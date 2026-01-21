@@ -21,17 +21,21 @@ import MathBackground from "@/components/ui/MathBackground";
 
 export default function Home() {
     const [introComplete, setIntroComplete] = useState(false);
+    const [introSkipped, setIntroSkipped] = useState(false);
 
     return (
         <div className="relative overflow-x-hidden min-h-screen">
             <LenisScroll />
-            <CinematicIntro onComplete={() => setIntroComplete(true)} />
+            <CinematicIntro onComplete={(skipped) => {
+                setIntroComplete(true);
+                if (skipped) setIntroSkipped(true);
+            }} />
 
             <MathBackground />
             <div className="fixed inset-0 pointer-events-none z-10 bg-gradient-to-b from-transparent via-background/10 to-background/80" />
 
             {/* Hero Section - The Event Horizon */}
-            <SpotlightHero />
+            <SpotlightHero startAnimation={introComplete} skipped={introSkipped} />
 
             {/* Philosophy Grid (Bento) */}
             <section className="py-24 px-4 sm:px-6 lg:px-8 relative z-10">

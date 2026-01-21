@@ -129,9 +129,14 @@ export default function Footer() {
 
                 {/* Bottom Bar */}
                 <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
-                    <p className="text-xs text-muted font-mono">
-                        © {new Date().getFullYear()} RMC CBIT. EST 2018.
-                    </p>
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                        <p className="text-xs text-muted font-mono">
+                            © {new Date().getFullYear()} RMC CBIT. EST 2018.
+                        </p>
+                        <Link href="/admin/login" className="text-[10px] text-white/20 hover:text-teal transition-colors font-mono uppercase tracking-widest">
+                            Admin Portal
+                        </Link>
+                    </div>
                     <p className="text-xs text-muted font-mono flex items-center gap-2">
                         Designed with <span className="text-coral">♥</span> & <span className="text-teal">Infinite</span> Passion
                     </p>

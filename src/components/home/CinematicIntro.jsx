@@ -8,14 +8,24 @@ export default function CinematicIntro({ onComplete }) {
     const [step, setStep] = useState(1);
 
     useEffect(() => {
+        // Check if intro has already been shown in this session
+        const hasShown = typeof window !== 'undefined' && sessionStorage.getItem("rmc-intro-shown");
+
+        if (hasShown) {
+            setIsVisible(false);
+            onComplete && onComplete();
+            return;
+        }
+
         const sequences = [
             // Step 1 is initial state, so we wait for step 2
-            { time: 2000, action: () => setStep(2) }, // Show "RMC"
-            { time: 3500, action: () => setStep(3) }, // Fade out
+            { time: 500, action: () => setStep(2) }, // Show "RMC" fast
+            { time: 2000, action: () => setStep(3) }, // Fade out
             {
-                time: 4200, action: () => {
+                time: 2500, action: () => {
                     onComplete && onComplete();
                     setIsVisible(false);
+                    sessionStorage.setItem("rmc-intro-shown", "true");
                 }
             }, // Finish
         ];
@@ -39,6 +49,31 @@ export default function CinematicIntro({ onComplete }) {
             transition={{ duration: 1, ease: "easeInOut" }}
         >
             <div className="relative overflow-hidden w-full h-full flex items-center justify-center">
+
+                {/* Floating Math Equations Background */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    {["eⁱπ + 1 = 0", "V - E + F = 2", "∇ ⋅ B = 0", "∫ e⁻ˣ² dx = √π", "∑ (1/n²) = π²/6", "f(x) ≈ f(a) + f'(a)(x-a) + ...", "E = mc²", "sin²θ + cos²θ = 1"].map((eq, i) => (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 50, filter: "blur(4px)" }}
+                            animate={{ opacity: [0, 0.5, 0], y: -80, filter: "blur(0px)" }}
+                            transition={{
+                                duration: 5,
+                                repeat: Infinity,
+                                delay: i * 0.4,
+                                ease: "easeInOut"
+                            }}
+                            className="absolute text-teal/40 font-serif italic text-lg md:text-3xl select-none whitespace-nowrap font-bold"
+                            style={{
+                                left: `${Math.random() * 80 + 10}%`,
+                                top: `${Math.random() * 80 + 10}%`
+                            }}
+                        >
+                            {eq}
+                        </motion.div>
+                    ))}
+                </div>
+
                 <AnimatePresence mode="wait">
                     {step === 1 && (
                         <motion.div

@@ -4,15 +4,15 @@ import { useState } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, CheckCircle, Smartphone, User, Mail, Hash, Briefcase, Calendar } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle, Smartphone, User, Mail, Hash, Briefcase, Calendar } from "lucide-react";
 import { upcomingEvents } from "@/data/upcomingEvents";
 import SectionTitle from "@/components/ui/SectionTitle";
 import { useParams } from "next/navigation";
 
 export default function RegistrationPage() {
     const params = useParams();
-    const eventId = parseInt(params.eventId);
-    const event = upcomingEvents.find(e => e.id === eventId);
+    const eventId = params.eventId; // IDs are strings (e.g., 'u1')
+    const event = upcomingEvents.find(e => e.id == eventId);
 
     // Mock state if event not found (or handle redirect)
     if (!event && eventId) {

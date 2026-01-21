@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import MathTitle from "@/components/ui/MathTitle";
 
-export default function SpotlightHero() {
+export default function SpotlightHero({ startAnimation = true, skipped = false }) {
     const [activeQuote, setActiveQuote] = useState(0);
 
     const quotes = [
@@ -35,9 +35,9 @@ export default function SpotlightHero() {
             {/* 3. The Content (Top Layer) - Text is always visible */}
             <div className="relative z-20 pointer-events-none flex flex-col items-center justify-center text-center px-4 w-full h-full">
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5, duration: 1 }}
+                    initial={skipped ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                    animate={skipped || startAnimation ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                    transition={{ duration: skipped ? 0 : 1, ease: "easeOut" }}
                     className="mb-6 pointer-events-auto"
                 >
                     <div className="relative group cursor-default">
@@ -61,7 +61,7 @@ export default function SpotlightHero() {
                     <motion.span
                         initial={{ opacity: 0, letterSpacing: "0em" }}
                         animate={{ opacity: 1, letterSpacing: "0.5em" }}
-                        transition={{ delay: 1, duration: 2, ease: "easeOut" }}
+                        transition={{ delay: skipped ? 0.1 : 1, duration: skipped ? 0.8 : 2, ease: "easeOut" }}
                         className="font-sans font-bold text-sm md:text-xl lg:text-2xl text-white/50 uppercase tracking-[0.5em] z-10"
                     >
                         Math Club
@@ -87,7 +87,7 @@ export default function SpotlightHero() {
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 2, duration: 0.5 }}
+                    transition={{ delay: skipped ? 0.3 : 2, duration: 0.5 }}
                     className="pointer-events-auto"
                 >
                     <MagneticButton>
@@ -102,7 +102,7 @@ export default function SpotlightHero() {
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 2.5, duration: 1 }}
+                    transition={{ delay: skipped ? 0.5 : 2.5, duration: 1 }}
                     className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
                 >
                     <div className="w-[1px] h-12 bg-gradient-to-b from-teal to-transparent opacity-50" />

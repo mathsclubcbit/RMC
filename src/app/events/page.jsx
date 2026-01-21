@@ -25,12 +25,26 @@ export default function EventsPage() {
             <div className="max-w-7xl mx-auto relative z-10">
                 {/* Header */}
                 <div className="mb-16">
-                    <SectionTitle
-                        title="Operational Log"
-                        subtitle="Explore upcoming and past mathematical endeavors."
-                        variant="silver"
-                        className="mb-8"
-                    />
+                    {/* Custom Header with Cinzel Font */}
+                    <div className="mb-16 text-center">
+                        <h1
+                            className="text-5xl md:text-7xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-b from-white via-slate-200 to-slate-500 tracking-widest pb-2"
+                            style={{ fontFamily: 'var(--font-cinzel)' }}
+                        >
+                            EVENTS
+                        </h1>
+
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="flex items-center gap-2 text-teal/40 font-mono text-xs">
+                                <span className="h-[1px] w-12 bg-gradient-to-r from-transparent to-teal/40"></span>
+                                <span>//</span>
+                                <span className="h-[1px] w-12 bg-gradient-to-l from-transparent to-teal/40"></span>
+                            </div>
+                            <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-light leading-relaxed font-sans">
+                                Explore our timeline of mathematical endeavors.
+                            </p>
+                        </div>
+                    </div>
 
                     {/* Control Panel (Filter/Search) */}
                     <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-1 border-y border-white/10 py-6 bg-black/50 backdrop-blur-sm">
@@ -56,8 +70,8 @@ export default function EventsPage() {
                                     key={tab}
                                     onClick={() => setFilter(tab)}
                                     className={`px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-widest border transition-all whitespace-nowrap ${filter === tab
-                                            ? "bg-teal/10 border-teal text-teal shadow-[0_0_10px_rgba(45,212,191,0.2)]"
-                                            : "border-white/10 text-muted hover:border-white/30 hover:text-white"
+                                        ? "bg-teal/10 border-teal text-teal shadow-[0_0_10px_rgba(45,212,191,0.2)]"
+                                        : "border-white/10 text-muted hover:border-white/30 hover:text-white"
                                         }`}
                                 >
                                     {tab}
