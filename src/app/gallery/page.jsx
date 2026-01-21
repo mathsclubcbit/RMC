@@ -30,6 +30,8 @@ const galleryItems = [
     { id: 12, category: "Fun Events", title: "Math Quiz Night", symbol: "α", color: "orange", height: "h-72" },
 ];
 
+import MathBackground from "@/components/ui/MathBackground";
+
 export default function GalleryPage() {
     const [activeCategory, setActiveCategory] = useState("All");
 
@@ -38,9 +40,9 @@ export default function GalleryPage() {
         : galleryItems.filter(item => item.category === activeCategory);
 
     return (
-        <div className="relative bg-background min-h-screen">
-            {/* Background Texture */}
-            <div className="fixed inset-0 z-0 bg-[url('/noise.png')] opacity-[0.03] pointer-events-none" />
+        <div className="relative bg-black min-h-screen overflow-hidden">
+            {/* Standard Math Background */}
+            <MathBackground />
 
             <div className="relative z-10">
                 {/* Hero */}

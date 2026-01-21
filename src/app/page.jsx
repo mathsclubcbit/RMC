@@ -41,8 +41,8 @@ export default function Home() {
             <section className="py-24 px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="max-w-7xl mx-auto mb-16">
                     <SectionTitle
-                        title="The Legacy of Infinity"
-                        subtitle="Inspired by Srinivasa Ramanujan, we foster a community where mathematics transcends calculations to become art."
+                        title="The Logic Lattice"
+                        subtitle="A digital framework where mathematical thought structures interconnect to form a perfect proof of community."
                         center={true}
                         variant="silver"
                     />

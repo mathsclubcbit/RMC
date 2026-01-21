@@ -14,7 +14,7 @@ export default function AboutPage() {
             description: "Encourage logical reasoning and problem-solving skills among students through challenging puzzles.",
             color: "text-teal",
             bg: "bg-teal/10",
-            border: "hover:border-teal/50",
+            border: "border-teal/30 md:border-white/10 md:hover:border-teal/50",
             colSpan: "md:col-span-2"
         },
         {
@@ -23,7 +23,7 @@ export default function AboutPage() {
             description: "Host olympiads, quizzes, and puzzle contests to challenge minds.",
             color: "text-lime",
             bg: "bg-lime/10",
-            border: "hover:border-lime/50",
+            border: "border-lime/30 md:border-white/10 md:hover:border-lime/50",
             colSpan: "md:col-span-1"
         },
         {
@@ -32,7 +32,7 @@ export default function AboutPage() {
             description: "Conduct sessions by experts on advanced mathematical concepts.",
             color: "text-orange-400",
             bg: "bg-orange-400/10",
-            border: "hover:border-orange-400/50",
+            border: "border-orange-400/30 md:border-white/10 md:hover:border-orange-400/50",
             colSpan: "md:col-span-1"
         },
         {
@@ -41,7 +41,7 @@ export default function AboutPage() {
             description: "Create a supportive network of math enthusiasts at CBIT.",
             color: "text-purple-400",
             bg: "bg-purple-400/10",
-            border: "hover:border-purple-400/50",
+            border: "border-purple-400/30 md:border-white/10 md:hover:border-purple-400/50",
             colSpan: "md:col-span-2"
         },
     ];
@@ -132,10 +132,12 @@ export default function AboutPage() {
                                 </div>
                             </div>
                             <div className="relative flex justify-center">
-                                <SpotlightCard className="aspect-square w-full max-w-sm rounded-[2rem] bg-gradient-to-br from-white/5 to-transparent border border-white/10 flex flex-col items-center justify-center p-8 text-center group cursor-default shadow-[0_0_50px_-20px_rgba(45,212,191,0.2)]">
+                                {/* Mobile: Scale 95 on active. Desktop: Scale 105 on hover */}
+                                <SpotlightCard className="aspect-square w-full max-w-sm rounded-[2rem] bg-gradient-to-br from-white/5 to-transparent border border-white/10 flex flex-col items-center justify-center p-8 text-center group cursor-default shadow-[0_0_50px_-20px_rgba(45,212,191,0.2)] active:scale-95 md:active:scale-100 transition-transform">
                                     <div className="relative">
-                                        <div className="absolute inset-0 bg-teal/20 blur-3xl rounded-full opacity-20 group-hover:opacity-50 transition-opacity duration-500" />
-                                        <div className="text-8xl md:text-9xl mb-4 font-serif text-transparent bg-clip-text bg-gradient-to-b from-teal to-lime font-bold group-hover:scale-105 transition-transform duration-500 relative z-10">
+                                        {/* Mobile: Opacity 40 default. Desktop: Opacity 0 -> 50 on hover */}
+                                        <div className="absolute inset-0 bg-teal/20 blur-3xl rounded-full opacity-40 md:opacity-0 md:group-hover:opacity-50 transition-opacity duration-500" />
+                                        <div className="text-8xl md:text-9xl mb-4 font-serif text-transparent bg-clip-text bg-gradient-to-b from-teal to-lime font-bold md:group-hover:scale-105 transition-transform duration-500 relative z-10">
                                             1729
                                         </div>
                                     </div>
@@ -159,11 +161,11 @@ export default function AboutPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
                         {team.map((member, idx) => (
-                            <SpotlightCard key={idx} className="bg-white/5 border border-white/10 p-6 rounded-2xl group text-center hover:bg-white/10 transition-colors">
-                                <div className={`w-20 h-20 mx-auto rounded-2xl ${member.color.replace('text', 'bg')}/10 flex items-center justify-center mb-6 border border-white/5 group-hover:scale-110 transition-transform`}>
+                            <SpotlightCard key={idx} className="bg-white/5 border border-white/10 p-6 rounded-2xl group text-center active:bg-white/10 md:hover:bg-white/10 transition-colors active:scale-95 md:active:scale-100 md:hover:scale-100 duration-200">
+                                <div className={`w-20 h-20 mx-auto rounded-2xl ${member.color.replace('text', 'bg')}/10 flex items-center justify-center mb-6 border border-white/5 md:group-hover:scale-110 transition-transform`}>
                                     <member.icon className={`w-8 h-8 ${member.color}`} />
                                 </div>
-                                <h3 className="text-xl font-serif font-bold text-white mb-1 group-hover:text-teal transition-colors">{member.name}</h3>
+                                <h3 className="text-xl font-serif font-bold text-white mb-1 md:group-hover:text-teal transition-colors">{member.name}</h3>
                                 <p className="text-xs font-mono text-white/40 uppercase tracking-widest">{member.role}</p>
                             </SpotlightCard>
                         ))}
@@ -217,7 +219,7 @@ export default function AboutPage() {
                         {objectives.map((obj, index) => (
                             <SpotlightCard
                                 key={index}
-                                className={`bg-black/40 border border-white/10 p-8 rounded-2xl ${obj.colSpan} ${obj.border} transition-colors bg-clip-padding backdrop-filter backdrop-blur-sm`}
+                                className={`bg-black/40 p-8 rounded-2xl ${obj.colSpan} border-white/5 ${obj.border} transition-colors bg-clip-padding backdrop-filter backdrop-blur-sm`}
                             >
                                 <div className={`w-12 h-12 rounded-xl ${obj.bg} flex items-center justify-center mb-6 ${obj.color}`}>
                                     <obj.icon className="w-6 h-6" />

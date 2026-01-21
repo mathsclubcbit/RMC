@@ -99,24 +99,22 @@ const departments = [
     { name: "Content Team", members: 5, color: "orange", icon: Award },
 ];
 
+import MathBackground from "@/components/ui/MathBackground";
+
 export default function TeamPage() {
     return (
-        <div className="relative overflow-hidden">
-            {/* Background Gradients */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-teal/5 blur-[120px] rounded-full mix-blend-screen"></div>
-                <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-coral/5 blur-[120px] rounded-full mix-blend-screen"></div>
-            </div>
+        <div className="relative overflow-hidden min-h-screen">
+            {/* Standard Math Background */}
+            <MathBackground />
 
             {/* Hero */}
-            <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 z-10">
-                <div className="max-w-4xl mx-auto text-center">
-                    <h1 className="text-5xl md:text-7xl font-bold mb-6 font-serif tracking-tight">
-                        Our <span className="text-gradient">Team</span>
-                    </h1>
-                    <p className="text-xl md:text-2xl text-muted max-w-2xl mx-auto font-light leading-relaxed">
-                        The brilliant minds driving the Ramanujan Math Club.
-                    </p>
+            <section className="relative pt-32 pb-10 px-4 sm:px-6 lg:px-8 z-10">
+                <div className="max-w-4xl mx-auto">
+                    <SectionTitle
+                        title={<>Our <span className="text-gradient">Team</span></>}
+                        subtitle="The brilliant minds driving the Ramanujan Math Club."
+                        center={true}
+                    />
                 </div>
             </section>
 

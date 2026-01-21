@@ -51,12 +51,18 @@ export default function EventAdminPage() {
         router.push("/admin/login");
     };
 
+    const handlePosterUpload = () => {
+        const url = window.prompt("Enter Image URL for Poster:", "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=2070&auto=format&fit=crop");
+        if (url) {
+            setFormData({ ...formData, img: url });
+        }
+    };
+
     if (!event) return <div className="min-h-screen bg-black text-white flex items-center justify-center font-mono animate-pulse">Loading Event Data...</div>;
 
     return (
         <div className="min-h-screen bg-black text-white font-sans relative overflow-hidden">
             <MathBackground />
-            <div className="fixed inset-0 bg-gradient-to-b from-black/50 via-black/80 to-black pointer-events-none z-0" />
 
             {/* Nav */}
             <nav className="border-b border-white/5 bg-black/50 backdrop-blur-xl sticky top-0 z-30 relative">
@@ -79,7 +85,7 @@ export default function EventAdminPage() {
             <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
                 {/* Left Column: Event Settings */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-6 relative overflow-hidden">
+                    <div className="glass-premium rounded-3xl p-6 relative overflow-hidden border border-white/10">
                         <div className="absolute top-0 right-0 w-20 h-20 bg-teal/10 blur-2xl rounded-full pointer-events-none" />
                         <h2 className="text-xl font-serif font-bold mb-6 text-white flex items-center gap-2">
                             <div className="w-1 h-6 bg-teal rounded-full" />
@@ -88,17 +94,17 @@ export default function EventAdminPage() {
                         <form onSubmit={handleSave} className="space-y-5">
                             <div className="space-y-1">
                                 <label className="text-[10px] uppercase text-teal/70 font-mono pl-3 tracking-widest">Event Name</label>
-                                <input type="text" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus:border-teal/50 outline-none text-white transition-colors" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
+                                <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-teal/50 outline-none text-white transition-colors placeholder-white/20" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
                             </div>
 
                             <div className="space-y-1">
                                 <label className="text-[10px] uppercase text-teal/70 font-mono pl-3 tracking-widest">Date</label>
-                                <input type="text" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus:border-teal/50 outline-none text-white transition-colors" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+                                <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-teal/50 outline-none text-white transition-colors placeholder-white/20" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
                             </div>
 
                             <div className="space-y-1">
                                 <label className="text-[10px] uppercase text-teal/70 font-mono pl-3 tracking-widest">Status</label>
-                                <select className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus:border-teal/50 outline-none text-white" value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })}>
+                                <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-teal/50 outline-none text-white" value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })}>
                                     <option className="bg-black">Registration Open</option>
                                     <option className="bg-black">Closed</option>
                                     <option className="bg-black">Upcoming</option>
@@ -108,7 +114,7 @@ export default function EventAdminPage() {
 
                             <div className="space-y-1">
                                 <label className="text-[10px] uppercase text-teal/70 font-mono pl-3 tracking-widest">Description</label>
-                                <textarea className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus:border-teal/50 outline-none min-h-[150px] text-white transition-colors" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+                                <textarea className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-teal/50 outline-none min-h-[150px] text-white transition-colors placeholder-white/20" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
                             </div>
 
                             <button type="submit" className="w-full py-4 bg-teal/10 hover:bg-teal text-teal hover:text-black border border-teal/50 font-bold rounded-xl flex items-center justify-center gap-2 transition-all uppercase tracking-widest text-xs hover:shadow-[0_0_20px_rgba(45,212,191,0.2)]">
@@ -117,18 +123,18 @@ export default function EventAdminPage() {
                         </form>
                     </div>
 
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                    <div className="glass-premium rounded-3xl p-6 border border-white/10">
                         <h2 className="text-xl font-serif font-bold mb-6 text-white flex items-center gap-2">
                             <div className="w-1 h-6 bg-purple-500 rounded-full" />
                             Event Poster
                         </h2>
-                        <div className="aspect-video bg-black/50 rounded-xl mb-4 border border-white/10 flex items-center justify-center overflow-hidden relative group cursor-pointer">
-                            <div className="absolute inset-0 bg-teal/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="aspect-video bg-black/50 rounded-xl mb-4 border border-white/10 flex items-center justify-center overflow-hidden relative group cursor-pointer" onClick={handlePosterUpload}>
+                            <div className="absolute inset-0 bg-teal/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
                                 <Upload className="w-8 h-8 text-teal" />
                             </div>
                             <img src={formData.img || '/noise.png'} alt="Preview" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" />
                         </div>
-                        <button className="w-full py-3 border border-white/10 hover:bg-white/5 text-white/70 hover:text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-xs uppercase tracking-widest">
+                        <button onClick={handlePosterUpload} className="w-full py-3 border border-white/10 hover:bg-white/5 text-white/70 hover:text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-xs uppercase tracking-widest">
                             <Upload className="w-4 h-4" /> Upload New Poster
                         </button>
                     </div>
@@ -136,7 +142,7 @@ export default function EventAdminPage() {
 
                 {/* Right Column: Registrations */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden flex flex-col h-full min-h-[500px]">
+                    <div className="glass-premium rounded-3xl overflow-hidden flex flex-col h-full min-h-[500px] border border-white/10">
                         <div className="p-6 border-b border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 bg-white/[0.02]">
                             <div className="text-center md:text-left">
                                 <h2 className="text-xl font-serif font-bold text-white">Registrations</h2>
@@ -145,7 +151,7 @@ export default function EventAdminPage() {
                             <div className="flex gap-2 w-full md:w-auto">
                                 <div className="relative flex-1 md:flex-none">
                                     <Search className="absolute left-3 top-2.5 w-3 h-3 text-white/30" />
-                                    <input type="text" placeholder="Search..." className="bg-black/40 border border-white/10 rounded-lg py-2 pl-8 pr-3 text-xs text-white focus:border-teal/30 outline-none w-full md:w-48" />
+                                    <input type="text" placeholder="Search..." className="bg-white/5 border border-white/10 rounded-lg py-2 pl-8 pr-3 text-xs text-white focus:border-teal/30 outline-none w-full md:w-48 placeholder-white/20" />
                                 </div>
                                 <button className="px-4 py-2 bg-white/5 hover:bg-teal/20 hover:text-teal border border-white/10 hover:border-teal/30 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all">
                                     <Download className="w-3 h-3" /> <span className="hidden md:inline">Export CSV</span><span className="md:hidden">Export</span>
@@ -165,7 +171,7 @@ export default function EventAdminPage() {
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
                                     {mockRegistrants.map((user) => (
-                                        <tr key={user.id} className="hover:bg-white/[0.02] transition-colors group">
+                                        <tr key={user.id} className="hover:bg-white/[0.05] transition-colors group">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-teal text-xs font-bold group-hover:border-teal/50 transition-colors">
