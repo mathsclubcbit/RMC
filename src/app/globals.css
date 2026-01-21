@@ -1,26 +1,250 @@
+@import url('https://fonts.googleapis.com/css2?family=Julius+Sans+One&display=swap');
 @import "tailwindcss";
 
+/* ===== RMC Premium Design System ===== */
+/* ===== RMC Premium Design System ===== */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Enforcing "Math Noir" as Default Theme */
+  --rmc-teal: #3ABCB3;
+  --rmc-lime: #AFF44A;
+  --rmc-coral: #E36951;
+  --rmc-orange: #E8B237;
+
+  /* Richer Variants for "Gold/Premium" Feel */
+  --rmc-teal-dark: #1A6B63;
+  --rmc-lime-dark: #6B8C2D;
+  --rmc-coral-dark: #B5422E;
+  --rmc-orange-dark: #B0821E;
+
+  /* Neutrals - Deep Jungle/Slate Background */
+  --background: #020617;
+  --foreground: #F8FAFC;
+  --card-bg: rgba(15, 23, 42, 0.6);
+  --muted: #94A3B8;
+  --border: #1E293B;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--rmc-teal) 0%, var(--rmc-lime) 100%);
+  --gradient-accent: linear-gradient(135deg, var(--rmc-coral) 0%, var(--rmc-orange) 100%);
+  --gradient-dark: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+}
+
+/* Optional Light Mode (Hidden/Disabled for Consistency) */
+@media (prefers-color-scheme: light) {
+  :root {
+    --background: #020617;
+    --foreground: #ffffff;
+
+    /* Premium Math RMC Palette */
+    --card: #0a0e20;
+    --card-foreground: #e2e8f0;
+
+    --popover: #0a0e20;
+    --popover-foreground: #e2e8f0;
+
+    --primary: #3ABCB3;
+    /* RMC Teal */
+    --primary-foreground: #000000;
+
+    --secondary: #D4AF37;
+    /* Mathematical Gold */
+    --secondary-foreground: #000000;
+
+    --muted: #64748b;
+    --muted-foreground: #94a3b8;
+
+    --accent: #2A2F45;
+    --accent-foreground: #ffffff;
+
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+
+    --border: #1e293b;
+    --input: #1e293b;
+    --ring: #3ABCB3;
+  }
 }
 
 @theme inline {
+  /* Colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card-bg);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+
+  /* RMC Brand Colors */
+  --color-teal: var(--rmc-teal);
+  --color-lime: var(--rmc-lime);
+  --color-coral: var(--rmc-coral);
+  --color-orange: var(--rmc-orange);
+
+  /* Fonts */
+  --font-serif: var(--font-cormorant), serif;
+  --font-sans: var(--font-montserrat), sans-serif;
+  --font-body: var(--font-inter), sans-serif;
+  --font-mono: var(--font-jetbrains), monospace;
+  --font-math: "Julius Sans One", sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ===== Base Styles ===== */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-serif);
+  /* Switch headings to Serif */
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  /* Tight tracking for elegance */
+}
+
+/* ===== Premium Utilities ===== */
+
+/* Glassmorphism - Premium Frosted */
+/* Glassmorphism - Premium Frosted */
+/* Glassmorphism - Premium Frosted (Global) */
+.glass-premium {
+  /* Gradient with transparency for glass effect */
+  background: radial-gradient(125% 125% at 50% 10%, rgba(0, 0, 0, 0.4) 40%, rgba(102, 51, 238, 0.2) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* Spotlight Effect Base */
+.spotlight-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.06), transparent 40%);
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.spotlight-card:hover::before {
+  opacity: 1;
+}
+
+/* Animations */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-20px) rotate(5deg);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Button Upgrades */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 2rem;
+  border-radius: 9999px;
+  /* Pill shape */
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-primary {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: 0 4px 15px rgba(45, 155, 148, 0.2);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(45, 155, 148, 0.3);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.btn-outline:hover {
+  border-color: var(--rmc-teal);
+  color: var(--rmc-teal);
+  background: rgba(45, 155, 148, 0.05);
+}
+
+/* Text Gradient Utilities */
+.text-gradient {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, var(--rmc-orange) 0%, var(--rmc-coral) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-silver {
+  background: linear-gradient(135deg, #FFFFFF 0%, #94A3B8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
 }

@@ -1,0 +1,75 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence, animate } from "framer-motion";
+
+export default function Preloader() {
+    const [isLoading, setIsLoading] = useState(true);
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        // Prevent scrolling during loading
+        document.body.style.overflow = "hidden";
+
+        // Smooth Counter Animation using Framer Motion's animate
+        const controls = animate(2018, 2026, {
+            duration: 2,
+            ease: "easeInOut",
+            onUpdate: (value) => setCount(Math.floor(value)),
+            onComplete: () => {
+                setTimeout(() => {
+                    setIsLoading(false);
+                    document.body.style.overflow = "";
+                }, 200);
+            }
+        });
+
+        return () => {
+            controls.stop();
+            document.body.style.overflow = "";
+        };
+    }, []);
+
+    return (
+        <AnimatePresence mode="wait">
+            {isLoading && (
+                <motion.div
+                    key="preloader"
+                    initial={{ y: 0 }}
+                    exit={{ y: "-100%", transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] } }}
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black text-white px-4 md:px-0"
+                >
+                    {/* Background Noise/Texture - Removed for now */}
+                    <div className="absolute inset-0 bg-white/5 opacity-[0.05] pointer-events-none"></div>
+
+                    <div className="relative z-10 flex flex-col items-center">
+                        {/* The Counter */}
+                        <div className="flex items-baseline font-serif font-bold tracking-tighter">
+                            <div className="flex items-center overflow-hidden h-[1.1em] text-6xl md:text-8xl">
+                                <motion.span
+                                    initial={{ y: "100%" }}
+                                    animate={{ y: "0%" }}
+                                    transition={{ duration: 0.8, ease: "circOut" }}
+                                >
+                                    {count}
+                                </motion.span>
+                            </div>
+                        </div>
+
+                        {/* Loading Text */}
+                        <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                            className="mt-4 font-mono text-sm uppercase tracking-[0.4em] text-teal/90 drop-shadow-[0_0_10px_rgba(58,188,179,0.5)]"
+                        >
+                            Loading Legacy...
+                        </motion.p>
+                    </div>
+
+                    {/* Bottom Corner Tag Removed */}
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+}
