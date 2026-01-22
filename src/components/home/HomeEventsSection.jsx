@@ -1,12 +1,20 @@
-"use client";
-
+import { useState, useEffect } from "react";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { upcomingEvents } from "@/data/upcomingEvents";
+// import { upcomingEvents } from "@/data/upcomingEvents"; // Removed static import
 import SectionTitle from "@/components/ui/SectionTitle";
 import HolographicCard from "@/components/events/HolographicCard";
 
 export default function HomeEventsSection() {
+    const [events, setEvents] = useState([]);
+
+    useEffect(() => {
+        fetch('/api/events')
+            .then(res => res.json())
+            .then(data => setEvents(data))
+            .catch(err => console.error("Error fetching events:", err));
+    }, []);
+
     return (
         <section className="py-32 px-4 sm:px-6 lg:px-8 relative bg-black overflow-hidden">
             {/* Background Atmosphere */}
@@ -37,7 +45,7 @@ export default function HomeEventsSection() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {upcomingEvents.map((event, index) => (
+                    {events.map((event, index) => (
                         <HolographicCard key={event.id} event={event} index={index} />
                     ))}
 

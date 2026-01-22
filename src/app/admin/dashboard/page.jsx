@@ -2,27 +2,44 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Search, Calendar, MapPin, Users, Edit, Trash2, X, Check, BarChart3, LogOut, Clock, Copy, Shield } from "lucide-react";
-import { upcomingEvents } from "@/data/upcomingEvents";
+// import { upcomingEvents } from "@/data/upcomingEvents"; // Removed static import
 import MathBackground from "@/components/ui/MathBackground";
 
 export default function AdminDashboard() {
     const router = useRouter();
-    const [events, setEvents] = useState(upcomingEvents);
+    const [events, setEvents] = useState([]); // Initialize empty
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
 
     // Success Modal State
     const [createdEventCreds, setCreatedEventCreds] = useState(null);
 
-    // Auth Check
+    // Auth Check & Data Fetch
     useEffect(() => {
         const auth = sessionStorage.getItem("admin-auth");
         if (auth !== "main") {
             router.push("/admin/login");
+        } else {
+            // Fetch events from API
+            fetch('/api/events')
+                .then(res => res.json())
+                .then(data => setEvents(data))
+                .catch(err => console.error("Failed to fetch events:", err));
         }
     }, [router]);
+
+    // Lock Body Scroll when Modal is Open
+    useEffect(() => {
+        if (isCreateModalOpen) {
+            document.body.classList.add("noscroll");
+        } else {
+            document.body.classList.remove("noscroll");
+        }
+        return () => { document.body.classList.remove("noscroll"); };
+    }, [isCreateModalOpen]);
 
     // Create State
     const [newEvent, setNewEvent] = useState({
@@ -59,7 +76,7 @@ export default function AdminDashboard() {
         return password.split('').sort(() => 0.5 - Math.random()).join('');
     };
 
-    const handleCreate = (e) => {
+    const handleCreate = async (e) => {
         e.preventDefault();
 
         // Generate Secure Password
@@ -90,14 +107,31 @@ export default function AdminDashboard() {
             password: eventPassword, // Store internally
             img: "/assets/events/math-heist.jpg"
         };
-        setEvents([...events, created]);
-        setIsCreateModalOpen(false);
-        setCreatedEventCreds({ title: newEvent.title, password: eventPassword }); // Show success modal
 
-        setNewEvent({
-            title: "", isOneDay: true, startDate: "", endDate: "", startTime: "", endTime: "",
-            location: "", category: "Competition", description: "", status: "Registration Open"
-        });
+        // API Call to Persist
+        try {
+            const res = await fetch('/api/events', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(created)
+            });
+
+            if (res.ok) {
+                setEvents([...events, created]);
+                setIsCreateModalOpen(false);
+                setCreatedEventCreds({ title: newEvent.title, password: eventPassword }); // Show success modal
+
+                setNewEvent({
+                    title: "", isOneDay: true, startDate: "", endDate: "", startTime: "", endTime: "",
+                    location: "", category: "Competition", description: "", status: "Registration Open"
+                });
+            } else {
+                alert("Failed to save event.");
+            }
+        } catch (error) {
+            console.error("Creation error:", error);
+            alert("Error creating event.");
+        }
     };
 
     const handleLogout = () => {
@@ -223,10 +257,10 @@ export default function AdminDashboard() {
                 </div>
             </main>
 
-            {/* Create Modal */}
+            {/* Create Modal - Ported to Body */}
             <AnimatePresence>
-                {isCreateModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                {isCreateModalOpen && typeof document !== 'undefined' && createPortal(
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-black/90 backdrop-blur-md"
@@ -342,7 +376,8 @@ export default function AdminDashboard() {
                                 </button>
                             </form>
                         </motion.div>
-                    </div>
+                    </div>,
+                    document.body
                 )}
             </AnimatePresence>
 

@@ -8,6 +8,27 @@ export default function Preloader() {
     const [count, setCount] = useState(0);
 
     useEffect(() => {
+        // Check local storage for timestamp
+        const lastShown = typeof window !== 'undefined' ? localStorage.getItem("rmc-legacy-preloader-timestamp") : null;
+        const ONE_HOUR = 60 * 60 * 1000;
+        const now = Date.now();
+
+        const timeSince = lastShown ? now - (parseInt(lastShown) || 0) : Infinity;
+
+        // Show if:
+        // 1. Never shown (!lastShown)
+        // 2. Expired (> ONE_HOUR)
+        // 3. Just started (< 2000ms) - Fix for React Strict Mode
+        const shouldShow = !lastShown || timeSince > ONE_HOUR || timeSince < 2000;
+
+        if (!shouldShow) {
+            setIsLoading(false);
+            return;
+        }
+
+        // Set timestamp immediately
+        localStorage.setItem("rmc-legacy-preloader-timestamp", now.toString());
+
         // Prevent scrolling during loading
         document.body.style.overflow = "hidden";
 

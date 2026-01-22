@@ -7,9 +7,11 @@ export const upcomingEvents = [
         description: "A high-stakes mathematical puzzle challenge where teams compete to crack the vault.",
         status: "Registration Open",
         category: "Competition",
-        img: "/assets/events/math-heist.jpg", // Placeholder
+        img: "/assets/events/math-heist.jpg",
         participants: 0,
-        year: "2025-26"
+        year: "2025-26",
+        registrationFee: "₹100",
+        qrCode: "/qr-placeholder.png"
     },
     {
         id: 'u2',
@@ -21,7 +23,9 @@ export const upcomingEvents = [
         category: "Innovation",
         img: "/assets/events/ideathon.jpg", // Placeholder
         participants: 0,
-        year: "2025-26"
+        year: "2025-26",
+        registrationFee: "₹100",
+        qrCode: "/qr-placeholder.png"
     },
     {
         id: 'u3',
@@ -33,6 +37,8 @@ export const upcomingEvents = [
         category: "Social",
         img: "/assets/events/match.jpg", // Placeholder
         participants: 0,
-        year: "2025-26"
+        year: "2025-26",
+        registrationFee: "₹100",
+        qrCode: "/qr-placeholder.png"
     }
 ];

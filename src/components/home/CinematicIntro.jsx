@@ -8,14 +8,28 @@ export default function CinematicIntro({ onComplete }) {
     const [step, setStep] = useState(1);
 
     useEffect(() => {
-        // Check if intro has already been shown in this session
-        const hasShown = typeof window !== 'undefined' && sessionStorage.getItem("rmc-intro-shown");
+        // Check local storage for timestamp
+        const lastShown = typeof window !== 'undefined' ? localStorage.getItem("rmc-intro-timestamp") : null;
+        const ONE_HOUR = 60 * 60 * 1000;
+        const now = Date.now();
 
-        if (hasShown) {
+        // Robust time check
+        const timeSince = lastShown ? now - (parseInt(lastShown) || 0) : Infinity;
+
+        // Show if:
+        // 1. Never shown (!lastShown)
+        // 2. Expired (> ONE_HOUR)
+        // 3. Just started (< 2000ms) - Fix for React Strict Mode which runs effect twice
+        const shouldShow = !lastShown || timeSince > ONE_HOUR || timeSince < 2000;
+
+        if (!shouldShow) {
             setIsVisible(false);
             onComplete && onComplete();
             return;
         }
+
+        // Set timestamp immediately to prevent "refresh loop" exploits
+        localStorage.setItem("rmc-intro-timestamp", now.toString());
 
         const sequences = [
             // Step 1 is initial state, so we wait for step 2
@@ -25,7 +39,6 @@ export default function CinematicIntro({ onComplete }) {
                 time: 2500, action: () => {
                     onComplete && onComplete();
                     setIsVisible(false);
-                    sessionStorage.setItem("rmc-intro-shown", "true");
                 }
             }, // Finish
         ];

@@ -1,18 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { upcomingEvents } from "@/data/upcomingEvents";
+// import { upcomingEvents } from "@/data/upcomingEvents"; // Removed static import
 import HolographicCard from "@/components/events/HolographicCard";
 import SectionTitle from "@/components/ui/SectionTitle";
 import MathBackground from "@/components/ui/MathBackground";
 import { Search, Filter } from "lucide-react";
 
 export default function EventsPage() {
+    const [events, setEvents] = useState([]);
     const [filter, setFilter] = useState("all");
     const [searchQuery, setSearchQuery] = useState("");
 
-    const filteredEvents = upcomingEvents.filter(event => {
+    useEffect(() => {
+        fetch('/api/events')
+            .then(res => res.json())
+            .then(data => setEvents(data))
+            .catch(err => console.error("Error fetching events:", err));
+    }, []);
+
+    const filteredEvents = events.filter(event => {
         const matchesFilter = filter === "all" || event.category === filter; // Assuming category exists or just mock
         const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesFilter && matchesSearch;
