@@ -85,5 +85,5 @@ export async function generateQRCodeSVG(registrationId: string): Promise<string>
 export function validateQRData(data: string): boolean {
     // Registration IDs typically follow pattern: REG-{eventId}-{timestamp}-{random}
     // For now, just check it's not empty and has reasonable length
-    return data && data.length > 5 && data.length < 100;
+    return Boolean(data) && data.length > 5 && data.length < 100;
 }
