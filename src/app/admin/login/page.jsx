@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Lock, User, Key, ShieldCheck, ArrowRight } from "lucide-react";
@@ -12,6 +12,26 @@ export default function AdminLoginPage() {
         username: "", // For Event Admin
         password: ""  // For Both
     });
+    const [events, setEvents] = useState([]); // Store fetched events
+    const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+
+    // Fetch events for dropdown
+    useEffect(() => {
+        setIsLoadingEvents(true);
+        fetch('/api/events')
+            .then(res => res.json())
+            .then(data => {
+                setEvents(data);
+                if (data.length > 0) {
+                    setCredentials(prev => ({ ...prev, username: data[0].title }));
+                }
+                setIsLoadingEvents(false);
+            })
+            .catch(err => {
+                console.error("Failed to fetch events:", err);
+                setIsLoadingEvents(false);
+            });
+    }, []);
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
@@ -20,27 +40,39 @@ export default function AdminLoginPage() {
         setError("");
         setIsLoading(true);
 
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            if (isAdminMode) {
+                // MAIN ADMIN CHECK (Mock)
+                // Simulate API delay
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
-        if (isAdminMode) {
-            // MAIN ADMIN CHECK (Mock)
-            if (credentials.password === "RMC2026") {
-                sessionStorage.setItem("admin-auth", "main");
-                router.push("/admin/dashboard");
+                if (credentials.password === "RMC2026") {
+                    sessionStorage.setItem("admin-auth", "main");
+                    router.push("/admin/dashboard");
+                } else {
+                    setError("Invalid Password. Please try again.");
+                    setIsLoading(false);
+                }
             } else {
-                setError("Invalid Password. Please try again.");
-                setIsLoading(false);
+                // EVENT ADMIN CHECK
+                const res = await fetch('/api/events');
+                if (!res.ok) throw new Error("Failed to verify credentials");
+
+                const events = await res.json();
+                const event = events.find(e => e.title === credentials.username && e.password === credentials.password);
+
+                if (event) {
+                    sessionStorage.setItem("admin-auth", "event-" + event.id);
+                    router.push(`/admin/event/${event.id}`);
+                } else {
+                    setError("Authentication Failed. Check credentials.");
+                    setIsLoading(false);
+                }
             }
-        } else {
-            // EVENT ADMIN CHECK (Mock)
-            if (credentials.username && credentials.password) {
-                sessionStorage.setItem("admin-auth", "event-" + credentials.username);
-                router.push("/admin/event/u1");
-            } else {
-                setError("Authentication Failed. Check credentials.");
-                setIsLoading(false);
-            }
+        } catch (err) {
+            console.error(err);
+            setError("Login Error. Please try again.");
+            setIsLoading(false);
         }
     };
 
@@ -91,14 +123,21 @@ export default function AdminLoginPage() {
                                 <div className="space-y-1">
                                     <label className="text-[10px] text-teal/70 font-mono uppercase tracking-widest pl-3">Event Name</label>
                                     <div className="relative">
-                                        <User className="absolute left-4 top-3.5 w-4 h-4 text-white/30" />
-                                        <input
-                                            type="text"
-                                            className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:border-teal/50 focus:ring-1 focus:ring-teal/50 outline-none transition-all placeholder-white/20"
-                                            placeholder="e.g. Math Heist"
+                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                                        <select
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-10 pr-10 text-white focus:border-teal/50 focus:ring-1 focus:ring-teal/50 outline-none transition-all placeholder-white/20 appearance-none"
                                             value={credentials.username}
                                             onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
-                                        />
+                                            disabled={isLoadingEvents}
+                                        >
+                                            {events.length === 0 && <option value="" disabled>Loading events...</option>}
+                                            {events.map(event => (
+                                                <option key={event.id} value={event.title} className="bg-black text-white">
+                                                    {event.title}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 w-2 h-2 border-r border-b border-white/30 rotate-45 pointer-events-none" />
                                     </div>
                                 </div>
                             )}
@@ -106,7 +145,7 @@ export default function AdminLoginPage() {
                             <div className="space-y-1">
                                 <label className="text-[10px] text-teal/70 font-mono uppercase tracking-widest pl-3">Password</label>
                                 <div className="relative">
-                                    <Key className="absolute left-4 top-3.5 w-4 h-4 text-white/30" />
+                                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                                     <input
                                         type="password"
                                         className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:border-teal/50 focus:ring-1 focus:ring-teal/50 outline-none transition-all placeholder-white/20"

@@ -44,6 +44,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata = {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
     title: "RMC - Ramanujan Math Club | CBIT",
     description: "Where Numbers Tell Stories - Celebrating Mathematical Excellence at CBIT. Join us for events, workshops, competitions, and more!",
     keywords: ["math club", "CBIT", "Ramanujan", "mathematics", "competitions", "events"],

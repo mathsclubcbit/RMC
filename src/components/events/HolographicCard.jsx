@@ -3,6 +3,7 @@
 import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
 import { ArrowRight, Calendar, MapPin } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 // Glitch Text Component for Hover Effects
 const GlitchText = ({ text, className }) => {
@@ -30,6 +31,10 @@ export default function HolographicCard({ event, index }) {
         mouseY.set(clientY - top);
     }
 
+    // Determine which poster to show (fallback to img, then to null)
+    const posterSrc = event.posterDesktop || event.posterMobile || event.img;
+    const hasPoster = !!posterSrc;
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -54,7 +59,36 @@ export default function HolographicCard({ event, index }) {
 
             {/* Image Background with Gradient Overlay & Chromatic Noise */}
             <div className="absolute inset-0 z-0">
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black opacity-50" />
+                {hasPoster ? (
+                    <>
+                        {/* Desktop poster (hidden on mobile) */}
+                        {event.posterDesktop && (
+                            <img
+                                src={event.posterDesktop}
+                                alt={event.title}
+                                className="absolute inset-0 w-full h-full object-cover hidden md:block"
+                            />
+                        )}
+                        {/* Mobile poster (hidden on desktop) */}
+                        {event.posterMobile && (
+                            <img
+                                src={event.posterMobile}
+                                alt={event.title}
+                                className="absolute inset-0 w-full h-full object-cover md:hidden"
+                            />
+                        )}
+                        {/* Fallback to single poster or img if only one exists */}
+                        {!event.posterDesktop && !event.posterMobile && event.img && (
+                            <img
+                                src={event.img}
+                                alt={event.title}
+                                className="absolute inset-0 w-full h-full object-cover"
+                            />
+                        )}
+                    </>
+                ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black opacity-50" />
+                )}
                 <div className="absolute inset-0 bg-[url('/noise.png')] opacity-20 mix-blend-overlay" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
             </div>
@@ -70,7 +104,7 @@ export default function HolographicCard({ event, index }) {
                     </span>
                 </div>
 
-                <div className="space-y-4 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                <div className="space-y-4 translate-y-0 md:translate-y-4 md:group-hover:translate-y-0 transition-transform duration-500">
                     <div className="flex items-center gap-2 text-teal text-xs font-bold uppercase tracking-widest">
                         <Calendar className="w-4 h-4" />
                         <span>{event.date}</span>
@@ -84,7 +118,7 @@ export default function HolographicCard({ event, index }) {
                         {event.description}
                     </p>
 
-                    <div className="pt-6 flex items-center justify-between border-t border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    <div className="pt-6 flex items-center justify-between border-t border-white/10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-500">
                         <div className="flex items-center gap-2 text-xs text-muted">
                             <MapPin className="w-3 h-3" />
                             <span>{event.location}</span>

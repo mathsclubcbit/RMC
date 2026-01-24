@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import { uploadToDrive, checkDuplicateUTR, appendRowToSheet, getOrCreateFolder } from '@/lib/google';
-import { sendVerificationEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
     try {
@@ -9,13 +8,14 @@ export async function POST(req: NextRequest) {
 
         const eventId = formData.get('eventId') as string;
         const eventName = formData.get('eventName') as string;
-        const name = formData.get('name') as string; // Changed from leaderName
+        const name = formData.get('name') as string;
         const email = formData.get('email') as string;
-        const rollNo = formData.get('rollNo') as string; // New
-        const department = formData.get('department') as string; // New
+        const rollNo = formData.get('rollNo') as string;
+        const department = formData.get('department') as string;
         const utrId = formData.get('utrId') as string;
         const amount = formData.get('amount') as string;
         const screenshot = formData.get('screenshot') as File;
+        const teamMembersStr = formData.get('teamMembers') as string | null; // Optional team members
 
         // 1. Validation
         // 1. Validation
@@ -83,17 +83,45 @@ export async function POST(req: NextRequest) {
             driveFile.id || '',
             driveFile.webViewLink || '',
             driveFile.webContentLink || '',
-            status
+            status,
+            '', // Column O - checkedInAt (empty initially)
+            teamMembersStr || '' // Column P - Team Members JSON
         ];
 
         await appendRowToSheet(spreadsheetId, rowData);
 
-        // 5. Send Verification Email (Non-blocking)
-        await sendVerificationEmail(email, name, eventName, registrationId);
+        // 5. Generate QR Code and Send Ticket Email
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const ticketUrl = `${baseUrl}/ticket/${registrationId}`;
+
+        // Generate QR code
+        const { generateQRCode } = await import('@/lib/qrcode');
+        const qrCode = await generateQRCode(registrationId);
+
+        // Import event details for email
+        const eventDate = 'TBD'; // Will be shown in ticket page
+        const eventTime = 'TBD';
+        const eventVenue = 'CBIT Campus';
+
+        // Send QR ticket email (non-blocking)
+        const { sendTicketEmail } = await import('@/lib/email');
+        sendTicketEmail({
+            toEmail: email,
+            participantName: name,
+            eventName: eventName,
+            eventDate,
+            eventTime,
+            eventVenue,
+            registrationId,
+            department,
+            rollNo
+        }).catch(err => console.error('Email send failed:', err));
 
         return NextResponse.json({
             message: 'Registration successful',
             registrationId,
+            ticketUrl,
+            qrCode, // QR code as data URL
             driveViewUrl: driveFile.webViewLink
         }, { status: 201 });
 

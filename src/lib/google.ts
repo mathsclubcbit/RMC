@@ -162,3 +162,125 @@ export const appendRowToSheet = async (
         },
     });
 };
+
+/**
+ * Registration data type for analytics
+ */
+export interface RegistrationData {
+    timestamp: string;
+    registrationId: string;
+    eventId: string;
+    eventName: string;
+    name: string;
+    email: string;
+    rollNo: string;
+    department: string;
+    utrId: string;
+    amount: number;
+    driveFileId: string;
+    driveViewUrl: string;
+    driveDownloadUrl: string;
+    status: string;
+    checkedInAt?: string;
+    teamMembers?: string; // JSON string of team members from Column P
+}
+
+/**
+ * Fetch all registrations from Google Sheet for analytics
+ */
+export const getAllRegistrations = async (spreadsheetId: string): Promise<RegistrationData[]> => {
+    const authClient = await getAuthClient();
+    const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+
+    const response = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: 'Sheet1!A:P', // Include column P for teamMembers
+    });
+
+    const rows = response.data.values;
+    if (!rows || rows.length <= 1) return []; // Skip header row or empty
+
+    // Map rows to objects (skip header)
+    return rows.slice(1).map(row => ({
+        timestamp: row[0] || '',
+        registrationId: row[1] || '',
+        eventId: row[2] || '',
+        eventName: row[3] || '',
+        name: row[4] || '',
+        email: row[5] || '',
+        rollNo: row[6] || '',
+        department: row[7] || '',
+        utrId: row[8] || '',
+        amount: parseFloat(row[9]) || 0,
+        driveFileId: row[10] || '',
+        driveViewUrl: row[11] || '',
+        driveDownloadUrl: row[12] || '',
+        status: row[13] || 'PENDING',
+        checkedInAt: row[14] || '',
+        teamMembers: row[15] || '' // Column P - Team Members JSON
+    }));
+};
+
+/**
+ * Update registration status in Google Sheet
+ * Status column is N (index 13, 1-based column 14)
+ */
+export const updateRegistrationStatus = async (
+    spreadsheetId: string,
+    registrationId: string,
+    newStatus: string
+): Promise<{ success: boolean; rowNumber?: number; error?: string }> => {
+    const authClient = await getAuthClient();
+    const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+
+    try {
+        // First, find the row with this registration ID (Column B)
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Sheet1!B:B', // Registration ID column
+        });
+
+        const rows = response.data.values;
+        if (!rows || rows.length === 0) {
+            return { success: false, error: 'No registrations found' };
+        }
+
+        // Find the row index (1-indexed for sheets, +1 for header)
+        const rowIndex = rows.findIndex((row, idx) =>
+            idx > 0 && row[0] === registrationId
+        );
+
+        if (rowIndex === -1) {
+            return { success: false, error: 'Registration not found' };
+        }
+
+        // Row number in sheet (1-indexed, +1 for header compensation)
+        const sheetRowNumber = rowIndex + 1;
+
+        // Update the status column (N)
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `Sheet1!N${sheetRowNumber}`,
+            valueInputOption: 'USER_ENTERED',
+            requestBody: {
+                values: [[newStatus]]
+            }
+        });
+
+        return { success: true, rowNumber: sheetRowNumber };
+    } catch (error) {
+        console.error('Error updating registration status:', error);
+        return { success: false, error: 'Failed to update status' };
+    }
+};
+
+/**
+ * Get a single registration by ID
+ */
+export const getRegistrationById = async (
+    spreadsheetId: string,
+    registrationId: string
+): Promise<RegistrationData | null> => {
+    const registrations = await getAllRegistrations(spreadsheetId);
+    return registrations.find(r => r.registrationId === registrationId) || null;
+};
