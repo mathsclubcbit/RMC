@@ -1,105 +1,149 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-
-const equations = [
-    "e^{i\\pi} + 1 = 0",
-    "\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}",
-    "\\sum_{n=1}^{\\infty} \\frac{1}{n^2} = \\frac{\\pi^2}{6}",
-    "\\nabla \\cdot \\mathbf{E} = \\frac{\\rho}{\\epsilon_0}",
-    "F = G \\frac{m_1 m_2}{r^2}",
-    "i\\hbar \\frac{\\partial}{\\partial t} \\Psi = \\hat{H} \\Psi",
-    "\\mathcal{F}(\\omega) = \\int_{-\\infty}^{\\infty} f(t)e^{-i\\omega t} dt",
-    "V - E + F = 2",
-    "\\phi = \\frac{1 + \\sqrt{5}}{2}",
-    "a^2 + b^2 = c^2"
-];
+import { useEffect, useRef } from "react";
 
 export default function MathBackground() {
-    const [mounted, setMounted] = useState(false);
+    const canvasRef = useRef(null);
 
     useEffect(() => {
-        setMounted(true);
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        let animationFrameId;
+
+        // Symbol Settings
+        const symbols = ["∑", "∫", "∂", "∇", "∏", "Ω", "λ", "μ", "π", "θ", "∞", "≈", "≠", "≡", "√"];
+        const floatingSymbols = [];
+
+        class FloatingSymbol {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.symbol = symbols[Math.floor(Math.random() * symbols.length)];
+                this.velocity = {
+                    x: (Math.random() - 0.5) * 1.0, // Faster movement
+                    y: (Math.random() - 0.5) * 1.0
+                };
+                this.opacity = 0;
+                this.life = 0;
+                this.maxLife = 200 + Math.random() * 300;
+
+                // Responsive Size Logic
+                const isMobile = canvas.width < 768;
+                if (isMobile) {
+                    this.size = 12 + Math.random() * 12; // Mobile: 12px - 24px (Smaller/Refined)
+                } else {
+                    this.size = 24 + Math.random() * 24; // Desktop: 24px - 48px (Large)
+                }
+            }
+
+            update() {
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.life++;
+
+                // Fade in/out
+                if (this.life < 50) {
+                    this.opacity = this.life / 50;
+                } else if (this.life > this.maxLife - 50) {
+                    this.opacity = (this.maxLife - this.life) / 50;
+                } else {
+                    this.opacity = 0.8; // Higher base opacity (was 0.4)
+                }
+
+                if (this.life > this.maxLife) {
+                    this.reset();
+                }
+            }
+
+            draw(ctx) {
+                ctx.font = `italic ${this.size}px serif`;
+                ctx.fillStyle = `rgba(45, 212, 191, ${this.opacity})`; // Removed 0.6 multiplier
+                ctx.fillText(this.symbol, this.x, this.y);
+            }
+        }
+
+        // Initialize symbols
+        // Responsive Count: Fewer symbols on mobile to reduce clutter
+        const isMobileInit = window.innerWidth < 768;
+        const maxSymbols = isMobileInit ? 10 : 20;
+
+        for (let i = 0; i < maxSymbols; i++) {
+            floatingSymbols.push(new FloatingSymbol());
+        }
+
+        // Settings
+        const spacing = 30; // Grid spacing
+        const length = 10;  // Vector length
+        let time = 0;
+
+        // Resize handler
+        const resize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
+        window.addEventListener("resize", resize);
+        resize();
+
+        // Animation Loop
+        const render = () => {
+            time += 0.005;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Vector Field
+            ctx.strokeStyle = "rgba(45, 212, 191, 0.08)";
+            ctx.lineWidth = 1;
+
+            const cols = Math.floor(canvas.width / spacing);
+            const rows = Math.floor(canvas.height / spacing);
+
+            for (let i = 0; i < cols; i++) {
+                for (let j = 0; j < rows; j++) {
+                    const x = i * spacing + spacing / 2;
+                    const y = j * spacing + spacing / 2;
+
+                    // Vector Field Function (Simple Perlin-ish Noise approximation)
+                    // Angle depends on position and time
+                    const angle = Math.cos(x * 0.005 + time) * Math.sin(y * 0.005 + time) * Math.PI * 2;
+
+                    // Draw Vector
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+                    ctx.stroke();
+
+                    // Optional: Dot at origin
+                    // ctx.beginPath();
+                    // ctx.arc(x, y, 1, 0, Math.PI * 2);
+                    // ctx.fill();
+                }
+            }
+
+            // Draw Floating Symbols
+            for (const symbol of floatingSymbols) {
+                symbol.update();
+                symbol.draw(ctx);
+            }
+
+            animationFrameId = requestAnimationFrame(render);
+        };
+
+        render();
+
+        return () => {
+            window.removeEventListener("resize", resize);
+            cancelAnimationFrame(animationFrameId);
+        };
     }, []);
 
-    if (!mounted) return null;
-
     return (
-        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden select-none">
-            {/* Subtle Grid Overlay */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
-
-            {/* Floating Equations */}
-            {equations.map((eq, i) => (
-                <FloatingEquation key={i} equation={eq} index={i} />
-            ))}
-
-            {/* Random Symbols */}
-            {Array.from({ length: 15 }).map((_, i) => (
-                <FloatingSymbol key={`sym-${i}`} index={i} />
-            ))}
-        </div>
+        <canvas
+            ref={canvasRef}
+            className="fixed inset-0 z-0 pointer-events-none opacity-30"
+        />
     );
-}
-
-function FloatingEquation({ equation, index }) {
-    // Random initial positions
-    const initialX = Math.random() * 100;
-    const initialY = Math.random() * 100;
-    const duration = 20 + Math.random() * 20; // Slow float
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, x: `${initialX}vw`, y: `${initialY}vh` }}
-            animate={{
-                opacity: [0, 0.1, 0.15, 0.1, 0],
-                y: [`${initialY}vh`, `${initialY - 20}vh`]
-            }}
-            transition={{
-                duration: duration,
-                repeat: Infinity,
-                ease: "linear",
-                delay: index * 2
-            }}
-            className="absolute text-white/10 text-sm md:text-lg font-serif italic whitespace-nowrap"
-            style={{
-                filter: "blur(0.5px)",
-                transform: `rotate(${Math.random() * 10 - 5}deg)`
-            }}
-        >
-            {/* Note: In a real app we might use KaTeX, but here just raw text looks cryptic/cool enough for background */}
-            {equation}
-        </motion.div>
-    );
-}
-
-function FloatingSymbol({ index }) {
-    const symbols = ["∑", "∫", "∂", "∇", "∏", "Ω", "λ", "μ", "π", "θ", "∞", "≈", "≠", "≡", "√"];
-    const symbol = symbols[index % symbols.length];
-
-    return (
-        <motion.div
-            initial={{
-                opacity: 0,
-                x: `${Math.random() * 100}vw`,
-                y: `${Math.random() * 100}vh`,
-                scale: 0.5
-            }}
-            animate={{
-                opacity: [0, 0.2, 0.4, 0.2, 0],
-                y: "+=100",
-                rotate: [0, 360]
-            }}
-            transition={{
-                duration: 15 + Math.random() * 15,
-                repeat: Infinity,
-                ease: "linear",
-                delay: Math.random() * 5
-            }}
-            className="absolute text-teal/20 text-2xl md:text-4xl font-serif"
-        >
-            {symbol}
-        </motion.div>
-    )
 }
