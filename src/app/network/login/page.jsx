@@ -2,16 +2,28 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import { Shield, Key, AlertCircle, ArrowRight, Lock } from "lucide-react";
+import { Shield, Key, AlertCircle, ArrowRight, Lock, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 
 export default function NetworkLogin() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [isFacultyMode, setIsFacultyMode] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    // Auto-redirect if already logged in
+    useState(() => {
+        const checkUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) router.replace("/network/dashboard");
+        };
+        checkUser();
+    }, []);
 
 
     const handleAuth = async (e) => {
@@ -35,7 +47,16 @@ export default function NetworkLogin() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-black p-4">
+        <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-black p-4 font-sans">
+
+            {/* Exit Route */}
+            <Link
+                href="/"
+                className="absolute top-8 left-8 z-20 flex items-center gap-2 text-white/30 hover:text-teal transition-colors font-mono text-[10px] uppercase tracking-[0.2em] group"
+            >
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                Return to Origin
+            </Link>
 
             {/* Background Effects */}
             <div className="absolute inset-0 z-0">
@@ -53,12 +74,23 @@ export default function NetworkLogin() {
                 <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-[0_0_50px_-10px_rgba(45,212,191,0.2)]">
 
                     {/* Header */}
-                    <div className="p-8 pb-0 text-center">
-                        <div className="w-16 h-16 mx-auto bg-teal/10 rounded-2xl flex items-center justify-center mb-6 border border-teal/20 shadow-[0_0_20px_rgba(45,212,191,0.1)]">
-                            <Shield className="w-8 h-8 text-teal" />
+                    <div className="p-8 pb-0 text-center relative">
+                        <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-6 p-2 border transition-all shadow-[0_0_20px_rgba(45,212,191,0.1)] relative ${isFacultyMode ? 'bg-purple-500/10 border-purple-500/20 shadow-purple-500/10' : 'bg-teal/10 border-teal/20 shadow-teal/10'}`}>
+                            <Image
+                                src="/RMC logo-circular.png"
+                                alt="RMC Logo"
+                                fill
+                                className="object-contain p-2"
+                                sizes="64px"
+                                priority
+                            />
                         </div>
-                        <h1 className="text-2xl font-[family-name:var(--font-cinzel)] font-bold text-white mb-2">Internal Network</h1>
-                        <p className="text-white/40 font-mono text-xs uppercase tracking-widest">Restricted Access // RMC Council</p>
+                        <h1 className="text-2xl font-[family-name:var(--font-cinzel)] font-bold text-white mb-2 uppercase tracking-wider">
+                            {isFacultyMode ? 'Faculty Portal' : 'RMC Portal'}
+                        </h1>
+                        <p className="text-white/40 font-mono text-xs uppercase tracking-widest">
+                            {isFacultyMode ? 'Administrative Access' : 'Management Console'}
+                        </p>
                     </div>
 
                     {/* Form */}
@@ -72,9 +104,11 @@ export default function NetworkLogin() {
 
                         <form onSubmit={handleAuth} className="space-y-4">
                             <div className="space-y-1">
-                                <label className="text-[10px] uppercase text-teal/70 font-mono pl-3 tracking-widest">Identity / Email</label>
+                                <label className={`text-[10px] uppercase font-mono pl-3 tracking-widest transition-colors ${isFacultyMode ? 'text-purple-400/70' : 'text-teal/70'}`}>
+                                    {isFacultyMode ? 'Faculty Email' : 'Email Address'}
+                                </label>
                                 <div className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/30 group-focus-within:text-teal transition-colors">
+                                    <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/30 transition-colors ${isFacultyMode ? 'group-focus-within:text-purple-400' : 'group-focus-within:text-teal'}`}>
                                         <Key className="w-4 h-4" />
                                     </div>
                                     <input
@@ -82,16 +116,18 @@ export default function NetworkLogin() {
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder-white/20 focus:border-teal/50 focus:bg-black/50 outline-none transition-all font-mono text-sm"
-                                        placeholder="user@rmc.cbit.ac.in"
+                                        className={`w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder-white/20 outline-none transition-all font-mono text-sm ${isFacultyMode ? 'focus:border-purple-500/50 focus:bg-purple-900/10' : 'focus:border-teal/50 focus:bg-black/50'}`}
+                                        placeholder={isFacultyMode ? "faculty@rmc.cbit.ac.in" : "user@rmc.cbit.ac.in"}
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] uppercase text-teal/70 font-mono pl-3 tracking-widest">Passcode</label>
+                                <label className={`text-[10px] uppercase font-mono pl-3 tracking-widest transition-colors ${isFacultyMode ? 'text-purple-400/70' : 'text-teal/70'}`}>
+                                    Password
+                                </label>
                                 <div className="relative group">
-                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/30 group-focus-within:text-teal transition-colors">
+                                    <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/30 transition-colors ${isFacultyMode ? 'group-focus-within:text-purple-400' : 'group-focus-within:text-teal'}`}>
                                         <Lock className="w-4 h-4" />
                                     </div>
                                     <input
@@ -99,7 +135,7 @@ export default function NetworkLogin() {
                                         required
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder-white/20 focus:border-teal/50 focus:bg-black/50 outline-none transition-all font-mono text-sm"
+                                        className={`w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder-white/20 outline-none transition-all font-mono text-sm ${isFacultyMode ? 'focus:border-purple-500/50 focus:bg-purple-900/10' : 'focus:border-teal/50 focus:bg-black/50'}`}
                                         placeholder="••••••••"
                                     />
                                 </div>
@@ -110,23 +146,44 @@ export default function NetworkLogin() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full py-4 mt-6 bg-teal hover:bg-teal-400 text-black font-bold rounded-xl uppercase tracking-widest shadow-[0_0_20px_rgba(45,212,191,0.2)] hover:shadow-[0_0_30px_rgba(45,212,191,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group"
+                                className={`w-full py-4 mt-6 text-black font-bold rounded-xl uppercase tracking-widest transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group shadow-lg ${isFacultyMode ? 'bg-purple-500 hover:bg-purple-400 shadow-purple-500/20 hover:shadow-purple-500/40' : 'bg-teal hover:bg-teal-400 shadow-teal/20 hover:shadow-teal/40'}`}
                             >
                                 {loading ? (
                                     <span className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
                                 ) : (
                                     <>
-                                        <span>Authenticate</span>
+                                        <span>Sign In</span>
                                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                     </>
                                 )}
                             </button>
                         </form>
 
-                        <div className="mt-6 text-center">
-                            <p className="text-[10px] text-white/20 font-mono uppercase tracking-widest">
-                                Protocol Access is Restricted. <br /> Contact Command for Credentials.
+                        <div className="mt-8 text-center space-y-6">
+                            {/* Mode Switch */}
+                            <button
+                                onClick={() => setIsFacultyMode(!isFacultyMode)}
+                                className={`inline-flex items-center gap-2 px-6 py-2 rounded-full border transition-all font-mono text-[10px] uppercase tracking-[0.2em] ${isFacultyMode
+                                    ? 'bg-teal/5 border-teal/20 text-teal hover:bg-teal/10'
+                                    : 'bg-purple-500/10 border-purple-500/20 text-purple-400 hover:bg-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.1)]'
+                                    }`}
+                            >
+                                <Lock className="w-3 h-3" />
+                                {isFacultyMode ? 'Member Login' : 'Faculty Login'}
+                            </button>
+
+                            <p className="text-[10px] text-white/20 font-mono uppercase tracking-widest leading-relaxed">
+                                Access limited to club members. <br /> Contact administrator for help.
                             </p>
+
+                            <div className="pt-4 border-t border-white/5">
+                                <Link
+                                    href="/"
+                                    className="text-[10px] text-teal/40 hover:text-teal font-mono uppercase tracking-[0.2em] transition-colors"
+                                >
+                                    [ Exit Hub ]
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>

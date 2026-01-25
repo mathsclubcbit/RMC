@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import { Shield, Target, Users, Activity } from "lucide-react";
+import { Shield, Target, Users, Activity, ArrowLeft } from "lucide-react";
 
 export default function NetworkDashboard() {
+    const router = useRouter();
     const [profile, setProfile] = useState(null);
     const [stats, setStats] = useState({ activeTasks: 0, teamMembers: 0, completionRate: 0 });
     const [tasks, setTasks] = useState([]);
@@ -76,8 +79,15 @@ export default function NetworkDashboard() {
                         {profile?.team?.toUpperCase()?.replace('_', ' ')} // STATUS: <span className="text-teal">ACTIVE</span>
                     </p>
                 </div>
-                <div className="flex gap-4 w-full md:w-auto">
-                    <div className="px-4 py-2 bg-white/5 rounded-full border border-white/10 flex items-center justify-center md:justify-start gap-2 text-[10px] text-teal font-mono">
+                <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+                    <button
+                        onClick={() => router.push('/')}
+                        className="flex-1 md:flex-none px-6 py-2.5 bg-teal hover:bg-teal-400 text-black font-bold rounded-full text-[10px] md:text-xs uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(45,212,191,0.2)] flex items-center justify-center gap-2"
+                    >
+                        <ArrowLeft className="w-4 h-4" /> Exit to Main Site
+                    </button>
+
+                    <div className="hidden sm:flex px-4 py-2 bg-white/5 rounded-full border border-white/10 items-center justify-center gap-2 text-[10px] text-teal font-mono">
                         <div className="w-2 h-2 rounded-full bg-teal animate-pulse" />
                         SYNCED
                     </div>
@@ -87,65 +97,81 @@ export default function NetworkDashboard() {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {[
-                    { label: "Active Tasks", value: stats.activeTasks, icon: Target, color: "text-blue-400", border: "border-blue-500/20" },
+                    profile?.role === 'faculty'
+                        ? { label: "System Integrity", value: "SECURE", icon: (props) => <div className="relative w-full h-full"><Image src="/RMC logo-circular.png" alt="RMC" fill className="object-contain" {...props} /></div>, color: "text-purple-400", border: "border-purple-500/20" }
+                        : { label: "Active Tasks", value: stats.activeTasks, icon: Target, color: "text-blue-400", border: "border-blue-500/20" },
                     { label: "Team Strength", value: stats.teamMembers, icon: Users, color: "text-teal", border: "border-teal/20" },
                     { label: "Completion Rate", value: `${stats.completionRate}%`, icon: Activity, color: "text-purple-400", border: "border-purple-500/20" },
                 ].map((stat, i) => (
                     <div key={i} className={`bg-black/40 backdrop-blur-xl border ${stat.border} rounded-3xl p-5 md:p-6 relative group overflow-hidden`}>
-                        <div className={`absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity ${stat.color}`}>
-                            <stat.icon className="w-16 h-16 md:w-20 md:h-20" />
+                        <div className={`absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity ${stat.color} w-32 h-32`}>
+                            {typeof stat.icon === 'function' ? (
+                                <stat.icon />
+                            ) : (
+                                <stat.icon className="w-16 h-16 md:w-20 md:h-20" />
+                            )}
                         </div>
                         <div className="relative z-10">
-                            <stat.icon className={`w-6 h-6 md:w-8 md:h-8 ${stat.color} mb-3 md:mb-4`} />
-                            <h3 className="text-2xl md:text-4xl font-bold text-white mb-1 font-[family-name:var(--font-cinzel)]">{stat.value}</h3>
+                            {typeof stat.icon === 'function' ? (
+                                <div className="w-6 h-6 md:w-8 md:h-8 mb-3 md:mb-4 relative">
+                                    <Image src="/RMC logo-circular.png" alt="Icon" fill className="object-contain opacity-70" />
+                                </div>
+                            ) : (
+                                <stat.icon className={`w-6 h-6 md:w-8 md:h-8 ${stat.color} mb-3 md:mb-4`} />
+                            )}
+                            <h3 className="text-2xl md:text-3xl font-bold text-white mb-1 font-[family-name:var(--font-cinzel)]">{stat.value}</h3>
                             <p className="text-[10px] text-white/40 uppercase font-mono tracking-widest">{stat.label}</p>
                         </div>
                     </div>
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-white font-bold text-base md:text-lg flex items-center gap-2">
-                            <Shield className="w-5 h-5 text-teal" /> Recent Tasks
-                        </h3>
-                        <button className="text-teal text-[10px] font-mono uppercase tracking-widest hover:text-white transition-colors" onClick={() => router.push('/network/missions')}>View All</button>
-                    </div>
+            <div className={`grid grid-cols-1 ${profile?.role === 'faculty' ? '' : 'lg:grid-cols-3'} gap-8 pb-10`}>
+                {profile?.role !== 'faculty' && (
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-white font-bold text-base md:text-lg flex items-center gap-2">
+                                <div className="w-5 h-5 relative">
+                                    <Image src="/RMC logo-circular.png" alt="" fill className="object-contain" sizes="20px" />
+                                </div> Recent Tasks
+                            </h3>
+                            <button className="text-teal text-[10px] font-mono uppercase tracking-widest hover:text-white transition-colors" onClick={() => router.push('/network/missions')}>View All</button>
+                        </div>
 
-                    <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden min-h-[200px]">
-                        {tasks.length === 0 ? (
-                            <div className="p-8 text-center text-white/30 font-mono text-sm">
-                                No active tasks for {profile?.team} team.
-                            </div>
-                        ) : (
-                            tasks.map((task) => (
-                                <div key={task.id} className="p-4 border-b border-white/5 hover:bg-white/5 transition-colors group cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                    <div className="flex items-start gap-4">
-                                        <div className={`w-1 md:w-2 h-10 md:h-12 rounded-full flex-shrink-0 ${task.priority === 'critical' ? 'bg-red-500' : 'bg-teal'}`} />
-                                        <div className="min-w-0">
-                                            <h4 className="text-white font-bold text-sm md:text-base mb-1 group-hover:text-teal transition-colors truncate">{task.title}</h4>
-                                            <p className="text-[10px] text-white/40 font-mono">Status: <span className="text-white/70 uppercase">{task.status}</span></p>
-                                        </div>
-                                    </div>
-                                    <div className="text-left sm:text-right pl-5 sm:pl-0">
-                                        <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[9px] text-white/60 mb-1 inline-block">
-                                            {new Date(task.created_at).toLocaleDateString()}
-                                        </div>
-                                    </div>
+                        <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden min-h-[200px]">
+                            {tasks.length === 0 ? (
+                                <div className="p-8 text-center text-white/30 font-mono text-sm">
+                                    No active tasks for {profile?.team} team.
                                 </div>
-                            ))
-                        )}
+                            ) : (
+                                tasks.map((task) => (
+                                    <div key={task.id} className="p-4 border-b border-white/5 hover:bg-white/5 transition-colors group cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div className="flex items-start gap-4">
+                                            <div className={`w-1 md:w-2 h-10 md:h-12 rounded-full flex-shrink-0 ${task.priority === 'critical' ? 'bg-red-500' : 'bg-teal'}`} />
+                                            <div className="min-w-0">
+                                                <h4 className="text-white font-bold text-sm md:text-base mb-1 group-hover:text-teal transition-colors truncate">{task.title}</h4>
+                                                <p className="text-[10px] text-white/40 font-mono">Status: <span className="text-white/70 uppercase">{task.status}</span></p>
+                                            </div>
+                                        </div>
+                                        <div className="text-left sm:text-right pl-5 sm:pl-0">
+                                            <div className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[9px] text-white/60 mb-1 inline-block">
+                                                {new Date(task.created_at).toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 <div className="space-y-6">
                     <h3 className="text-white font-bold text-base md:text-lg flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-purple-400" /> Intelligence Feed
+                        <Activity className="w-5 h-5 text-purple-400" /> Recent Activity
                     </h3>
-                    <div className="bg-black/20 border border-white/5 rounded-3xl p-6 h-[400px] overflow-y-auto intelligence-feed no-scrollbar space-y-6">
+                    <div className="bg-black/20 border border-white/5 rounded-3xl p-6 h-[300px] md:h-[400px] overflow-y-auto no-scrollbar space-y-6">
                         {loadingNotifications ? (
-                            <div className="flex items-center justify-center h-full text-white/20 font-mono text-[10px] uppercase">Decrypting logs...</div>
+                            <div className="flex items-center justify-center h-full text-white/20 font-mono text-[10px] uppercase">Loading logs...</div>
                         ) : notifications.length === 0 ? (
                             <div className="flex items-center justify-center h-full text-white/20 font-mono text-[10px] uppercase">No new alerts.</div>
                         ) : (

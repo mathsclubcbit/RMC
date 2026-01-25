@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import {
     Download,
@@ -133,10 +134,13 @@ export default function TicketPage() {
                     <div className="p-8 flex flex-col items-center">
                         <div className="bg-white p-4 rounded-2xl shadow-lg mb-4">
                             {qrCode ? (
-                                <img
+                                <Image
                                     src={qrCode}
                                     alt="Ticket QR Code"
+                                    width={192}
+                                    height={192}
                                     className="w-48 h-48"
+                                    unoptimized
                                 />
                             ) : (
                                 <div className="w-48 h-48 bg-gray-200 flex items-center justify-center text-gray-500">

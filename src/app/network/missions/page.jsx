@@ -27,6 +27,10 @@ export default function MissionsPage() {
     });
     const [createLoading, setCreateLoading] = useState(false);
 
+    // Approval Modal State
+    const [approvalModal, setApprovalModal] = useState({ show: false, task: null, feedback: "" });
+    const [approveLoading, setApproveLoading] = useState(false);
+
     useEffect(() => {
         const fetchInitialData = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -57,7 +61,7 @@ export default function MissionsPage() {
         let query = supabase.from('tasks').select(`
             *,
             assignee:profiles!tasks_assigned_to_fkey(full_name, role),
-            commander:profiles!tasks_assigned_by_fkey(full_name)
+            assigner:profiles!tasks_assigned_by_fkey(full_name)
         `);
 
         if (currentProfile?.role !== 'faculty' && currentProfile?.role !== 'president' && currentProfile?.team !== 'council') {
@@ -68,16 +72,29 @@ export default function MissionsPage() {
         setTasks(data || []);
     };
 
-    const handleCreateMission = async (e) => {
+    const handleCreateTask = async (e) => {
         e.preventDefault();
         setCreateLoading(true);
-        const { error } = await supabase.from('tasks').insert([{
+        const { error, data } = await supabase.from('tasks').insert([{
             ...newMission,
             assigned_by: profile.id,
             status: 'pending'
-        }]);
+        }]).select();
 
         if (!error) {
+            // Trigger Notification
+            fetch('/api/notifications/trigger', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'NEW_TASK',
+                    team: newMission.team_scope,
+                    assigned_to: newMission.assigned_to,
+                    title: `New Task: ${newMission.title}`,
+                    url: '/network/missions'
+                })
+            }).catch(err => console.error("Notification Trigger Failed", err));
+
             setShowAddModal(false);
             setNewMission({ title: "", description: "", priority: "medium", assigned_to: "", due_date: "", team_scope: profile?.team || "" });
             fetchTasks(profile);
@@ -85,7 +102,30 @@ export default function MissionsPage() {
         setCreateLoading(false);
     };
 
+    // Final Approval Logic with Feedback
+    const submitApproval = async (e) => {
+        e.preventDefault();
+        setApproveLoading(true);
+        if (!approvalModal.task) return;
+
+        const { error } = await supabase.from('tasks').update({
+            status: 'done',
+            feedback: approvalModal.feedback
+        }).eq('id', approvalModal.task.id);
+
+        if (!error) {
+            setTasks(tasks.map(t => t.id === approvalModal.task.id ? { ...t, status: 'done', feedback: approvalModal.feedback } : t));
+            setApprovalModal({ show: false, task: null, feedback: "" });
+        }
+        setApproveLoading(false);
+    };
+
     const updateTaskStatus = async (taskId, newStatus) => {
+        if (newStatus === 'done') {
+            // Open modal instead of direct update
+            setApprovalModal({ show: true, task: tasks.find(t => t.id === taskId), feedback: "" });
+            return;
+        }
         await supabase.from('tasks').update({ status: newStatus }).eq('id', taskId);
         setTasks(tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
     };
@@ -221,20 +261,28 @@ export default function MissionsPage() {
                                                 onClick={() => updateTaskStatus(task.id, 'done')}
                                                 className="flex-1 py-3 bg-teal hover:bg-teal-400 text-black border border-white/10 rounded-xl text-[10px] uppercase font-bold transition-all shadow-[0_0_15px_rgba(45,212,191,0.2)]"
                                             >
-                                                Approve Mission
+                                                Approve Completion
                                             </button>
                                         )}
 
                                         {/* Basic Start/Update if Commander */}
                                         {canCreate && task.status === 'pending' && task.assigned_to !== profile?.id && !task.assigned_to && (
-                                            <span className="text-[8px] text-white/20 uppercase font-mono py-3">Awaiting Agent...</span>
+                                            <span className="text-[8px] text-white/20 uppercase font-mono py-3">Awaiting Member...</span>
                                         )}
                                     </>
                                 )}
 
                                 {task.status === 'done' && (
-                                    <div className="w-full py-3 bg-green-500/10 text-green-500 border border-green-500/20 rounded-xl text-[10px] uppercase font-bold text-center">
-                                        Mission Accomplished
+                                    <div className="w-full space-y-3">
+                                        <div className="w-full py-3 bg-green-500/10 text-green-500 border border-green-500/20 rounded-xl text-[10px] uppercase font-bold text-center flex items-center justify-center gap-2">
+                                            <CheckCircle2 className="w-4 h-4" /> Task Completed
+                                        </div>
+                                        {task.feedback && (
+                                            <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+                                                <p className="text-[9px] text-teal font-mono uppercase tracking-widest mb-1">Commander's Feedback:</p>
+                                                <p className="text-xs text-white/70 italic leading-relaxed">"{task.feedback}"</p>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -252,7 +300,7 @@ export default function MissionsPage() {
                     >
                         <motion.div
                             initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-                            className="w-full max-w-xl bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl shadow-teal/5"
+                            className="w-full max-w-xl bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl shadow-teal/5"
                         >
                             <div className="flex justify-between items-center mb-8 pb-4 border-b border-white/10">
                                 <h2 className="text-xl font-bold font-[family-name:var(--font-cinzel)] flex items-center gap-3">
@@ -263,7 +311,7 @@ export default function MissionsPage() {
                                 </button>
                             </div>
 
-                            <form onSubmit={handleCreateMission} className="space-y-6">
+                            <form onSubmit={handleCreateTask} className="space-y-6">
                                 <div className="space-y-1">
                                     <label className="text-[10px] uppercase text-white/50 font-mono tracking-widest pl-2">Title</label>
                                     <input
@@ -346,6 +394,50 @@ export default function MissionsPage() {
                                     className="w-full py-4 bg-teal hover:bg-[#2dcdc2] text-black font-bold rounded-xl uppercase tracking-widest transition-all mt-4 disabled:opacity-50 shadow-[0_4px_20px_rgba(58,188,179,0.2)]"
                                 >
                                     {createLoading ? "Saving..." : "Create Task"}
+                                </button>
+                            </form>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Approval Feedback Modal */}
+            <AnimatePresence>
+                {approvalModal.show && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
+                            className="w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl shadow-teal/5"
+                        >
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-bold font-[family-name:var(--font-cinzel)] flex items-center gap-3 text-white">
+                                    <CheckCircle2 className="w-5 h-5 text-teal" /> Approve Completion
+                                </h2>
+                                <button onClick={() => setApprovalModal({ show: false, task: null, feedback: "" })} className="text-white/40 hover:text-white transition-colors">
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={submitApproval} className="space-y-6">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase text-white/50 font-mono tracking-widest pl-2">Commander's Assessment (Optional)</label>
+                                    <textarea
+                                        rows={4}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal outline-none resize-none transition-all placeholder-white/20"
+                                        placeholder="Add performance notes or remarks for the President..."
+                                        value={approvalModal.feedback}
+                                        onChange={e => setApprovalModal({ ...approvalModal, feedback: e.target.value })}
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit" disabled={approveLoading}
+                                    className="w-full py-4 bg-teal hover:bg-[#2dcdc2] text-black font-bold rounded-xl uppercase tracking-widest transition-all shadow-[0_4px_20px_rgba(58,188,179,0.2)]"
+                                >
+                                    {approveLoading ? "Finalizing..." : "Confirm & Close Task"}
                                 </button>
                             </form>
                         </motion.div>

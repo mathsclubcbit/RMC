@@ -9,6 +9,7 @@ const quickLinks = [
     { href: "/events", label: "Events" },
     { href: "/team", label: "Our Team" },
     { href: "/gallery", label: "Gallery" },
+    { href: "/network/login", label: "Member Login" },
 ];
 
 const resourceLinks = [
@@ -133,7 +134,11 @@ export default function Footer() {
                         <p className="text-xs text-muted font-mono">
                             © {new Date().getFullYear()} RMC CBIT. EST 2018.
                         </p>
-                        <Link href="/admin/login" className="text-[10px] text-white/20 hover:text-teal transition-colors font-mono uppercase tracking-widest">
+                        <Link href="/network/login" className="text-[10px] text-teal/40 hover:text-teal transition-colors font-mono uppercase tracking-widest">
+                            RMC Hub
+                        </Link>
+                        <span className="text-white/10">|</span>
+                        <Link href="/admin/login" className="text-[10px] text-white/10 hover:text-teal transition-colors font-mono uppercase tracking-widest">
                             Admin Portal
                         </Link>
                     </div>

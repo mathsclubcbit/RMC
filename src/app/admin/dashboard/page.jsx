@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Search, Calendar, MapPin, Users, Edit, Trash2, X, Check, BarChart3, LogOut, Clock, Copy, Shield, AlertTriangle, AlertCircle, CheckCircle2, Upload, TrendingUp } from "lucide-react";
@@ -716,7 +717,9 @@ export default function AdminDashboard() {
                                                 />
                                                 <div className={`border-2 border-dashed rounded-xl p-4 text-center transition-all ${posterMobilePreview ? 'border-teal/50' : 'border-white/20 hover:border-teal/30'}`}>
                                                     {posterMobilePreview ? (
-                                                        <img src={posterMobilePreview} alt="Mobile preview" className="w-full h-32 object-cover rounded-lg" />
+                                                        <div className="relative w-full h-32">
+                                                            <Image src={posterMobilePreview} alt="Mobile preview" fill className="object-cover rounded-lg" unoptimized />
+                                                        </div>
                                                     ) : (
                                                         <div className="h-32 flex flex-col items-center justify-center">
                                                             <Upload className="w-6 h-6 text-white/30 mb-2" />
@@ -738,7 +741,9 @@ export default function AdminDashboard() {
                                                 />
                                                 <div className={`border-2 border-dashed rounded-xl p-4 text-center transition-all ${posterDesktopPreview ? 'border-teal/50' : 'border-white/20 hover:border-teal/30'}`}>
                                                     {posterDesktopPreview ? (
-                                                        <img src={posterDesktopPreview} alt="Desktop preview" className="w-full h-32 object-cover rounded-lg" />
+                                                        <div className="relative w-full h-32">
+                                                            <Image src={posterDesktopPreview} alt="Desktop preview" fill className="object-cover rounded-lg" unoptimized />
+                                                        </div>
                                                     ) : (
                                                         <div className="h-32 flex flex-col items-center justify-center">
                                                             <Upload className="w-6 h-6 text-white/30 mb-2" />
@@ -947,7 +952,9 @@ export default function AdminDashboard() {
                                                     />
                                                     <div className={`border-2 border-dashed rounded-xl p-4 text-center transition-all ${editPosterMobilePreview ? 'border-purple-500/50' : 'border-white/20 hover:border-purple-500/30'}`}>
                                                         {editPosterMobilePreview ? (
-                                                            <img src={editPosterMobilePreview} alt="Mobile poster" className="w-full h-32 object-cover rounded-lg" />
+                                                            <div className="relative w-full h-32">
+                                                                <Image src={editPosterMobilePreview} alt="Mobile poster" fill className="object-cover rounded-lg" unoptimized />
+                                                            </div>
                                                         ) : (
                                                             <div className="h-32 flex flex-col items-center justify-center">
                                                                 <Upload className="w-6 h-6 text-white/30 mb-2" />
@@ -969,7 +976,9 @@ export default function AdminDashboard() {
                                                     />
                                                     <div className={`border-2 border-dashed rounded-xl p-4 text-center transition-all ${editPosterDesktopPreview ? 'border-purple-500/50' : 'border-white/20 hover:border-purple-500/30'}`}>
                                                         {editPosterDesktopPreview ? (
-                                                            <img src={editPosterDesktopPreview} alt="Desktop poster" className="w-full h-32 object-cover rounded-lg" />
+                                                            <div className="relative w-full h-32">
+                                                                <Image src={editPosterDesktopPreview} alt="Desktop poster" fill className="object-cover rounded-lg" unoptimized />
+                                                            </div>
                                                         ) : (
                                                             <div className="h-32 flex flex-col items-center justify-center">
                                                                 <Upload className="w-6 h-6 text-white/30 mb-2" />

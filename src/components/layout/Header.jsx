@@ -11,6 +11,7 @@ const navLinks = [
     { href: "/team", label: "Team" },
     { href: "/gallery", label: "Gallery" },
     { href: "/resources", label: "Resources" },
+    { href: "/network/login", label: "Member Login" },
 ];
 
 export default function Header() {
@@ -93,16 +94,22 @@ export default function Header() {
                 {isMenuOpen && (
                     <div className="md:hidden py-4 border-t border-white/10">
                         <div className="flex flex-col gap-2">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    className="px-4 py-3 rounded-lg text-foreground/80 hover:text-teal hover:bg-teal/10 transition-all"
-                                    onClick={() => setIsMenuOpen(false)}
-                                >
-                                    {link.label}
-                                </Link>
-                            ))}
+                            {navLinks.map((link, index) => {
+                                const isLast = index === navLinks.length - 1;
+                                return (
+                                    <Link
+                                        key={link.href}
+                                        href={link.href}
+                                        className={`px-4 py-3 rounded-lg transition-all ${isLast
+                                            ? "bg-teal/10 text-teal border border-teal/20 font-bold"
+                                            : "text-foreground/80 hover:text-teal hover:bg-teal/10"
+                                            }`}
+                                        onClick={() => setIsMenuOpen(false)}
+                                    >
+                                        {link.label}
+                                    </Link>
+                                );
+                            })}
                         </div>
                     </div>
                 )}

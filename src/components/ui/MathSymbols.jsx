@@ -15,15 +15,15 @@ export default function MathSymbols() {
     ];
 
     return (
-        <div className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none z-30">
             {symbols.map((item, index) => (
                 <span
                     key={index}
                     className={`math-symbol ${item.className} absolute`}
                     style={{
                         top: item.top,
-                        left: item.left,
-                        right: item.right,
+                        ...(item.left && { left: item.left }),
+                        ...(item.right && { right: item.right }),
                     }}
                 >
                     {item.symbol}

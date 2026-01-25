@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Shield, UserPlus, X, ChevronRight, Settings, Lock, Trash2, AlertTriangle } from "lucide-react";
+import { Shield, UserPlus, X, ChevronRight, CheckCircle, Save, AlertTriangle, Key, Settings, Lock, Trash2 } from "lucide-react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function PersonnelPage() {
@@ -14,7 +15,7 @@ export default function PersonnelPage() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deletingMember, setDeletingMember] = useState(null);
     const [editingMember, setEditingMember] = useState(null);
-    const [editData, setEditData] = useState({ fullName: '', password: '' });
+    const [editData, setEditData] = useState({ fullName: '', password: '', role: '' });
 
     // New User State
     const [newUser, setNewUser] = useState({
@@ -142,14 +143,15 @@ export default function PersonnelPage() {
                 body: JSON.stringify({
                     targetUserId: editingMember.id,
                     fullName: editData.fullName,
-                    password: editData.password
+                    password: editData.password,
+                    role: editData.role
                 })
             });
 
             const data = await res.json();
             if (data.error) throw new Error(data.error);
 
-            setMembers(members.map(m => m.id === editingMember.id ? { ...m, full_name: editData.fullName } : m));
+            setMembers(members.map(m => m.id === editingMember.id ? { ...m, full_name: editData.fullName, role: editData.role || m.role } : m));
             setShowEditModal(false);
             setEditingMember(null);
         } catch (err) {
@@ -161,7 +163,7 @@ export default function PersonnelPage() {
 
     const openEditModal = (member) => {
         setEditingMember(member);
-        setEditData({ fullName: member.full_name, password: '' });
+        setEditData({ fullName: member.full_name, password: '', role: member.role });
         setShowEditModal(true);
         setCreateMessage(null);
     };
@@ -205,6 +207,8 @@ export default function PersonnelPage() {
     );
 
     const isPresident = profile?.role === 'president';
+    const isFaculty = profile?.role === 'faculty';
+    const isAdmin = isPresident || isFaculty;
 
     return (
         <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto space-y-8 pb-10">
@@ -212,8 +216,8 @@ export default function PersonnelPage() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 md:w-10 md:h-10 bg-teal/10 border border-teal/20 rounded-xl flex items-center justify-center">
-                            <Shield className="w-4 h-4 md:w-5 md:h-5 text-teal" />
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-teal/10 border border-teal/20 rounded-xl flex items-center justify-center p-1.5 relative">
+                            <Image src="/RMC logo-circular.png" alt="RMC Logo" fill className="object-contain p-1" sizes="40px" />
                         </div>
                         <h1 className="text-2xl md:text-3xl font-[family-name:var(--font-cinzel)] font-bold text-white">Team Members</h1>
                     </div>
@@ -222,7 +226,7 @@ export default function PersonnelPage() {
                     </p>
                 </div>
 
-                {isPresident && (
+                {isAdmin && (
                     <button
                         onClick={() => setShowAddModal(true)}
                         className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-teal hover:bg-teal-400 text-black font-bold rounded-xl shadow-[0_0_20px_rgba(45,212,191,0.2)] transition-all uppercase tracking-wide text-xs group"
@@ -254,19 +258,19 @@ export default function PersonnelPage() {
                                             <p className="text-sm font-bold text-white truncate group-hover/item:text-teal transition-colors">{member.full_name}</p>
                                             <p className="text-[10px] text-white/40 uppercase font-mono">{member.role?.replace('_', ' ')}</p>
                                         </div>
-                                        {isPresident && member.role !== 'president' && (
+                                        {isAdmin && member.role !== 'faculty' && (
                                             <div className="flex gap-1">
                                                 <button
                                                     onClick={() => openEditModal(member)}
                                                     className="p-2 text-white/20 hover:text-teal opacity-0 group-hover/item:opacity-100 transition-all"
-                                                    title="Edit Member Credentials"
+                                                    title="Edit Member"
                                                 >
                                                     <Settings className="w-3.5 h-3.5" />
                                                 </button>
                                                 <button
                                                     onClick={() => openDeleteModal(member)}
                                                     className="p-2 text-white/20 hover:text-red-500 opacity-0 group-hover/item:opacity-100 transition-all"
-                                                    title="Expel Agent"
+                                                    title="Remove Member"
                                                 >
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
@@ -295,7 +299,7 @@ export default function PersonnelPage() {
                             exit={{ scale: 0.95, y: 20 }}
                             className="w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden shadow-2xl shadow-teal/10"
                         >
-                            <div className="p-6 border-b border-white/10 flex justify-between items-center">
+                            <div className="p-5 md:p-6 border-b border-white/10 flex justify-between items-center">
                                 <h2 className="text-xl font-bold text-white font-[family-name:var(--font-cinzel)] flex items-center gap-2">
                                     <UserPlus className="w-5 h-5 text-teal" /> New Recruitment
                                 </h2>
@@ -304,7 +308,7 @@ export default function PersonnelPage() {
                                 </button>
                             </div>
 
-                            <form onSubmit={handleCreateUser} className="p-8 space-y-4">
+                            <form onSubmit={handleCreateUser} className="p-6 md:p-8 space-y-4">
                                 {createMessage && (
                                     <div className={`p-4 rounded-xl text-xs font-mono border ${createMessage.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-green-500/10 border-green-500/20 text-green-400'}`}>
                                         {createMessage.text}
@@ -402,7 +406,7 @@ export default function PersonnelPage() {
                     >
                         <motion.div
                             initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-                            className="w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl shadow-teal/5"
+                            className="w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl shadow-teal/5"
                         >
                             <div className="flex justify-between items-center mb-8 pb-4 border-b border-white/10">
                                 <h2 className="text-xl font-bold font-[family-name:var(--font-cinzel)] flex items-center gap-3">
@@ -425,7 +429,7 @@ export default function PersonnelPage() {
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-[10px] uppercase text-white/50 font-mono tracking-widest pl-2">Override Password</label>
+                                    <label className="text-[10px] uppercase text-white/50 font-mono tracking-widest pl-2">Change Password</label>
                                     <div className="relative">
                                         <input
                                             type="password"
@@ -436,8 +440,29 @@ export default function PersonnelPage() {
                                         />
                                         <Lock className="w-4 h-4 text-white/20 absolute right-4 top-1/2 -translate-y-1/2" />
                                     </div>
-                                    <p className="text-[9px] text-white/30 px-2 mt-1 italic leading-tight">For security, current passwords remain hidden. You may only set a new override.</p>
+                                    <p className="text-[9px] text-white/30 px-2 mt-1 italic leading-tight">Current passwords are hidden for security.</p>
                                 </div>
+
+                                {isFaculty && (
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] uppercase text-white/50 font-mono tracking-widest pl-2">Assign Role</label>
+                                        <div className="relative group">
+                                            <select
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal outline-none appearance-none transition-all cursor-pointer"
+                                                value={editData.role}
+                                                onChange={e => setEditData({ ...editData, role: e.target.value })}
+                                            >
+                                                {roles.map(r => (
+                                                    <option key={r.id} value={r.id} className="bg-[#0a0a0a] text-white">{r.label}</option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/20 group-hover:text-teal transition-colors">
+                                                <ChevronRight className="w-4 h-4 rotate-90" />
+                                            </div>
+                                        </div>
+                                        <p className="text-[9px] text-amber-500/50 px-2 mt-1 italic leading-tight">Note: There can be only one President.</p>
+                                    </div>
+                                )}
 
                                 {createMessage && (
                                     <div className={`p-4 rounded-xl text-xs font-mono uppercase ${createMessage.type === 'error' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-teal/10 text-teal border border-teal/20'}`}>
@@ -463,7 +488,7 @@ export default function PersonnelPage() {
                     >
                         <motion.div
                             initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-                            className="w-full max-w-md bg-[#0a0a0a] border border-red-500/20 rounded-3xl p-8 shadow-2xl shadow-red-500/10"
+                            className="w-full max-w-md bg-[#0a0a0a] border border-red-500/20 rounded-3xl p-6 md:p-8 shadow-2xl shadow-red-500/10"
                         >
                             <div className="flex flex-col items-center text-center space-y-4">
                                 <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/20">
@@ -472,11 +497,11 @@ export default function PersonnelPage() {
 
                                 <div>
                                     <h2 className="text-xl font-bold font-[family-name:var(--font-cinzel)] text-white mb-2 uppercase tracking-widest">
-                                        Expulsion Protocol
+                                        Remove Member
                                     </h2>
                                     <p className="text-white/40 text-xs font-mono leading-relaxed">
-                                        Confirming the permanent removal of agent <span className="text-white font-bold underline">{deletingMember.full_name}</span>.
-                                        This action will immediately terminate all access keys and revoke their presence from the network.
+                                        Are you sure you want to remove <span className="text-white font-bold underline">{deletingMember.full_name}</span>?
+                                        This will immediately revoke their access to the portal.
                                     </p>
                                 </div>
 
@@ -492,7 +517,7 @@ export default function PersonnelPage() {
                                         disabled={createLoading}
                                         className="py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs uppercase transition-all shadow-lg shadow-red-600/20 disabled:opacity-50"
                                     >
-                                        {createLoading ? "Executing..." : "Confirm Expulsion"}
+                                        {createLoading ? "Removing..." : "Confirm Removal"}
                                     </button>
                                 </div>
                             </div>

@@ -52,7 +52,7 @@ export default function MathBackground() {
                 } else if (this.life > this.maxLife - 50) {
                     this.opacity = (this.maxLife - this.life) / 50;
                 } else {
-                    this.opacity = 0.8; // Higher base opacity (was 0.4)
+                    this.opacity = 0.4;
                 }
 
                 if (this.life > this.maxLife) {
@@ -62,6 +62,7 @@ export default function MathBackground() {
 
             draw(ctx) {
                 ctx.font = `italic ${this.size}px serif`;
+                ctx.font = `italic ${this.size}px sans-serif`;
                 ctx.fillStyle = `rgba(45, 212, 191, ${this.opacity})`; // Removed 0.6 multiplier
                 ctx.fillText(this.symbol, this.x, this.y);
             }
@@ -70,15 +71,15 @@ export default function MathBackground() {
         // Initialize symbols
         // Responsive Count: Fewer symbols on mobile to reduce clutter
         const isMobileInit = window.innerWidth < 768;
-        const maxSymbols = isMobileInit ? 10 : 20;
+        const maxSymbols = isMobileInit ? 8 : 18;
 
         for (let i = 0; i < maxSymbols; i++) {
             floatingSymbols.push(new FloatingSymbol());
         }
 
         // Settings
-        const spacing = 30; // Grid spacing
-        const length = 10;  // Vector length
+        const spacing = 40; // Increased spacing for cleaner grid
+        const length = 12;  // Vector length
         let time = 0;
 
         // Resize handler
@@ -95,7 +96,7 @@ export default function MathBackground() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Draw Vector Field
-            ctx.strokeStyle = "rgba(45, 212, 191, 0.08)";
+            ctx.strokeStyle = "rgba(45, 212, 191, 0.05)";
             ctx.lineWidth = 1;
 
             const cols = Math.floor(canvas.width / spacing);
@@ -143,7 +144,7 @@ export default function MathBackground() {
     return (
         <canvas
             ref={canvasRef}
-            className="fixed inset-0 z-0 pointer-events-none opacity-30"
+            className="fixed inset-0 z-30 pointer-events-none opacity-20"
         />
     );
 }

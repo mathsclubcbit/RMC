@@ -15,7 +15,7 @@ const supabaseAdmin = createClient(
 export async function POST(request) {
     try {
         const body = await request.json();
-        const { targetUserId, fullName, password } = body;
+        const { targetUserId, fullName, password, role } = body;
 
         // 1. VERIFY AUTH TOKEN (Don't trust the client)
         const authHeader = request.headers.get('Authorization');
@@ -37,14 +37,24 @@ export async function POST(request) {
             .eq('id', requester.id)
             .single();
 
-        if (profileError || !requesterProfile || requesterProfile.role !== 'president') {
-            return NextResponse.json({ error: 'Forbidden: Only the President can modify existing agent credentials.' }, { status: 403 });
+        if (profileError || !requesterProfile || !['president', 'faculty'].includes(requesterProfile.role)) {
+            return NextResponse.json({ error: 'Forbidden: Insufficient clearance level.' }, { status: 403 });
+        }
+
+        // Only Faculty can change roles
+        if (role && requesterProfile.role !== 'faculty') {
+            return NextResponse.json({ error: 'Forbidden: Only Faculty can modify agent roles.' }, { status: 403 });
         }
 
         // 3. EXECUTE UPDATES
         const updateData = {};
         if (password) updateData.password = password;
-        if (fullName) updateData.user_metadata = { full_name: fullName };
+        if (fullName || role) {
+            updateData.user_metadata = {
+                ...(fullName && { full_name: fullName }),
+                ...(role && { role: role })
+            };
+        }
 
         const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
             targetUserId,
@@ -53,11 +63,24 @@ export async function POST(request) {
 
         if (updateError) throw updateError;
 
-        // Sync Name change in profiles table if applicable
-        if (fullName) {
+        // Sync Profile Table
+        const profileUpdate = {};
+        if (fullName) profileUpdate.full_name = fullName;
+        if (role) {
+            // If promoting to president, demote current president
+            if (role === 'president') {
+                await supabaseAdmin
+                    .from('profiles')
+                    .update({ role: 'member', team: 'event' })
+                    .eq('role', 'president');
+            }
+            profileUpdate.role = role;
+        }
+
+        if (Object.keys(profileUpdate).length > 0) {
             await supabaseAdmin
                 .from('profiles')
-                .update({ full_name: fullName })
+                .update(profileUpdate)
                 .eq('id', targetUserId);
         }
 

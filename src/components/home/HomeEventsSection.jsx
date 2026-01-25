@@ -31,7 +31,7 @@ export default function HomeEventsSection() {
                     <div className="absolute -left-[calc(2rem+1px)] md:left-[calc(50%-4px)] top-1/2 w-2 h-2 rounded-full bg-teal shadow-[0_0_10px_rgba(45,212,191,0.5)] hidden md:block" />
 
                     <SectionTitle
-                        title="Upcoming Operations"
+                        title="Upcoming Events"
                         subtitle="Join the next generation of mathematical explorers."
                         variant="silver"
                         className="mb-0"

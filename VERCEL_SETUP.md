@@ -6,13 +6,21 @@ Your backend implementation is now fully integrated into Next.js. You can deploy
 
 In your Vercel Project Settings > Environment Variables, add the following:
 
-| Variable Name | Value |
+| Variable Name | Description |
 | :--- | :--- |
-| `GOOGLE_SHEET_ID` | Your Google Sheet ID |
-| `GOOGLE_DRIVE_FOLDER_ID` | Your Google Drive Folder ID |
-| `GOOGLE_SERVICE_ACCOUNT_JSON` | **Paste the entire content** of your `service-account.json` file here. |
-| `EMAIL_USER` | Your Gmail Address (e.g., `you@gmail.com`) |
-| `EMAIL_PASS` | Your Gmail App Password (NOT your login password) |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase Anon Key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase Service Role Key (Critical for RLS) |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Web Push Public Key (Generated) |
+| `VAPID_PRIVATE_KEY` | Web Push Private Key (Generated) |
+| `VAPID_SUBJECT` | Mailto link (e.g., mailto:admin@rmc.com) |
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret |
+| `GOOGLE_REFRESH_TOKEN` | Google OAuth Refresh Token |
+| `GOOGLE_SHEET_ID` | ID of the Spreadsheet for database |
+| `GOOGLE_DRIVE_FOLDER_ID` | ID of the Drive Setup for file uploads |
+| `EMAIL_USER` | Gmail Address for sending tickets |
+| `EMAIL_PASS` | Gmail App Password |
 
 > [!TIP]
 > **Locally**, you can add these to a `.env.local` file in your root directory to test before deploying.

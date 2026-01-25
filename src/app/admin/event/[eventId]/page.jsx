@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import {
     ArrowLeft, Save, Upload, Search, Download, LogOut,
@@ -479,7 +480,9 @@ export default function EventAdminPage() {
                                 <div className="absolute inset-0 bg-teal/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
                                     <Upload className="w-8 h-8 text-teal" />
                                 </div>
-                                <img src={formData.img || '/noise.png'} alt="Preview" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" />
+                                <div className="relative w-full h-full">
+                                    <Image src={formData.img || '/noise.png'} alt="Preview" fill className="object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" unoptimized />
+                                </div>
                             </div>
                             <button onClick={handlePosterUpload} className="w-full py-2.5 border border-white/10 hover:bg-white/5 text-white/70 hover:text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-xs uppercase tracking-widest">
                                 <Upload className="w-4 h-4" /> Upload New Poster

@@ -43,8 +43,8 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Unauthorized: Could not verify identity' }, { status: 401 });
         }
 
-        // Only President or Vice President can recruit
-        if (requesterProfile.role !== 'president' && requesterProfile.role !== 'vice_president') {
+        // Only Faculty, President or Vice President can recruit
+        if (!['faculty', 'president', 'vice_president'].includes(requesterProfile.role)) {
             return NextResponse.json({ error: 'Forbidden: Insufficient clearance level.' }, { status: 403 });
         }
 

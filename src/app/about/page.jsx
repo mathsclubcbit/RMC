@@ -18,8 +18,8 @@ export default function AboutPage() {
     const objectives = [
         {
             icon: Brain,
-            title: "Critical Thought (α)",
-            description: "Encourage logical reasoning and problem-solving skills through challenging puzzles.",
+            title: "Critical Thinking",
+            description: "Developing logical reasoning and structured problem-solving through workshops and puzzles.",
             color: "text-teal",
             bg: "bg-teal/10",
             border: "border-teal/30",
@@ -27,8 +27,8 @@ export default function AboutPage() {
         },
         {
             icon: Award,
-            title: "Competition (β)",
-            description: "Host olympiads, quizzes, and puzzle contests to challenge minds.",
+            title: "Competitive Spirit",
+            description: "Organizing Olympiads and quizzes to challenge and reward mathematical talent.",
             color: "text-lime",
             bg: "bg-lime/10",
             border: "border-lime/30",
@@ -36,8 +36,8 @@ export default function AboutPage() {
         },
         {
             icon: BookOpen,
-            title: "Discourse (γ)",
-            description: "Conduct sessions by experts on advanced mathematical concepts.",
+            title: "Expert Discourse",
+            description: "Interactive sessions by industry experts on advanced and applied mathematics.",
             color: "text-orange-400",
             bg: "bg-orange-400/10",
             border: "border-orange-400/30",
@@ -45,8 +45,8 @@ export default function AboutPage() {
         },
         {
             icon: Users,
-            title: "Community (Σ)",
-            description: "Create a supportive network of math enthusiasts at CBIT.",
+            title: "Vibrant Community",
+            description: "Building a supportive network for like-minded math enthusiasts at CBIT.",
             color: "text-purple-400",
             bg: "bg-purple-400/10",
             border: "border-purple-400/30",
@@ -55,13 +55,13 @@ export default function AboutPage() {
     ];
 
     const timeline = [
-        { year: "2018", event: "RMC established at CBIT (t=0)" },
-        { year: "2019", event: "Inaugural Math Olympiad: 200+ Nodes" },
-        { year: "2020", event: "Virtual Workshop Series Initiated" },
-        { year: "2021", event: "Membership crosses 300+ Units" },
-        { year: "2022", event: "National Math Organization Partnership" },
-        { year: "2023", event: "Awarded 'Best Technical Club' Accolade" },
-        { year: "2024", event: "Inter-college Mathematics Fest" },
+        { year: "2018", event: "RMC established at CBIT" },
+        { year: "2019", event: "Inaugural Math Olympiad: 200+ Participants" },
+        { year: "2020", event: "Virtual Workshop Series Launched" },
+        { year: "2021", event: "Membership crosses 300+ Members" },
+        { year: "2022", event: "National Level Partnerships" },
+        { year: "2023", event: "Awarded 'Best Technical Club' at CBIT" },
+        { year: "2024", event: "Inter-college Mathematics Festival" },
         { year: "2025", event: "Reached 500+ Member Milestone" },
     ];
 
@@ -90,7 +90,7 @@ export default function AboutPage() {
                         className="inline-block"
                     >
                         <h1 className="text-6xl md:text-9xl font-[family-name:var(--font-cinzel)] font-bold text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-transparent tracking-tighter mb-4">
-                            AXIOMS
+                            OUR STORY
                         </h1>
                     </motion.div>
 
@@ -100,18 +100,10 @@ export default function AboutPage() {
                         transition={{ delay: 0.5, duration: 0.8 }}
                         className="text-white/50 font-serif italic text-xl md:text-2xl max-w-2xl mx-auto"
                     >
-                        "Tracing the mathematical lineage and foundational principles of our society."
+                        "Empowering minds at CBIT through the beauty of mathematics and the precision of logic."
                     </motion.p>
 
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 1, duration: 1 }}
-                        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-                    >
-                        <span className="text-[10px] uppercase tracking-[0.3em] text-teal/50">Scroll to Explore</span>
-                        <div className="w-[1px] h-12 bg-gradient-to-b from-teal/50 to-transparent" />
-                    </motion.div>
+
                 </motion.div>
 
                 {/* Cinematic Vignette */}
@@ -121,7 +113,7 @@ export default function AboutPage() {
             {/* Theorem I: The Legacy */}
             <section className="relative py-32 px-4 sm:px-6 lg:px-8 z-10">
                 <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-                <SectionDivider type="theorem" number="I" text="The Ramanujan Legacy" />
+                <SectionDivider type="theorem" number="I" text="Inspired by a Legend" />
 
                 <div className="max-w-7xl mx-auto mt-24">
                     <div className="grid md:grid-cols-2 gap-20 items-center">
@@ -136,7 +128,7 @@ export default function AboutPage() {
                                 ∞
                             </div>
                             <h3 className="font-[family-name:var(--font-cinzel)] text-4xl md:text-5xl text-white mb-8 leading-tight">
-                                The Man Who Knew <span className="text-teal">Infinity</span>
+                                The Ramanujan <span className="text-teal">Philosophy</span>
                             </h3>
 
                             <p className="text-white/70 text-lg md:text-xl leading-relaxed mb-8 font-light font-serif">
@@ -181,7 +173,7 @@ export default function AboutPage() {
                 {/* Background Grid */}
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_80%)]" />
 
-                <SectionDivider type="axiom" text="Fundamental Principles" />
+                <SectionDivider type="axiom" text="Mission & Vision" />
 
                 <div className="max-w-7xl mx-auto mt-24 relative z-10">
                     <div className="grid md:grid-cols-2 gap-8">
@@ -199,7 +191,7 @@ export default function AboutPage() {
                                     <div className="w-16 h-16 rounded-2xl bg-teal/10 flex items-center justify-center text-teal border border-teal/20 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_30px_rgba(45,212,191,0.2)]">
                                         <Telescope className="w-8 h-8" />
                                     </div>
-                                    <span className="font-mono text-teal/50 text-xs tracking-widest uppercase border border-teal/20 px-3 py-1 rounded-full">Axiom A</span>
+                                    <span className="font-mono text-teal/50 text-xs tracking-widest uppercase border border-teal/20 px-3 py-1 rounded-full">Vision</span>
                                 </div>
                                 <h3 className="text-4xl font-[family-name:var(--font-cinzel)] mb-6 text-white relative z-10">Our Vision</h3>
                                 <p className="text-white/60 text-lg leading-relaxed font-serif relative z-10">
@@ -222,7 +214,7 @@ export default function AboutPage() {
                                     <div className="w-16 h-16 rounded-2xl bg-lime/10 flex items-center justify-center text-lime border border-lime/20 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_30px_rgba(132,204,22,0.2)]">
                                         <Target className="w-8 h-8" />
                                     </div>
-                                    <span className="font-mono text-lime/50 text-xs tracking-widest uppercase border border-lime/20 px-3 py-1 rounded-full">Axiom B</span>
+                                    <span className="font-mono text-lime/50 text-xs tracking-widest uppercase border border-lime/20 px-3 py-1 rounded-full">Mission</span>
                                 </div>
                                 <h3 className="text-4xl font-[family-name:var(--font-cinzel)] mb-6 text-white relative z-10">Our Mission</h3>
                                 <p className="text-white/60 text-lg leading-relaxed font-serif relative z-10">
@@ -238,8 +230,8 @@ export default function AboutPage() {
             <section className="py-32 px-4 sm:px-6 lg:px-8 z-10 relative">
                 <div className="max-w-7xl mx-auto">
                     <SectionTitle
-                        title="Core Variables"
-                        subtitle="The parameters of our operation"
+                        title="Core Values"
+                        subtitle="The foundation of our community"
                         center={true}
                     />
                     <div className="grid md:grid-cols-3 gap-6 mt-16">
@@ -263,8 +255,8 @@ export default function AboutPage() {
             <section className="py-32 px-4 sm:px-6 lg:px-8 z-10 relative bg-black/40">
                 <div className="max-w-7xl mx-auto">
                     <SectionTitle
-                        title="The Council"
-                        subtitle="Architects of the RMC System."
+                        title="Leadership"
+                        subtitle="The dedicated minds behind the RMC community."
                         center={true}
                         variant="gold"
                     />
@@ -277,12 +269,12 @@ export default function AboutPage() {
             {/* Timeline */}
             <section className="py-32 px-4 sm:px-6 lg:px-8 z-10 relative">
                 <div className="max-w-4xl mx-auto">
-                    <SectionDivider type="lemma" text="Temporal Evolution" />
+                    <SectionDivider type="lemma" text="Our Journey" />
 
                     <div className="relative mt-24">
-                        {/* Center Line with Gradient */}
-                        <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-[2px] bg-gradient-to-b from-transparent via-teal/20 to-transparent"></div>
-                        <div className="absolute left-1/2 transform -translate-x-1/2 top-0 w-[1px] h-[30vh] bg-gradient-to-b from-teal to-transparent opacity-50" />
+                        {/* Center Line with Gradient - Hidden on Mobile, replaced by left line */}
+                        <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2 h-full w-[2px] bg-gradient-to-b from-transparent via-teal/20 to-transparent"></div>
+                        <div className="md:hidden absolute left-4 h-full w-[2px] bg-gradient-to-b from-transparent via-teal/20 to-transparent"></div>
 
                         {timeline.map((item, index) => (
                             <motion.div
@@ -290,17 +282,17 @@ export default function AboutPage() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, margin: "-100px" }}
                                 key={index}
-                                className={`relative flex items-center mb-24 ${index % 2 === 0 ? "justify-start" : "justify-end"}`}
+                                className={`relative flex items-center mb-24 md:mb-24 ${index % 2 === 0 ? "md:justify-start" : "md:justify-end"} justify-start pl-12 md:pl-0`}
                             >
-                                <div className={`w-5/12 ${index % 2 === 0 ? "text-right pr-16" : "text-left pl-16"} group`}>
-                                    <span className="font-mono text-teal text-2xl font-bold block mb-3 opacity-50 group-hover:opacity-100 transition-opacity">{item.year}</span>
-                                    <h4 className="text-white/80 font-serif text-xl leading-relaxed group-hover:text-white transition-colors">
+                                <div className={`w-full md:w-5/12 ${index % 2 === 0 ? "md:text-right md:pr-16" : "md:text-left md:pl-16"} text-left group`}>
+                                    <span className="font-mono text-teal text-xl font-bold block mb-3 opacity-50 group-hover:opacity-100 transition-opacity">{item.year}</span>
+                                    <h4 className="text-white/80 font-serif text-lg md:text-xl leading-relaxed group-hover:text-white transition-colors">
                                         {item.event}
                                     </h4>
                                 </div>
 
-                                {/* Central Node */}
-                                <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center">
+                                {/* Central Node - Adjusted for Mobile Left Alignment */}
+                                <div className="absolute left-4 md:left-1/2 transform -translate-x-1/2 flex items-center justify-center">
                                     <div className="w-8 h-8 rounded-full bg-black border border-teal/50 flex items-center justify-center z-10 shadow-[0_0_20px_rgba(45,212,191,0.2)]">
                                         <div className="w-2 h-2 bg-teal rounded-full" />
                                     </div>

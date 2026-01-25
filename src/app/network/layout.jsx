@@ -14,36 +14,42 @@ export default function NetworkLayout({ children }) {
 
     useEffect(() => {
         const checkAuth = async () => {
+            // 1. Initial Quick Check
             const { data: { user } } = await supabase.auth.getUser();
+
             if (!user) {
-                if (pathname !== '/network/login') {
-                    router.push('/network/login');
-                }
+                if (pathname !== '/network/login') router.push('/network/login');
+                setProfile(null); // Clear profile on logout detection
                 setLoading(false);
                 return;
             }
 
-            // Fetch Profile Once
-            const { data: profileData } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', user.id)
-                .single();
+            // 2. Fetch profile if missing OR if user ID mismatch (Critical Fix)
+            if (!profile || profile.id !== user.id) {
+                const { data: profileData } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
 
-            if (profileData) {
-                setProfile(profileData);
-            } else {
-                setProfile({
-                    full_name: user.user_metadata.full_name,
-                    role: user.user_metadata.role || 'member',
-                    team: user.user_metadata.team || 'council'
-                });
+                if (profileData) {
+                    setProfile(profileData);
+                } else {
+                    // Fallback for new users without profile rows yet
+                    setProfile({
+                        id: user.id, // Ensure ID is set for future checks
+                        full_name: user.user_metadata.full_name,
+                        role: user.user_metadata.role || 'member',
+                        team: user.user_metadata.team || 'council'
+                    });
+                }
             }
+
             setLoading(false);
         };
 
         checkAuth();
-    }, [router, pathname]);
+    }, [pathname, profile, router]); // Keep pathname for login/logout sync, but profile check prevents re-fetch
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -68,7 +74,7 @@ export default function NetworkLayout({ children }) {
                     <div className="w-8 h-8 bg-teal/10 border border-teal/20 rounded-lg flex items-center justify-center">
                         <Shield className="w-4 h-4 text-teal" />
                     </div>
-                    <span className="font-[family-name:var(--font-cinzel)] text-white font-bold text-sm tracking-widest">RMC NET</span>
+                    <span className="font-[family-name:var(--font-cinzel)] text-white font-bold text-sm tracking-widest">RMC HUB</span>
                 </div>
                 <button
                     onClick={() => setIsSidebarOpen(true)}

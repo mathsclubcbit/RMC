@@ -325,3 +325,46 @@ textarea:focus {
   filter: invert(1);
   cursor: pointer;
 }
+
+/* ===== Math Symbols (Chaos Layer) ===== */
+.math-symbol {
+  font-family: var(--font-math);
+  font-size: 2rem;
+  color: rgba(255, 255, 255, 0.1);
+  user-select: none;
+  pointer-events: none;
+  z-index: 30;
+  transition: all 0.5s ease;
+}
+
+.math-symbol-1 {
+  animation: float 8s ease-in-out infinite;
+}
+
+.math-symbol-2 {
+  animation: float 12s ease-in-out infinite;
+  animation-delay: -2s;
+}
+
+.math-symbol-3 {
+  animation: float 10s ease-in-out infinite;
+  animation-delay: -5s;
+}
+
+.math-symbol-4 {
+  animation: float 15s ease-in-out infinite;
+  animation-delay: -1s;
+}
+
+.math-symbol:hover {
+  color: var(--rmc-teal);
+  text-shadow: 0 0 20px rgba(58, 188, 179, 0.6);
+  opacity: 0.4;
+}
+
+@media (max-width: 768px) {
+  .math-symbol {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.02);
+  }
+}
