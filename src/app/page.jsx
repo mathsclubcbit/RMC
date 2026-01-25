@@ -12,16 +12,15 @@ import HomeEventsSection from "@/components/home/HomeEventsSection";
 import StatsSection from "@/components/home/StatsSection";
 import { ArrowRight, Trophy, Calendar, Users, Star, TrendingUp } from "lucide-react";
 import MathDerivation from "@/components/ui/MathDerivation";
-import MathBackground from "@/components/ui/MathBackground";
+import AnnouncementsWidget from "@/components/home/AnnouncementsWidget"; // [NEW IMPORT]
 
 export default function Home() {
     return (
         <div className="relative overflow-x-hidden min-h-screen bg-[#020617] selection:bg-teal/30 selection:text-teal">
             <LenisScroll />
+            <AnnouncementsWidget /> {/* [NEW WIDGET] */}
 
-            {/* Background Layer - Vector Field */}
-            <MathBackground />
-            <div className="fixed inset-0 pointer-events-none z-0 bg-[url('/noise.png')] opacity-[0.15] mix-blend-overlay" />
+            {/* Background Layer - Moved to Layout */}
 
             {/* Hero Section - The Chaos System */}
             <ChaosHero />

@@ -1,60 +1,68 @@
 "use client";
 
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
 import SectionTitle from "@/components/ui/SectionTitle";
 import SpotlightCard from "@/components/ui/SpotlightCard";
-import MathBackground from "@/components/ui/MathBackground";
-import { motion } from "framer-motion";
-import { Target, Telescope, Users, Award, History, Brain, BookOpen, Calculator, Sigma, Variable, ChevronRight } from "lucide-react";
+import SectionDivider from "@/components/ui/SectionDivider";
+import HeroParticles from "@/components/about/HeroParticles";
+import CouncilGrid from "@/components/about/CouncilGrid";
+import { Target, Telescope, Users, Award, Brain, BookOpen, Calculator, Sigma, Variable } from "lucide-react";
 
 export default function AboutPage() {
+    const containerRef = useRef(null);
+    const { scrollYProgress } = useScroll({ target: containerRef });
+    const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+    const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
+
     const objectives = [
         {
             icon: Brain,
-            title: "Promote Critical Thinking",
-            description: "Encourage logical reasoning and problem-solving skills among students through challenging puzzles.",
+            title: "Critical Thought (α)",
+            description: "Encourage logical reasoning and problem-solving skills through challenging puzzles.",
             color: "text-teal",
             bg: "bg-teal/10",
-            border: "border-teal/30 md:border-white/10 md:hover:border-teal/50",
+            border: "border-teal/30",
             colSpan: "md:col-span-2"
         },
         {
             icon: Award,
-            title: "Organize Competitions",
+            title: "Competition (β)",
             description: "Host olympiads, quizzes, and puzzle contests to challenge minds.",
             color: "text-lime",
             bg: "bg-lime/10",
-            border: "border-lime/30 md:border-white/10 md:hover:border-lime/50",
+            border: "border-lime/30",
             colSpan: "md:col-span-1"
         },
         {
             icon: BookOpen,
-            title: "Workshops & Lectures",
+            title: "Discourse (γ)",
             description: "Conduct sessions by experts on advanced mathematical concepts.",
             color: "text-orange-400",
             bg: "bg-orange-400/10",
-            border: "border-orange-400/30 md:border-white/10 md:hover:border-orange-400/50",
+            border: "border-orange-400/30",
             colSpan: "md:col-span-1"
         },
         {
             icon: Users,
-            title: "Build Community",
+            title: "Community (Σ)",
             description: "Create a supportive network of math enthusiasts at CBIT.",
             color: "text-purple-400",
             bg: "bg-purple-400/10",
-            border: "border-purple-400/30 md:border-white/10 md:hover:border-purple-400/50",
+            border: "border-purple-400/30",
             colSpan: "md:col-span-2"
         },
     ];
 
     const timeline = [
-        { year: "2018", event: "RMC was founded at CBIT" },
-        { year: "2019", event: "First Math Olympiad conducted with 200+ participants" },
-        { year: "2020", event: "Launched virtual workshops during pandemic" },
-        { year: "2021", event: "Crossed 300+ active members" },
-        { year: "2022", event: "Partnered with national math organizations" },
-        { year: "2023", event: "Awarded Best Technical Club at CBIT" },
-        { year: "2024", event: "Hosted inter-college mathematics fest" },
-        { year: "2025", event: "Reached 500+ members milestone" },
+        { year: "2018", event: "RMC established at CBIT (t=0)" },
+        { year: "2019", event: "Inaugural Math Olympiad: 200+ Nodes" },
+        { year: "2020", event: "Virtual Workshop Series Initiated" },
+        { year: "2021", event: "Membership crosses 300+ Units" },
+        { year: "2022", event: "National Math Organization Partnership" },
+        { year: "2023", event: "Awarded 'Best Technical Club' Accolade" },
+        { year: "2024", event: "Inter-college Mathematics Fest" },
+        { year: "2025", event: "Reached 500+ Member Milestone" },
     ];
 
     const team = [
@@ -65,209 +73,241 @@ export default function AboutPage() {
     ];
 
     return (
-        <div className="relative overflow-hidden min-h-screen bg-black text-white selection:bg-teal/30 selection:text-teal font-sans">
-            <MathBackground />
+        <div ref={containerRef} className="relative min-h-screen bg-black overflow-hidden selection:bg-teal/20 selection:text-teal">
 
-            {/* Background Gradients */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-teal/5 blur-[120px] rounded-full mix-blend-screen animate-pulse duration-[5000ms]" />
-                <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-lime/5 blur-[100px] rounded-full mix-blend-screen" />
-            </div>
+            {/* Immersive Hero Section */}
+            <section className="relative h-screen flex items-center justify-center overflow-hidden">
+                <HeroParticles />
 
-            {/* Hero Banner */}
-            <section className="relative pt-40 pb-20 px-4 sm:px-6 lg:px-8 z-10 flex flex-col items-center justify-center min-h-[60vh]">
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
-                    className="max-w-4xl mx-auto text-center"
+                    style={{ opacity, scale }}
+                    className="relative z-10 text-center px-4"
                 >
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-teal mb-8 backdrop-blur-md">
-                        <History className="w-3 h-3" />
-                        <span className="tracking-widest uppercase">Est. 2018</span>
-                    </div>
-                    <h1 className="text-5xl md:text-8xl font-bold mb-8 font-serif tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-b from-white via-white/90 to-white/50">
-                        The Enigma <br /> of <span className="text-teal">RMC</span>
-                    </h1>
-                    <p className="text-lg md:text-2xl text-white/50 max-w-2xl mx-auto font-light leading-relaxed mb-10">
-                        Where the elegance of equations meets the thrill of the unknown.
-                    </p>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                        className="inline-block"
+                    >
+                        <h1 className="text-6xl md:text-9xl font-[family-name:var(--font-cinzel)] font-bold text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-transparent tracking-tighter mb-4">
+                            AXIOMS
+                        </h1>
+                    </motion.div>
+
+                    <motion.p
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5, duration: 0.8 }}
+                        className="text-white/50 font-serif italic text-xl md:text-2xl max-w-2xl mx-auto"
+                    >
+                        "Tracing the mathematical lineage and foundational principles of our society."
+                    </motion.p>
+
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1, duration: 1 }}
+                        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+                    >
+                        <span className="text-[10px] uppercase tracking-[0.3em] text-teal/50">Scroll to Explore</span>
+                        <div className="w-[1px] h-12 bg-gradient-to-b from-teal/50 to-transparent" />
+                    </motion.div>
                 </motion.div>
 
-                {/* Scroll Indicator */}
-                <motion.div
-                    animate={{ y: [0, 10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute bottom-10"
-                >
-                    <div className="w-6 h-10 border-2 border-white/20 rounded-full flex justify-center pt-2">
-                        <div className="w-1 h-3 bg-teal rounded-full" />
-                    </div>
-                </motion.div>
+                {/* Cinematic Vignette */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,black_100%)] pointer-events-none" />
             </section>
 
-            {/* The Legacy Section (Glass Card) */}
-            <section className="py-20 px-4 sm:px-6 lg:px-8 z-10 relative">
-                <div className="max-w-7xl mx-auto">
-                    <div className="relative bg-black/40 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-16 border border-white/5 overflow-hidden group">
-                        <div className="absolute inset-0 bg-gradient-to-br from-teal/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+            {/* Theorem I: The Legacy */}
+            <section className="relative py-32 px-4 sm:px-6 lg:px-8 z-10">
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                <SectionDivider type="theorem" number="I" text="The Ramanujan Legacy" />
 
-                        <div className="grid md:grid-cols-2 gap-16 items-center relative z-10">
-                            <div>
-                                <SectionTitle
-                                    title="The Man Who Knew Infinity"
-                                    subtitle="A tribute to Srinivasa Ramanujan"
-                                    center={false}
-                                />
-                                <p className="text-white/60 text-lg leading-relaxed mb-8 font-light">
-                                    Srinivasa Ramanujan (1887-1920) was one of the greatest mathematical geniuses
-                                    of all time. Born in Erode, India, he made extraordinary contributions to
-                                    mathematical analysis, number theory, infinite series, and continued fractions.
-                                </p>
-                                <div className="pl-6 border-l-2 border-teal py-2 my-8 md:pr-12">
-                                    <p className="font-serif italic text-2xl text-white">
-                                        "An equation means nothing to me unless it expresses a thought of God."
-                                    </p>
-                                    <p className="text-xs text-teal mt-4 font-mono tracking-[0.2em] uppercase">— Srinivasa Ramanujan</p>
-                                </div>
+                <div className="max-w-7xl mx-auto mt-24">
+                    <div className="grid md:grid-cols-2 gap-20 items-center">
+                        <motion.div
+                            initial={{ opacity: 0, x: -50 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.8 }}
+                            viewport={{ once: true }}
+                            className="relative"
+                        >
+                            <div className="absolute -left-10 -top-10 text-[10rem] font-serif text-white/5 font-bold leading-none select-none -z-10">
+                                ∞
                             </div>
-                            <div className="relative flex justify-center">
-                                {/* Mobile: Scale 95 on active. Desktop: Scale 105 on hover */}
-                                <SpotlightCard className="aspect-square w-full max-w-sm rounded-[2rem] bg-gradient-to-br from-white/5 to-transparent border border-white/10 flex flex-col items-center justify-center p-8 text-center group cursor-default shadow-[0_0_50px_-20px_rgba(45,212,191,0.2)] active:scale-95 md:active:scale-100 transition-transform">
-                                    <div className="relative">
-                                        {/* Mobile: Opacity 40 default. Desktop: Opacity 0 -> 50 on hover */}
-                                        <div className="absolute inset-0 bg-teal/20 blur-3xl rounded-full opacity-40 md:opacity-0 md:group-hover:opacity-50 transition-opacity duration-500" />
-                                        <div className="text-8xl md:text-9xl mb-4 font-serif text-transparent bg-clip-text bg-gradient-to-b from-teal to-lime font-bold md:group-hover:scale-105 transition-transform duration-500 relative z-10">
-                                            1729
-                                        </div>
-                                    </div>
-                                    <p className="text-white font-mono text-lg tracking-wide">Hardy-Ramanujan Number</p>
-                                    <div className="flex items-center gap-4 mt-4 text-xs font-mono text-white/30">
-                                        <span>1³ + 12³</span>
-                                        <span className="text-teal">=</span>
-                                        <span>9³ + 10³</span>
-                                    </div>
-                                </SpotlightCard>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+                            <h3 className="font-[family-name:var(--font-cinzel)] text-4xl md:text-5xl text-white mb-8 leading-tight">
+                                The Man Who Knew <span className="text-teal">Infinity</span>
+                            </h3>
 
-            {/* The Council (Team) */}
-            <section className="py-20 px-4 sm:px-6 lg:px-8 z-10 relative">
-                <div className="max-w-7xl mx-auto">
-                    <SectionTitle title="The Architects" subtitle="Minds behind the club" center={true} />
+                            <p className="text-white/70 text-lg md:text-xl leading-relaxed mb-8 font-light font-serif">
+                                Srinivasa Ramanujan (1887-1920) was a singularity in the history of mathematics.
+                                With almost no formal training, he made extraordinary contributions to number theory,
+                                infinite series, and continued fractions. He saw equations not as mere calculations,
+                                but as divine revelations.
+                            </p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
-                        {team.map((member, idx) => (
-                            <SpotlightCard key={idx} className="bg-white/5 border border-white/10 p-6 rounded-2xl group text-center active:bg-white/10 md:hover:bg-white/10 transition-colors active:scale-95 md:active:scale-100 md:hover:scale-100 duration-200">
-                                <div className={`w-20 h-20 mx-auto rounded-2xl ${member.color.replace('text', 'bg')}/10 flex items-center justify-center mb-6 border border-white/5 md:group-hover:scale-110 transition-transform`}>
-                                    <member.icon className={`w-8 h-8 ${member.color}`} />
+                            <blockquote className="border-l-2 border-teal pl-6 py-2 italic text-2xl text-white/90 font-serif">
+                                "An equation means nothing to me unless it expresses a thought of God."
+                                <footer className="text-xs text-teal mt-4 font-mono tracking-[0.2em] uppercase not-italic">— Srinivasa Ramanujan</footer>
+                            </blockquote>
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, rotate: 5 }}
+                            whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                            transition={{ duration: 0.8 }}
+                            viewport={{ once: true }}
+                            className="relative flex justify-center"
+                        >
+                            <div className="absolute inset-0 bg-teal/20 blur-[100px] rounded-full opacity-30" />
+                            <SpotlightCard className="relative aspect-square w-full max-w-sm rounded-[3rem] bg-black/40 border border-white/10 backdrop-blur-xl flex flex-col items-center justify-center p-8 text-center group cursor-default shadow-2xl">
+                                <div className="text-9xl mb-4 font-serif text-transparent bg-clip-text bg-gradient-to-b from-teal to-lime font-bold relative z-10 group-hover:scale-110 transition-transform duration-700">
+                                    1729
                                 </div>
-                                <h3 className="text-xl font-serif font-bold text-white mb-1 md:group-hover:text-teal transition-colors">{member.name}</h3>
-                                <p className="text-xs font-mono text-white/40 uppercase tracking-widest">{member.role}</p>
+                                <p className="text-white font-mono text-lg tracking-wide uppercase text-white/50">Taxicab Number</p>
+                                <div className="flex items-center gap-4 mt-6 text-sm font-mono text-white/40 border-t border-white/10 pt-4 w-full justify-center">
+                                    <span>1³ + 12³</span>
+                                    <span className="text-teal">=</span>
+                                    <span>9³ + 10³</span>
+                                </div>
                             </SpotlightCard>
-                        ))}
+                        </motion.div>
                     </div>
                 </div>
             </section>
 
+            {/* Axioms: Mission & Vision */}
+            <section className="py-32 px-4 sm:px-6 lg:px-8 z-10 relative bg-black/50 overflow-hidden">
+                {/* Background Grid */}
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_80%)]" />
 
-            {/* Mission & Vision (Bento Grid) */}
-            <section className="py-20 px-4 sm:px-6 lg:px-8 z-10 relative">
-                <div className="max-w-7xl mx-auto">
-                    <SectionTitle title="The Equation" subtitle="Our purpose & vision" center={true} />
+                <SectionDivider type="axiom" text="Fundamental Principles" />
 
-                    <div className="grid md:grid-cols-2 gap-8 mt-12">
-                        <SpotlightCard className="bg-gradient-to-b from-black/60 to-black/20 border border-teal/20 p-10 rounded-3xl h-full backdrop-blur-sm">
-                            <div className="w-16 h-16 rounded-2xl bg-teal/10 flex items-center justify-center mb-8 text-teal border border-teal/20">
-                                <Target className="w-8 h-8" />
-                            </div>
-                            <h3 className="text-3xl font-bold mb-4 font-serif text-white">Our Mission</h3>
-                            <p className="text-white/60 text-lg leading-relaxed font-light">
-                                To ignite passion for mathematics among students by providing
-                                a platform for learning, exploration, and collaboration. We aim to make
-                                mathematics accessible, engaging, and fun for everyone.
-                            </p>
-                        </SpotlightCard>
+                <div className="max-w-7xl mx-auto mt-24 relative z-10">
+                    <div className="grid md:grid-cols-2 gap-8">
+                        {/* Vision */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 50 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.6 }}
+                        >
+                            <SpotlightCard className="bg-black/80 border border-teal/20 p-12 rounded-[2rem] h-full backdrop-blur-xl hover:bg-teal/5 transition-colors duration-500 group relative overflow-hidden">
+                                <div className="absolute -right-20 -top-20 w-64 h-64 bg-teal/10 rounded-full blur-[80px] group-hover:bg-teal/20 transition-colors duration-700" />
 
-                        <SpotlightCard className="bg-gradient-to-b from-black/60 to-black/20 border border-lime/20 p-10 rounded-3xl h-full backdrop-blur-sm">
-                            <div className="w-16 h-16 rounded-2xl bg-lime/10 flex items-center justify-center mb-8 text-lime border border-lime/20">
-                                <Telescope className="w-8 h-8" />
-                            </div>
-                            <h3 className="text-3xl font-bold mb-4 font-serif text-white">Our Vision</h3>
-                            <p className="text-white/60 text-lg leading-relaxed font-light">
-                                To become the premier mathematics community in the region, envisioning a campus
-                                where mathematical curiosity thrives and every student appreciates the beauty of numbers.
-                            </p>
-                        </SpotlightCard>
+                                <div className="flex items-start justify-between mb-10 relative z-10">
+                                    <div className="w-16 h-16 rounded-2xl bg-teal/10 flex items-center justify-center text-teal border border-teal/20 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_30px_rgba(45,212,191,0.2)]">
+                                        <Telescope className="w-8 h-8" />
+                                    </div>
+                                    <span className="font-mono text-teal/50 text-xs tracking-widest uppercase border border-teal/20 px-3 py-1 rounded-full">Axiom A</span>
+                                </div>
+                                <h3 className="text-4xl font-[family-name:var(--font-cinzel)] mb-6 text-white relative z-10">Our Vision</h3>
+                                <p className="text-white/60 text-lg leading-relaxed font-serif relative z-10">
+                                    To become the premier mathematics community, visualizing a domain where every student appreciates the chaotic beauty of logic.
+                                </p>
+                            </SpotlightCard>
+                        </motion.div>
+
+                        {/* Mission */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 50 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.6, delay: 0.2 }}
+                        >
+                            <SpotlightCard className="bg-black/80 border border-lime/20 p-12 rounded-[2rem] h-full backdrop-blur-xl hover:bg-lime/5 transition-colors duration-500 group relative overflow-hidden">
+                                <div className="absolute -right-20 -top-20 w-64 h-64 bg-lime/10 rounded-full blur-[80px] group-hover:bg-lime/20 transition-colors duration-700" />
+
+                                <div className="flex items-start justify-between mb-10 relative z-10">
+                                    <div className="w-16 h-16 rounded-2xl bg-lime/10 flex items-center justify-center text-lime border border-lime/20 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_30px_rgba(132,204,22,0.2)]">
+                                        <Target className="w-8 h-8" />
+                                    </div>
+                                    <span className="font-mono text-lime/50 text-xs tracking-widest uppercase border border-lime/20 px-3 py-1 rounded-full">Axiom B</span>
+                                </div>
+                                <h3 className="text-4xl font-[family-name:var(--font-cinzel)] mb-6 text-white relative z-10">Our Mission</h3>
+                                <p className="text-white/60 text-lg leading-relaxed font-serif relative z-10">
+                                    To extend the curve of knowledge. We provide a coordinate system for learning, exploration, and collaboration, making mathematics accessible to all subsets of students.
+                                </p>
+                            </SpotlightCard>
+                        </motion.div>
                     </div>
                 </div>
             </section>
 
-
-            {/* Objectives (Bento Grid) */}
-            <section className="py-20 px-4 sm:px-6 lg:px-8 z-10 relative">
+            {/* Core Variables */}
+            <section className="py-32 px-4 sm:px-6 lg:px-8 z-10 relative">
                 <div className="max-w-7xl mx-auto">
                     <SectionTitle
                         title="Core Variables"
-                        subtitle="What we strive to achieve"
-                        gradient={true}
+                        subtitle="The parameters of our operation"
+                        center={true}
                     />
-                    <div className="grid md:grid-cols-3 gap-6 mt-12">
+                    <div className="grid md:grid-cols-3 gap-6 mt-16">
                         {objectives.map((obj, index) => (
                             <SpotlightCard
                                 key={index}
-                                className={`bg-black/40 p-8 rounded-2xl ${obj.colSpan} border-white/5 ${obj.border} transition-colors bg-clip-padding backdrop-filter backdrop-blur-sm`}
+                                className={`bg-white/5 p-10 rounded-3xl ${obj.colSpan} border-white/5 ${obj.border} transition-all duration-500 backdrop-blur-sm group hover:bg-white/10 hover:-translate-y-2`}
                             >
-                                <div className={`w-12 h-12 rounded-xl ${obj.bg} flex items-center justify-center mb-6 ${obj.color}`}>
-                                    <obj.icon className="w-6 h-6" />
+                                <div className={`w-14 h-14 rounded-2xl ${obj.bg} flex items-center justify-center mb-8 ${obj.color} group-hover:scale-110 transition-transform shadow-lg`}>
+                                    <obj.icon className="w-7 h-7" />
                                 </div>
-                                <h4 className="font-bold text-xl mb-3 font-serif text-white">{obj.title}</h4>
-                                <p className="text-white/50">{obj.description}</p>
+                                <h4 className="font-[family-name:var(--font-cinzel)] font-bold text-2xl mb-4 text-white">{obj.title}</h4>
+                                <p className="text-white/50 font-serif leading-relaxed text-lg">{obj.description}</p>
                             </SpotlightCard>
                         ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* The Council */}
+            <section className="py-32 px-4 sm:px-6 lg:px-8 z-10 relative bg-black/40">
+                <div className="max-w-7xl mx-auto">
+                    <SectionTitle
+                        title="The Council"
+                        subtitle="Architects of the RMC System."
+                        center={true}
+                        variant="gold"
+                    />
+                    <div className="mt-20">
+                        <CouncilGrid members={team} />
                     </div>
                 </div>
             </section>
 
             {/* Timeline */}
-            <section className="py-20 px-4 sm:px-6 lg:px-8 z-10 relative">
+            <section className="py-32 px-4 sm:px-6 lg:px-8 z-10 relative">
                 <div className="max-w-4xl mx-auto">
-                    <SectionTitle
-                        title="Timeline of Infinity"
-                        subtitle="Our journey through time"
-                    />
-                    <div className="relative mt-20">
-                        <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-px bg-gradient-to-b from-transparent via-teal to-transparent opacity-50"></div>
+                    <SectionDivider type="lemma" text="Temporal Evolution" />
+
+                    <div className="relative mt-24">
+                        {/* Center Line with Gradient */}
+                        <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-[2px] bg-gradient-to-b from-transparent via-teal/20 to-transparent"></div>
+                        <div className="absolute left-1/2 transform -translate-x-1/2 top-0 w-[1px] h-[30vh] bg-gradient-to-b from-teal to-transparent opacity-50" />
+
                         {timeline.map((item, index) => (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, margin: "-100px" }}
                                 key={index}
-                                className={`relative flex items-center mb-16 ${index % 2 === 0 ? "justify-start" : "justify-end"}`}
+                                className={`relative flex items-center mb-24 ${index % 2 === 0 ? "justify-start" : "justify-end"}`}
                             >
-                                <div className={`w-5/12 ${index % 2 === 0 ? "text-right pr-8 md:pr-12" : "text-left pl-8 md:pl-12"}`}>
-                                    <h4 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal to-lime font-serif mb-2">{item.year}</h4>
-                                    <p className="text-white/60 font-light text-sm md:text-base leading-relaxed">{item.event}</p>
+                                <div className={`w-5/12 ${index % 2 === 0 ? "text-right pr-16" : "text-left pl-16"} group`}>
+                                    <span className="font-mono text-teal text-2xl font-bold block mb-3 opacity-50 group-hover:opacity-100 transition-opacity">{item.year}</span>
+                                    <h4 className="text-white/80 font-serif text-xl leading-relaxed group-hover:text-white transition-colors">
+                                        {item.event}
+                                    </h4>
                                 </div>
-                                <div className={`absolute left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full bg-black border-2 ${index === timeline.length - 1 ? "border-lime shadow-[0_0_15px_rgba(132,204,22,0.5)] animate-pulse" : "border-teal"} z-10`}></div>
+
+                                {/* Central Node */}
+                                <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center">
+                                    <div className="w-8 h-8 rounded-full bg-black border border-teal/50 flex items-center justify-center z-10 shadow-[0_0_20px_rgba(45,212,191,0.2)]">
+                                        <div className="w-2 h-2 bg-teal rounded-full" />
+                                    </div>
+                                </div>
                             </motion.div>
                         ))}
                     </div>
-                </div>
-            </section>
-
-            {/* Footer CTA */}
-            <section className="py-20 px-4 text-center z-10 relative">
-                <div className="max-w-2xl mx-auto">
-                    <h2 className="text-4xl font-serif font-bold text-white mb-6">Ready to solve the puzzle?</h2>
-                    <p className="text-white/50 mb-8">Join the community where every problem has a solution.</p>
-                    <button className="bg-white text-black px-8 py-4 rounded-full font-bold hover:bg-teal hover:text-white transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(45,212,191,0.4)]">
-                        Join the Equation
-                    </button>
                 </div>
             </section>
         </div>

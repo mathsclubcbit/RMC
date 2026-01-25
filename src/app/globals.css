@@ -285,11 +285,43 @@ body.noscroll {
 
 /* Animated Gradient Text */
 @keyframes gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .animate-gradient {
   animation: gradient 3s ease infinite;
+}
+
+/* ===== Form Element Polish (Math Noir) ===== */
+select,
+input,
+textarea {
+  color-scheme: dark;
+}
+
+option {
+  background-color: #0a0a0a;
+  color: white;
+}
+
+select:focus,
+input:focus,
+textarea:focus {
+  border-color: var(--rmc-teal) !important;
+  box-shadow: 0 0 15px rgba(58, 188, 179, 0.1);
+}
+
+::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
 }

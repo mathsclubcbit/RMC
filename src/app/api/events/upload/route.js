@@ -1,17 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
-export async function POST(req: NextRequest) {
+export async function POST(req) {
     try {
         const formData = await req.formData();
 
-        const eventId = formData.get('eventId') as string;
-        const posterMobile = formData.get('posterMobile') as File | null;
-        const posterDesktop = formData.get('posterDesktop') as File | null;
+        const eventId = formData.get('eventId');
+        const posterMobile = formData.get('posterMobile');
+        const posterDesktop = formData.get('posterDesktop');
 
         if (!eventId) {
             return NextResponse.json({ error: 'Event ID is required' }, { status: 400 });
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
             // Directory may already exist
         }
 
-        const results: { posterMobile?: string; posterDesktop?: string } = {};
+        const results = {};
 
         // Process mobile poster
         if (posterMobile && posterMobile.size > 0) {
@@ -71,13 +71,13 @@ export async function POST(req: NextRequest) {
             ...results
         }, { status: 200 });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Poster upload error:', error);
         return NextResponse.json({ error: error.message || 'Upload failed' }, { status: 500 });
     }
 }
 
-function validateFile(file: File): { error?: string } {
+function validateFile(file) {
     if (file.size > MAX_FILE_SIZE) {
         return { error: 'File size exceeds 5MB limit' };
     }
@@ -87,7 +87,7 @@ function validateFile(file: File): { error?: string } {
     return {};
 }
 
-function getExtension(mimeType: string): string {
+function getExtension(mimeType) {
     switch (mimeType) {
         case 'image/jpeg': return 'jpg';
         case 'image/png': return 'png';

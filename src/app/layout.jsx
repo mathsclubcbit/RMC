@@ -65,23 +65,19 @@ export const metadata = {
 import SmoothScroll from "@/components/ui/SmoothScroll";
 import CustomCursor from "@/components/ui/CustomCursor";
 import Preloader from "@/components/ui/Preloader";
+import ConditionalShell from "@/components/layout/ConditionalShell";
 
 export default function RootLayout({ children }) {
     return (
         <html lang="en" className="scroll-smooth" suppressHydrationWarning>
             <body
-                className={`${montserrat.variable} ${inter.variable} ${playfair.variable} ${jetbrains.variable} ${cormorant.variable} ${cinzel.variable} antialiased min-h-screen flex flex-col bg-background text-foreground`}
+                className={`${montserrat.variable} ${inter.variable} ${playfair.variable} ${jetbrains.variable} ${cormorant.variable} ${cinzel.variable} antialiased min-h-screen flex flex-col bg-[#020617] text-foreground`}
             >
-                {/* <NoiseOverlay /> */}
                 <CustomCursor />
                 <Preloader />
-                <SmoothScroll>
-                    <Header />
-                    <main className="flex-1 w-full overflow-x-hidden">
-                        {children}
-                    </main>
-                    <Footer />
-                </SmoothScroll>
+                <ConditionalShell>
+                    {children}
+                </ConditionalShell>
             </body>
         </html>
     );

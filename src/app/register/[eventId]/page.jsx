@@ -12,6 +12,9 @@ export default function RegistrationPage() {
     const params = useParams();
     const eventId = params.eventId;
 
+    // Poster Modal State
+    const [showPoster, setShowPoster] = useState(false);
+
     // State for event
     const [event, setEvent] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -163,6 +166,39 @@ export default function RegistrationPage() {
 
     return (
         <div className="min-h-[100dvh] bg-black relative flex items-center justify-center p-2 md:p-0 overflow-hidden font-sans selection:bg-teal/30">
+            {/* Poster Modal */}
+            {showPoster && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl" onClick={() => setShowPoster(false)}>
+                    {/* Close Button */}
+                    <button
+                        onClick={() => setShowPoster(false)}
+                        className="absolute top-4 right-4 md:top-8 md:right-8 text-white/50 hover:text-white transition-colors"
+                    >
+                        <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10">
+                            <span className="text-xs font-mono uppercase tracking-widest">Close</span>
+                        </div>
+                    </button>
+
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="relative max-w-4xl w-full max-h-[90vh] overflow-hidden rounded-2xl shadow-2xl border border-white/10 select-none"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <img
+                            src={event.posterDesktop || event.img}
+                            alt={event.title}
+                            className="w-full h-full object-contain max-h-[85vh] mx-auto bg-black"
+                        />
+                        <div className="absolute bottom-4 left-0 right-0 text-center pointer-events-none">
+                            <p className="inline-block px-4 py-2 rounded-full bg-black/50 backdrop-blur-md border border-white/5 text-teal text-[10px] font-mono uppercase tracking-widest">
+                                Official Poster
+                            </p>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
             {/* Ambient Background */}
             <div className="fixed inset-0 pointer-events-none">
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20viewBox=%220%200%20200%20200%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter%20id=%22noiseFilter%22%3E%3CfeTurbulence%20type=%22fractalNoise%22%20baseFrequency=%220.65%22%20numOctaves=%223%22%20stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect%20width=%22100%25%22%20height=%22100%25%22%20filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')] opacity-[0.03] mix-blend-overlay" />
@@ -183,17 +219,42 @@ export default function RegistrationPage() {
                 className="w-full md:h-screen md:max-w-none md:static md:bg-transparent md:border-0 md:rounded-none md:shadow-none bg-gray-900/40 backdrop-blur-2xl border border-white/10 rounded-3xl overflow-hidden flex flex-col md:flex-row shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] relative z-10 my-8 md:my-0"
             >
                 {/* Left Panel: Event Info */}
-                <div className="w-full md:w-[45%] lg:w-[40%] bg-black/40 md:bg-gray-900/20 md:backdrop-blur-xl p-6 md:p-16 flex flex-col relative overflow-hidden border-b md:border-b-0 md:border-r border-white/5 md:h-full">
-                    <div className="absolute inset-0 bg-gradient-to-br from-teal/5 to-transparent pointer-events-none" />
+                <div className="w-full md:w-[45%] lg:w-[40%] bg-black/40 md:bg-gray-900/20 md:backdrop-blur-xl p-6 md:p-16 flex flex-col relative overflow-hidden border-b md:border-b-0 md:border-r border-white/5 md:h-full group">
+                    {/* Dynamic Poster Background */}
+                    <div className="absolute inset-0 z-0">
+                        {(event.posterDesktop || event.img) && (
+                            <img
+                                src={event.posterDesktop || event.img}
+                                alt="Background"
+                                className="w-full h-full object-cover opacity-20 blur-sm scale-110 group-hover:scale-100 transition-transform duration-700"
+                            />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/60 to-black/80" />
+                    </div>
+
+                    <div className="absolute inset-0 bg-gradient-to-br from-teal/5 to-transparent pointer-events-none z-1" />
 
                     {/* Content Container */}
                     <div className="relative z-10 flex flex-col h-full justify-center">
                         <div className="mb-12">
-                            <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/5 border border-white/10 text-teal text-[10px] font-mono uppercase tracking-[0.2em] mb-6 md:mb-8">
-                                {event.category || "Event"}
-                            </span>
+                            <div className="flex items-center justify-between mb-6 md:mb-8">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/5 border border-white/10 text-teal text-[10px] font-mono uppercase tracking-[0.2em] backdrop-blur-md">
+                                    {event.category || "Event"}
+                                </span>
 
-                            <h1 className="text-3xl md:text-5xl font-serif font-bold text-white mb-4 md:mb-6 leading-tight">
+                                {/* View Poster Button */}
+                                {(event.posterDesktop || event.img) && (
+                                    <button
+                                        onClick={() => setShowPoster(true)}
+                                        className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-white/50 hover:text-teal transition-colors border border-white/10 hover:border-teal/30 px-3 py-1 rounded-full bg-black/20 backdrop-blur-md"
+                                    >
+                                        <FileText className="w-3 h-3" />
+                                        <span>View Poster</span>
+                                    </button>
+                                )}
+                            </div>
+
+                            <h1 className="text-3xl md:text-5xl font-serif font-bold text-white mb-4 md:mb-6 leading-tight drop-shadow-lg">
                                 {event.title}
                             </h1>
                             <p className="text-white/60 text-sm md:text-lg leading-relaxed font-light">

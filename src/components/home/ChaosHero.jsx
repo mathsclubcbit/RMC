@@ -138,10 +138,19 @@ function ResponsiveCamera() {
 }
 
 export default function ChaosHero() {
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     return (
         <section className="relative w-full h-screen overflow-hidden bg-transparent">
             {/* 3D Scene */}
-            <div className="absolute inset-0 z-10 canvas-container">
+            <div className={`absolute inset-0 z-10 canvas-container ${isMobile ? 'pointer-events-none' : ''}`}>
                 <Canvas camera={{ position: [0, 8, 60], fov: 40 }} gl={{ alpha: true }} onCreated={({ gl }) => gl.setClearColor(new THREE.Color('#020617'), 0)}>
                     {/* <color attach="background" args={['#020617']} /> -- Removed to allow transparency */}
                     {/* Fog should match the background logic, but since it's transparent, fog might hide things locally. 
@@ -153,9 +162,10 @@ export default function ChaosHero() {
 
                     <OrbitControls
                         enableZoom={false}
-                        autoRotate={false}
+                        autoRotate={true}
+                        autoRotateSpeed={0.5}
                         enablePan={false}
-                        enableRotate={true}
+                        enableRotate={!isMobile} // Disable rotation on mobile to allow scrolling
                         maxPolarAngle={Math.PI / 1.5}
                         minPolarAngle={Math.PI / 3}
                     />
@@ -180,11 +190,14 @@ export default function ChaosHero() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 1 }}
-                        className="mb-6 flex items-center justify-center gap-4"
+                        className="mb-10"
                     >
-                        <div className="h-[1px] w-12 bg-teal/50" />
-                        <span className="font-serif text-teal/80 italic tracking-widest text-sm">Est. 2018</span>
-                        <div className="h-[1px] w-12 bg-teal/50" />
+                        <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-teal/20 bg-teal/5 backdrop-blur-md shadow-[0_0_20px_-5px_rgba(45,212,191,0.2)]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse shadow-[0_0_10px_rgba(45,212,191,0.8)]" />
+                            <span className="font-[family-name:var(--font-cinzel)] text-teal/90 text-xs tracking-[0.2em] font-bold">
+                                EST. MMXVIII
+                            </span>
+                        </div>
                     </motion.div>
 
                     {/* Main Title - Serif & Huge */}
@@ -192,10 +205,10 @@ export default function ChaosHero() {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 1.5, ease: "easeOut" }}
-                        className="font-[family-name:var(--font-cinzel)] text-5xl md:text-7xl lg:text-9xl text-white tracking-widest leading-none mb-6 mix-blend-difference uppercase"
+                        className="font-[family-name:var(--font-playfair)] font-black text-5xl md:text-7xl lg:text-9xl text-transparent bg-clip-text bg-gradient-to-b from-white to-white/80 tracking-widest leading-none mb-6 uppercase drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]"
                     >
                         RAMANUJAN <br />
-                        <span className="block mt-4 font-serif text-3xl md:text-5xl italic text-teal font-light tracking-normal normal-case">Math Club</span>
+                        <span className="block mt-4 font-[family-name:var(--font-cormorant)] text-3xl md:text-5xl italic text-teal font-light tracking-wide normal-case drop-shadow-none">Maths Club</span>
                     </motion.h1>
 
                     {/* Subtitle - Definition Style */}
@@ -205,24 +218,18 @@ export default function ChaosHero() {
                         transition={{ delay: 1, duration: 1 }}
                         className="font-serif text-xl md:text-2xl text-white/60 leading-relaxed italic max-w-2xl mx-auto"
                     >
-                        "The study of structures, patterns, and the chaotic beauty of logic."
+                        "The Art of the Infinite."
                     </motion.div>
 
                     {/* Math Notation Decoration */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 1.5, duration: 1 }}
-                        className="mt-12 font-mono text-xs text-white/30 tracking-widest"
-                    >
-                        Running Simulation: Lorenz Attractor (σ=10, ρ=28, β=8/3)
-                    </motion.div>
+
 
                 </div>
             </div>
 
             {/* Gradient Vignette for Text Readability */}
-            <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/20 to-black/80 pointer-events-none z-10" />
+            {/* Gradient Vignette for Text Readability - Reduced opacity and blend mode to reveal background */}
+            <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/10 to-black/60 pointer-events-none z-0" />
         </section>
     );
 }

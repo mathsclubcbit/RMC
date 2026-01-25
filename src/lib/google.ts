@@ -284,3 +284,134 @@ export const getRegistrationById = async (
     const registrations = await getAllRegistrations(spreadsheetId);
     return registrations.find(r => r.registrationId === registrationId) || null;
 };
+
+/**
+ * Announcement Data Type
+ */
+export interface AnnouncementData {
+    id: string;
+    title: string;
+    content: string;
+    category: string;
+    date: string;
+    postedBy: string;
+}
+
+/**
+ * Helper: Check if a sheet (tab) exists, and create it if not.
+ */
+const ensureSheetExists = async (spreadsheetId: string, title: string) => {
+    const authClient = await getAuthClient();
+    const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+
+    try {
+        const response = await sheets.spreadsheets.get({
+            spreadsheetId,
+        });
+
+        const sheet = response.data.sheets?.find(s => s.properties?.title === title);
+        if (!sheet) {
+            // Create the sheet
+            await sheets.spreadsheets.batchUpdate({
+                spreadsheetId,
+                requestBody: {
+                    requests: [
+                        {
+                            addSheet: {
+                                properties: {
+                                    title,
+                                    gridProperties: {
+                                        rowCount: 1000,
+                                        columnCount: 10
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            });
+
+            // Add Headers
+            await sheets.spreadsheets.values.update({
+                spreadsheetId,
+                range: `${title}!A1:F1`,
+                valueInputOption: 'USER_ENTERED',
+                requestBody: {
+                    values: [['ID', 'Title', 'Content', 'Category', 'Date', 'PostedBy']]
+                }
+            });
+        }
+    } catch (error) {
+        console.error(`Error ensuring sheet '${title}' exists:`, error);
+        throw error;
+    }
+};
+
+/**
+ * Fetch all announcements from Google Sheet (Announcements Tab)
+ */
+export const getAnnouncements = async (spreadsheetId: string): Promise<AnnouncementData[]> => {
+    const authClient = await getAuthClient();
+    const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+
+    try {
+        // Ensure sheet exists before reading
+        await ensureSheetExists(spreadsheetId, 'Announcements');
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: 'Announcements!A:F',
+        });
+
+        const rows = response.data.values;
+        if (!rows || rows.length <= 1) return []; // Skip header
+
+        return rows.slice(1).map((row) => ({
+            id: row[0] || '',
+            title: row[1] || '',
+            content: row[2] || '',
+            category: row[3] || '',
+            date: row[4] || '',
+            postedBy: row[5] || 'Admin',
+        })).reverse(); // Newest first
+    } catch (error) {
+        console.warn("Could not fetch announcements:", error);
+        return [];
+    }
+};
+
+/**
+ * Create a new announcement
+ */
+export const createAnnouncement = async (
+    spreadsheetId: string,
+    announcement: AnnouncementData
+) => {
+    const authClient = await getAuthClient();
+    const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+
+    await ensureSheetExists(spreadsheetId, 'Announcements');
+
+    const rowData = [
+        announcement.id,
+        announcement.title,
+        announcement.content,
+        announcement.category,
+        announcement.date,
+        announcement.postedBy
+    ];
+
+    try {
+        await sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: 'Announcements!A:F',
+            valueInputOption: 'USER_ENTERED',
+            requestBody: {
+                values: [rowData],
+            },
+        });
+    } catch (error: any) {
+        console.error("Error creating announcement:", error);
+        throw error;
+    }
+};

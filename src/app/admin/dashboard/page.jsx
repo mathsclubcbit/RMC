@@ -71,7 +71,9 @@ export default function AdminDashboard() {
         description: "",
         status: "Registration Open",
         registrationFee: "",
-        teamSize: 1
+        teamSize: 1,
+        regStartDate: "",
+        regEndDate: ""
     });
 
     // Poster upload state
@@ -96,6 +98,36 @@ export default function AdminDashboard() {
         const sanitizedTitle = title.toLowerCase().replace(/\s+/g, '');
         const commonSuffix = "rmc2026";
         return `${sanitizedTitle}${commonSuffix}`;
+    };
+
+    // --- ANNOUNCEMENTS ---
+    const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
+    const [newAnnouncement, setNewAnnouncement] = useState({
+        title: "",
+        category: "Critical",
+        content: ""
+    });
+
+    const handlePostAnnouncement = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch('/api/announcements', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newAnnouncement)
+            });
+
+            if (res.ok) {
+                showNotification("Announcement posted successfully!");
+                setIsAnnouncementModalOpen(false);
+                setNewAnnouncement({ title: "", category: "Critical", content: "" });
+            } else {
+                showNotification("Failed to post announcement.", "error");
+            }
+        } catch (error) {
+            console.error("Announcement Error:", error);
+            showNotification("Error posting announcement.", "error");
+        }
     };
 
     const handleCreate = async (e) => {
@@ -176,7 +208,8 @@ export default function AdminDashboard() {
                 // Reset form
                 setNewEvent({
                     title: "", isOneDay: true, startDate: "", endDate: "", startTime: "", endTime: "",
-                    location: "", category: "Competition", description: "", status: "Registration Open", registrationFee: "", teamSize: 1
+                    location: "", category: "Competition", description: "", status: "Registration Open", registrationFee: "", teamSize: 1,
+                    regStartDate: "", regEndDate: ""
                 });
                 setPosterMobile(null);
                 setPosterDesktop(null);
@@ -424,7 +457,13 @@ export default function AdminDashboard() {
                             onClick={() => setIsCreateModalOpen(true)}
                             className="flex-1 md:flex-none px-6 py-3 bg-teal/10 hover:bg-teal text-teal hover:text-black border border-teal/50 font-bold rounded-xl flex items-center justify-center gap-2 transition-all hover:shadow-[0_0_20px_rgba(45,212,191,0.3)] uppercase tracking-widest text-xs"
                         >
-                            <Plus className="w-4 h-4" /> <span className="hidden md:inline">Create New Event</span><span className="md:hidden">Create Event</span>
+                            <Plus className="w-4 h-4" /> <span className="hidden md:inline">Create New Event</span><span className="md:hidden">Create</span>
+                        </button>
+                        <button
+                            onClick={() => setIsAnnouncementModalOpen(true)}
+                            className="flex-1 md:flex-none px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold rounded-xl flex items-center justify-center gap-2 transition-all hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] uppercase tracking-widest text-xs"
+                        >
+                            <AlertCircle className="w-4 h-4" /> <span className="hidden md:inline">Announce</span>
                         </button>
                     </div>
                 </div>
@@ -572,33 +611,64 @@ export default function AdminDashboard() {
                                             <MapPin className="absolute right-4 top-3.5 w-4 h-4 text-white/30 pointer-events-none" />
                                         </div>
                                     </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] uppercase text-teal/70 font-mono pl-3 tracking-widest">Registration Fee</label>
-                                        <div className="relative">
-                                            <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-teal/50 outline-none text-white placeholder-white/20" value={newEvent.registrationFee} onChange={e => setNewEvent({ ...newEvent, registrationFee: e.target.value })} placeholder="₹100" />
+                                    {/* Registration Fee, Team Size, Reg Dates */}
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <div className="group">
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <span className="text-white/30 font-serif">₹</span>
+                                                </div>
+                                                <input
+                                                    type="number"
+                                                    placeholder="Fee"
+                                                    className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-teal/50 focus:bg-white/10 focus:ring-1 focus:ring-teal/50 text-white placeholder-white/20 transition-all font-mono text-sm"
+                                                    value={newEvent.registrationFee}
+                                                    onChange={(e) => setNewEvent({ ...newEvent, registrationFee: e.target.value })}
+                                                />
+                                            </div>
+                                            <p className="text-[10px] text-white/30 mt-1 pl-1 uppercase tracking-wider">Reg Fee</p>
+                                        </div>
+                                        <div className="group">
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <Users className="w-4 h-4 text-white/30" />
+                                                </div>
+                                                <input
+                                                    type="number"
+                                                    placeholder="Size"
+                                                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-teal/50 focus:bg-white/10 focus:ring-1 focus:ring-teal/50 text-white placeholder-white/20 transition-all font-mono text-sm"
+                                                    value={newEvent.teamSize}
+                                                    onChange={(e) => setNewEvent({ ...newEvent, teamSize: e.target.value })}
+                                                />
+                                            </div>
+                                            <p className="text-[10px] text-white/30 mt-1 pl-1 uppercase tracking-wider">Team Size</p>
+                                        </div>
+                                        <div className="group">
+                                            <div className="relative">
+                                                <input
+                                                    type="date"
+                                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-teal/50 focus:bg-white/10 focus:ring-1 focus:ring-teal/50 text-white placeholder-white/20 transition-all font-mono text-sm [color-scheme:dark]"
+                                                    value={newEvent.regStartDate}
+                                                    onChange={(e) => setNewEvent({ ...newEvent, regStartDate: e.target.value })}
+                                                />
+                                            </div>
+                                            <p className="text-[10px] text-white/30 mt-1 pl-1 uppercase tracking-wider">Reg Start</p>
+                                        </div>
+                                        <div className="group">
+                                            <div className="relative">
+                                                <input
+                                                    type="date"
+                                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-teal/50 focus:bg-white/10 focus:ring-1 focus:ring-teal/50 text-white placeholder-white/20 transition-all font-mono text-sm [color-scheme:dark]"
+                                                    value={newEvent.regEndDate}
+                                                    onChange={(e) => setNewEvent({ ...newEvent, regEndDate: e.target.value })}
+                                                />
+                                            </div>
+                                            <p className="text-[10px] text-white/30 mt-1 pl-1 uppercase tracking-wider">Reg End</p>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Team Size Field */}
-                                <div className="space-y-1">
-                                    <label className="text-[10px] uppercase text-teal/70 font-mono pl-3 tracking-widest">Team Size</label>
-                                    <div className="relative">
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            max="10"
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-teal/50 outline-none text-white placeholder-white/20"
-                                            value={newEvent.teamSize}
-                                            onChange={e => setNewEvent({ ...newEvent, teamSize: parseInt(e.target.value) || 1 })}
-                                            placeholder="1"
-                                        />
-                                        <span className="absolute right-4 top-3.5 text-white/30 text-xs">members</span>
-                                    </div>
-                                    <p className="text-[9px] text-white/40 pl-3">1 for individual, 2-10 for team events</p>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">\
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                                     <div className="space-y-1">
                                         <label className="text-[10px] uppercase text-teal/70 font-mono pl-3 tracking-widest">Category</label>
                                         <div className="relative">
@@ -924,6 +994,62 @@ export default function AdminDashboard() {
             }
 
 
+            {/* Announcement Modal */}
+            {isAnnouncementModalOpen && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-black/90 backdrop-blur-md"
+                        onClick={() => setIsAnnouncementModalOpen(false)}
+                    />
+                    <motion.div
+                        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                        className="relative bg-black border border-white/10 rounded-2xl w-full max-w-lg shadow-[0_0_50px_-12px_rgba(255,255,255,0.2)] flex flex-col overflow-hidden"
+                    >
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white to-transparent opacity-50 rounded-t-2xl" />
+
+                        <div className="flex justify-between items-center p-6 border-b border-white/5">
+                            <div>
+                                <h2 className="text-xl font-serif font-bold text-white">Post Announcement</h2>
+                                <p className="text-xs text-white/50 font-mono uppercase tracking-widest">Broadcast to all units</p>
+                            </div>
+                            <button onClick={() => setIsAnnouncementModalOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/50 hover:text-white pb-3">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6">
+                            <form onSubmit={handlePostAnnouncement} className="space-y-4">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase text-white/50 font-mono pl-3 tracking-widest">Title</label>
+                                    <input required type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-white/50 outline-none text-white placeholder-white/20 transition-colors" value={newAnnouncement.title} onChange={e => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })} placeholder="e.g. Protocol Update" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase text-white/50 font-mono pl-3 tracking-widest">Category</label>
+                                    <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-white/50 outline-none text-white" value={newAnnouncement.category} onChange={e => setNewAnnouncement({ ...newAnnouncement, category: e.target.value })}>
+                                        <option className="bg-black text-white p-2">Critical</option>
+                                        <option className="bg-black text-white p-2">Competition</option>
+                                        <option className="bg-black text-white p-2">Update</option>
+                                        <option className="bg-black text-white p-2">General</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase text-white/50 font-mono pl-3 tracking-widest">Content</label>
+                                    <textarea required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-white/50 outline-none min-h-[100px] text-white placeholder-white/20 resize-none" value={newAnnouncement.content} onChange={e => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })} placeholder="Enter message..." />
+                                </div>
+                                <button type="submit" className="w-full py-3 bg-white hover:bg-white/90 text-black font-bold rounded-xl mt-2 uppercase tracking-widest transition-all">
+                                    Broadcast Signal
+                                </button>
+                            </form>
+                        </div>
+                    </motion.div>
+                </div>,
+                document.body
+            )}
+
+
             {/* Success Credentials Modal */}
             {
                 createdEventCreds && (
@@ -1016,10 +1142,10 @@ export default function AdminDashboard() {
             <AnimatePresence>
                 {notification.isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: 50, x: "-50%" }}
-                        animate={{ opacity: 1, y: 0, x: "-50%" }}
-                        exit={{ opacity: 0, y: 20, x: "-50%" }}
-                        className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[11000] px-6 py-4 rounded-xl border backdrop-blur-md shadow-2xl flex items-center gap-4 min-w-[300px] ${notification.type === 'success' ? 'bg-teal/10 border-teal/30 text-teal' : 'bg-red-500/10 border-red-500/30 text-red-400'
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 50 }}
+                        className={`fixed top-24 right-6 z-[11000] px-6 py-4 rounded-xl border backdrop-blur-md shadow-2xl flex items-center gap-4 min-w-[300px] ${notification.type === 'success' ? 'bg-teal/10 border-teal/30 text-teal' : 'bg-red-500/10 border-red-500/30 text-red-400'
                             }`}
                     >
                         {notification.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}

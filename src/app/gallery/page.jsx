@@ -3,6 +3,8 @@
 import { useState } from "react";
 import SectionTitle from "@/components/ui/SectionTitle";
 import SpotlightCard from "@/components/ui/SpotlightCard";
+import PageHeader from "@/components/ui/PageHeader";
+import SectionDivider from "@/components/ui/SectionDivider";
 import { Filter, Image as ImageIcon, Play, Maximize2 } from "lucide-react";
 import Tilt from "react-parallax-tilt";
 import { cn } from "@/lib/utils";
@@ -30,8 +32,6 @@ const galleryItems = [
     { id: 12, category: "Fun Events", title: "Math Quiz Night", symbol: "α", color: "orange", height: "h-72" },
 ];
 
-import MathBackground from "@/components/ui/MathBackground";
-
 export default function GalleryPage() {
     const [activeCategory, setActiveCategory] = useState("All");
 
@@ -40,33 +40,19 @@ export default function GalleryPage() {
         : galleryItems.filter(item => item.category === activeCategory);
 
     return (
-        <div className="relative bg-black min-h-screen overflow-hidden">
-            {/* Standard Math Background */}
-            <MathBackground />
+        <div className="relative min-h-screen">
 
-            <div className="relative z-10">
-                {/* Hero */}
-                <section className="relative pt-40 pb-24 px-4 sm:px-6 lg:px-8 border-b border-white/5">
-                    <div className="max-w-7xl mx-auto flex flex-col items-center text-center relative">
-                        <div className="flex items-center gap-4 mb-8">
-                            <div className="w-12 h-[1px] bg-teal/30" />
-                            <span className="font-mono text-[10px] uppercase tracking-[0.5em] text-teal/80 font-bold">The Observatory</span>
-                            <div className="w-12 h-[1px] bg-teal/30" />
-                        </div>
-                        <h1 className="flex flex-col select-none mb-10">
-                            <span className="font-serif italic font-black text-6xl md:text-9xl tracking-tight leading-none text-white opacity-90">Visual</span>
-                            <span className="font-sans font-black text-5xl md:text-8xl tracking-tighter uppercase leading-none text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400 -translate-y-2 md:-translate-y-4">Registry</span>
-                        </h1>
-                        <p className="text-muted/80 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-sans font-light border-l-2 border-teal/20 pl-8 text-left">
-                            A curated collection of <span className="text-white">mathematical artifacts</span>, memories, and captured moments from our timeline.
-                        </p>
-                    </div>
-                </section>
+            <PageHeader
+                title="VISUAL PROOFS"
+                subtitle="A register of observed phenomena. The visual memories of our timeline."
+            />
+
+            <div className="relative z-10 px-4 sm:px-6 lg:px-8">
 
                 {/* Filter Tabs */}
-                <section className="sticky top-20 z-40 px-4 sm:px-6 lg:px-8 mb-20 pointer-events-none">
+                <div className="sticky top-24 z-40 mb-16 pointer-events-none">
                     <div className="max-w-4xl mx-auto pointer-events-auto">
-                        <div className="bg-black/60 backdrop-blur-xl p-2 flex flex-wrap justify-center gap-2 rounded-full border border-white/10 shadow-2xl">
+                        <div className="bg-black/60 backdrop-blur-xl p-2 flex flex-wrap justify-center gap-2 rounded-full border border-white/10 shadow-[0_0_30px_-10px_rgba(255,255,255,0.1)]">
                             {galleryCategories.map((cat, index) => (
                                 <button
                                     key={index}
@@ -83,10 +69,12 @@ export default function GalleryPage() {
                             ))}
                         </div>
                     </div>
-                </section>
+                </div>
+
+                <SectionDivider type="theorem" number="V" text="Observed Data" />
 
                 {/* Gallery Masonry Grid */}
-                <section className="pb-32 px-4 sm:px-6 lg:px-8">
+                <section className="pb-32">
                     <div className="max-w-7xl mx-auto">
                         <div className="columns-1 sm:columns-2 lg:columns-3 gap-8 space-y-8">
                             {filteredItems.map((item) => (
@@ -124,7 +112,7 @@ export default function GalleryPage() {
                                                 <span className="text-xs font-mono uppercase tracking-widest text-muted">{item.category}</span>
                                             </div>
 
-                                            <h3 className="text-white font-serif font-black italic text-3xl tracking-tight leading-none mb-4 group-hover:text-teal-50 transition-colors">{item.title}</h3>
+                                            <h3 className="text-white font-[family-name:var(--font-cinzel)] font-bold text-2xl tracking-tight leading-none mb-4 group-hover:text-teal-50 transition-colors">{item.title}</h3>
 
                                             <button className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-white/60 group-hover:text-teal-400 transition-colors opacity-0 group-hover:opacity-100 duration-500 delay-200">
                                                 <Maximize2 className="w-3 h-3" />
@@ -139,12 +127,12 @@ export default function GalleryPage() {
                 </section>
 
                 {/* Videos Section */}
-                <section className="py-32 px-4 sm:px-6 lg:px-8 border-t border-white/5 relative bg-black/40">
-                    <div className="max-w-7xl mx-auto">
+                <section className="py-20 border-t border-white/5 relative bg-black/20 rounded-3xl mb-20">
+                    <div className="max-w-7xl mx-auto px-4 md:px-12">
                         <SectionTitle
-                            title="Signal_Feeds"
-                            subtitle="Archived transmissions from high-fidelity operations."
-                            gradient={true}
+                            title="Recorded Transmissions"
+                            subtitle="Archived playback of events."
+                            center={true}
                         />
                         <div className="grid md:grid-cols-3 gap-10 mt-20">
                             {[
