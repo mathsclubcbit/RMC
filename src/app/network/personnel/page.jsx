@@ -226,17 +226,18 @@ export default function PersonnelPage() {
                         <select
                             value={filterRole}
                             onChange={(e) => setFilterRole(e.target.value)}
-                            className="appearance-none bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-10 text-white focus:border-teal/50 outline-none min-w-[180px]"
+                            className="appearance-none bg-gray-800 border border-white/10 rounded-xl px-4 py-3 pr-10 text-white focus:border-teal/50 outline-none min-w-[180px]"
+                            style={{ colorScheme: 'dark' }}
                         >
-                            <option value="all">All Roles</option>
-                            <optgroup label="Core Council">
+                            <option value="all" className="bg-gray-800 text-white">All Roles</option>
+                            <optgroup label="Core Council" className="bg-gray-800 text-white">
                                 {CORE_COUNCIL_ROLES.map(role => (
-                                    <option key={role.value} value={role.value}>{role.label}</option>
+                                    <option key={role.value} value={role.value} className="bg-gray-800 text-white">{role.label}</option>
                                 ))}
                             </optgroup>
-                            <optgroup label="Team Roles">
+                            <optgroup label="Team Roles" className="bg-gray-800 text-white">
                                 {TEAM_ROLES.map(role => (
-                                    <option key={role.value} value={role.value}>{role.label}</option>
+                                    <option key={role.value} value={role.value} className="bg-gray-800 text-white">{role.label}</option>
                                 ))}
                             </optgroup>
                         </select>
@@ -305,8 +306,8 @@ export default function PersonnelPage() {
                                                             <span
                                                                 key={tm.id}
                                                                 className={`inline-block px-2 py-0.5 text-xs rounded ${tm.teams?.type === "fest"
-                                                                        ? "bg-purple-500/20 text-purple-400"
-                                                                        : "bg-teal/20 text-teal"
+                                                                    ? "bg-purple-500/20 text-purple-400"
+                                                                    : "bg-teal/20 text-teal"
                                                                     }`}
                                                             >
                                                                 {tm.teams?.name} {tm.role === "head" && "(Head)"}
@@ -497,30 +498,55 @@ function AddMemberModal({ teams, onClose, onSuccess }) {
                         </div>
                     </div>
 
-                    {/* Role Selection */}
+                    {/* Member Type Toggle */}
                     <div className="space-y-2">
                         <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
-                            Role *
+                            Member Type *
                         </label>
-                        <select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            className="w-full appearance-none bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-teal/50 outline-none"
-                        >
-                            <optgroup label="Core Council">
-                                {CORE_COUNCIL_ROLES.map(r => (
-                                    <option key={r.value} value={r.value}>{r.label}</option>
-                                ))}
-                            </optgroup>
-                            <optgroup label="Team Roles">
-                                {TEAM_ROLES.map(r => (
-                                    <option key={r.value} value={r.value}>{r.label}</option>
-                                ))}
-                            </optgroup>
-                        </select>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setRole("member")}
+                                className={`px-4 py-3 rounded-xl border transition-all ${!isCoreCouncilRole
+                                    ? "bg-teal/10 border-teal/50 text-teal"
+                                    : "bg-white/5 border-white/10 text-white/50"
+                                    }`}
+                            >
+                                Team Member
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setRole("president")}
+                                className={`px-4 py-3 rounded-xl border transition-all ${isCoreCouncilRole
+                                    ? "bg-purple-500/10 border-purple-500/50 text-purple-400"
+                                    : "bg-white/5 border-white/10 text-white/50"
+                                    }`}
+                            >
+                                Core Council
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Team Selection (Hidden for Core Council) */}
+                    {/* Core Council Role Selection */}
+                    {isCoreCouncilRole && (
+                        <div className="space-y-2">
+                            <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
+                                Council Position *
+                            </label>
+                            <select
+                                value={role}
+                                onChange={(e) => setRole(e.target.value)}
+                                className="w-full appearance-none bg-gray-800 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-teal/50 outline-none"
+                                style={{ colorScheme: 'dark' }}
+                            >
+                                {CORE_COUNCIL_ROLES.map(r => (
+                                    <option key={r.value} value={r.value} className="bg-gray-800 text-white">{r.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
+                    {/* Team Selection (Only for Team Members) */}
                     {!isCoreCouncilRole && (
                         <>
                             <div className="space-y-2">
@@ -531,11 +557,12 @@ function AddMemberModal({ teams, onClose, onSuccess }) {
                                     value={teamId}
                                     onChange={(e) => setTeamId(e.target.value)}
                                     required
-                                    className="w-full appearance-none bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-teal/50 outline-none"
+                                    className="w-full appearance-none bg-gray-800 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-teal/50 outline-none"
+                                    style={{ colorScheme: 'dark' }}
                                 >
-                                    <option value="">Select a team...</option>
+                                    <option value="" className="bg-gray-800 text-white/50">Select a team...</option>
                                     {teams.map(team => (
-                                        <option key={team.id} value={team.id}>
+                                        <option key={team.id} value={team.id} className="bg-gray-800 text-white">
                                             {team.name} ({team.type === "fest" ? "Fest" : "General"})
                                         </option>
                                     ))}
@@ -544,15 +571,15 @@ function AddMemberModal({ teams, onClose, onSuccess }) {
 
                             <div className="space-y-2">
                                 <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
-                                    Team Role
+                                    Role in Team
                                 </label>
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
                                         type="button"
                                         onClick={() => setTeamRole("member")}
                                         className={`px-4 py-3 rounded-xl border transition-all ${teamRole === "member"
-                                                ? "bg-teal/10 border-teal/50 text-teal"
-                                                : "bg-white/5 border-white/10 text-white/50"
+                                            ? "bg-teal/10 border-teal/50 text-teal"
+                                            : "bg-white/5 border-white/10 text-white/50"
                                             }`}
                                     >
                                         Member
@@ -561,8 +588,8 @@ function AddMemberModal({ teams, onClose, onSuccess }) {
                                         type="button"
                                         onClick={() => setTeamRole("head")}
                                         className={`px-4 py-3 rounded-xl border transition-all ${teamRole === "head"
-                                                ? "bg-yellow-500/10 border-yellow-500/50 text-yellow-400"
-                                                : "bg-white/5 border-white/10 text-white/50"
+                                            ? "bg-yellow-500/10 border-yellow-500/50 text-yellow-400"
+                                            : "bg-white/5 border-white/10 text-white/50"
                                             }`}
                                     >
                                         Head

@@ -215,8 +215,8 @@ export default function TasksPage() {
                     <button
                         onClick={() => setFilterStatus("all")}
                         className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap ${filterStatus === "all"
-                                ? "bg-white/10 text-white"
-                                : "text-white/50 hover:text-white"
+                            ? "bg-white/10 text-white"
+                            : "text-white/50 hover:text-white"
                             }`}
                     >
                         All ({tasks.length})
@@ -228,8 +228,8 @@ export default function TasksPage() {
                                 key={key}
                                 onClick={() => setFilterStatus(key)}
                                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap ${filterStatus === key
-                                        ? config.color
-                                        : "text-white/50 hover:text-white"
+                                    ? config.color
+                                    : "text-white/50 hover:text-white"
                                     }`}
                             >
                                 {config.label} ({count})
@@ -301,10 +301,11 @@ export default function TasksPage() {
                                             <select
                                                 value={task.status}
                                                 onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                                                className="appearance-none bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-teal/50 outline-none"
+                                                className="appearance-none bg-gray-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-teal/50 outline-none"
+                                                style={{ colorScheme: 'dark' }}
                                             >
                                                 {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-                                                    <option key={key} value={key}>{config.label}</option>
+                                                    <option key={key} value={key} className="bg-gray-800 text-white">{config.label}</option>
                                                 ))}
                                             </select>
 
@@ -503,8 +504,8 @@ function CreateTaskModal({ task, teams, members, onClose, onSuccess }) {
                                 type="button"
                                 onClick={() => setAssignType("team")}
                                 className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all ${assignType === "team"
-                                        ? "bg-teal/10 border-teal/50 text-teal"
-                                        : "bg-white/5 border-white/10 text-white/50 hover:border-white/30"
+                                    ? "bg-teal/10 border-teal/50 text-teal"
+                                    : "bg-white/5 border-white/10 text-white/50 hover:border-white/30"
                                     }`}
                             >
                                 <Users className="w-5 h-5" />
@@ -514,8 +515,8 @@ function CreateTaskModal({ task, teams, members, onClose, onSuccess }) {
                                 type="button"
                                 onClick={() => setAssignType("user")}
                                 className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all ${assignType === "user"
-                                        ? "bg-purple-500/10 border-purple-500/50 text-purple-400"
-                                        : "bg-white/5 border-white/10 text-white/50 hover:border-white/30"
+                                    ? "bg-purple-500/10 border-purple-500/50 text-purple-400"
+                                    : "bg-white/5 border-white/10 text-white/50 hover:border-white/30"
                                     }`}
                             >
                                 <User className="w-5 h-5" />
@@ -533,11 +534,12 @@ function CreateTaskModal({ task, teams, members, onClose, onSuccess }) {
                             <select
                                 value={assignToTeam}
                                 onChange={(e) => setAssignToTeam(e.target.value)}
-                                className="w-full appearance-none bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-teal/50 outline-none"
+                                className="w-full appearance-none bg-gray-800 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-teal/50 outline-none"
+                                style={{ colorScheme: 'dark' }}
                             >
-                                <option value="">Choose a team...</option>
+                                <option value="" className="bg-gray-800 text-white/50">Choose a team...</option>
                                 {teams.map(team => (
-                                    <option key={team.id} value={team.id}>
+                                    <option key={team.id} value={team.id} className="bg-gray-800 text-white">
                                         {team.name} ({team.type === "fest" ? "Fest" : "General"})
                                     </option>
                                 ))}
@@ -551,11 +553,12 @@ function CreateTaskModal({ task, teams, members, onClose, onSuccess }) {
                             <select
                                 value={assignToUser}
                                 onChange={(e) => setAssignToUser(e.target.value)}
-                                className="w-full appearance-none bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-teal/50 outline-none"
+                                className="w-full appearance-none bg-gray-800 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-teal/50 outline-none"
+                                style={{ colorScheme: 'dark' }}
                             >
-                                <option value="">Choose a member...</option>
+                                <option value="" className="bg-gray-800 text-white/50">Choose a member...</option>
                                 {members.map(member => (
-                                    <option key={member.id} value={member.id}>
+                                    <option key={member.id} value={member.id} className="bg-gray-800 text-white">
                                         {member.full_name || member.email}
                                     </option>
                                 ))}

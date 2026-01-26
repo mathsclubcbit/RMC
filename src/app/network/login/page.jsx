@@ -6,37 +6,67 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Mail, Lock, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 export default function NetworkLoginPage() {
+    const [isSignUp, setIsSignUp] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [fullName, setFullName] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [successMessage, setSuccessMessage] = useState("");
     const router = useRouter();
-    const supabase = createClient();
+    const { signIn, signUp } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
+        setSuccessMessage("");
         setLoading(true);
 
         try {
-            const { data, error: signInError } = await supabase.auth.signInWithPassword({
-                email: email.trim().toLowerCase(),
-                password
-            });
+            if (isSignUp) {
+                // Sign Up Logic
+                const { data, error: signUpError } = await signUp(email, password, {
+                    data: {
+                        full_name: fullName.trim() || email.split('@')[0]
+                    }
+                });
 
-            if (signInError) {
-                setError(signInError.message);
-                setLoading(false);
-                return;
-            }
+                if (signUpError) {
+                    setError(signUpError.message);
+                    setLoading(false);
+                    return;
+                }
 
-            if (data?.user) {
-                router.push("/network/dashboard");
+                if (data?.user) {
+                    setSuccessMessage("Account created! Logging you in...");
+                    if (data.session) {
+                        setTimeout(() => router.push("/network/dashboard"), 1000);
+                    } else {
+                        setSuccessMessage("Account created! Please check your email to confirm.");
+                        setLoading(false);
+                    }
+                }
+            } else {
+                // Sign In Logic
+                const { data, error: signInError } = await signIn(email, password);
+
+                if (signInError) {
+                    setError(signInError.message);
+                    setLoading(false);
+                    return;
+                }
+
+                if (data?.user) {
+                    setTimeout(() => {
+                        router.push("/network/dashboard");
+                    }, 100);
+                }
             }
         } catch (err) {
+            console.error(err);
             setError("An unexpected error occurred. Please try again.");
             setLoading(false);
         }
@@ -81,10 +111,10 @@ export default function NetworkLoginPage() {
                             </div>
                         </div>
                         <h1 className="text-3xl font-serif font-bold text-white mb-2">
-                            RMC Network
+                            {isSignUp ? "Create Account" : "RMC Network"}
                         </h1>
                         <p className="text-white/50 text-sm">
-                            Member Portal Access
+                            {isSignUp ? "Sign up to join your team" : "Member Portal Access"}
                         </p>
                     </div>
 
@@ -100,8 +130,42 @@ export default function NetworkLoginPage() {
                         </motion.div>
                     )}
 
+                    {/* Success Message */}
+                    {successMessage && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mb-6 p-4 bg-teal/10 border border-teal/20 rounded-xl flex items-center gap-3 text-teal text-sm"
+                        >
+                            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                            {successMessage}
+                        </motion.div>
+                    )}
+
                     {/* Login Form */}
                     <form onSubmit={handleSubmit} className="space-y-5">
+                        {/* Full Name Field (Only for Sign Up) */}
+                        {isSignUp && (
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono ml-1">
+                                    Full Name
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 flex items-center justify-center font-bold text-xs">
+                                        Az
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={fullName}
+                                        onChange={(e) => setFullName(e.target.value)}
+                                        placeholder="John Doe"
+                                        required={isSignUp}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/10 outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
                         {/* Email Field */}
                         <div className="space-y-2">
                             <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono ml-1">
@@ -133,6 +197,7 @@ export default function NetworkLoginPage() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
                                     required
+                                    minLength={6}
                                     className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/10 outline-none transition-all"
                                 />
                             </div>
@@ -147,21 +212,30 @@ export default function NetworkLoginPage() {
                             {loading ? (
                                 <>
                                     <Loader2 className="w-5 h-5 animate-spin" />
-                                    Signing In...
+                                    {isSignUp ? "Creating Account..." : "Signing In..."}
                                 </>
                             ) : (
                                 <>
-                                    Access Network
+                                    {isSignUp ? "Create Account" : "Access Network"}
                                     <ArrowRight className="w-5 h-5" />
                                 </>
                             )}
                         </button>
                     </form>
 
-                    {/* Footer Note */}
-                    <p className="text-center text-white/30 text-xs mt-8">
-                        Contact the President if you need access credentials.
-                    </p>
+                    {/* Toggle Mode */}
+                    <div className="text-center mt-6">
+                        <button
+                            onClick={() => {
+                                setIsSignUp(!isSignUp);
+                                setError("");
+                                setSuccessMessage("");
+                            }}
+                            className="text-teal text-sm hover:underline"
+                        >
+                            {isSignUp ? "Already have an account? Sign In" : "First time here? Create an Account"}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Decorative Elements */}

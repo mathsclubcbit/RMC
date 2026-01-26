@@ -17,7 +17,8 @@ import {
     LogOut,
     ChevronLeft,
     Menu,
-    X
+    X,
+    ExternalLink
 } from "lucide-react";
 
 export default function NetworkSidebar() {
@@ -107,8 +108,8 @@ export default function NetworkSidebar() {
                             key={link.href}
                             href={link.href}
                             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${isActive
-                                    ? 'bg-teal/10 text-teal'
-                                    : 'text-white/50 hover:bg-white/5 hover:text-white'
+                                ? 'bg-teal/10 text-teal'
+                                : 'text-white/50 hover:bg-white/5 hover:text-white'
                                 } ${collapsed ? 'justify-center' : ''}`}
                         >
                             <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-teal' : 'group-hover:text-teal'}`} />
@@ -120,14 +121,25 @@ export default function NetworkSidebar() {
                 })}
             </nav>
 
-            {/* User & Sign Out */}
-            <div className="px-3 py-4 border-t border-white/5">
+            {/* User & Actions */}
+            <div className="px-3 py-4 border-t border-white/5 space-y-1">
                 {!collapsed && (
                     <div className="px-3 py-2 mb-2">
                         <p className="text-white text-sm font-medium truncate">{profile?.full_name || profile?.email}</p>
                         <p className="text-white/40 text-xs truncate">{profile?.email}</p>
                     </div>
                 )}
+
+                {/* Exit to Main Website */}
+                <Link
+                    href="/"
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/50 hover:bg-white/5 hover:text-white transition-all w-full ${collapsed ? 'justify-center' : ''}`}
+                >
+                    <ExternalLink className="w-5 h-5" />
+                    {!collapsed && <span className="text-sm font-medium">Exit to Website</span>}
+                </Link>
+
+                {/* Sign Out */}
                 <button
                     onClick={handleSignOut}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400/70 hover:bg-red-500/10 hover:text-red-400 transition-all w-full ${collapsed ? 'justify-center' : ''}`}
