@@ -125,7 +125,7 @@ export default function DashboardPage() {
         <div className="flex min-h-screen">
             <NetworkSidebar />
 
-            <main className="flex-1 p-4 pt-16 md:p-6 md:pt-6 lg:p-10 overflow-auto">
+            <main className="flex-1 p-4 lg:p-10 pt-24 lg:pt-10 overflow-auto">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

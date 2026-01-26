@@ -173,8 +173,13 @@ export default function MyTeamPage() {
             setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } catch (error) {
             console.error("Error removing member:", error);
-            alert("Failed to remove member. You might not have permission.");
-            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            setConfirmModal({
+                isOpen: true,
+                type: "error",
+                title: "Error",
+                message: "Failed to remove member. You might not have permission.",
+                onConfirm: null
+            });
         } finally {
             setIsDeleting(false);
         }
@@ -183,6 +188,7 @@ export default function MyTeamPage() {
     const handleRemoveMember = (teamId, memberId, memberName) => {
         setConfirmModal({
             isOpen: true,
+            type: "confirm",
             title: "Remove Member",
             message: `Are you sure you want to remove ${memberName} from the team? This action cannot be undone.`,
             confirmText: "Remove Member",
@@ -195,7 +201,7 @@ export default function MyTeamPage() {
         <div className="flex min-h-screen">
             <NetworkSidebar />
 
-            <main className="flex-1 p-6 lg:p-10 overflow-auto">
+            <main className="flex-1 p-6 lg:p-10 pt-24 lg:pt-10 overflow-auto">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

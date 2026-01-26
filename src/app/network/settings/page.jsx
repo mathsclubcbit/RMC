@@ -144,7 +144,7 @@ export default function SettingsPage() {
         <div className="flex min-h-screen">
             <NetworkSidebar />
 
-            <main className="flex-1 p-6 lg:p-10 overflow-auto">
+            <main className="flex-1 p-6 lg:p-10 pt-24 lg:pt-10 overflow-auto">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -164,8 +164,8 @@ export default function SettingsPage() {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${message.type === "success"
-                                ? "bg-green-500/10 border border-green-500/20 text-green-400"
-                                : "bg-red-500/10 border border-red-500/20 text-red-400"
+                            ? "bg-green-500/10 border border-green-500/20 text-green-400"
+                            : "bg-red-500/10 border border-red-500/20 text-red-400"
                             }`}
                     >
                         {message.type === "success" ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}

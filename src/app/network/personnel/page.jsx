@@ -18,8 +18,10 @@ import {
     Mail,
     User,
     ChevronDown,
-    AlertCircle
+    AlertCircle,
+    Check
 } from "lucide-react";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 const CORE_COUNCIL_ROLES = [
     { value: "president", label: "President" },
@@ -43,6 +45,24 @@ export default function PersonnelPage() {
     const [filterRole, setFilterRole] = useState("all");
     const [showAddModal, setShowAddModal] = useState(false);
     const [showCredentialsModal, setShowCredentialsModal] = useState(null);
+
+    // Global Alert/Confirm State
+    const [statusModal, setStatusModal] = useState({
+        isOpen: false,
+        type: "confirm",
+        title: "",
+        message: "",
+        onConfirm: null
+    });
+
+    const showAlert = (title, message, type = "success") => {
+        setStatusModal({ isOpen: true, title, message, type, onConfirm: null });
+    };
+
+    const showConfirm = (title, message, onConfirm, isDangerous = false) => {
+        setStatusModal({ isOpen: true, title, message, type: "confirm", onConfirm, isDangerous });
+    };
+
     const supabase = createClient();
 
     useEffect(() => {
@@ -104,28 +124,31 @@ export default function PersonnelPage() {
     };
 
     const handleDeleteMember = async (memberId, memberEmail) => {
-        if (!confirm(`Are you sure you want to remove "${memberEmail}" from the system? This will also delete their Supabase Auth account.`)) {
-            return;
-        }
+        showConfirm(
+            "Remove Member",
+            `Are you sure you want to remove "${memberEmail}" from the system? This will also delete their Supabase Auth account.`,
+            async () => {
+                try {
+                    const res = await fetch("/api/admin/delete-user", {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ userId: memberId })
+                    });
 
-        try {
-            // Call admin API to delete user
-            const res = await fetch("/api/admin/delete-user", {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: memberId })
-            });
+                    if (!res.ok) {
+                        const data = await res.json();
+                        throw new Error(data.error || "Failed to delete user");
+                    }
 
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || "Failed to delete user");
-            }
-
-            fetchData();
-        } catch (error) {
-            console.error("Error deleting member:", error);
-            alert(error.message);
-        }
+                    fetchData();
+                    showAlert("Removed", "Member has been successfully removed from the system.", "success");
+                } catch (error) {
+                    console.error("Error deleting member:", error);
+                    showAlert("Error", error.message, "error");
+                }
+            },
+            true
+        );
     };
 
     const filteredMembers = members.filter(member => {
@@ -175,12 +198,12 @@ export default function PersonnelPage() {
         <div className="flex min-h-screen">
             <NetworkSidebar />
 
-            <main className="flex-1 p-6 lg:p-10 overflow-auto">
+            <main className="flex-1 p-6 lg:p-10 pt-24 lg:pt-10 overflow-auto">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8"
+                    className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8"
                 >
                     <div>
                         <h1 className="text-3xl lg:text-4xl font-serif font-bold text-white mb-2">
@@ -372,6 +395,20 @@ export default function PersonnelPage() {
                     />
                 )}
             </AnimatePresence>
+
+            {/* Global Status/Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={statusModal.isOpen}
+                type={statusModal.type}
+                title={statusModal.title}
+                message={statusModal.message}
+                isDangerous={statusModal.isDangerous}
+                onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={statusModal.onConfirm ? () => {
+                    statusModal.onConfirm();
+                    setStatusModal(prev => ({ ...prev, isOpen: false }));
+                } : null}
+            />
         </div>
     );
 }
