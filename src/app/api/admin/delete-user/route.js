@@ -1,62 +1,72 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-    {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false
-        }
-    }
-);
-
-export async function POST(request) {
+/**
+ * DELETE /api/admin/delete-user
+ * Deletes a user from Supabase Auth (which cascades to profiles via trigger).
+ * Only accessible by President or users with delegated can_manage_members permission.
+ */
+export async function DELETE(request) {
     try {
-        const body = await request.json();
-        const { targetUserId } = body;
+        const supabase = await createClient();
 
-        // 1. VERIFY AUTH TOKEN
-        const authHeader = request.headers.get('Authorization');
-        if (!authHeader) {
-            return NextResponse.json({ error: 'Missing Authorization header' }, { status: 401 });
+        // Verify current user session
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const token = authHeader.replace('Bearer ', '');
-        const { data: { user: requester }, error: authError } = await supabaseAdmin.auth.getUser(token);
-
-        if (authError || !requester) {
-            return NextResponse.json({ error: 'Unauthorized: Invalid session' }, { status: 401 });
-        }
-
-        // 2. VERIFY PRESIDENT ROLE
-        const { data: requesterProfile, error: profileError } = await supabaseAdmin
+        // Get current user's profile
+        const { data: profile } = await supabase
             .from('profiles')
             .select('role')
-            .eq('id', requester.id)
+            .eq('id', user.id)
             .single();
 
-        if (profileError || !requesterProfile || requesterProfile.role !== 'president') {
-            return NextResponse.json({ error: 'Forbidden: Only the President can remove agents from the network.' }, { status: 403 });
+        // Check if user has permission
+        let hasPermission = profile?.role === 'president';
+
+        if (!hasPermission) {
+            const { data: permissions } = await supabase
+                .from('delegated_permissions')
+                .select('can_manage_members')
+                .eq('user_id', user.id)
+                .single();
+
+            hasPermission = permissions?.can_manage_members === true;
+        }
+
+        if (!hasPermission) {
+            return NextResponse.json({ error: 'Forbidden: Insufficient permissions' }, { status: 403 });
+        }
+
+        const body = await request.json();
+        const { userId } = body;
+
+        if (!userId) {
+            return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
         }
 
         // Prevent self-deletion
-        if (targetUserId === requester.id) {
-            return NextResponse.json({ error: 'Forbidden: You cannot remove yourself from the high command.' }, { status: 403 });
+        if (userId === user.id) {
+            return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 });
         }
 
-        // 3. EXECUTE DELETE
-        const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(
-            targetUserId
-        );
+        // Use admin client to delete the user
+        const adminClient = createAdminClient();
 
-        if (deleteError) throw deleteError;
+        const { error: deleteError } = await adminClient.auth.admin.deleteUser(userId);
 
-        return NextResponse.json({ success: true, message: 'Agent removed successfully' });
+        if (deleteError) {
+            console.error('Error deleting user:', deleteError);
+            return NextResponse.json({ error: deleteError.message }, { status: 400 });
+        }
+
+        return NextResponse.json({ message: 'User deleted successfully' }, { status: 200 });
 
     } catch (error) {
-        console.error("Admin Delete User Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('Delete user error:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

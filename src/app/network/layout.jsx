@@ -2,103 +2,57 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import NetworkSidebar from "@/components/network/NetworkSidebar";
-import { Shield } from "lucide-react";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 
-export default function NetworkLayout({ children }) {
+function NetworkLayoutInner({ children }) {
+    const { loading, user, profile } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
-    const [profile, setProfile] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [timedOut, setTimedOut] = useState(false);
 
+    // Timeout fallback - if loading takes more than 5 seconds, stop waiting
     useEffect(() => {
-        const checkAuth = async () => {
-            // 1. Initial Quick Check
-            const { data: { user } } = await supabase.auth.getUser();
-
-            if (!user) {
-                if (pathname !== '/network/login') router.push('/network/login');
-                setProfile(null); // Clear profile on logout detection
-                setLoading(false);
-                return;
+        const timer = setTimeout(() => {
+            if (loading) {
+                console.warn("Auth loading timed out");
+                setTimedOut(true);
             }
+        }, 5000);
 
-            // 2. Fetch profile if missing OR if user ID mismatch (Critical Fix)
-            if (!profile || profile.id !== user.id) {
-                const { data: profileData } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single();
+        return () => clearTimeout(timer);
+    }, [loading]);
 
-                if (profileData) {
-                    setProfile(profileData);
-                } else {
-                    // Fallback for new users without profile rows yet
-                    setProfile({
-                        id: user.id, // Ensure ID is set for future checks
-                        full_name: user.user_metadata.full_name,
-                        role: user.user_metadata.role || 'member',
-                        team: user.user_metadata.team || 'council'
-                    });
-                }
-            }
+    // Redirect if not logged in (except for login page)
+    useEffect(() => {
+        if ((timedOut || !loading) && !user && pathname !== "/network/login") {
+            router.push("/network/login");
+        }
+    }, [timedOut, loading, user, pathname, router]);
 
-            setLoading(false);
-        };
-
-        checkAuth();
-    }, [pathname, profile, router]); // Keep pathname for login/logout sync, but profile check prevents re-fetch
-
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-    if (loading) {
+    // Show loading only if still loading and not timed out
+    if (loading && !timedOut) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center">
+            <div className="min-h-screen bg-[#020617] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-16 h-16 border-4 border-teal/20 border-t-teal rounded-full animate-spin" />
-                    <div className="text-teal font-mono text-xs uppercase tracking-[0.2em] animate-pulse">Loading Project Dashboard</div>
+                    <div className="w-12 h-12 border-2 border-teal/30 border-t-teal rounded-full animate-spin" />
+                    <p className="text-white/50 text-sm font-mono">Loading Network...</p>
                 </div>
             </div>
         );
     }
 
-    if (pathname === '/network/login') return children;
-
     return (
-        <div className="min-h-screen bg-black">
-            {/* Mobile Top Bar */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-black border-b border-white/10 flex items-center justify-between px-6 z-30">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-teal/10 border border-teal/20 rounded-lg flex items-center justify-center">
-                        <Shield className="w-4 h-4 text-teal" />
-                    </div>
-                    <span className="font-[family-name:var(--font-cinzel)] text-white font-bold text-sm tracking-widest">RMC HUB</span>
-                </div>
-                <button
-                    onClick={() => setIsSidebarOpen(true)}
-                    className="p-2 text-white/60 hover:text-teal transition-colors"
-                >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                    </svg>
-                </button>
-            </div>
-
-            {/* Sidebar with Drawer Logic */}
-            <div
-                className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-40 transition-opacity lg:hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-                onClick={() => setIsSidebarOpen(false)}
-            />
-
-            <div className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                <NetworkSidebar profile={profile} onClose={() => setIsSidebarOpen(false)} />
-            </div>
-
-            <main className="lg:pl-64 min-h-screen pt-16 lg:pt-0">
-                {children}
-            </main>
+        <div className="min-h-screen bg-[#020617]">
+            {children}
         </div>
     );
 }
+
+export default function NetworkLayout({ children }) {
+    return (
+        <AuthProvider>
+            <NetworkLayoutInner>{children}</NetworkLayoutInner>
+        </AuthProvider>
+    );
+}
+

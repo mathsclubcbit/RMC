@@ -220,7 +220,7 @@ export default function RegistrationClient({ eventId }) {
                 {/* LEFT: Event Info */}
                 <div className="hidden md:flex w-[40%] bg-gray-900/20 p-16 flex-col justify-center relative overflow-hidden border-r border-white/5">
                     <div className="absolute inset-0 z-0">
-                        <Image src={event.posterDesktop || event.img} alt="BG" fill className="object-cover opacity-20 blur-sm" unoptimized />
+                        <Image src={event.posterDesktop || event.img} alt="BG" fill sizes="40vw" className="object-cover opacity-20 blur-sm" unoptimized />
                         <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/60 to-black/80" />
                     </div>
                     <div className="relative z-10">
@@ -251,8 +251,7 @@ export default function RegistrationClient({ eventId }) {
                             <p className="text-xs text-white/30 font-mono mb-8">ID: {registrationId?.substring(0, 8)}</p>
 
                             <div className="flex gap-4">
-                                <Link href={`/ticket/${registrationId}`} className="px-6 py-3 bg-teal text-black font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-teal/80 transition-colors">Download Ticket</Link>
-                                <Link href="/events" className="px-6 py-3 bg-white/5 text-white font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-white/10 transition-colors">More Events</Link>
+                                <Link href="/events" className="px-6 py-3 bg-teal text-black font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-teal/80 transition-colors">Back to Events</Link>
                             </div>
                         </div>
                     ) : (

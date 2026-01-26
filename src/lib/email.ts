@@ -32,7 +32,6 @@ interface TicketEmailData {
  * Generate beautiful HTML email template for ticket
  */
 const generateTicketEmailHTML = (data: TicketEmailData, qrCodeDataUrl: string): string => {
-    const ticketUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/ticket/${data.registrationId}`;
 
     return `
 <!DOCTYPE html>
@@ -179,14 +178,6 @@ const generateTicketEmailHTML = (data: TicketEmailData, qrCodeDataUrl: string): 
                         </td>
                     </tr>
 
-                    <!-- View Online Button -->
-                    <tr>
-                        <td style="padding: 0 40px 30px; text-align: center;">
-                            <a href="${ticketUrl}" style="display: inline-block; background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 50px; font-size: 15px; font-weight: 600; box-shadow: 0 4px 15px rgba(20, 184, 166, 0.4);">
-                                View Ticket Online →
-                            </a>
-                        </td>
-                    </tr>
 
                     <!-- Important Notes -->
                     <tr>
@@ -268,7 +259,7 @@ export const sendTicketEmail = async (data: TicketEmailData): Promise<boolean> =
         };
 
         await transporter.sendMail(mailOptions);
-        console.log(`Ticket email sent successfully to ${data.toEmail}`);
+
         return true;
     } catch (error) {
         console.error("Error sending ticket email:", error);
@@ -315,7 +306,7 @@ export const sendVerificationEmail = async (
 
     try {
         await transporter.sendMail(mailOptions);
-        console.log(`Email sent to ${toEmail}`);
+
     } catch (error) {
         console.error("Error sending email:", error);
         // Don't throw error to prevent failing the entire registration if email fails

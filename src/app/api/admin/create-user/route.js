@@ -1,71 +1,102 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 
-// Initialize a SERVER-SIDE ONLY admin client
-// This has full access to the DB, so we must be very careful using it
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-    {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false
-        }
-    }
-);
-
+/**
+ * POST /api/admin/create-user
+ * Creates a new user in Supabase Auth and the profiles table.
+ * Only accessible by President or users with delegated can_manage_members permission.
+ */
 export async function POST(request) {
     try {
-        const body = await request.json();
-        const { email, password, fullName, role, team } = body;
+        const supabase = await createClient();
 
-        // 1. VERIFY AUTH TOKEN (Don't trust the body)
-        const authHeader = request.headers.get('Authorization');
-        if (!authHeader) {
-            return NextResponse.json({ error: 'Missing Authorization header' }, { status: 401 });
+        // Verify current user session
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const token = authHeader.replace('Bearer ', '');
-        const { data: { user: requester }, error: authError } = await supabaseAdmin.auth.getUser(token);
-
-        if (authError || !requester) {
-            return NextResponse.json({ error: 'Unauthorized: Invalid session' }, { status: 401 });
-        }
-
-        // 2. VERIFY PERMISSIONS
-        const { data: requesterProfile, error: profileError } = await supabaseAdmin
+        // Get current user's profile
+        const { data: profile } = await supabase
             .from('profiles')
             .select('role')
-            .eq('id', requester.id)
+            .eq('id', user.id)
             .single();
 
-        if (profileError || !requesterProfile) {
-            return NextResponse.json({ error: 'Unauthorized: Could not verify identity' }, { status: 401 });
+        // Check if user has permission
+        let hasPermission = profile?.role === 'president';
+
+        if (!hasPermission) {
+            const { data: permissions } = await supabase
+                .from('delegated_permissions')
+                .select('can_manage_members')
+                .eq('user_id', user.id)
+                .single();
+
+            hasPermission = permissions?.can_manage_members === true;
         }
 
-        // Only Faculty, President or Vice President can recruit
-        if (!['faculty', 'president', 'vice_president'].includes(requesterProfile.role)) {
-            return NextResponse.json({ error: 'Forbidden: Insufficient clearance level.' }, { status: 403 });
+        // Also allow heads to add members to their team
+        if (!hasPermission && profile?.role === 'head') {
+            hasPermission = true; // Will be restricted to their team below
         }
 
-        // 3. CREATE THE USER
-        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-            email,
-            password,
+        if (!hasPermission) {
+            return NextResponse.json({ error: 'Forbidden: Insufficient permissions' }, { status: 403 });
+        }
+
+        const body = await request.json();
+        const { email, fullName, role, teamId, teamRole } = body;
+
+        if (!email) {
+            return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+        }
+
+        // Generate a random password
+        const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8).toUpperCase();
+
+        // Use admin client to create the user
+        const adminClient = createAdminClient();
+
+        const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+            email: email.toLowerCase(),
+            password: tempPassword,
             email_confirm: true,
             user_metadata: {
-                full_name: fullName,
-                role: role,
-                team: team
+                full_name: fullName || '',
+                role: role || 'member'
             }
         });
 
-        if (createError) throw createError;
+        if (createError) {
+            console.error('Error creating user:', createError);
+            return NextResponse.json({ error: createError.message }, { status: 400 });
+        }
 
-        return NextResponse.json({ success: true, user: newUser });
+        // If teamId is provided, add user to the team
+        if (teamId && newUser?.user) {
+            const { error: teamMemberError } = await adminClient
+                .from('team_members')
+                .insert({
+                    user_id: newUser.user.id,
+                    team_id: teamId,
+                    role: teamRole || 'member'
+                });
+
+            if (teamMemberError) {
+                console.error('Error adding to team:', teamMemberError);
+            }
+        }
+
+        return NextResponse.json({
+            message: 'User created successfully',
+            userId: newUser?.user?.id,
+            tempPassword // Include for display to admin
+        }, { status: 201 });
 
     } catch (error) {
-        console.error("Admin Create User Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('Create user error:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

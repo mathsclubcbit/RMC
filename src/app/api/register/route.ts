@@ -91,8 +91,6 @@ export async function POST(req: NextRequest) {
         await appendRowToSheet(spreadsheetId, rowData);
 
         // 5. Generate QR Code and Send Ticket Email
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        const ticketUrl = `${baseUrl}/ticket/${registrationId}`;
 
         // Generate QR code
         const { generateQRCode } = await import('@/lib/qrcode');
@@ -120,7 +118,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             message: 'Registration successful',
             registrationId,
-            ticketUrl,
             qrCode, // QR code as data URL
             driveViewUrl: driveFile.webViewLink
         }, { status: 201 });

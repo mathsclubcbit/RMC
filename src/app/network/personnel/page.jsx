@@ -1,530 +1,732 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { Shield, UserPlus, X, ChevronRight, CheckCircle, Save, AlertTriangle, Key, Settings, Lock, Trash2 } from "lucide-react";
-import Image from "next/image";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
+import NetworkSidebar from "@/components/network/Sidebar";
+import { createClient } from "@/lib/supabase/client";
+import {
+    UserCog,
+    Plus,
+    Search,
+    Trash2,
+    Key,
+    Shield,
+    Users,
+    Loader2,
+    X,
+    Mail,
+    User,
+    ChevronDown,
+    AlertCircle
+} from "lucide-react";
+
+const CORE_COUNCIL_ROLES = [
+    { value: "president", label: "President" },
+    { value: "vice_president", label: "Vice President" },
+    { value: "general_secretary", label: "General Secretary" },
+    { value: "joint_secretary", label: "Joint Secretary" },
+    { value: "faculty", label: "Faculty Advisor" }
+];
+
+const TEAM_ROLES = [
+    { value: "head", label: "Head" },
+    { value: "member", label: "Member" }
+];
 
 export default function PersonnelPage() {
-    const [profile, setProfile] = useState(null);
+    const { profile, canManageMembers, isPresident } = useAuth();
     const [members, setMembers] = useState([]);
+    const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [filterRole, setFilterRole] = useState("all");
     const [showAddModal, setShowAddModal] = useState(false);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [deletingMember, setDeletingMember] = useState(null);
-    const [editingMember, setEditingMember] = useState(null);
-    const [editData, setEditData] = useState({ fullName: '', password: '', role: '' });
-
-    // New User State
-    const [newUser, setNewUser] = useState({
-        email: "",
-        password: "",
-        fullName: "",
-        role: "member",
-        team: "event"
-    });
-    const [createLoading, setCreateLoading] = useState(false);
-    const [createMessage, setCreateMessage] = useState(null);
-
-    const roles = [
-        { id: "president", label: "President" },
-        { id: "vice_president", label: "Vice President" },
-        { id: "general_secretary", label: "General Secretary" },
-        { id: "joint_secretary", label: "Joint Secretary" },
-        { id: "head", label: "Team Head" },
-        { id: "member", label: "Team Member" }
-    ];
-
-    const coreRoles = ["president", "vice_president", "general_secretary", "joint_secretary"];
-
-    const teams = [
-        { id: "council", label: "Core Council" },
-        { id: "event", label: "Event Team" },
-        { id: "content", label: "Content Team" },
-        { id: "visual_media", label: "Visual Media Team" },
-        { id: "pr", label: "PR & Social Media Team" },
-        { id: "tech", label: "Tech Team" }
-    ];
+    const [showCredentialsModal, setShowCredentialsModal] = useState(null);
+    const supabase = createClient();
 
     useEffect(() => {
-        const fetchData = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            // Parallelize Profile and Members fetching
-            const [profileRes, membersRes] = await Promise.all([
-                supabase.from('profiles').select('*').eq('id', user.id).single(),
-                supabase.from('profiles').select('*').order('team', { ascending: true })
-            ]);
-
-            setProfile(profileRes.data);
-            setMembers(membersRes.data || []);
-            setLoading(false);
-        };
         fetchData();
+
+        // Realtime subscription
+        const profilesChannel = supabase
+            .channel("profiles-changes")
+            .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, fetchData)
+            .subscribe();
+
+        const membersChannel = supabase
+            .channel("team-members-changes")
+            .on("postgres_changes", { event: "*", schema: "public", table: "team_members" }, fetchData)
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(profilesChannel);
+            supabase.removeChannel(membersChannel);
+        };
     }, []);
 
-    const hasPresident = members.some(m => m.role === 'president');
+    const fetchData = async () => {
+        try {
+            // Fetch all profiles with their team memberships
+            const { data: profilesData, error: profilesError } = await supabase
+                .from("profiles")
+                .select(`
+                    *,
+                    team_members (
+                        id,
+                        role,
+                        team_id,
+                        teams:team_id (
+                            id,
+                            name,
+                            type
+                        )
+                    )
+                `)
+                .order("created_at", { ascending: false });
 
-    const handleRoleChange = (roleId) => {
-        const isCore = coreRoles.includes(roleId);
-        setNewUser(prev => ({
-            ...prev,
-            role: roleId,
-            team: isCore ? "council" : (prev.team === "council" ? "event" : prev.team)
-        }));
+            if (profilesError) throw profilesError;
+            setMembers(profilesData || []);
+
+            // Fetch teams for the dropdown
+            const { data: teamsData, error: teamsError } = await supabase
+                .from("teams")
+                .select("id, name, type")
+                .order("name");
+
+            if (teamsError) throw teamsError;
+            setTeams(teamsData || []);
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleTeamChange = (teamId) => {
-        const isCouncil = teamId === "council";
-        setNewUser(prev => ({
-            ...prev,
-            team: teamId,
-            role: isCouncil ? "vice_president" : (coreRoles.includes(prev.role) ? "member" : prev.role)
-        }));
-    };
-
-    const handleCreateUser = async (e) => {
-        e.preventDefault();
-        setCreateLoading(true);
-        setCreateMessage(null);
-
-        if (newUser.role === 'president' && hasPresident) {
-            setCreateMessage({ type: 'error', text: "A President already exists in the club." });
-            setCreateLoading(false);
+    const handleDeleteMember = async (memberId, memberEmail) => {
+        if (!confirm(`Are you sure you want to remove "${memberEmail}" from the system? This will also delete their Supabase Auth account.`)) {
             return;
         }
 
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const res = await fetch('/api/admin/create-user', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({
-                    ...newUser,
-                    requesterId: profile.id
-                })
+            // Call admin API to delete user
+            const res = await fetch("/api/admin/delete-user", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: memberId })
             });
 
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error);
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "Failed to delete user");
+            }
 
-            setCreateMessage({ type: 'success', text: `Agent ${newUser.fullName} recruited successfully.` });
-            setNewUser({ email: "", password: "", fullName: "", role: "member", team: "event" });
-
-            const { data: allMembers } = await supabase.from('profiles').select('*').order('team', { ascending: true });
-            setMembers(allMembers || []);
-
-            setTimeout(() => { setShowAddModal(false); setCreateMessage(null); }, 2000);
-        } catch (err) {
-            setCreateMessage({ type: 'error', text: err.message });
-        } finally {
-            setCreateLoading(false);
+            fetchData();
+        } catch (error) {
+            console.error("Error deleting member:", error);
+            alert(error.message);
         }
     };
 
-    const handleUpdateUser = async (e) => {
-        e.preventDefault();
-        setCreateLoading(true);
-        setCreateMessage(null);
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const res = await fetch('/api/admin/update-user', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${session.access_token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    targetUserId: editingMember.id,
-                    fullName: editData.fullName,
-                    password: editData.password,
-                    role: editData.role
-                })
-            });
+    const filteredMembers = members.filter(member => {
+        const matchesSearch =
+            member.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            member.email?.toLowerCase().includes(searchQuery.toLowerCase());
 
-            const data = await res.json();
-            if (data.error) throw new Error(data.error);
+        const matchesRole = filterRole === "all" || member.role === filterRole;
 
-            setMembers(members.map(m => m.id === editingMember.id ? { ...m, full_name: editData.fullName, role: editData.role || m.role } : m));
-            setShowEditModal(false);
-            setEditingMember(null);
-        } catch (err) {
-            setCreateMessage({ type: 'error', text: err.message });
-        } finally {
-            setCreateLoading(false);
-        }
+        return matchesSearch && matchesRole;
+    });
+
+    const getRoleBadge = (role) => {
+        const colors = {
+            president: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+            vice_president: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+            general_secretary: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+            joint_secretary: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+            faculty: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+            head: "bg-teal/20 text-teal border-teal/30",
+            member: "bg-white/10 text-white/60 border-white/20"
+        };
+
+        return colors[role] || colors.member;
     };
 
-    const openEditModal = (member) => {
-        setEditingMember(member);
-        setEditData({ fullName: member.full_name, password: '', role: member.role });
-        setShowEditModal(true);
-        setCreateMessage(null);
+    const formatRole = (role) => {
+        return role.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
     };
 
-    const openDeleteModal = (member) => {
-        setDeletingMember(member);
-        setShowDeleteModal(true);
-    };
-
-    const handleDeleteUser = async () => {
-        if (!deletingMember) return;
-        setCreateLoading(true);
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const res = await fetch('/api/admin/delete-user', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${session.access_token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ targetUserId: deletingMember.id })
-            });
-
-            const data = await res.json();
-            if (data.error) throw new Error(data.error);
-
-            setMembers(members.filter(m => m.id !== deletingMember.id));
-            setShowDeleteModal(false);
-            setDeletingMember(null);
-        } catch (err) {
-            alert("Security Breach: " + err.message);
-        } finally {
-            setCreateLoading(false);
-        }
-    };
-
-    if (loading) return (
-        <div className="flex items-center justify-center py-20 px-8">
-            <div className="text-teal font-mono animate-pulse uppercase tracking-widest text-sm">Loading Members Database...</div>
-        </div>
-    );
-
-    const isPresident = profile?.role === 'president';
-    const isFaculty = profile?.role === 'faculty';
-    const isAdmin = isPresident || isFaculty;
+    if (!canManageMembers() && !isPresident()) {
+        return (
+            <div className="flex min-h-screen">
+                <NetworkSidebar />
+                <main className="flex-1 p-10 flex items-center justify-center">
+                    <div className="text-center">
+                        <Shield className="w-16 h-16 text-red-400/50 mx-auto mb-4" />
+                        <h1 className="text-2xl font-serif text-white mb-2">Access Denied</h1>
+                        <p className="text-white/50">You don't have permission to view personnel.</p>
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
     return (
-        <div className="p-4 md:p-6 lg:p-10 max-w-7xl mx-auto space-y-8 pb-10">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div>
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 md:w-10 md:h-10 bg-teal/10 border border-teal/20 rounded-xl flex items-center justify-center p-1.5 relative">
-                            <Image src="/RMC logo-circular.png" alt="RMC Logo" fill className="object-contain p-1" sizes="40px" />
-                        </div>
-                        <h1 className="text-2xl md:text-3xl font-[family-name:var(--font-cinzel)] font-bold text-white">Team Members</h1>
+        <div className="flex min-h-screen">
+            <NetworkSidebar />
+
+            <main className="flex-1 p-6 lg:p-10 overflow-auto">
+                {/* Header */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8"
+                >
+                    <div>
+                        <h1 className="text-3xl lg:text-4xl font-serif font-bold text-white mb-2">
+                            Personnel
+                        </h1>
+                        <p className="text-white/50">
+                            Manage all club members and their roles
+                        </p>
                     </div>
-                    <p className="text-white/40 font-mono text-[10px] md:text-xs pl-11 md:pl-14">
-                        TOTAL AGENTS: <span className="text-teal">{members.length}</span> // ACCESS: <span className="uppercase text-white/70">{profile?.role}</span>
-                    </p>
-                </div>
 
-                {isAdmin && (
-                    <button
-                        onClick={() => setShowAddModal(true)}
-                        className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-teal hover:bg-teal-400 text-black font-bold rounded-xl shadow-[0_0_20px_rgba(45,212,191,0.2)] transition-all uppercase tracking-wide text-xs group"
-                    >
-                        <UserPlus className="w-4 h-4" />
-                        Recruit Member
-                    </button>
-                )}
-            </div>
+                    {canManageMembers() && (
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            className="flex items-center gap-2 px-5 py-3 bg-teal text-black font-bold rounded-xl hover:bg-teal/80 transition-colors"
+                        >
+                            <Plus className="w-5 h-5" />
+                            Add Member
+                        </button>
+                    )}
+                </motion.div>
 
-            {/* Team Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {teams.map(team => {
-                    const teamMembers = members.filter(m => m.team === team.id);
-                    if (teamMembers.length === 0) return null;
+                {/* Filters */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="flex flex-col md:flex-row gap-4 mb-6"
+                >
+                    {/* Search */}
+                    <div className="relative flex-1">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search by name or email..."
+                            className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white placeholder-white/20 focus:border-teal/50 outline-none"
+                        />
+                    </div>
 
-                    return (
-                        <div key={team.id} className="bg-white/5 border border-white/10 rounded-3xl p-6 relative overflow-hidden group hover:border-teal/30 transition-all">
-                            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 font-[family-name:var(--font-cinzel)]">
-                                {team.label} <span className="text-[10px] bg-white/10 px-2 py-1 rounded-full font-mono text-teal">{teamMembers.length}</span>
-                            </h3>
-                            <div className="space-y-3">
-                                {teamMembers.map(member => (
-                                    <div key={member.id} className="flex items-center gap-3 p-3 bg-black/40 rounded-xl border border-white/5 hover:border-teal/20 transition-colors group/item">
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center text-[10px] font-bold text-white/70">
-                                            {member.full_name?.[0]?.toUpperCase()}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-bold text-white truncate group-hover/item:text-teal transition-colors">{member.full_name}</p>
-                                            <p className="text-[10px] text-white/40 uppercase font-mono">{member.role?.replace('_', ' ')}</p>
-                                        </div>
-                                        {isAdmin && member.role !== 'faculty' && (
-                                            <div className="flex gap-1">
-                                                <button
-                                                    onClick={() => openEditModal(member)}
-                                                    className="p-2 text-white/20 hover:text-teal opacity-0 group-hover/item:opacity-100 transition-all"
-                                                    title="Edit Member"
-                                                >
-                                                    <Settings className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button
-                                                    onClick={() => openDeleteModal(member)}
-                                                    className="p-2 text-white/20 hover:text-red-500 opacity-0 group-hover/item:opacity-100 transition-all"
-                                                    title="Remove Member"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
+                    {/* Role Filter */}
+                    <div className="relative">
+                        <select
+                            value={filterRole}
+                            onChange={(e) => setFilterRole(e.target.value)}
+                            className="appearance-none bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-10 text-white focus:border-teal/50 outline-none min-w-[180px]"
+                        >
+                            <option value="all">All Roles</option>
+                            <optgroup label="Core Council">
+                                {CORE_COUNCIL_ROLES.map(role => (
+                                    <option key={role.value} value={role.value}>{role.label}</option>
                                 ))}
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
+                            </optgroup>
+                            <optgroup label="Team Roles">
+                                {TEAM_ROLES.map(role => (
+                                    <option key={role.value} value={role.value}>{role.label}</option>
+                                ))}
+                            </optgroup>
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none" />
+                    </div>
+                </motion.div>
 
-            {/* Recruitment Modal remains same logic ... */}
+                {/* Members Table */}
+                {loading ? (
+                    <div className="flex items-center justify-center py-20">
+                        <Loader2 className="w-10 h-10 text-teal animate-spin" />
+                    </div>
+                ) : filteredMembers.length === 0 ? (
+                    <div className="text-center py-20">
+                        <Users className="w-16 h-16 text-white/10 mx-auto mb-4" />
+                        <h3 className="text-xl text-white/50 mb-2">No Members Found</h3>
+                        <p className="text-white/30">Try adjusting your search or filters</p>
+                    </div>
+                ) : (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="bg-gray-900/40 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden"
+                    >
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="border-b border-white/5">
+                                        <th className="text-left px-6 py-4 text-[10px] uppercase tracking-widest text-white/40 font-mono">Member</th>
+                                        <th className="text-left px-6 py-4 text-[10px] uppercase tracking-widest text-white/40 font-mono">Role</th>
+                                        <th className="text-left px-6 py-4 text-[10px] uppercase tracking-widest text-white/40 font-mono">Team(s)</th>
+                                        {canManageMembers() && (
+                                            <th className="text-right px-6 py-4 text-[10px] uppercase tracking-widest text-white/40 font-mono">Actions</th>
+                                        )}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredMembers.map((member, index) => (
+                                        <tr
+                                            key={member.id}
+                                            className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
+                                        >
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-gradient-to-br from-teal/20 to-purple-500/20 rounded-full flex items-center justify-center">
+                                                        <span className="text-white font-bold text-sm">
+                                                            {member.full_name?.[0] || member.email?.[0] || "?"}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-white font-medium">{member.full_name || "Unnamed"}</p>
+                                                        <p className="text-white/40 text-sm">{member.email}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-block px-2 py-1 text-[10px] uppercase tracking-widest rounded-full border ${getRoleBadge(member.role)}`}>
+                                                    {formatRole(member.role)}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-wrap gap-1">
+                                                    {member.team_members?.length > 0 ? (
+                                                        member.team_members.map(tm => (
+                                                            <span
+                                                                key={tm.id}
+                                                                className={`inline-block px-2 py-0.5 text-xs rounded ${tm.teams?.type === "fest"
+                                                                        ? "bg-purple-500/20 text-purple-400"
+                                                                        : "bg-teal/20 text-teal"
+                                                                    }`}
+                                                            >
+                                                                {tm.teams?.name} {tm.role === "head" && "(Head)"}
+                                                            </span>
+                                                        ))
+                                                    ) : (
+                                                        <span className="text-white/30 text-sm">—</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            {canManageMembers() && (
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <button
+                                                            onClick={() => setShowCredentialsModal(member)}
+                                                            className="p-2 text-white/40 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
+                                                            title="Reset Password"
+                                                        >
+                                                            <Key className="w-4 h-4" />
+                                                        </button>
+                                                        {member.id !== profile?.id && (
+                                                            <button
+                                                                onClick={() => handleDeleteMember(member.id, member.email)}
+                                                                className="p-2 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                                title="Remove Member"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </motion.div>
+                )}
+            </main>
+
+            {/* Add Member Modal */}
             <AnimatePresence>
                 {showAddModal && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.95, y: 20 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.95, y: 20 }}
-                            className="w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden shadow-2xl shadow-teal/10"
-                        >
-                            <div className="p-5 md:p-6 border-b border-white/10 flex justify-between items-center">
-                                <h2 className="text-xl font-bold text-white font-[family-name:var(--font-cinzel)] flex items-center gap-2">
-                                    <UserPlus className="w-5 h-5 text-teal" /> New Recruitment
-                                </h2>
-                                <button onClick={() => setShowAddModal(false)} className="text-white/40 hover:text-white transition-colors">
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleCreateUser} className="p-6 md:p-8 space-y-4">
-                                {createMessage && (
-                                    <div className={`p-4 rounded-xl text-xs font-mono border ${createMessage.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-green-500/10 border-green-500/20 text-green-400'}`}>
-                                        {createMessage.text}
-                                    </div>
-                                )}
-
-                                <div className="space-y-1">
-                                    <label className="text-[10px] uppercase text-white/50 font-mono tracking-widest pl-2">Full Name</label>
-                                    <input
-                                        type="text" required
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal outline-none transition-all"
-                                        placeholder="Full Name"
-                                        value={newUser.fullName}
-                                        onChange={e => setNewUser({ ...newUser, fullName: e.target.value })}
-                                    />
-                                </div>
-
-                                <div className="space-y-1">
-                                    <label className="text-[10px] uppercase text-white/50 font-mono tracking-widest pl-2">Email Address</label>
-                                    <input
-                                        type="email" required
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal outline-none transition-all"
-                                        placeholder="email@example.com"
-                                        value={newUser.email}
-                                        onChange={e => setNewUser({ ...newUser, email: e.target.value })}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] uppercase text-white/50 font-mono tracking-widest pl-2">Designation</label>
-                                        <div className="relative group">
-                                            <select
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal outline-none appearance-none transition-all cursor-pointer"
-                                                value={newUser.role}
-                                                onChange={e => handleRoleChange(e.target.value)}
-                                            >
-                                                {roles.filter(r => {
-                                                    if (r.id === 'president' && hasPresident) return false;
-                                                    if (newUser.team === 'council') return coreRoles.includes(r.id);
-                                                    return !coreRoles.includes(r.id);
-                                                }).map(r => <option key={r.id} value={r.id} className="bg-[#0a0a0a] text-white">{r.label}</option>)}
-                                            </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/20 group-hover:text-teal transition-colors">
-                                                <ChevronRight className="w-4 h-4 rotate-90" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] uppercase text-white/50 font-mono tracking-widest pl-2">Team</label>
-                                        <div className="relative group">
-                                            <select
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal outline-none appearance-none transition-all cursor-pointer"
-                                                value={newUser.team}
-                                                onChange={e => handleTeamChange(e.target.value)}
-                                            >
-                                                {teams.filter(t => {
-                                                    if (coreRoles.includes(newUser.role)) return t.id === 'council';
-                                                    return t.id !== 'council';
-                                                }).map(t => <option key={t.id} value={t.id} className="bg-[#0a0a0a] text-white">{t.label}</option>)}
-                                            </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/20 group-hover:text-teal transition-colors">
-                                                <ChevronRight className="w-4 h-4 rotate-90" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-1">
-                                    <label className="text-[10px] uppercase text-white/50 font-mono tracking-widest pl-2">Password</label>
-                                    <input
-                                        type="password" required
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal outline-none transition-all"
-                                        placeholder="••••••••"
-                                        value={newUser.password}
-                                        onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                                    />
-                                </div>
-
-                                <button
-                                    type="submit" disabled={createLoading}
-                                    className="w-full py-4 bg-teal hover:bg-[#2dcdc2] text-black font-bold rounded-xl uppercase tracking-widest transition-all mt-4 disabled:opacity-50 shadow-[0_4px_20px_rgba(58,188,179,0.2)]"
-                                >
-                                    {createLoading ? "Recruiting..." : "Confirm Recruit"}
-                                </button>
-                            </form>
-                        </motion.div>
-                    </motion.div>
+                    <AddMemberModal
+                        teams={teams}
+                        onClose={() => setShowAddModal(false)}
+                        onSuccess={() => {
+                            setShowAddModal(false);
+                            fetchData();
+                        }}
+                    />
                 )}
+            </AnimatePresence>
 
-                {showEditModal && (
-                    <motion.div
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-                            className="w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl shadow-teal/5"
-                        >
-                            <div className="flex justify-between items-center mb-8 pb-4 border-b border-white/10">
-                                <h2 className="text-xl font-bold font-[family-name:var(--font-cinzel)] flex items-center gap-3">
-                                    <Settings className="w-5 h-5 text-teal" /> Edit Agent
-                                </h2>
-                                <button onClick={() => setShowEditModal(false)} className="text-white/40 hover:text-white transition-colors">
-                                    <X className="w-6 h-6" />
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleUpdateUser} className="space-y-6">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] uppercase text-white/50 font-mono tracking-widest pl-2">Full Name</label>
-                                    <input
-                                        type="text" required
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal outline-none transition-all"
-                                        value={editData.fullName}
-                                        onChange={e => setEditData({ ...editData, fullName: e.target.value })}
-                                    />
-                                </div>
-
-                                <div className="space-y-1">
-                                    <label className="text-[10px] uppercase text-white/50 font-mono tracking-widest pl-2">Change Password</label>
-                                    <div className="relative">
-                                        <input
-                                            type="password"
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal outline-none transition-all pr-10"
-                                            placeholder="Leave blank to keep current"
-                                            value={editData.password}
-                                            onChange={e => setEditData({ ...editData, password: e.target.value })}
-                                        />
-                                        <Lock className="w-4 h-4 text-white/20 absolute right-4 top-1/2 -translate-y-1/2" />
-                                    </div>
-                                    <p className="text-[9px] text-white/30 px-2 mt-1 italic leading-tight">Current passwords are hidden for security.</p>
-                                </div>
-
-                                {isFaculty && (
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] uppercase text-white/50 font-mono tracking-widest pl-2">Assign Role</label>
-                                        <div className="relative group">
-                                            <select
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-teal outline-none appearance-none transition-all cursor-pointer"
-                                                value={editData.role}
-                                                onChange={e => setEditData({ ...editData, role: e.target.value })}
-                                            >
-                                                {roles.map(r => (
-                                                    <option key={r.id} value={r.id} className="bg-[#0a0a0a] text-white">{r.label}</option>
-                                                ))}
-                                            </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/20 group-hover:text-teal transition-colors">
-                                                <ChevronRight className="w-4 h-4 rotate-90" />
-                                            </div>
-                                        </div>
-                                        <p className="text-[9px] text-amber-500/50 px-2 mt-1 italic leading-tight">Note: There can be only one President.</p>
-                                    </div>
-                                )}
-
-                                {createMessage && (
-                                    <div className={`p-4 rounded-xl text-xs font-mono uppercase ${createMessage.type === 'error' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-teal/10 text-teal border border-teal/20'}`}>
-                                        {createMessage.text}
-                                    </div>
-                                )}
-
-                                <button
-                                    type="submit" disabled={createLoading}
-                                    className="w-full py-4 bg-teal hover:bg-[#2dcdc2] text-black font-bold rounded-xl uppercase tracking-widest transition-all mt-4 disabled:opacity-50 shadow-[0_4px_20px_rgba(45,212,191,0.2)]"
-                                >
-                                    {createLoading ? "Saving..." : "Update Credentials"}
-                                </button>
-                            </form>
-                        </motion.div>
-                    </motion.div>
-                )}
-
-                {showDeleteModal && deletingMember && (
-                    <motion.div
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-                            className="w-full max-w-md bg-[#0a0a0a] border border-red-500/20 rounded-3xl p-6 md:p-8 shadow-2xl shadow-red-500/10"
-                        >
-                            <div className="flex flex-col items-center text-center space-y-4">
-                                <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/20">
-                                    <AlertTriangle className="w-8 h-8 text-red-500 animate-pulse" />
-                                </div>
-
-                                <div>
-                                    <h2 className="text-xl font-bold font-[family-name:var(--font-cinzel)] text-white mb-2 uppercase tracking-widest">
-                                        Remove Member
-                                    </h2>
-                                    <p className="text-white/40 text-xs font-mono leading-relaxed">
-                                        Are you sure you want to remove <span className="text-white font-bold underline">{deletingMember.full_name}</span>?
-                                        This will immediately revoke their access to the portal.
-                                    </p>
-                                </div>
-
-                                <div className="w-full grid grid-cols-2 gap-4 pt-4">
-                                    <button
-                                        onClick={() => setShowDeleteModal(false)}
-                                        className="py-3 border border-white/10 rounded-xl text-xs text-white/60 hover:text-white hover:bg-white/5 font-bold uppercase transition-all"
-                                    >
-                                        Abort
-                                    </button>
-                                    <button
-                                        onClick={handleDeleteUser}
-                                        disabled={createLoading}
-                                        className="py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs uppercase transition-all shadow-lg shadow-red-600/20 disabled:opacity-50"
-                                    >
-                                        {createLoading ? "Removing..." : "Confirm Removal"}
-                                    </button>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </motion.div>
+            {/* Credentials Modal */}
+            <AnimatePresence>
+                {showCredentialsModal && (
+                    <CredentialsModal
+                        member={showCredentialsModal}
+                        onClose={() => setShowCredentialsModal(null)}
+                    />
                 )}
             </AnimatePresence>
         </div>
+    );
+}
+
+function AddMemberModal({ teams, onClose, onSuccess }) {
+    const { profile } = useAuth();
+    const [email, setEmail] = useState("");
+    const [fullName, setFullName] = useState("");
+    const [role, setRole] = useState("member");
+    const [teamId, setTeamId] = useState("");
+    const [teamRole, setTeamRole] = useState("member");
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState("");
+
+    const isCoreCouncilRole = CORE_COUNCIL_ROLES.some(r => r.value === role);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+
+        if (!email.trim()) {
+            setError("Email is required");
+            return;
+        }
+
+        if (!isCoreCouncilRole && !teamId) {
+            setError("Please select a team for this member");
+            return;
+        }
+
+        setSaving(true);
+
+        try {
+            const res = await fetch("/api/admin/create-user", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: email.trim().toLowerCase(),
+                    fullName: fullName.trim(),
+                    role,
+                    teamId: isCoreCouncilRole ? null : teamId,
+                    teamRole: isCoreCouncilRole ? null : teamRole
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "Failed to create user");
+            }
+
+            onSuccess();
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        >
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl w-full max-w-md overflow-hidden max-h-[90vh] overflow-y-auto"
+            >
+                {/* Modal Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 sticky top-0 bg-gray-900/95 backdrop-blur-xl">
+                    <h2 className="text-xl font-serif font-bold text-white">Add New Member</h2>
+                    <button onClick={onClose} className="text-white/50 hover:text-white">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {/* Modal Body */}
+                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                    {error && (
+                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                            {error}
+                        </div>
+                    )}
+
+                    {/* Email */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
+                            Email Address *
+                        </label>
+                        <div className="relative">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="member@cbit.ac.in"
+                                required
+                                className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white placeholder-white/20 focus:border-teal/50 outline-none"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Full Name */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
+                            Full Name
+                        </label>
+                        <div className="relative">
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
+                            <input
+                                type="text"
+                                value={fullName}
+                                onChange={(e) => setFullName(e.target.value)}
+                                placeholder="John Doe"
+                                className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white placeholder-white/20 focus:border-teal/50 outline-none"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Role Selection */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
+                            Role *
+                        </label>
+                        <select
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)}
+                            className="w-full appearance-none bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-teal/50 outline-none"
+                        >
+                            <optgroup label="Core Council">
+                                {CORE_COUNCIL_ROLES.map(r => (
+                                    <option key={r.value} value={r.value}>{r.label}</option>
+                                ))}
+                            </optgroup>
+                            <optgroup label="Team Roles">
+                                {TEAM_ROLES.map(r => (
+                                    <option key={r.value} value={r.value}>{r.label}</option>
+                                ))}
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    {/* Team Selection (Hidden for Core Council) */}
+                    {!isCoreCouncilRole && (
+                        <>
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
+                                    Assign to Team *
+                                </label>
+                                <select
+                                    value={teamId}
+                                    onChange={(e) => setTeamId(e.target.value)}
+                                    required
+                                    className="w-full appearance-none bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-teal/50 outline-none"
+                                >
+                                    <option value="">Select a team...</option>
+                                    {teams.map(team => (
+                                        <option key={team.id} value={team.id}>
+                                            {team.name} ({team.type === "fest" ? "Fest" : "General"})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
+                                    Team Role
+                                </label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setTeamRole("member")}
+                                        className={`px-4 py-3 rounded-xl border transition-all ${teamRole === "member"
+                                                ? "bg-teal/10 border-teal/50 text-teal"
+                                                : "bg-white/5 border-white/10 text-white/50"
+                                            }`}
+                                    >
+                                        Member
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setTeamRole("head")}
+                                        className={`px-4 py-3 rounded-xl border transition-all ${teamRole === "head"
+                                                ? "bg-yellow-500/10 border-yellow-500/50 text-yellow-400"
+                                                : "bg-white/5 border-white/10 text-white/50"
+                                            }`}
+                                    >
+                                        Head
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    <p className="text-white/30 text-xs">
+                        A temporary password will be generated. You can share it with the member or reset it later.
+                    </p>
+
+                    {/* Submit */}
+                    <button
+                        type="submit"
+                        disabled={saving}
+                        className="w-full bg-teal text-black font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-teal/80 transition-colors disabled:opacity-50"
+                    >
+                        {saving ? (
+                            <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                Creating...
+                            </>
+                        ) : (
+                            <>
+                                <Plus className="w-5 h-5" />
+                                Add Member
+                            </>
+                        )}
+                    </button>
+                </form>
+            </motion.div>
+        </motion.div>
+    );
+}
+
+function CredentialsModal({ member, onClose }) {
+    const [newPassword, setNewPassword] = useState("");
+    const [saving, setSaving] = useState(false);
+    const [success, setSuccess] = useState(false);
+    const [error, setError] = useState("");
+
+    const handleResetPassword = async () => {
+        if (!newPassword || newPassword.length < 6) {
+            setError("Password must be at least 6 characters");
+            return;
+        }
+
+        setSaving(true);
+        setError("");
+
+        try {
+            const res = await fetch("/api/admin/update-credentials", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userId: member.id,
+                    newPassword
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "Failed to update password");
+            }
+
+            setSuccess(true);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        >
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl w-full max-w-md overflow-hidden"
+            >
+                {/* Modal Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+                    <h2 className="text-xl font-serif font-bold text-white">Reset Password</h2>
+                    <button onClick={onClose} className="text-white/50 hover:text-white">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {/* Modal Body */}
+                <div className="p-6 space-y-5">
+                    <div className="flex items-center gap-3 p-4 bg-white/5 rounded-xl">
+                        <div className="w-10 h-10 bg-gradient-to-br from-teal/20 to-purple-500/20 rounded-full flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">
+                                {member.full_name?.[0] || member.email?.[0] || "?"}
+                            </span>
+                        </div>
+                        <div>
+                            <p className="text-white font-medium">{member.full_name || "Unnamed"}</p>
+                            <p className="text-white/40 text-sm">{member.email}</p>
+                        </div>
+                    </div>
+
+                    {success ? (
+                        <div className="text-center py-4">
+                            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Key className="w-8 h-8 text-green-400" />
+                            </div>
+                            <h3 className="text-lg text-white font-medium mb-2">Password Updated!</h3>
+                            <p className="text-white/50 text-sm">The new password has been set successfully.</p>
+                        </div>
+                    ) : (
+                        <>
+                            {error && (
+                                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                                    {error}
+                                </div>
+                            )}
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
+                                    New Password
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder="Enter new password"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:border-teal/50 outline-none"
+                                />
+                                <p className="text-white/30 text-xs">Minimum 6 characters</p>
+                            </div>
+
+                            <button
+                                onClick={handleResetPassword}
+                                disabled={saving}
+                                className="w-full bg-teal text-black font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-teal/80 transition-colors disabled:opacity-50"
+                            >
+                                {saving ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        Updating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Key className="w-5 h-5" />
+                                        Reset Password
+                                    </>
+                                )}
+                            </button>
+                        </>
+                    )}
+                </div>
+            </motion.div>
+        </motion.div>
     );
 }
