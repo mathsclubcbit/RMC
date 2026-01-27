@@ -10,6 +10,26 @@ export async function middleware(request) {
     let supabaseResponse = NextResponse.next({ request });
 
     // ==========================================
+    // 0. ADMIN SESSION PROTECTION FOR /admin ROUTES
+    // ==========================================
+    if (request.nextUrl.pathname.startsWith('/admin')) {
+        const isLoginPage = request.nextUrl.pathname === '/admin/login';
+        const isLoggedIn = request.cookies.get('admin_session')?.value === 'true';
+
+        if (!isLoginPage && !isLoggedIn) {
+            const url = request.nextUrl.clone();
+            url.pathname = '/admin/login';
+            return NextResponse.redirect(url);
+        }
+
+        if (isLoginPage && isLoggedIn) {
+            const url = request.nextUrl.clone();
+            url.pathname = '/admin/scan';
+            return NextResponse.redirect(url);
+        }
+    }
+
+    // ==========================================
     // 1. RATE LIMITING FOR API ROUTES
     // ==========================================
     if (request.nextUrl.pathname.startsWith('/api')) {
@@ -99,6 +119,7 @@ export async function middleware(request) {
 export const config = {
     matcher: [
         '/api/:path*',
+        '/admin/:path*',
         '/network/:path*',
     ],
 };

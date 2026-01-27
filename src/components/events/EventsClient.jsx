@@ -1,17 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import SectionTitle from "@/components/ui/SectionTitle";
 import EventsList from "@/components/ui/EventsList"; // Fallback/Alternative view
 import Link from "next/link";
-import { upcomingEvents } from "@/data/upcomingEvents";
-import { eventsData } from "@/data/eventsData";
 import TimeWarpHero from "@/components/events/TimeWarpHero";
 import Timeline from "@/components/ui/Timeline";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function EventsClient() {
     const [activeTab, setActiveTab] = useState("upcoming");
+    const [events, setEvents] = useState([]);
+
+    useEffect(() => {
+        fetch("/api/events")
+            .then((res) => res.json())
+            .then((data) => setEvents(Array.isArray(data) ? data : []))
+            .catch(() => setEvents([]));
+    }, []);
+
+    const { upcomingEvents, pastEvents } = useMemo(() => {
+        const today = new Date().toISOString().slice(0, 10);
+        const normalized = (events || []).map((e) => ({
+            ...e,
+            date: e?.startDate || e?.date || "",
+        }));
+
+        const upcoming = normalized
+            .filter((e) => String(e?.date || "") >= today)
+            .sort((a, b) => String(a?.date || "").localeCompare(String(b?.date || "")));
+
+        const past = normalized
+            .filter((e) => e?.date && String(e?.date || "") < today)
+            .sort((a, b) => String(b?.date || "").localeCompare(String(a?.date || "")));
+
+        return { upcomingEvents: upcoming, pastEvents: past };
+    }, [events]);
 
     // Transform upcoming events for Timeline
     const upcomingTimelineItems = upcomingEvents.map(e => ({
@@ -19,19 +43,19 @@ export default function EventsClient() {
         title: e.title,
         description: e.description,
         category: e.category,
-        href: e.status === "Registration Open" ? `/register/${e.id}` : null,
-        ctaLabel: e.status === "Registration Open" ? "Register Now" : "Details"
+        href: (e.status || "").toLowerCase().includes("open") ? `/register/${e.id}` : null,
+        ctaLabel: (e.status || "").toLowerCase().includes("open") ? "Register Now" : "Details"
     }));
 
     // Transform archive events for Timeline (reversed order for latest first)
     // Taking last 20 for performance in timeline view
-    const archiveTimelineItems = [...eventsData].reverse().slice(0, 20).map(e => ({
+    const archiveTimelineItems = [...pastEvents].slice(0, 20).map(e => ({
         date: e.date,
         title: e.title,
         description: e.description || `Participants: ${e.participants}`,
         category: e.category,
-        href: e.links && e.links.length > 0 ? e.links[0] : null,
-        ctaLabel: "View Resources"
+        href: null,
+        ctaLabel: "Details"
     }));
 
     return (

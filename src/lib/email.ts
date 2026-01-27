@@ -124,7 +124,7 @@ const generateTicketEmailHTML = (data: TicketEmailData, qrCodeDataUrl: string): 
                                             </tr>
                                             <tr>
                                                 <td style="padding: 8px 0;">
-                                                    <span style="color: #64748b; font-size: 13px;">Registration ID</span><br>
+                                                    <span style="color: #64748b; font-size: 13px;">Ticket Code</span><br>
                                                     <span style="color: #14b8a6; font-size: 14px; font-family: 'Courier New', monospace; background: rgba(20, 184, 166, 0.1); padding: 4px 8px; border-radius: 4px;">${data.registrationId}</span>
                                                 </td>
                                             </tr>

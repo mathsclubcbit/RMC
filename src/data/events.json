@@ -58,5 +58,27 @@
         "year": "2025-26",
         "password": "safesefrmc2026",
         "img": "/assets/events/paper-presentation.jpg"
+    },
+    {
+        "id": "mkwm4bf5bdcpkf",
+        "title": "MATH-HEIST",
+        "date": "2026-02-17",
+        "time": "09:00 - 04:00",
+        "location": "SEMINAR HALL",
+        "category": "Competition",
+        "status": "Registration Open",
+        "description": "NA LAWADA",
+        "participants": 0,
+        "year": "2025-26",
+        "registrationFee": "200",
+        "password": "heist@2026",
+        "teamSize": 3,
+        "regStartDate": "2026-01-24",
+        "regEndDate": "2026-02-18",
+        "isOneDay": true,
+        "startDate": "2026-02-17",
+        "startTime": "09:00",
+        "endTime": "04:00",
+        "img": "/assets/events/paper-presentation.jpg"
     }
 ]
