@@ -9,6 +9,10 @@ function hasSupabaseConfig() {
     return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
+function isMissingTableError(error) {
+    return Boolean(error && (error.code === 'PGRST205' || String(error.message || '').includes("Could not find the table 'public.events'")));
+}
+
 function requireAdmin(request) {
     const isLoggedIn = request.cookies.get('admin_session')?.value === 'true';
     if (!isLoggedIn) {
@@ -94,6 +98,12 @@ export async function PUT(request, { params }) {
             .single();
 
         if (existingError || !existing) {
+            if (isMissingTableError(existingError)) {
+                return NextResponse.json(
+                    { error: "Supabase table 'public.events' is missing. Run the SQL in supabase/schema.sql to create it." },
+                    { status: 500 }
+                );
+            }
             return NextResponse.json({ error: 'Event not found' }, { status: 404 });
         }
 
@@ -105,6 +115,9 @@ export async function PUT(request, { params }) {
         }
         next.date = effectiveDate;
 
+        /** @type {string[]} */
+        const uploadErrors = [];
+
         const uploadOne = async (file, field) => {
             const ext = String(file.name || 'image').split('.').pop() || 'png';
             const objectPath = `events/${String(id)}/${field}-${Date.now()}.${ext}`;
@@ -114,22 +127,28 @@ export async function PUT(request, { params }) {
                     contentType: file.type || 'application/octet-stream',
                     upsert: true,
                 });
-            if (uploadError) throw uploadError;
+
+            if (uploadError) {
+                const msg = String(uploadError.message || uploadError.error || uploadError);
+                uploadErrors.push(`${field}: ${msg}`);
+                return null;
+            }
+
             const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(objectPath);
-            return data.publicUrl;
+            return data?.publicUrl || null;
         };
 
         if (files.imgFile) {
             const url = await uploadOne(files.imgFile, 'img');
-            next.img = url;
+            if (url) next.img = url;
         }
         if (files.posterDesktopFile) {
             const url = await uploadOne(files.posterDesktopFile, 'posterDesktop');
-            next.posterDesktop = url;
+            if (url) next.posterDesktop = url;
         }
         if (files.posterMobileFile) {
             const url = await uploadOne(files.posterMobileFile, 'posterMobile');
-            next.posterMobile = url;
+            if (url) next.posterMobile = url;
         }
 
         const { data: updated, error } = await supabase
@@ -138,13 +157,18 @@ export async function PUT(request, { params }) {
                 title: next.title,
                 date: next.date,
                 payload: next,
-                updated_at: new Date().toISOString(),
             })
             .eq('id', String(id))
             .select('id,title,date,payload,created_at,updated_at')
             .single();
 
         if (error || !updated) {
+            if (isMissingTableError(error)) {
+                return NextResponse.json(
+                    { error: "Supabase table 'public.events' is missing. Run the SQL in supabase/schema.sql to create it." },
+                    { status: 500 }
+                );
+            }
             console.error('Error updating event (Supabase):', error);
             return NextResponse.json({ error: 'Failed to update event' }, { status: 500 });
         }
@@ -157,6 +181,10 @@ export async function PUT(request, { params }) {
             createdAt: updated.created_at,
             updatedAt: updated.updated_at,
         };
+
+        if (uploadErrors.length) {
+            return NextResponse.json({ ...responseEvent, uploadErrors });
+        }
 
         return NextResponse.json(responseEvent);
     } catch (error) {
@@ -183,6 +211,12 @@ export async function DELETE(request, { params }) {
             .eq('id', String(id));
 
         if (error) {
+            if (isMissingTableError(error)) {
+                return NextResponse.json(
+                    { error: "Supabase table 'public.events' is missing. Run the SQL in supabase/schema.sql to create it." },
+                    { status: 500 }
+                );
+            }
             console.error('Error deleting event (Supabase):', error);
             return NextResponse.json({ error: 'Failed to delete event' }, { status: 500 });
         }

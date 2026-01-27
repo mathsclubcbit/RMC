@@ -206,6 +206,14 @@ CREATE POLICY "Only president can manage delegated permissions"
 -- These events are managed by the custom admin panel (cookie-based auth)
 -- via server-side service role key. We keep the schema minimal and store
 -- the flexible event shape as JSONB.
+--
+-- Common payload fields used by the web app:
+-- - registrationFee: number|string (fixed price; ignored if variablePricingEnabled)
+-- - minTeamSize: number (minimum participants including leader)
+-- - maxTeamSize: number (maximum participants including leader)
+-- - variablePricingEnabled: boolean
+-- - pricingTiers: [{ teamSize: number, price: number }]
+--   where teamSize is the total participants including leader and price is total amount.
 
 CREATE TABLE IF NOT EXISTS public.events (
     id TEXT PRIMARY KEY,

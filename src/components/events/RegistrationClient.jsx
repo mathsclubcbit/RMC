@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, CheckCircle, Upload, User, Mail, Hash, Briefcase, FileText, CreditCard, Users, ChevronRight, ChevronLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle, Upload, FileText, Users } from "lucide-react";
+import TicketDownloadButton from "./TicketDownloadButton";
 
 export default function RegistrationClient({ eventId }) {
     // Event State
@@ -33,6 +34,59 @@ export default function RegistrationClient({ eventId }) {
 
     const fileInputRef = useRef(null);
 
+    const teamConstraints = (() => {
+        const legacy = Number(event?.teamSize);
+        const min = Number(event?.minTeamSize);
+        const max = Number(event?.maxTeamSize);
+
+        // Backward compatibility: if min/max not set, fall back to legacy teamSize.
+        if (Number.isFinite(min) || Number.isFinite(max)) {
+            return {
+                minTeamSize: Number.isFinite(min) && min > 0 ? min : 1,
+                maxTeamSize: Number.isFinite(max) && max > 0 ? max : (Number.isFinite(min) && min > 0 ? min : 1),
+            };
+        }
+
+        if (Number.isFinite(legacy) && legacy > 0) {
+            return { minTeamSize: legacy, maxTeamSize: legacy };
+        }
+
+        return { minTeamSize: 1, maxTeamSize: 1 };
+    })();
+
+    const requiresTeamStep = teamConstraints.maxTeamSize > 1;
+    const currentTeamSize = 1 + (Array.isArray(teamMembers) ? teamMembers.length : 0);
+
+    const computeAmountForTeamSize = (teamSize) => {
+        const parseAmount = (value) => {
+            if (value == null) return 0;
+            if (typeof value === 'number' && Number.isFinite(value)) return value;
+            const raw = String(value);
+            const cleaned = raw.replace(/[^0-9.]/g, '');
+            const n = Number(cleaned);
+            return Number.isFinite(n) ? n : 0;
+        };
+
+        const enabled = !!event?.variablePricingEnabled;
+        if (!enabled) {
+            return parseAmount(event?.registrationFee);
+        }
+
+        const tiers = Array.isArray(event?.pricingTiers) ? event.pricingTiers : [];
+        const match = tiers.find((t) => Number(t?.teamSize) === Number(teamSize));
+        return parseAmount(match?.price);
+    };
+
+    const qrImageSrc = event?.qrCode || event?.qr || event?.qrImage || event?.qr_code || event?.qrcode || null;
+
+    const hasPricingTierForCurrentTeamSize = (() => {
+        if (!event?.variablePricingEnabled) return true;
+        const tiers = Array.isArray(event?.pricingTiers) ? event.pricingTiers : [];
+        return Boolean(tiers.find((t) => Number(t?.teamSize) === Number(currentTeamSize)));
+    })();
+
+    const amountToPay = computeAmountForTeamSize(currentTeamSize);
+
     // Fetch Event
     useEffect(() => {
         if (eventId) {
@@ -52,15 +106,39 @@ export default function RegistrationClient({ eventId }) {
 
     // Init Team
     useEffect(() => {
-        if (event && event.teamSize > 1) {
-            const membersCount = event.teamSize - 1;
-            const initialMembers = Array.from({ length: membersCount }, () => ({
-                name: "",
-                rollNo: ""
-            }));
-            setTeamMembers(initialMembers);
+        if (!event) return;
+
+        // Initialize to min team size (excluding leader).
+        if (teamConstraints.maxTeamSize > 1) {
+            const minMembers = Math.max(0, (teamConstraints.minTeamSize || 1) - 1);
+            setTeamMembers((prev) => {
+                if (Array.isArray(prev) && prev.length >= minMembers) return prev;
+                const initialMembers = Array.from({ length: minMembers }, () => ({ name: "", rollNo: "" }));
+                return initialMembers;
+            });
+        } else {
+            setTeamMembers([]);
         }
-    }, [event]);
+    }, [event, teamConstraints.maxTeamSize, teamConstraints.minTeamSize]);
+
+    const addTeammate = () => {
+        const maxMembers = Math.max(0, teamConstraints.maxTeamSize - 1);
+        setTeamMembers((prev) => {
+            const current = Array.isArray(prev) ? prev : [];
+            if (current.length >= maxMembers) return current;
+            return [...current, { name: "", rollNo: "" }];
+        });
+    };
+
+    const removeTeammate = (idx) => {
+        const minMembers = Math.max(0, teamConstraints.minTeamSize - 1);
+        setTeamMembers((prev) => {
+            const current = Array.isArray(prev) ? [...prev] : [];
+            if (current.length <= minMembers) return current;
+            current.splice(idx, 1);
+            return current;
+        });
+    };
 
     // Handlers
     const handleFileChange = (e) => {
@@ -88,6 +166,14 @@ export default function RegistrationClient({ eventId }) {
 
         if (step === 2) {
             // Team Validation
+            if (currentTeamSize < teamConstraints.minTeamSize) {
+                setErrorMessage(`Minimum team size is ${teamConstraints.minTeamSize}.`);
+                return false;
+            }
+            if (currentTeamSize > teamConstraints.maxTeamSize) {
+                setErrorMessage(`Maximum team size is ${teamConstraints.maxTeamSize}.`);
+                return false;
+            }
             for (let i = 0; i < teamMembers.length; i++) {
                 if (!teamMembers[i].name || !teamMembers[i].rollNo) {
                     setErrorMessage(`Please complete details for Team Member ${i + 2}.`);
@@ -98,6 +184,14 @@ export default function RegistrationClient({ eventId }) {
         }
 
         if (step === 3) {
+            if (event?.variablePricingEnabled) {
+                const tiers = Array.isArray(event?.pricingTiers) ? event.pricingTiers : [];
+                const match = tiers.find((t) => Number(t?.teamSize) === Number(currentTeamSize));
+                if (!match) {
+                    setErrorMessage(`Price is not configured for team size ${currentTeamSize}. Please adjust teammates or contact the organizer.`);
+                    return false;
+                }
+            }
             if (!formData.utrId) {
                 setErrorMessage("Please enter the UTR / Transaction ID.");
                 return false;
@@ -114,7 +208,7 @@ export default function RegistrationClient({ eventId }) {
     const nextStep = () => {
         if (validateStep(currentStep)) {
             // Skip Step 2 if single player
-            if (currentStep === 1 && (!event.teamSize || event.teamSize <= 1)) {
+            if (currentStep === 1 && !requiresTeamStep) {
                 setCurrentStep(3);
             } else {
                 setCurrentStep(prev => prev + 1);
@@ -123,7 +217,7 @@ export default function RegistrationClient({ eventId }) {
     };
 
     const prevStep = () => {
-        if (currentStep === 3 && (!event.teamSize || event.teamSize <= 1)) {
+        if (currentStep === 3 && !requiresTeamStep) {
             setCurrentStep(1);
         } else {
             setCurrentStep(prev => prev - 1);
@@ -142,7 +236,7 @@ export default function RegistrationClient({ eventId }) {
             const data = new FormData();
             data.append('eventId', event.id);
             data.append('eventName', event.title);
-            data.append('amount', event.registrationFee || "0");
+            data.append('amount', String(amountToPay));
             data.append('name', formData.name);
             data.append('email', formData.email);
             data.append('rollNo', formData.rollNo);
@@ -152,6 +246,7 @@ export default function RegistrationClient({ eventId }) {
             if (teamMembers.length > 0) {
                 data.append('teamMembers', JSON.stringify(teamMembers));
             }
+            data.append('teamSize', String(currentTeamSize));
             data.append('screenshot', screenshot);
 
             const response = await fetch('/api/register', {
@@ -228,7 +323,12 @@ export default function RegistrationClient({ eventId }) {
                         <h1 className="text-5xl font-serif font-bold text-white mb-6 leading-tight">{event.title}</h1>
                         <p className="text-white/60 text-lg leading-relaxed mb-8">{event.description}</p>
                         <div className="flex gap-8 border-t border-white/10 pt-8">
-                            <div><div className="text-[10px] uppercase tracking-widest text-white/30 font-mono mb-1">Fee</div><div className="text-teal text-lg">{event.registrationFee || "Free"}</div></div>
+                            <div>
+                                <div className="text-[10px] uppercase tracking-widest text-white/30 font-mono mb-1">Fee</div>
+                                <div className="text-teal text-lg">
+                                    {event.variablePricingEnabled ? `From ${computeAmountForTeamSize(teamConstraints.minTeamSize) || 0}` : (event.registrationFee || "Free")}
+                                </div>
+                            </div>
                             <div><div className="text-[10px] uppercase tracking-widest text-white/30 font-mono mb-1">Date</div><div className="text-white text-lg">{event.date}</div></div>
                         </div>
                         <button onClick={() => setShowPoster(true)} className="mt-8 flex items-center gap-2 text-xs text-white/40 hover:text-white transition-colors"><FileText className="w-4 h-4" /> View Official Poster</button>
@@ -252,6 +352,10 @@ export default function RegistrationClient({ eventId }) {
 
                             <div className="flex gap-4">
                                 <Link href="/events" className="px-6 py-3 bg-teal text-black font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-teal/80 transition-colors">Back to Events</Link>
+                            </div>
+
+                            <div className="mt-4">
+                                <TicketDownloadButton event={event} ticketCode={registrationId} qrCodeUrl={qrCodeUrl} />
                             </div>
                         </div>
                     ) : (

@@ -14,12 +14,17 @@ const defaultEvent = {
     description: "",
     year: "",
     registrationFee: "",
+    variablePricingEnabled: false,
+    pricingTiers: [],
     password: "",
     img: "",
     posterDesktop: "",
     posterMobile: "",
     qrCode: "",
+    // Legacy single team size (kept for backward compatibility)
     teamSize: "",
+    minTeamSize: "",
+    maxTeamSize: "",
     regStartDate: "",
     regEndDate: "",
     isOneDay: true,
@@ -43,6 +48,7 @@ export default function EventForm({ mode, initialEvent }) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+    const [warning, setWarning] = useState("");
 
     const isEdit = mode === "edit";
 
@@ -50,7 +56,19 @@ export default function EventForm({ mode, initialEvent }) {
         // Keep existing flexible schema, but normalize a few numeric fields if provided.
         const out = { ...event };
         out.teamSize = toNumberOrKeep(out.teamSize);
+        out.minTeamSize = toNumberOrKeep(out.minTeamSize);
+        out.maxTeamSize = toNumberOrKeep(out.maxTeamSize);
         out.participants = out.participants ?? 0;
+
+        // Normalize pricing tiers if present.
+        if (Array.isArray(out.pricingTiers)) {
+            out.pricingTiers = out.pricingTiers
+                .map((t) => ({
+                    teamSize: toNumberOrKeep(t?.teamSize ?? ""),
+                    price: toNumberOrKeep(t?.price ?? ""),
+                }))
+                .filter((t) => t.teamSize !== "" || t.price !== "");
+        }
 
         // If one-day event, keep date/time derived for compatibility.
         if (out.isOneDay) {
@@ -70,9 +88,52 @@ export default function EventForm({ mode, initialEvent }) {
         e.preventDefault();
         setError("");
         setSuccess("");
+        setWarning("");
 
         if (!event.title) return setError("Title is required");
         if (!(event.date || event.startDate)) return setError("Date is required");
+
+        const minTeam = event.minTeamSize === "" ? null : Number(event.minTeamSize);
+        const maxTeam = event.maxTeamSize === "" ? null : Number(event.maxTeamSize);
+        if (minTeam != null || maxTeam != null) {
+            if (!Number.isFinite(minTeam ?? 1) || !Number.isFinite(maxTeam ?? 1)) {
+                return setError("Min/Max team size must be a number");
+            }
+            if ((minTeam ?? 1) < 1 || (maxTeam ?? 1) < 1) {
+                return setError("Team sizes must be at least 1");
+            }
+            if (minTeam != null && maxTeam != null && minTeam > maxTeam) {
+                return setError("Min team size cannot be greater than max team size");
+            }
+        }
+
+        if (event.variablePricingEnabled) {
+            const tiers = Array.isArray(event.pricingTiers) ? event.pricingTiers : [];
+            if (!tiers.length) {
+                return setError("Add at least one pricing tier (team size + price)");
+            }
+            const seen = new Set();
+            for (const tier of tiers) {
+                const ts = Number(tier?.teamSize);
+                const price = Number(tier?.price);
+                if (!Number.isFinite(ts) || ts < 1) {
+                    return setError("Each pricing tier must have a valid team size");
+                }
+                if (!Number.isFinite(price) || price < 0) {
+                    return setError("Each pricing tier must have a valid price");
+                }
+                if (seen.has(ts)) {
+                    return setError(`Duplicate pricing tier for team size ${ts}`);
+                }
+                seen.add(ts);
+                if (minTeam != null && ts < minTeam) {
+                    return setError(`Pricing tier team size ${ts} is below min team size ${minTeam}`);
+                }
+                if (maxTeam != null && ts > maxTeam) {
+                    return setError(`Pricing tier team size ${ts} is above max team size ${maxTeam}`);
+                }
+            }
+        }
 
         setSaving(true);
         try {
@@ -95,6 +156,13 @@ export default function EventForm({ mode, initialEvent }) {
                 throw new Error(data?.error || "Failed to save event");
             }
 
+            if (Array.isArray(data?.uploadErrors) && data.uploadErrors.length) {
+                setWarning(
+                    `Event saved, but some image uploads failed: ${data.uploadErrors.join(" | ")}. ` +
+                    `Check Supabase Storage bucket 'event-images'.`
+                );
+            }
+
             setSuccess(isEdit ? "Event updated" : "Event created");
 
             // Clear staged uploads after successful save.
@@ -115,6 +183,31 @@ export default function EventForm({ mode, initialEvent }) {
 
     function setField(name, value) {
         setEvent((prev) => ({ ...prev, [name]: value }));
+    }
+
+    function setPricingTier(idx, key, value) {
+        setEvent((prev) => {
+            const tiers = Array.isArray(prev.pricingTiers) ? [...prev.pricingTiers] : [];
+            const next = { ...(tiers[idx] || {}) };
+            next[key] = value;
+            tiers[idx] = next;
+            return { ...prev, pricingTiers: tiers };
+        });
+    }
+
+    function addPricingTier() {
+        setEvent((prev) => ({
+            ...prev,
+            pricingTiers: [...(Array.isArray(prev.pricingTiers) ? prev.pricingTiers : []), { teamSize: "", price: "" }],
+        }));
+    }
+
+    function removePricingTier(idx) {
+        setEvent((prev) => {
+            const tiers = Array.isArray(prev.pricingTiers) ? [...prev.pricingTiers] : [];
+            tiers.splice(idx, 1);
+            return { ...prev, pricingTiers: tiers };
+        });
     }
 
     return (
@@ -155,6 +248,11 @@ export default function EventForm({ mode, initialEvent }) {
                     {success ? (
                         <div className="rounded-xl border border-teal-500/30 bg-teal-500/10 text-teal-100 px-4 py-3 text-sm">
                             {success}
+                        </div>
+                    ) : null}
+                    {warning ? (
+                        <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-yellow-100 px-4 py-3 text-sm">
+                            {warning}
                         </div>
                     ) : null}
 
@@ -302,21 +400,31 @@ export default function EventForm({ mode, initialEvent }) {
                             />
                         </Field>
 
-                        <Field label="Registration fee">
+                        <Field label="Registration fee" hint={event.variablePricingEnabled ? "Ignored when Variable pricing is enabled" : undefined}>
                             <input
                                 value={event.registrationFee || ""}
                                 onChange={(e) => setField("registrationFee", e.target.value)}
                                 className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
                                 placeholder="150"
+                                disabled={!!event.variablePricingEnabled}
                             />
                         </Field>
 
-                        <Field label="Team size">
+                        <Field label="Min team size" hint="Minimum participants including leader (1 for solo)">
                             <input
-                                value={event.teamSize ?? ""}
-                                onChange={(e) => setField("teamSize", e.target.value)}
+                                value={event.minTeamSize ?? ""}
+                                onChange={(e) => setField("minTeamSize", e.target.value)}
                                 className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
-                                placeholder="e.g. 4"
+                                placeholder="e.g. 2"
+                            />
+                        </Field>
+
+                        <Field label="Max team size" hint="Maximum participants including leader">
+                            <input
+                                value={event.maxTeamSize ?? ""}
+                                onChange={(e) => setField("maxTeamSize", e.target.value)}
+                                className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
+                                placeholder="e.g. 5"
                             />
                         </Field>
 
@@ -328,6 +436,65 @@ export default function EventForm({ mode, initialEvent }) {
                                 placeholder="eventpassword2026"
                             />
                         </Field>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                        <label className="flex items-center gap-3 text-sm text-white/80">
+                            <input
+                                type="checkbox"
+                                checked={!!event.variablePricingEnabled}
+                                onChange={(e) => setField("variablePricingEnabled", e.target.checked)}
+                            />
+                            Variable pricing based on team size
+                        </label>
+
+                        {event.variablePricingEnabled ? (
+                            <div className="mt-4 space-y-3">
+                                <div className="text-xs text-white/50">
+                                    Add one or more tiers: each tier maps a team size to a total price.
+                                </div>
+
+                                <div className="space-y-2">
+                                    {(Array.isArray(event.pricingTiers) ? event.pricingTiers : []).map((tier, idx) => (
+                                        <div key={idx} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2 items-end">
+                                            <div>
+                                                <div className="text-[11px] text-white/60 mb-1">Team size</div>
+                                                <input
+                                                    value={tier?.teamSize ?? ""}
+                                                    onChange={(e) => setPricingTier(idx, "teamSize", e.target.value)}
+                                                    className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
+                                                    placeholder="e.g. 3"
+                                                />
+                                            </div>
+                                            <div>
+                                                <div className="text-[11px] text-white/60 mb-1">Price</div>
+                                                <input
+                                                    value={tier?.price ?? ""}
+                                                    onChange={(e) => setPricingTier(idx, "price", e.target.value)}
+                                                    className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
+                                                    placeholder="e.g. 200"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removePricingTier(idx)}
+                                                className="px-3 py-2 rounded-xl bg-white/10 border border-white/15 hover:bg-white/15 transition text-sm"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={addPricingTier}
+                                    className="px-4 py-2 rounded-xl bg-teal-400 text-black font-semibold hover:bg-teal-300 transition"
+                                >
+                                    + Add pricing tier
+                                </button>
+                            </div>
+                        ) : null}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

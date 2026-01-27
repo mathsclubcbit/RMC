@@ -8,7 +8,8 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'plus.unsplash.com' },
       { protocol: 'https', hostname: 'vqa-frontend.vercel.app' }, // RMC Assets
-      // Supabase Storage (if applicable, add your supabase domain here)
+      // Supabase Storage
+      { protocol: 'https', hostname: 'zuczhjbmspuijwaypdjd.supabase.co' },
     ],
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',

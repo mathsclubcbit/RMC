@@ -9,6 +9,10 @@ function hasSupabaseConfig() {
     return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
+function isMissingTableError(error) {
+    return Boolean(error && (error.code === 'PGRST205' || String(error.message || '').includes("Could not find the table 'public.events'")));
+}
+
 function requireAdmin(request) {
     const isLoggedIn = request.cookies.get('admin_session')?.value === 'true';
     if (!isLoggedIn) {
@@ -35,6 +39,10 @@ export async function GET() {
             .order('date', { ascending: false });
 
         if (error) {
+            if (isMissingTableError(error)) {
+                console.warn("Supabase table public.events is missing; returning empty events list.");
+                return NextResponse.json([], { status: 200 });
+            }
             console.error('Error loading events from Supabase:', error);
             return NextResponse.json({ error: 'Failed to load events' }, { status: 500 });
         }
@@ -106,34 +114,7 @@ export async function POST(request) {
 
         const supabase = createAdminClient();
 
-        // Upload images (if provided) and store public URLs into the payload.
-        const uploadOne = async (file, field) => {
-            const ext = String(file.name || 'image').split('.').pop() || 'png';
-            const objectPath = `events/${newEvent.id}/${field}-${Date.now()}.${ext}`;
-            const { error: uploadError } = await supabase.storage
-                .from(STORAGE_BUCKET)
-                .upload(objectPath, file, {
-                    contentType: file.type || 'application/octet-stream',
-                    upsert: true,
-                });
-            if (uploadError) throw uploadError;
-            const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(objectPath);
-            return data.publicUrl;
-        };
-
-        if (files.imgFile) {
-            const url = await uploadOne(files.imgFile, 'img');
-            newEvent.img = url;
-        }
-        if (files.posterDesktopFile) {
-            const url = await uploadOne(files.posterDesktopFile, 'posterDesktop');
-            newEvent.posterDesktop = url;
-        }
-        if (files.posterMobileFile) {
-            const url = await uploadOne(files.posterMobileFile, 'posterMobile');
-            newEvent.posterMobile = url;
-        }
-
+        // Create the event row first (so event creation doesn't depend on Storage bucket existence).
         const { data: inserted, error } = await supabase
             .from('events')
             .insert({
@@ -146,6 +127,14 @@ export async function POST(request) {
             .single();
 
         if (error) {
+            if (isMissingTableError(error)) {
+                return NextResponse.json(
+                    {
+                        error: "Supabase table 'public.events' is missing. Run the SQL in supabase/schema.sql to create it.",
+                    },
+                    { status: 500 }
+                );
+            }
             // Duplicate key or other constraint errors.
             const msg = String(error.message || '').toLowerCase();
             if (msg.includes('duplicate') || msg.includes('unique')) {
@@ -155,14 +144,70 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Failed to create event' }, { status: 500 });
         }
 
+        /** @type {string[]} */
+        const uploadErrors = [];
+
+        // Upload images (if provided) and store public URLs into the payload.
+        const uploadOne = async (file, field) => {
+            const ext = String(file.name || 'image').split('.').pop() || 'png';
+            const objectPath = `events/${newEvent.id}/${field}-${Date.now()}.${ext}`;
+            const { error: uploadError } = await supabase.storage
+                .from(STORAGE_BUCKET)
+                .upload(objectPath, file, {
+                    contentType: file.type || 'application/octet-stream',
+                    upsert: true,
+                });
+
+            if (uploadError) {
+                const msg = String(uploadError.message || uploadError.error || uploadError);
+                uploadErrors.push(`${field}: ${msg}`);
+                return null;
+            }
+
+            const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(objectPath);
+            return data?.publicUrl || null;
+        };
+
+        const patchedEvent = { ...(inserted?.payload || {}), id: String(inserted?.id || newEvent.id) };
+
+        if (files.imgFile) {
+            const url = await uploadOne(files.imgFile, 'img');
+            if (url) patchedEvent.img = url;
+        }
+        if (files.posterDesktopFile) {
+            const url = await uploadOne(files.posterDesktopFile, 'posterDesktop');
+            if (url) patchedEvent.posterDesktop = url;
+        }
+        if (files.posterMobileFile) {
+            const url = await uploadOne(files.posterMobileFile, 'posterMobile');
+            if (url) patchedEvent.posterMobile = url;
+        }
+
+        // If any uploads succeeded (or attempted), persist patched payload.
+        const anyUploadAttempted = Boolean(files.imgFile || files.posterDesktopFile || files.posterMobileFile);
+        if (anyUploadAttempted) {
+            await supabase
+                .from('events')
+                .update({
+                    title: patchedEvent.title,
+                    date: patchedEvent.date,
+                    payload: patchedEvent,
+                })
+                .eq('id', String(inserted.id));
+        }
+
         const responseEvent = {
-            ...(inserted?.payload || {}),
+            ...(patchedEvent || inserted?.payload || {}),
             id: String(inserted.id),
             title: inserted.title,
             date: inserted.date,
             createdAt: inserted.created_at,
             updatedAt: inserted.updated_at,
         };
+
+        if (uploadErrors.length) {
+            return NextResponse.json({ ...responseEvent, uploadErrors }, { status: 201 });
+        }
 
         return NextResponse.json(responseEvent, { status: 201 });
     } catch (error) {

@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomInt } from 'crypto';
 import { uploadToDrive, checkDuplicateRegistrationId, checkDuplicateUTR, appendRowToSheet, getOrCreateFolder } from '@/lib/google';
+import { createAdminClient } from '@/lib/supabase/server';
+
+type PricingTier = {
+    teamSize?: unknown;
+    price?: unknown;
+};
+
+type EventPayload = {
+    teamSize?: unknown;
+    minTeamSize?: unknown;
+    maxTeamSize?: unknown;
+    registrationFee?: unknown;
+    variablePricingEnabled?: unknown;
+    pricingTiers?: unknown;
+};
 
 const generateTicketCode = () => String(randomInt(0, 1_000_000)).padStart(6, '0');
 
@@ -15,13 +30,13 @@ export async function POST(req: NextRequest) {
         const rollNo = formData.get('rollNo') as string;
         const department = formData.get('department') as string;
         const utrId = formData.get('utrId') as string;
-        const amount = formData.get('amount') as string;
+        const amountFromClient = formData.get('amount') as string;
         const screenshot = formData.get('screenshot') as File;
         const teamMembersStr = formData.get('teamMembers') as string | null; // Optional team members
+        const teamSizeStr = formData.get('teamSize') as string | null;
 
         // 1. Validation
-        // 1. Validation
-        if (!eventId || !eventName || !name || !email || !rollNo || !department || !utrId || !amount || !screenshot) {
+        if (!eventId || !eventName || !name || !email || !rollNo || !department || !utrId || !screenshot) {
             return NextResponse.json({ error: 'Missing required fields or file.' }, { status: 400 });
         }
 
@@ -48,6 +63,90 @@ export async function POST(req: NextRequest) {
         if (!spreadsheetId || !driveFolderId) {
             console.error('Missing env configuration');
             return NextResponse.json({ error: 'Server misconfiguration.' }, { status: 500 });
+        }
+
+        // 1b. Determine team size and compute expected amount from event config.
+        let teamMembers: Array<{ name?: string; rollNo?: string }> = [];
+        if (teamMembersStr) {
+            try {
+                const parsed = JSON.parse(teamMembersStr);
+                if (Array.isArray(parsed)) teamMembers = parsed;
+            } catch {
+                return NextResponse.json({ error: 'Invalid teamMembers payload.' }, { status: 400 });
+            }
+        }
+
+        const computedTeamSize = 1 + (Array.isArray(teamMembers) ? teamMembers.length : 0);
+        if (teamSizeStr) {
+            const declared = Number(teamSizeStr);
+            if (Number.isFinite(declared) && declared !== computedTeamSize) {
+                return NextResponse.json({ error: 'TEAM_SIZE_MISMATCH' }, { status: 400 });
+            }
+        }
+
+        // Default fallback: accept client amount (legacy behavior) if we cannot load event.
+        const parseAmount = (value: unknown) => {
+            if (value == null) return 0;
+            if (typeof value === 'number' && Number.isFinite(value)) return value;
+            const raw = String(value);
+            const cleaned = raw.replace(/[^0-9.]/g, '');
+            const n = Number(cleaned);
+            return Number.isFinite(n) ? n : 0;
+        };
+
+        let expectedAmount = parseAmount(amountFromClient);
+
+        try {
+            const supabase = createAdminClient();
+            const { data: eventRow, error: eventError } = await supabase
+                .from('events')
+                .select('payload')
+                .eq('id', String(eventId))
+                .single();
+
+            if (!eventError && eventRow?.payload) {
+                const payload = eventRow.payload as EventPayload;
+
+                const legacyTeamSize = Number(payload?.teamSize);
+                const minTeamSize = Number(payload?.minTeamSize);
+                const maxTeamSize = Number(payload?.maxTeamSize);
+
+                const resolvedMin = Number.isFinite(minTeamSize) && minTeamSize > 0
+                    ? minTeamSize
+                    : (Number.isFinite(legacyTeamSize) && legacyTeamSize > 0 ? legacyTeamSize : 1);
+
+                const resolvedMax = Number.isFinite(maxTeamSize) && maxTeamSize > 0
+                    ? maxTeamSize
+                    : (Number.isFinite(legacyTeamSize) && legacyTeamSize > 0 ? legacyTeamSize : resolvedMin);
+
+                if (computedTeamSize < resolvedMin) {
+                    return NextResponse.json({ error: 'TEAM_SIZE_TOO_SMALL', minTeamSize: resolvedMin }, { status: 400 });
+                }
+                if (computedTeamSize > resolvedMax) {
+                    return NextResponse.json({ error: 'TEAM_SIZE_TOO_LARGE', maxTeamSize: resolvedMax }, { status: 400 });
+                }
+
+                if (Boolean(payload?.variablePricingEnabled)) {
+                    const tiersRaw = Array.isArray(payload?.pricingTiers) ? (payload.pricingTiers as unknown[]) : [];
+                    const tiers: PricingTier[] = tiersRaw.filter((t) => typeof t === 'object' && t !== null) as PricingTier[];
+                    const tier = tiers.find((t) => Number(t?.teamSize) === computedTeamSize);
+                    const price = parseAmount(tier?.price);
+                    if (!Number.isFinite(price) || price < 0) {
+                        return NextResponse.json({ error: 'PRICE_NOT_CONFIGURED', teamSize: computedTeamSize }, { status: 400 });
+                    }
+                    expectedAmount = price;
+                } else {
+                    const fee = parseAmount(payload?.registrationFee);
+                    expectedAmount = Number.isFinite(fee) && fee >= 0 ? fee : 0;
+                }
+            }
+        } catch (err) {
+            // Keep fallback behavior, but log for diagnostics.
+            console.warn('Could not compute expected amount from Supabase event payload:', err);
+        }
+
+        if (!Number.isFinite(expectedAmount) || expectedAmount < 0) {
+            return NextResponse.json({ error: 'INVALID_AMOUNT' }, { status: 400 });
         }
 
         if (process.env.NODE_ENV !== 'production') {
@@ -101,7 +200,7 @@ export async function POST(req: NextRequest) {
             rollNo,
             department,
             normalizedUTR,
-            amount,
+            String(expectedAmount),
             driveFile.id || '',
             driveFile.webViewLink || '',
             driveFile.webContentLink || '',
