@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import NetworkSidebar from "@/components/network/Sidebar";
@@ -15,8 +15,10 @@ import {
     Trash2,
     Loader2,
     X,
-    Search
+    Search,
+    Check
 } from "lucide-react";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 const TYPE_CONFIG = {
     link: { label: "Link", icon: LinkIcon, color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
@@ -31,23 +33,28 @@ export default function ResourcesPage() {
     const [showModal, setShowModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [filterType, setFilterType] = useState("all");
-    const supabase = createClient();
 
-    useEffect(() => {
-        fetchResources();
+    // Global Alert/Confirm State
+    const [statusModal, setStatusModal] = useState({
+        isOpen: false,
+        type: "confirm",
+        title: "",
+        message: "",
+        onConfirm: null
+    });
 
-        // Realtime subscription
-        const channel = supabase
-            .channel("resources-changes")
-            .on("postgres_changes", { event: "*", schema: "public", table: "resources" }, fetchResources)
-            .subscribe();
+    const showAlert = (title, message, type = "success") => {
+        setStatusModal({ isOpen: true, title, message, type, onConfirm: null });
+    };
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, []);
+    const showConfirm = (title, message, onConfirm, isDangerous = false) => {
+        setStatusModal({ isOpen: true, title, message, type: "confirm", onConfirm, isDangerous });
+    };
 
-    const fetchResources = async () => {
+    const supabase = useMemo(() => createClient(), []);
+
+    const fetchResources = useCallback(async () => {
+        if (!profile?.id) return;
         try {
             const { data, error } = await supabase
                 .from("resources")
@@ -64,19 +71,39 @@ export default function ResourcesPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [profile?.id, supabase]);
+
+    useEffect(() => {
+        fetchResources();
+
+        // Realtime subscription
+        const channel = supabase
+            .channel("resources-changes")
+            .on("postgres_changes", { event: "*", schema: "public", table: "resources" }, fetchResources)
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [fetchResources, supabase]);
 
     const handleDelete = async (resourceId) => {
-        if (!confirm("Are you sure you want to delete this resource?")) return;
-
-        try {
-            const { error } = await supabase.from("resources").delete().eq("id", resourceId);
-            if (error) throw error;
-            fetchResources();
-        } catch (error) {
-            console.error("Error deleting resource:", error);
-            alert("Failed to delete resource");
-        }
+        showConfirm(
+            "Delete Resource",
+            "Are you sure you want to delete this resource? This action cannot be undone.",
+            async () => {
+                try {
+                    const { error } = await supabase.from("resources").delete().eq("id", resourceId);
+                    if (error) throw error;
+                    fetchResources();
+                    showAlert("Deleted", "Resource has been removed successfully.", "success");
+                } catch (error) {
+                    console.error("Error deleting resource:", error);
+                    showAlert("Error", "Failed to delete resource.", "error");
+                }
+            },
+            true
+        );
     };
 
     const filteredResources = resources.filter(resource => {
@@ -90,12 +117,12 @@ export default function ResourcesPage() {
         <div className="flex min-h-screen">
             <NetworkSidebar />
 
-            <main className="flex-1 p-6 lg:p-10 overflow-auto">
+            <main className="flex-1 p-6 lg:p-10 pt-24 lg:pt-10 overflow-auto">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8"
+                    className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10"
                 >
                     <div>
                         <h1 className="text-3xl lg:text-4xl font-serif font-bold text-white mb-2">
@@ -141,8 +168,8 @@ export default function ResourcesPage() {
                         <button
                             onClick={() => setFilterType("all")}
                             className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${filterType === "all"
-                                    ? "bg-white/10 text-white"
-                                    : "text-white/50 hover:text-white"
+                                ? "bg-white/10 text-white"
+                                : "text-white/50 hover:text-white"
                                 }`}
                         >
                             All
@@ -152,8 +179,8 @@ export default function ResourcesPage() {
                                 key={key}
                                 onClick={() => setFilterType(key)}
                                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${filterType === key
-                                        ? config.color
-                                        : "text-white/50 hover:text-white"
+                                    ? config.color
+                                    : "text-white/50 hover:text-white"
                                     }`}
                             >
                                 {config.label}
@@ -244,6 +271,19 @@ export default function ResourcesPage() {
                     />
                 )}
             </AnimatePresence>
+            {/* Global Status/Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={statusModal.isOpen}
+                type={statusModal.type}
+                title={statusModal.title}
+                message={statusModal.message}
+                isDangerous={statusModal.isDangerous}
+                onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={statusModal.onConfirm ? () => {
+                    statusModal.onConfirm();
+                    setStatusModal(prev => ({ ...prev, isOpen: false }));
+                } : null}
+            />
         </div>
     );
 }
@@ -365,8 +405,8 @@ function AddResourceModal({ onClose, onSuccess }) {
                                         type="button"
                                         onClick={() => setType(key)}
                                         className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border transition-all text-sm ${type === key
-                                                ? config.color
-                                                : "bg-white/5 border-white/10 text-white/50"
+                                            ? config.color
+                                            : "bg-white/5 border-white/10 text-white/50"
                                             }`}
                                     >
                                         <Icon className="w-4 h-4" />

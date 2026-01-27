@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import NetworkSidebar from "@/components/network/Sidebar";
@@ -13,53 +13,51 @@ export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(null);
     const [message, setMessage] = useState(null);
-    const supabase = createClient();
 
-    // Fetch VP, GS, JS and their permission states
+    const fetchDelegatedUsers = useCallback(async () => {
+        try {
+            // Fetch core council members who can receive delegated permissions
+            const { data: coreUsers, error: usersError } = await supabase
+                .from("profiles")
+                .select("id, email, full_name, role")
+                .in("role", ["vice_president", "general_secretary", "joint_secretary"]);
+
+            if (usersError) throw usersError;
+
+            // Fetch existing permissions
+            const { data: permissions, error: permError } = await supabase
+                .from("delegated_permissions")
+                .select("*");
+
+            if (permError && permError.code !== "PGRST116") throw permError;
+
+            // Merge data
+            const merged = (coreUsers || []).map(user => {
+                const perm = permissions?.find(p => p.user_id === user.id);
+                return {
+                    ...user,
+                    can_manage_teams: perm?.can_manage_teams || false,
+                    can_manage_members: perm?.can_manage_members || false,
+                    has_permission_row: !!perm,
+                    permission_id: perm?.id
+                };
+            });
+
+            setDelegatedUsers(merged);
+        } catch (error) {
+            console.error("Error fetching delegated users:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, [supabase]);
+
     useEffect(() => {
-        const fetchDelegatedUsers = async () => {
-            try {
-                // Fetch core council members who can receive delegated permissions
-                const { data: coreUsers, error: usersError } = await supabase
-                    .from("profiles")
-                    .select("id, email, full_name, role")
-                    .in("role", ["vice_president", "general_secretary", "joint_secretary"]);
-
-                if (usersError) throw usersError;
-
-                // Fetch existing permissions
-                const { data: permissions, error: permError } = await supabase
-                    .from("delegated_permissions")
-                    .select("*");
-
-                if (permError && permError.code !== "PGRST116") throw permError;
-
-                // Merge data
-                const merged = (coreUsers || []).map(user => {
-                    const perm = permissions?.find(p => p.user_id === user.id);
-                    return {
-                        ...user,
-                        can_manage_teams: perm?.can_manage_teams || false,
-                        can_manage_members: perm?.can_manage_members || false,
-                        has_permission_row: !!perm,
-                        permission_id: perm?.id
-                    };
-                });
-
-                setDelegatedUsers(merged);
-            } catch (error) {
-                console.error("Error fetching delegated users:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         if (isPresident()) {
             fetchDelegatedUsers();
         } else {
             setLoading(false);
         }
-    }, [isPresident]);
+    }, [isPresident, fetchDelegatedUsers]);
 
     const togglePermission = async (userId, permissionType, currentValue) => {
         setSaving(userId);
@@ -112,6 +110,7 @@ export default function SettingsPage() {
         }
     };
 
+
     if (!isPresident()) {
         return (
             <div className="flex min-h-screen">
@@ -144,7 +143,7 @@ export default function SettingsPage() {
         <div className="flex min-h-screen">
             <NetworkSidebar />
 
-            <main className="flex-1 p-6 lg:p-10 overflow-auto">
+            <main className="flex-1 p-6 lg:p-10 pt-24 lg:pt-10 overflow-auto">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -164,8 +163,8 @@ export default function SettingsPage() {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${message.type === "success"
-                                ? "bg-green-500/10 border border-green-500/20 text-green-400"
-                                : "bg-red-500/10 border border-red-500/20 text-red-400"
+                            ? "bg-green-500/10 border border-green-500/20 text-green-400"
+                            : "bg-red-500/10 border border-red-500/20 text-red-400"
                             }`}
                     >
                         {message.type === "success" ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
@@ -265,6 +264,7 @@ export default function SettingsPage() {
                         )}
                     </div>
                 </motion.div>
+
             </main>
         </div>
     );

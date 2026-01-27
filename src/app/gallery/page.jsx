@@ -5,7 +5,7 @@ import SectionTitle from "@/components/ui/SectionTitle";
 import SpotlightCard from "@/components/ui/SpotlightCard";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionDivider from "@/components/ui/SectionDivider";
-import { Filter, Image as ImageIcon, Play, Maximize2 } from "lucide-react";
+import { Play, Maximize2 } from "lucide-react";
 import Tilt from "react-parallax-tilt";
 import { cn } from "@/lib/utils";
 
@@ -152,7 +152,7 @@ export default function GalleryPage() {
                                     </div>
                                     <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black to-transparent z-10">
                                         <h3 className="text-white font-serif font-bold text-lg group-hover:text-teal-200 transition-colors">{video.title}</h3>
-                                        <p className="text-muted/60 font-mono text-xs uppercase tracking-widest mt-1">{video.duration} // REPLAY</p>
+                                        <p className="text-muted/60 font-mono text-xs uppercase tracking-widest mt-1">{video.duration} {"// REPLAY"}</p>
                                     </div>
                                 </SpotlightCard>
                             ))}

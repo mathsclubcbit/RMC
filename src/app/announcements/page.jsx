@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Tag, AlertTriangle, Bell, ArrowLeft } from "lucide-react";
+import { Calendar, AlertTriangle, Bell, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import MathBackground from "@/components/ui/MathBackground";
 

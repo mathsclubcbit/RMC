@@ -2,11 +2,41 @@
 
 import { useRef, useEffect } from "react";
 
+class Particle {
+    constructor(width, height, particleLife) {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.velocityX = (Math.random() - 0.5) * 1.5;
+        this.velocityY = (Math.random() - 0.5) * 1.5;
+        this.life = Math.random() * particleLife;
+    }
+
+    position(width, height) {
+        if ((this.x + this.velocityX > width && this.velocityX > 0) || (this.x + this.velocityX < 0 && this.velocityX < 0)) {
+            this.velocityX *= -1;
+        }
+        if ((this.y + this.velocityY > height && this.velocityY > 0) || (this.y + this.velocityY < 0 && this.velocityY < 0)) {
+            this.velocityY *= -1;
+        }
+        this.x += this.velocityX;
+        this.y += this.velocityY;
+    }
+
+    reDraw(ctx, particleRadius, particleColor) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, particleRadius, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.fillStyle = particleColor;
+        ctx.fill();
+    }
+}
+
 export default function HeroParticles() {
     const canvasRef = useRef(null);
 
     useEffect(() => {
         const canvas = canvasRef.current;
+        if (!canvas) return;
         const ctx = canvas.getContext("2d");
         let width = canvas.width = window.innerWidth;
         let height = canvas.height = window.innerHeight;
@@ -21,31 +51,6 @@ export default function HeroParticles() {
             particleLife: 6,
         };
 
-        class Particle {
-            constructor() {
-                this.x = Math.random() * width;
-                this.y = Math.random() * height;
-                this.velocityX = (Math.random() - 0.5) * 1.5;
-                this.velocityY = (Math.random() - 0.5) * 1.5;
-                this.life = Math.random() * properties.particleLife;
-            }
-
-            position() {
-                this.x + this.velocityX > width && this.velocityX > 0 || this.x + this.velocityX < 0 && this.velocityX < 0 ? this.velocityX *= -1 : this.velocityX;
-                this.y + this.velocityY > height && this.velocityY > 0 || this.y + this.velocityY < 0 && this.velocityY < 0 ? this.velocityY *= -1 : this.velocityY;
-                this.x += this.velocityX;
-                this.y += this.velocityY;
-            }
-
-            reDraw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, properties.particleRadius, 0, Math.PI * 2);
-                ctx.closePath();
-                ctx.fillStyle = properties.particleColor;
-                ctx.fill();
-            }
-        }
-
         function reDrawBackground() {
             ctx.fillStyle = properties.bgColor;
             ctx.fillRect(0, 0, width, height);
@@ -53,8 +58,8 @@ export default function HeroParticles() {
 
         function drawLines() {
             let x1, y1, x2, y2, length, opacity;
-            for (let i in particles) {
-                for (let j in particles) {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
                     x1 = particles[i].x;
                     y1 = particles[i].y;
                     x2 = particles[j].x;
@@ -63,7 +68,7 @@ export default function HeroParticles() {
 
                     if (length < properties.lineLength) {
                         opacity = 1 - length / properties.lineLength;
-                        ctx.lineWidth = '0.5';
+                        ctx.lineWidth = 0.5;
                         ctx.strokeStyle = `rgba(45, 212, 191, ${opacity})`;
                         ctx.beginPath();
                         ctx.moveTo(x1, y1);
@@ -76,22 +81,23 @@ export default function HeroParticles() {
         }
 
         function reDrawParticles() {
-            for (let i in particles) {
-                particles[i].position();
-                particles[i].reDraw();
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].position(width, height);
+                particles[i].reDraw(ctx, properties.particleRadius, properties.particleColor);
             }
         }
 
+        let animationFrameId;
         function loop() {
             reDrawBackground();
             reDrawParticles();
             drawLines();
-            requestAnimationFrame(loop);
+            animationFrameId = requestAnimationFrame(loop);
         }
 
         function init() {
             for (let i = 0; i < properties.particleCount; i++) {
-                particles.push(new Particle());
+                particles.push(new Particle(width, height, properties.particleLife));
             }
             loop();
         }
@@ -104,7 +110,10 @@ export default function HeroParticles() {
         };
 
         window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            cancelAnimationFrame(animationFrameId);
+        };
     }, []);
 
     return (

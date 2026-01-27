@@ -3,37 +3,37 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+const containerVars = {
+    hidden: {},
+    visible: {
+        transition: {
+            staggerChildren: 0.1,
+        },
+    },
+};
+
+const letterVars = {
+    hidden: {
+        opacity: 0,
+        y: 100,
+        filter: "blur(10px)",
+        scale: 0.8
+    },
+    visible: {
+        opacity: 1,
+        y: 0,
+        filter: "blur(0px)",
+        scale: 1,
+        transition: {
+            type: "spring",
+            damping: 12,
+            stiffness: 100
+        }
+    },
+};
+
 export default function MathTitle({ text = "Ramanujan", className = "" }) {
     const letters = text.split("");
-
-    const containerVars = {
-        hidden: {},
-        visible: {
-            transition: {
-                staggerChildren: 0.1,
-            },
-        },
-    };
-
-    const letterVars = {
-        hidden: {
-            opacity: 0,
-            y: 100,
-            filter: "blur(10px)",
-            scale: 0.8
-        },
-        visible: {
-            opacity: 1,
-            y: 0,
-            filter: "blur(0px)",
-            scale: 1,
-            transition: {
-                type: "spring",
-                damping: 12,
-                stiffness: 100
-            }
-        },
-    };
 
     return (
         <div className={cn("relative flex flex-col items-center justify-center", className)}>

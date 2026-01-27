@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import NetworkSidebar from "@/components/network/Sidebar";
@@ -10,9 +10,9 @@ import {
     ListTodo,
     Calendar,
     TrendingUp,
-    Clock,
     CheckCircle,
-    AlertCircle
+    AlertCircle,
+    RefreshCw
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -24,36 +24,64 @@ export default function DashboardPage() {
         upcomingEvents: 0
     });
     const [loading, setLoading] = useState(true);
-    const supabase = createClient();
+    const [error, setError] = useState(false);
+    const supabase = useMemo(() => createClient(), []);
+
+    const fetchStats = useCallback(async () => {
+        if (!profile?.id) return;
+        setLoading(true);
+        setError(false);
+
+        try {
+            // Fetch team count
+            const teamPromise = supabase
+                .from("teams")
+                .select("*", { count: "exact", head: true });
+
+            // Fetch member count
+            const memberPromise = supabase
+                .from("profiles")
+                .select("*", { count: "exact", head: true });
+
+            // Promise.race to handle timeout elegantly without throwing unhandled rejection
+            const timeoutPromise = new Promise((resolve) => {
+                setTimeout(() => resolve({ timeout: true }), 15000); // 15s timeout
+            });
+
+            const result = await Promise.race([
+                Promise.all([teamPromise, memberPromise]),
+                timeoutPromise
+            ]);
+
+            if (result.timeout) {
+                console.warn("Stats fetch timed out");
+                setError(true);
+            } else {
+                const [teamResult, memberResult] = result;
+
+                if (teamResult.error || memberResult.error) {
+                    console.warn("Stats fetch error:", teamResult.error || memberResult.error);
+                    setError(true);
+                } else {
+                    setStats({
+                        totalMembers: memberResult.count || 0,
+                        totalTeams: teamResult.count || 0,
+                        pendingTasks: 0,
+                        upcomingEvents: 0
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Error fetching stats:", err);
+            setError(true);
+        } finally {
+            setLoading(false);
+        }
+    }, [profile?.id, supabase]);
 
     useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                // Fetch team count
-                const { count: teamCount } = await supabase
-                    .from("teams")
-                    .select("*", { count: "exact", head: true });
-
-                // Fetch member count
-                const { count: memberCount } = await supabase
-                    .from("profiles")
-                    .select("*", { count: "exact", head: true });
-
-                setStats({
-                    totalMembers: memberCount || 0,
-                    totalTeams: teamCount || 0,
-                    pendingTasks: 0, // Will be implemented in Phase 5
-                    upcomingEvents: 0 // Will be implemented in Phase 6
-                });
-            } catch (error) {
-                console.error("Error fetching stats:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchStats();
-    }, []);
+    }, [fetchStats]);
 
     const getGreeting = () => {
         const hour = new Date().getHours();
@@ -97,23 +125,44 @@ export default function DashboardPage() {
         <div className="flex min-h-screen">
             <NetworkSidebar />
 
-            <main className="flex-1 p-6 lg:p-10 overflow-auto">
+            <main className="flex-1 p-4 lg:p-10 pt-24 lg:pt-10 overflow-auto">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-10"
+                    className="mb-6 md:mb-10"
                 >
-                    <h1 className="text-3xl lg:text-4xl font-serif font-bold text-white mb-2">
+                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold text-white mb-2">
                         {getGreeting()}, <span className="text-teal">{profile?.full_name?.split(' ')[0] || 'Member'}</span>
                     </h1>
-                    <p className="text-white/50">
-                        Welcome to the RMC Network. Here's your overview.
+                    <p className="text-white/50 text-sm md:text-base">
+                        Welcome to the RMC Network. Here&apos;s your overview.
                     </p>
                 </motion.div>
 
+                {/* Error State with Retry */}
+                {error && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center justify-between"
+                    >
+                        <div className="flex items-center gap-3 text-red-400">
+                            <AlertCircle className="w-5 h-5" />
+                            <span className="text-sm">Failed to load data. Check your connection.</span>
+                        </div>
+                        <button
+                            onClick={fetchStats}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm transition-colors"
+                        >
+                            <RefreshCw className="w-4 h-4" />
+                            Retry
+                        </button>
+                    </motion.div>
+                )}
+
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-10">
                     {statCards.filter(card => card.visible).map((card, index) => {
                         const Icon = card.icon;
                         const colorClass = {
@@ -136,17 +185,17 @@ export default function DashboardPage() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.1 }}
-                                className={`bg-gradient-to-br ${colorClass} backdrop-blur-xl border rounded-2xl p-6`}
+                                className={`bg-gradient-to-br ${colorClass} backdrop-blur-xl border rounded-xl md:rounded-2xl p-4 md:p-6`}
                             >
-                                <div className="flex items-center justify-between mb-4">
-                                    <Icon className={`w-8 h-8 ${iconColor}`} />
+                                <div className="flex items-center justify-between mb-2 md:mb-4">
+                                    <Icon className={`w-6 h-6 md:w-8 md:h-8 ${iconColor}`} />
                                     {loading ? (
-                                        <div className="w-8 h-8 bg-white/10 rounded animate-pulse" />
+                                        <div className="w-6 h-6 md:w-8 md:h-8 bg-white/10 rounded animate-pulse" />
                                     ) : (
-                                        <span className="text-3xl font-bold text-white">{card.value}</span>
+                                        <span className="text-2xl md:text-3xl font-bold text-white">{card.value}</span>
                                     )}
                                 </div>
-                                <h3 className="text-white/60 text-sm font-medium">{card.title}</h3>
+                                <h3 className="text-white/60 text-xs md:text-sm font-medium">{card.title}</h3>
                             </motion.div>
                         );
                     })}
@@ -157,10 +206,10 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
-                    className="bg-gray-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6"
+                    className="bg-gray-900/40 backdrop-blur-xl border border-white/5 rounded-xl md:rounded-2xl p-4 md:p-6"
                 >
-                    <h2 className="text-xl font-serif font-bold text-white mb-4">Quick Actions</h2>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <h2 className="text-lg md:text-xl font-serif font-bold text-white mb-3 md:mb-4">Quick Actions</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                         <QuickAction
                             href="/network/tasks"
                             icon={ListTodo}
@@ -190,16 +239,16 @@ export default function DashboardPage() {
                     </div>
                 </motion.div>
 
-                {/* Placeholder for Calendar Widget (Phase 6) */}
+                {/* Upcoming Widget */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
-                    className="mt-8 bg-gray-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-6"
+                    className="mt-4 md:mt-8 bg-gray-900/40 backdrop-blur-xl border border-white/5 rounded-xl md:rounded-2xl p-4 md:p-6"
                 >
-                    <h2 className="text-xl font-serif font-bold text-white mb-4">Upcoming</h2>
-                    <div className="flex items-center justify-center h-48 border border-dashed border-white/10 rounded-xl">
-                        <p className="text-white/30 text-sm">Calendar widget coming soon...</p>
+                    <h2 className="text-lg md:text-xl font-serif font-bold text-white mb-3 md:mb-4">Upcoming</h2>
+                    <div className="flex items-center justify-center h-32 md:h-48 border border-dashed border-white/10 rounded-xl">
+                        <p className="text-white/30 text-xs md:text-sm">Calendar widget coming soon...</p>
                     </div>
                 </motion.div>
             </main>
@@ -209,10 +258,10 @@ export default function DashboardPage() {
 
 function QuickAction({ href, icon: Icon, label, color }) {
     const colorClass = {
-        teal: 'hover:border-teal/50 hover:bg-teal/5',
-        lime: 'hover:border-lime/50 hover:bg-lime/5',
-        orange: 'hover:border-orange/50 hover:bg-orange/5',
-        purple: 'hover:border-purple-500/50 hover:bg-purple-500/5'
+        teal: 'hover:border-teal/50 hover:bg-teal/5 active:bg-teal/10',
+        lime: 'hover:border-lime/50 hover:bg-lime/5 active:bg-lime/10',
+        orange: 'hover:border-orange/50 hover:bg-orange/5 active:bg-orange/10',
+        purple: 'hover:border-purple-500/50 hover:bg-purple-500/5 active:bg-purple-500/10'
     }[color];
 
     const iconColor = {
@@ -225,10 +274,10 @@ function QuickAction({ href, icon: Icon, label, color }) {
     return (
         <a
             href={href}
-            className={`group flex flex-col items-center gap-2 p-4 bg-white/5 border border-white/10 rounded-xl transition-all ${colorClass}`}
+            className={`group flex flex-col items-center gap-2 p-3 md:p-4 bg-white/5 border border-white/10 rounded-xl transition-all ${colorClass}`}
         >
-            <Icon className={`w-6 h-6 text-white/50 ${iconColor} transition-colors`} />
-            <span className="text-white/70 text-sm text-center group-hover:text-white transition-colors">{label}</span>
+            <Icon className={`w-5 h-5 md:w-6 md:h-6 text-white/50 ${iconColor} transition-colors`} />
+            <span className="text-white/70 text-xs md:text-sm text-center group-hover:text-white transition-colors">{label}</span>
         </a>
     );
 }

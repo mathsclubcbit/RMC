@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { cn } from "@/lib/utils";
 import Tilt from "react-parallax-tilt";
 import { motion } from "framer-motion";
@@ -26,14 +26,14 @@ export const BentoGridItem = ({
     icon,
 }) => {
     const divRef = useRef(null);
-    const [position, setPosition] = useState({ x: 0, y: 0 });
-    const [isHovered, setIsHovered] = useState(false);
 
     const handleMouseMove = (e) => {
         if (!divRef.current) return;
-
         const rect = divRef.current.getBoundingClientRect();
-        setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        divRef.current.style.setProperty("--mouse-x", `${x}px`);
+        divRef.current.style.setProperty("--mouse-y", `${y}px`);
     };
 
     return (
@@ -53,8 +53,6 @@ export const BentoGridItem = ({
             <div
                 ref={divRef}
                 onMouseMove={handleMouseMove}
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
                 className="relative h-full w-full rounded-3xl transition duration-500 shadow-xl border border-white/10 justify-between flex flex-col space-y-4 overflow-hidden group-hover:border-teal/40 bg-black/60 backdrop-blur-xl"
                 style={{
                     transformStyle: "preserve-3d",
@@ -71,10 +69,10 @@ export const BentoGridItem = ({
                 />
 
                 {/* 2. Spotlight gradient following mouse */}
-                <motion.div
+                <div
                     className="pointer-events-none absolute -inset-px transition duration-300 z-10 opacity-0 group-hover:opacity-100"
                     style={{
-                        background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, rgba(58, 188, 179, 0.06), transparent 40%)`,
+                        background: `radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(58, 188, 179, 0.06), transparent 40%)`,
                     }}
                 />
 

@@ -1,5 +1,7 @@
 import { google } from 'googleapis';
 import { Readable } from 'stream';
+import { OAuth2Client } from 'google-auth-library';
+import { JSONClient } from 'google-auth-library/build/src/auth/googleauth';
 
 const SCOPES = [
     'https://www.googleapis.com/auth/drive.file',
@@ -17,7 +19,7 @@ const normalizeCell = (value: unknown) => String(value ?? '').trim();
 /**
  * Authenticate using Service Account from Environment Variable
  */
-const getAuthClient = async () => {
+const getAuthClient = async (): Promise<any> => {
     // 1. Try OAuth 2.0 (User Account - Free 15GB Quota)
     if (process.env.GOOGLE_REFRESH_TOKEN && process.env.GOOGLE_CLIENT_ID) {
         const oauth2Client = new google.auth.OAuth2(
@@ -40,7 +42,8 @@ const getAuthClient = async () => {
             credentials,
             scopes: SCOPES,
         });
-        return await auth.getClient();
+        const client = await auth.getClient();
+        return client;
     }
 
     throw new Error('Missing Google Credentials: Set GOOGLE_REFRESH_TOKEN (User) or GOOGLE_SERVICE_ACCOUNT_JSON (Service Account)');
@@ -56,7 +59,7 @@ export const uploadToDrive = async (
     parentFolderId: string
 ) => {
     const authClient = await getAuthClient();
-    const drive = google.drive({ version: 'v3', auth: authClient as any });
+    const drive = google.drive({ version: 'v3', auth: authClient });
 
     const bufferStream = new Readable();
     bufferStream.push(fileBuffer);
@@ -86,12 +89,9 @@ export const uploadToDrive = async (
  */
 export const getOrCreateFolder = async (folderName: string, parentFolderId: string): Promise<string> => {
     const authClient = await getAuthClient();
-    const drive = google.drive({ version: 'v3', auth: authClient as any });
+    const drive = google.drive({ version: 'v3', auth: authClient });
 
-    // Sanitize folder name slightly to avoid query issues
     const safeFolderName = folderName.replace(/'/g, "\\'");
-
-    // Check if folder exists
     const query = `mimeType='application/vnd.google-apps.folder' and name='${safeFolderName}' and '${parentFolderId}' in parents and trashed=false`;
 
     try {
@@ -105,7 +105,6 @@ export const getOrCreateFolder = async (folderName: string, parentFolderId: stri
             return response.data.files[0].id!;
         }
 
-        // Create folder if not exists
         const fileMetadata = {
             name: folderName,
             mimeType: 'application/vnd.google-apps.folder',
@@ -120,12 +119,13 @@ export const getOrCreateFolder = async (folderName: string, parentFolderId: stri
         return folder.data.id!;
     } catch (error) {
         console.error('Error getting/creating folder:', error);
-        throw error; // Propagate error
+        throw error;
     }
 };
 
 /**
- * Check if the UTR already exists in the Google Sheet (Column K - index 10)
+ * Check if the UTR already exists in the Google Sheet.
+ * Current sheet layout stores UTR in Column I.
  */
 export const checkDuplicateUTR = async (
     spreadsheetId: string,
@@ -147,7 +147,7 @@ export const checkDuplicateUTR = async (
     }
 
     const normalizedUTR = utr.trim().toUpperCase();
-    const existingUTRs = rows.flat().map((val: any) => String(val).trim().toUpperCase());
+    const existingUTRs = rows.flat().map((val) => String(val).trim().toUpperCase());
 
     return existingUTRs.includes(normalizedUTR);
 };
@@ -186,7 +186,7 @@ export const appendRowToSheet = async (
     rowData: string[]
 ) => {
     const authClient = await getAuthClient();
-    const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+    const sheets = google.sheets({ version: 'v4', auth: authClient });
 
     try {
         const res = await sheets.spreadsheets.values.append({
@@ -365,7 +365,6 @@ export const markRegistrationAttendance = async (
 
 /**
  * Update registration status in Google Sheet
- * Status column is N (index 13, 1-based column 14)
  */
 export const updateRegistrationStatus = async (
     spreadsheetId: string,
@@ -376,7 +375,6 @@ export const updateRegistrationStatus = async (
     const sheets = google.sheets({ version: 'v4', auth: authClient as any });
 
     try {
-        // First, find the row with this registration ID (Column B)
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
             range: sheetRange('B:B'), // Registration ID column
@@ -398,10 +396,8 @@ export const updateRegistrationStatus = async (
             return { success: false, error: 'Registration not found' };
         }
 
-        // Row number in sheet (1-indexed, +1 for header compensation)
         const sheetRowNumber = rowIndex + 1;
 
-        // Update the status column (N)
         await sheets.spreadsheets.values.update({
             spreadsheetId,
             range: sheetRange(`N${sheetRowNumber}`),
@@ -503,7 +499,7 @@ export interface AnnouncementData {
  */
 const ensureSheetExists = async (spreadsheetId: string, title: string) => {
     const authClient = await getAuthClient();
-    const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+    const sheets = google.sheets({ version: 'v4', auth: authClient });
 
     try {
         const response = await sheets.spreadsheets.get({
@@ -512,7 +508,6 @@ const ensureSheetExists = async (spreadsheetId: string, title: string) => {
 
         const sheet = response.data.sheets?.find(s => s.properties?.title === title);
         if (!sheet) {
-            // Create the sheet
             await sheets.spreadsheets.batchUpdate({
                 spreadsheetId,
                 requestBody: {
@@ -532,7 +527,6 @@ const ensureSheetExists = async (spreadsheetId: string, title: string) => {
                 }
             });
 
-            // Add Headers
             await sheets.spreadsheets.values.update({
                 spreadsheetId,
                 range: `${title}!A1:F1`,
@@ -553,10 +547,9 @@ const ensureSheetExists = async (spreadsheetId: string, title: string) => {
  */
 export const getAnnouncements = async (spreadsheetId: string): Promise<AnnouncementData[]> => {
     const authClient = await getAuthClient();
-    const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+    const sheets = google.sheets({ version: 'v4', auth: authClient });
 
     try {
-        // Ensure sheet exists before reading
         await ensureSheetExists(spreadsheetId, 'Announcements');
 
         const response = await sheets.spreadsheets.values.get({
@@ -565,7 +558,7 @@ export const getAnnouncements = async (spreadsheetId: string): Promise<Announcem
         });
 
         const rows = response.data.values;
-        if (!rows || rows.length <= 1) return []; // Skip header
+        if (!rows || rows.length <= 1) return [];
 
         return rows.slice(1).map((row) => ({
             id: row[0] || '',
@@ -574,7 +567,7 @@ export const getAnnouncements = async (spreadsheetId: string): Promise<Announcem
             category: row[3] || '',
             date: row[4] || '',
             postedBy: row[5] || 'Admin',
-        })).reverse(); // Newest first
+        })).reverse();
     } catch (error) {
         console.warn("Could not fetch announcements:", error);
         return [];
@@ -589,7 +582,7 @@ export const createAnnouncement = async (
     announcement: AnnouncementData
 ) => {
     const authClient = await getAuthClient();
-    const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+    const sheets = google.sheets({ version: 'v4', auth: authClient });
 
     await ensureSheetExists(spreadsheetId, 'Announcements');
 

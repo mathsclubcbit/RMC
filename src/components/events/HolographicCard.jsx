@@ -58,16 +58,24 @@ export default function HolographicCard({ event, index }) {
                 {hasPoster ? (
                     <div className="relative w-full h-full transition-transform duration-700 group-hover:scale-110 group-hover:blur-[3px] group-hover:opacity-80">
                         {/* Universal Image Handler with Fallbacks */}
-                        <img
-                            src={event.posterDesktop || event.img || event.posterMobile}
-                            alt={event.title}
-                            className="absolute inset-0 w-full h-full object-cover hidden md:block"
-                        />
-                        <img
-                            src={event.posterMobile || event.img || event.posterDesktop}
-                            alt={event.title}
-                            className="absolute inset-0 w-full h-full object-cover md:hidden"
-                        />
+                        <div className="hidden md:block absolute inset-0">
+                            <Image
+                                src={event.posterDesktop || event.img || event.posterMobile}
+                                alt={event.title}
+                                fill
+                                className="object-cover"
+                                sizes="(min-width: 768px) 33vw, 100vw"
+                            />
+                        </div>
+                        <div className="md:hidden absolute inset-0">
+                            <Image
+                                src={event.posterMobile || event.img || event.posterDesktop}
+                                alt={event.title}
+                                fill
+                                className="object-cover"
+                                sizes="100vw"
+                            />
+                        </div>
                     </div>
                 ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black opacity-50" />

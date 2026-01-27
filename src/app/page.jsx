@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import dynamic from "next/dynamic"; // [OPTIMIZATION]
 import LenisScroll from "@/components/ui/LenisScroll";
 import SectionTitle from "@/components/ui/SectionTitle";
@@ -10,7 +8,7 @@ import { BentoGrid, BentoGridItem } from "@/components/ui/BentoGrid";
 import ParallaxGallery from "@/components/home/ParallaxGallery";
 import HomeEventsSection from "@/components/home/HomeEventsSection";
 import StatsSection from "@/components/home/StatsSection";
-import { ArrowRight, Trophy, Calendar, Users, Star, TrendingUp } from "lucide-react";
+import { ArrowRight, Star } from "lucide-react";
 import MathDerivation from "@/components/ui/MathDerivation";
 import AnnouncementsWidget from "@/components/home/AnnouncementsWidget";
 import MathBackground from "@/components/ui/MathBackground";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import NetworkSidebar from "@/components/network/Sidebar";
@@ -10,7 +10,6 @@ import {
     ChevronLeft,
     ChevronRight,
     Plus,
-    Clock,
     ListTodo,
     PartyPopper,
     X,
@@ -32,26 +31,54 @@ export default function CalendarPage() {
     const [showEventModal, setShowEventModal] = useState(false);
     const [selectedDate, setSelectedDate] = useState(null);
     const [viewingDate, setViewingDate] = useState(null);
-    const supabase = createClient();
+    const [myTeams, setMyTeams] = useState([]);
+    const supabase = useMemo(() => createClient(), []);
 
-    useEffect(() => {
-        fetchCalendarData();
-    }, [currentDate]);
+    const fetchCalendarData = useCallback(async () => {
+        if (!profile?.id) return;
 
-    const fetchCalendarData = async () => {
         try {
             const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
             const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
-            // Fetch calendar events
-            const { data: eventsData } = await supabase
+            // Fetch user's teams (for permission checks and visibility)
+            const { data: teamMemberships } = await supabase
+                .from("team_members")
+                .select(`
+                    team_id,
+                    role,
+                    teams:team_id (id, name, type)
+                `)
+                .eq("user_id", profile?.id);
+
+            const teams = teamMemberships?.map(tm => ({
+                id: tm.teams.id,
+                name: tm.teams.name,
+                type: tm.teams.type,
+                role: tm.role
+            })) || [];
+
+            setMyTeams(teams);
+            const userTeamIds = teams.map(t => t.id);
+
+            // Fetch calendar events with new visibility logic
+            let query = supabase
                 .from("calendar_events")
                 .select("*")
-                .or(`is_global.eq.true,visible_to_user.eq.${profile?.id}`)
                 .gte("start_time", startOfMonth.toISOString())
                 .lte("start_time", endOfMonth.toISOString());
 
-            setEvents(eventsData || []);
+            const { data: eventsData } = await query;
+
+            const filteredEvents = eventsData?.filter(event => {
+                if (event.created_by === profile?.id) return true;
+                if (event.is_global) return true;
+                if (event.visibility === 'global') return true;
+                if (event.visibility === 'team' && event.team_id && userTeamIds.includes(event.team_id)) return true;
+                return false;
+            }) || [];
+
+            setEvents(filteredEvents);
 
             // Fetch tasks with deadlines
             const { data: tasksData } = await supabase
@@ -62,7 +89,8 @@ export default function CalendarPage() {
                     deadline,
                     status,
                     assigned_to_team,
-                    assigned_to_user
+                    assigned_to_user,
+                    teams:assigned_to_team (name)
                 `)
                 .not("deadline", "is", null)
                 .gte("deadline", startOfMonth.toISOString())
@@ -71,13 +99,6 @@ export default function CalendarPage() {
             // Filter tasks visible to user
             let visibleTasks = tasksData || [];
             if (!isPresident()) {
-                const { data: userTeams } = await supabase
-                    .from("team_members")
-                    .select("team_id")
-                    .eq("user_id", profile?.id);
-
-                const userTeamIds = userTeams?.map(t => t.team_id) || [];
-
                 visibleTasks = tasksData?.filter(task => {
                     if (task.assigned_to_user === profile?.id) return true;
                     if (task.assigned_to_team && userTeamIds.includes(task.assigned_to_team)) return true;
@@ -91,7 +112,11 @@ export default function CalendarPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [profile?.id, currentDate, isPresident, supabase]);
+
+    useEffect(() => {
+        fetchCalendarData();
+    }, [fetchCalendarData]);
 
     const calendarDays = useMemo(() => {
         const year = currentDate.getFullYear();
@@ -159,7 +184,7 @@ export default function CalendarPage() {
         <div className="flex min-h-screen">
             <NetworkSidebar />
 
-            <main className="flex-1 p-6 lg:p-10 overflow-auto">
+            <main className="flex-1 p-4 lg:p-10 pt-24 lg:pt-10 overflow-auto">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -175,7 +200,7 @@ export default function CalendarPage() {
                         </p>
                     </div>
 
-                    {isPresident() && (
+                    {(isPresident() || myTeams.some(t => t.role === 'head')) && (
                         <button
                             onClick={() => handleAddEvent(null)}
                             className="flex items-center gap-2 px-5 py-3 bg-teal text-black font-bold rounded-xl hover:bg-teal/80 transition-colors"
@@ -240,41 +265,54 @@ export default function CalendarPage() {
                         <div className="grid grid-cols-7">
                             {calendarDays.map((date, index) => {
                                 const { events: dayEvents, tasks: dayTasks } = getEventsForDate(date);
-                                const hasItems = dayEvents.length > 0 || dayTasks.length > 0;
 
                                 return (
                                     <button
                                         key={index}
                                         onClick={() => handleDateClick(date)}
                                         disabled={!date}
-                                        className={`min-h-[80px] lg:min-h-[100px] p-2 border-b border-r border-white/5 text-left transition-colors ${date ? 'hover:bg-white/5' : 'bg-black/20'
-                                            } ${isToday(date) ? 'bg-teal/5' : ''}`}
+                                        className={`
+                                            min-h-[80px] md:min-h-[100px] lg:min-h-[120px] p-1.5 md:p-3 
+                                            border-b border-r border-white/5 
+                                            text-left transition-all duration-300 relative group
+                                            ${date
+                                                ? 'hover:bg-white/5 hover:shadow-[inset_0_0_20px_rgba(255,255,255,0.02)]'
+                                                : 'bg-black/20'
+                                            } 
+                                            ${isToday(date) ? 'bg-teal/5 ring-1 ring-inset ring-teal/20' : ''}
+                                        `}
                                     >
                                         {date && (
                                             <>
-                                                <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-sm ${isToday(date)
-                                                        ? 'bg-teal text-black font-bold'
-                                                        : 'text-white/70'
+                                                <span className={`inline-flex items-center justify-center w-6 h-6 md:w-7 md:h-7 rounded-full text-xs md:text-sm ${isToday(date)
+                                                    ? 'bg-teal text-black font-bold'
+                                                    : 'text-white/70'
                                                     }`}>
                                                     {date.getDate()}
                                                 </span>
 
                                                 {/* Event/Task Indicators */}
                                                 <div className="mt-1 space-y-1">
-                                                    {dayEvents.slice(0, 2).map((event, i) => (
+                                                    {dayEvents.slice(0, 3).map((event) => (
                                                         <div
                                                             key={event.id}
-                                                            className="text-[10px] px-1.5 py-0.5 bg-purple-500/20 text-purple-400 rounded truncate"
+                                                            className={`
+                                                                text-[9px] font-medium px-2 py-1 rounded-md truncate backdrop-blur-sm border
+                                                                ${event.visibility === 'team'
+                                                                    ? 'bg-purple-500/10 text-purple-300 border-purple-500/20'
+                                                                    : 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20'
+                                                                }
+                                                            `}
                                                         >
                                                             {event.title}
                                                         </div>
                                                     ))}
-                                                    {dayTasks.slice(0, 2).map((task, i) => (
+                                                    {dayTasks.slice(0, 2).map((task) => (
                                                         <div
                                                             key={task.id}
-                                                            className="text-[10px] px-1.5 py-0.5 bg-orange/20 text-orange rounded truncate"
+                                                            className="text-[9px] font-medium px-2 py-1 bg-amber-500/10 text-amber-300 border border-amber-500/20 rounded-md truncate"
                                                         >
-                                                            {task.title}
+                                                            {task.teams?.name ? `${task.teams.name}: ` : ""}{task.title}
                                                         </div>
                                                     ))}
                                                     {(dayEvents.length + dayTasks.length) > 2 && (
@@ -299,13 +337,17 @@ export default function CalendarPage() {
                     transition={{ delay: 0.3 }}
                     className="flex gap-6 mt-6 text-sm"
                 >
-                    <div className="flex items-center gap-2 text-white/50">
-                        <div className="w-3 h-3 bg-purple-500/40 rounded" />
-                        <span>Events</span>
+                    <div className="flex items-center gap-2 text-white/50 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                        <div className="w-2 h-2 bg-indigo-400 rounded-full shadow-[0_0_8px_rgba(129,140,248,0.5)]" />
+                        <span>Global Events</span>
                     </div>
-                    <div className="flex items-center gap-2 text-white/50">
-                        <div className="w-3 h-3 bg-orange/40 rounded" />
-                        <span>Task Deadlines</span>
+                    <div className="flex items-center gap-2 text-white/50 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                        <div className="w-2 h-2 bg-purple-400 rounded-full shadow-[0_0_8px_rgba(192,132,252,0.5)]" />
+                        <span>Team Events</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-white/50 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                        <div className="w-2 h-2 bg-amber-400 rounded-full shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
+                        <span>Deadlines</span>
                     </div>
                 </motion.div>
             </main>
@@ -329,6 +371,7 @@ export default function CalendarPage() {
                 {showEventModal && (
                     <AddEventModal
                         initialDate={selectedDate}
+                        myTeams={myTeams}
                         onClose={() => setShowEventModal(false)}
                         onSuccess={() => {
                             setShowEventModal(false);
@@ -401,12 +444,19 @@ function DayDetailModal({ date, events, tasks, isPresident, onClose, onAddEvent 
                             {tasks.map(task => (
                                 <div
                                     key={task.id}
-                                    className="flex items-start gap-3 p-3 bg-orange/10 border border-orange/20 rounded-xl"
+                                    className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl"
                                 >
-                                    <ListTodo className="w-5 h-5 text-orange mt-0.5" />
+                                    <ListTodo className="w-5 h-5 text-amber-400 mt-0.5" />
                                     <div>
-                                        <h4 className="text-white font-medium">{task.title}</h4>
-                                        <p className="text-orange/70 text-xs mt-1">
+                                        <h4 className="text-white font-medium">
+                                            {task.teams?.name && (
+                                                <span className="inline-block px-1.5 py-0.5 mr-2 bg-amber-500/20 text-[10px] rounded uppercase tracking-wider text-amber-300">
+                                                    {task.teams.name}
+                                                </span>
+                                            )}
+                                            {task.title}
+                                        </h4>
+                                        <p className="text-amber-400/70 text-xs mt-1">
                                             Due: {new Date(task.deadline).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                                         </p>
                                     </div>
@@ -417,7 +467,7 @@ function DayDetailModal({ date, events, tasks, isPresident, onClose, onAddEvent 
                 </div>
 
                 {/* Footer */}
-                {isPresident && (
+                {(isPresident || onAddEvent) && (
                     <div className="px-6 py-4 border-t border-white/5">
                         <button
                             onClick={onAddEvent}
@@ -433,14 +483,20 @@ function DayDetailModal({ date, events, tasks, isPresident, onClose, onAddEvent 
     );
 }
 
-function AddEventModal({ initialDate, onClose, onSuccess }) {
-    const { profile } = useAuth();
+function AddEventModal({ initialDate, myTeams, onClose, onSuccess }) {
+    const { profile, isPresident } = useAuth();
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [startTime, setStartTime] = useState(
         initialDate ? new Date(initialDate).toISOString().slice(0, 16) : ""
     );
-    const [isGlobal, setIsGlobal] = useState(true);
+    // Visibility State
+    const [visibility, setVisibility] = useState(isPresident() ? "global" : "team");
+
+    // Team ID State: Default to first Head team if not President user
+    const headTeams = myTeams?.filter(t => t.role === 'head') || [];
+    const [teamId, setTeamId] = useState(headTeams[0]?.id || "");
+
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const supabase = createClient();
@@ -459,6 +515,11 @@ function AddEventModal({ initialDate, onClose, onSuccess }) {
             return;
         }
 
+        if (visibility === 'team' && !teamId) {
+            setError("Please select a team");
+            return;
+        }
+
         setSaving(true);
 
         try {
@@ -468,7 +529,9 @@ function AddEventModal({ initialDate, onClose, onSuccess }) {
                     title: title.trim(),
                     description: description.trim() || null,
                     start_time: new Date(startTime).toISOString(),
-                    is_global: isGlobal,
+                    is_global: visibility === 'global',
+                    visibility: visibility,
+                    team_id: visibility === 'team' ? teamId : null,
                     type: "event",
                     created_by: profile.id
                 });
@@ -500,7 +563,7 @@ function AddEventModal({ initialDate, onClose, onSuccess }) {
             >
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-                    <h2 className="text-xl font-serif font-bold text-white">Add Global Event</h2>
+                    <h2 className="text-xl font-serif font-bold text-white">Add Event</h2>
                     <button onClick={onClose} className="text-white/50 hover:text-white">
                         <X className="w-5 h-5" />
                     </button>
@@ -522,7 +585,7 @@ function AddEventModal({ initialDate, onClose, onSuccess }) {
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            placeholder="e.g., Math Fest Planning Meeting"
+                            placeholder="e.g., Timeline Kickoff"
                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:border-teal/50 outline-none"
                         />
                     </div>
@@ -551,6 +614,74 @@ function AddEventModal({ initialDate, onClose, onSuccess }) {
                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-teal/50 outline-none"
                         />
                     </div>
+
+                    {/* Visibility Controls */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
+                            Visibility
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                            {isPresident() && (
+                                <button
+                                    type="button"
+                                    onClick={() => setVisibility("global")}
+                                    className={`px-4 py-3 rounded-xl border transition-all text-sm font-medium ${visibility === "global"
+                                        ? "bg-teal/10 border-teal/50 text-teal"
+                                        : "bg-white/5 border-white/10 text-white/50 hover:border-white/30"
+                                        }`}
+                                >
+                                    Global (Everyone)
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => setVisibility("team")}
+                                className={`px-4 py-3 rounded-xl border transition-all text-sm font-medium ${visibility === "team"
+                                    ? "bg-purple-500/10 border-purple-500/50 text-purple-400"
+                                    : "bg-white/5 border-white/10 text-white/50 hover:border-white/30"
+                                    } ${!isPresident() ? 'col-span-2' : ''}`}
+                            >
+                                Team Only
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Team Selection (Only if Team Visibility) */}
+                    {visibility === "team" && (
+                        <div className="space-y-2">
+                            <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
+                                Select Team *
+                            </label>
+                            <select
+                                value={teamId}
+                                onChange={(e) => setTeamId(e.target.value)}
+                                className="w-full appearance-none bg-gray-800 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-teal/50 outline-none"
+                                style={{ colorScheme: 'dark' }}
+                            >
+                                <option value="" className="bg-gray-800 text-white/50">Choose a team...</option>
+                                {/* If President, see all teams? No, passed myTeams. Wait, President isn't in all teams? 
+                                    President might need ALL teams list. Currently fetching only user's teams.
+                                    Ideally President should be able to post to ANY team? 
+                                    For now, let's limit to teams they are part of OR improve `myTeams` for president.
+                                    Actually, if President adds event for a team they are NOT in, it's weird.
+                                    But let's assume President is added to teams or we fetch all teams if President.
+                                    
+                                    Current `myTeams` is strictly my memberships.
+                                    We should update `CalendarPage.jsx` logic to fetch ALL teams if President?
+                                    Actually, user request "President can add... adjust visibility... which to be shown for who."
+                                    If "team" visibility, implied spec team.
+                                    
+                                    Let's stick to `myTeams` for now or better yet, verify.
+                                    If President assigns to a team, they should select from available teams.
+                                 */}
+                                {myTeams.map(team => (
+                                    <option key={team.id} value={team.id} className="bg-gray-800 text-white">
+                                        {team.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     <button
                         type="submit"

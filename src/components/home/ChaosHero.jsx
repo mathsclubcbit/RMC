@@ -112,14 +112,15 @@ function ResponsiveCamera() {
             const isMobile = window.innerWidth < 768;
 
             if (isMobile) {
-                // Mobile: Moved closer (Z: 80) to increase size further
                 // FOV 50: Balanced perspective
                 // Y 0: Perfectly centered
+                // eslint-disable-next-line react-hooks/immutability
                 camera.fov = 50;
                 camera.position.z = 80; // Was 90, now 80 (Closer = Bigger)
                 camera.position.y = 0;
             } else {
                 // Desktop: Standard Cinematic
+                // eslint-disable-next-line react-hooks/immutability
                 camera.fov = 40;
                 camera.position.z = 60;
                 camera.position.y = 8; // Slight lift on desktop
@@ -148,9 +149,12 @@ export default function ChaosHero() {
     }, []);
 
     return (
-        <section className="relative w-full h-screen overflow-hidden bg-transparent">
+        <section className="relative w-full h-screen overflow-hidden bg-transparent" style={{ touchAction: 'pan-y' }}>
             {/* 3D Scene */}
-            <div className={`absolute inset-0 z-10 canvas-container ${isMobile ? 'pointer-events-none' : ''}`}>
+            <div
+                className="absolute inset-0 z-10 canvas-container"
+                style={{ pointerEvents: isMobile ? 'none' : 'auto' }}
+            >
                 <Canvas camera={{ position: [0, 8, 60], fov: 40 }} gl={{ alpha: true }} onCreated={({ gl }) => gl.setClearColor(new THREE.Color('#020617'), 0)}>
                     {/* <color attach="background" args={['#020617']} /> -- Removed to allow transparency */}
                     {/* Fog should match the background logic, but since it's transparent, fog might hide things locally. 
@@ -160,15 +164,16 @@ export default function ChaosHero() {
 
                     <ResponsiveCamera />
 
-                    <OrbitControls
-                        enableZoom={false}
-                        autoRotate={true}
-                        autoRotateSpeed={0.5}
-                        enablePan={false}
-                        enableRotate={!isMobile} // Disable rotation on mobile to allow scrolling
-                        maxPolarAngle={Math.PI / 1.5}
-                        minPolarAngle={Math.PI / 3}
-                    />
+                    {!isMobile && (
+                        <OrbitControls
+                            enableZoom={false}
+                            autoRotate={true}
+                            autoRotateSpeed={0.5}
+                            enablePan={false}
+                            maxPolarAngle={Math.PI / 1.5}
+                            minPolarAngle={Math.PI / 3}
+                        />
+                    )}
 
                     <ambientLight intensity={0.5} />
 
@@ -218,7 +223,7 @@ export default function ChaosHero() {
                         transition={{ delay: 1, duration: 1 }}
                         className="font-serif text-xl md:text-2xl text-white/60 leading-relaxed italic max-w-2xl mx-auto"
                     >
-                        "The Art of the Infinite."
+                        &quot;The Art of the Infinite.&quot;
                     </motion.div>
 
                     {/* Math Notation Decoration */}

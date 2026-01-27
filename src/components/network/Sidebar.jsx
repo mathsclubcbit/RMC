@@ -17,7 +17,9 @@ import {
     LogOut,
     ChevronLeft,
     Menu,
-    X
+    X,
+    ExternalLink,
+    RefreshCw
 } from "lucide-react";
 
 export default function NetworkSidebar() {
@@ -29,15 +31,9 @@ export default function NetworkSidebar() {
 
     // Close mobile menu on route change
     useEffect(() => {
-        setMobileOpen(false);
-    }, [pathname]);
+        if (mobileOpen) setMobileOpen(false);
+    }, [pathname, mobileOpen]);
 
-    const handleSignOut = async () => {
-        await signOut();
-        router.push("/network/login");
-    };
-
-    // Build navigation links based on role and permissions
     const getNavLinks = () => {
         const links = [
             { href: "/network/dashboard", label: "Dashboard", icon: LayoutDashboard, always: true },
@@ -77,24 +73,44 @@ export default function NetworkSidebar() {
 
     const navLinks = getNavLinks();
 
-    const NavContent = () => (
+    const handleSignOut = async () => {
+        await signOut();
+        router.push("/network/login");
+    };
+
+    const windowReload = () => {
+        if (typeof window !== 'undefined') window.location.reload();
+    };
+
+    const commonProps = {
+        collapsed,
+        profile,
+        navLinks,
+        pathname,
+        handleSignOut,
+        windowReload
+    };
+
+    const NavContent = ({ hideLogo = false, collapsed, profile, navLinks, pathname, handleSignOut, windowReload }) => (
         <>
             {/* Logo */}
-            <div className={`flex items-center gap-3 px-4 py-6 border-b border-white/5 ${collapsed ? 'justify-center' : ''}`}>
-                <Image
-                    src="/RMC logo-circular.png"
-                    alt="RMC"
-                    width={collapsed ? 36 : 40}
-                    height={collapsed ? 36 : 40}
-                    className="flex-shrink-0"
-                />
-                {!collapsed && (
-                    <div>
-                        <h1 className="text-white font-serif font-bold text-lg">RMC Network</h1>
-                        <p className="text-white/40 text-[10px] uppercase tracking-widest">{profile?.role?.replace('_', ' ')}</p>
-                    </div>
-                )}
-            </div>
+            {!hideLogo && (
+                <div className={`flex items-center gap-3 px-4 py-6 border-b border-white/5 ${collapsed ? 'justify-center' : ''}`}>
+                    <Image
+                        src="/RMC logo-circular.png"
+                        alt="RMC"
+                        width={collapsed ? 36 : 40}
+                        height={collapsed ? 36 : 40}
+                        className="flex-shrink-0"
+                    />
+                    {!collapsed && (
+                        <div>
+                            <h1 className="text-white font-serif font-bold text-lg">RMC Network</h1>
+                            <p className="text-white/40 text-[10px] uppercase tracking-widest">{profile?.role?.replace('_', ' ')}</p>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Nav Links */}
             <nav className="flex-1 px-3 py-4 space-y-1">
@@ -107,8 +123,8 @@ export default function NetworkSidebar() {
                             key={link.href}
                             href={link.href}
                             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${isActive
-                                    ? 'bg-teal/10 text-teal'
-                                    : 'text-white/50 hover:bg-white/5 hover:text-white'
+                                ? 'bg-teal/10 text-teal'
+                                : 'text-white/50 hover:bg-white/5 hover:text-white'
                                 } ${collapsed ? 'justify-center' : ''}`}
                         >
                             <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-teal' : 'group-hover:text-teal'}`} />
@@ -120,14 +136,34 @@ export default function NetworkSidebar() {
                 })}
             </nav>
 
-            {/* User & Sign Out */}
-            <div className="px-3 py-4 border-t border-white/5">
+            {/* User & Actions */}
+            <div className="px-3 py-4 border-t border-white/5 space-y-1">
                 {!collapsed && (
                     <div className="px-3 py-2 mb-2">
                         <p className="text-white text-sm font-medium truncate">{profile?.full_name || profile?.email}</p>
                         <p className="text-white/40 text-xs truncate">{profile?.email}</p>
                     </div>
                 )}
+
+                {/* Refresh Network */}
+                <button
+                    onClick={windowReload}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/50 hover:bg-white/5 hover:text-white transition-all w-full ${collapsed ? 'justify-center' : ''}`}
+                >
+                    <RefreshCw className="w-5 h-5 flex-shrink-0" />
+                    {!collapsed && <span className="text-sm font-medium">Refresh Network</span>}
+                </button>
+
+                {/* Exit to Main Website */}
+                <Link
+                    href="/"
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/50 hover:bg-white/5 hover:text-white transition-all w-full ${collapsed ? 'justify-center' : ''}`}
+                >
+                    <ExternalLink className="w-5 h-5" />
+                    {!collapsed && <span className="text-sm font-medium">Exit to Website</span>}
+                </Link>
+
+                {/* Sign Out */}
                 <button
                     onClick={handleSignOut}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400/70 hover:bg-red-500/10 hover:text-red-400 transition-all w-full ${collapsed ? 'justify-center' : ''}`}
@@ -141,13 +177,27 @@ export default function NetworkSidebar() {
 
     return (
         <>
-            {/* Mobile Menu Button */}
-            <button
-                onClick={() => setMobileOpen(true)}
-                className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-gray-900/80 backdrop-blur-xl border border-white/10 rounded-xl text-white"
-            >
-                <Menu className="w-5 h-5" />
-            </button>
+            {/* Mobile Header Bar */}
+            <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[#0f172a]/80 backdrop-blur-xl border-b border-white/5 z-[60] px-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <Image
+                        src="/RMC logo-circular.png"
+                        alt="RMC"
+                        width={32}
+                        height={32}
+                    />
+                    <div>
+                        <h1 className="text-white font-serif font-bold text-sm leading-none">RMC Network</h1>
+                        <p className="text-white/40 text-[8px] uppercase tracking-widest mt-0.5">{profile?.role?.replace('_', ' ')}</p>
+                    </div>
+                </div>
+                <button
+                    onClick={() => setMobileOpen(true)}
+                    className="p-2 bg-white/5 border border-white/10 rounded-lg text-white/70 hover:text-white"
+                >
+                    <Menu className="w-5 h-5" />
+                </button>
+            </header>
 
             {/* Mobile Overlay */}
             <AnimatePresence>
@@ -157,46 +207,53 @@ export default function NetworkSidebar() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => setMobileOpen(false)}
-                        className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+                        className="lg:hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[70]"
                     />
                 )}
             </AnimatePresence>
 
-            {/* Mobile Sidebar */}
+            {/* Mobile Sidebar (Drawer) */}
             <AnimatePresence>
                 {mobileOpen && (
                     <motion.aside
                         initial={{ x: -280 }}
                         animate={{ x: 0 }}
                         exit={{ x: -280 }}
-                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                        className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-gray-900/95 backdrop-blur-xl border-r border-white/5 z-50 flex flex-col"
+                        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                        className="lg:hidden fixed left-0 top-0 bottom-0 w-80 bg-[#0f172a] border-r border-white/5 z-[80] flex flex-col shadow-2xl"
                     >
-                        <button
-                            onClick={() => setMobileOpen(false)}
-                            className="absolute top-4 right-4 p-2 text-white/50 hover:text-white"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
-                        <NavContent />
+                        <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/5">
+                            <h2 className="text-white font-serif font-bold text-lg">Navigation</h2>
+                            <button
+                                onClick={() => setMobileOpen(false)}
+                                className="p-2 text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto">
+                            <NavContent {...commonProps} hideLogo={true} />
+                        </div>
                     </motion.aside>
                 )}
             </AnimatePresence>
 
             {/* Desktop Sidebar */}
             <aside
-                className={`hidden lg:flex flex-col bg-gray-900/60 backdrop-blur-xl border-r border-white/5 transition-all duration-300 ${collapsed ? 'w-20' : 'w-64'
+                className={`hidden lg:flex flex-col bg-gray-900/60 backdrop-blur-xl border-r border-white/5 transition-all duration-300 relative ${collapsed ? 'w-20' : 'w-64'
                     }`}
             >
-                <NavContent />
+                <div className="flex flex-col h-full sticky top-0">
+                    <NavContent {...commonProps} />
 
-                {/* Collapse Toggle */}
-                <button
-                    onClick={() => setCollapsed(!collapsed)}
-                    className="absolute -right-3 top-20 p-1.5 bg-gray-800 border border-white/10 rounded-full text-white/50 hover:text-white transition-colors"
-                >
-                    <ChevronLeft className={`w-4 h-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
-                </button>
+                    {/* Collapse Toggle */}
+                    <button
+                        onClick={() => setCollapsed(!collapsed)}
+                        className="absolute -right-3 top-20 p-1.5 bg-gray-800 border border-white/10 rounded-full text-white/50 hover:text-white transition-colors z-10"
+                    >
+                        <ChevronLeft className={`w-4 h-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
+                    </button>
+                </div>
             </aside>
         </>
     );

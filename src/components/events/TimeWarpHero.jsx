@@ -3,11 +3,43 @@
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
+class Particle {
+    constructor(canvasWidth, canvasHeight) {
+        this.x = Math.random() * canvasWidth - canvasWidth / 2;
+        this.y = Math.random() * canvasHeight - canvasHeight / 2;
+        this.z = Math.random() * 2000;
+        this.color = ["#3ABCB3", "#D4AF37", "#FFFFFF"][Math.floor(Math.random() * 3)];
+    }
+
+    update(canvasWidth, canvasHeight) {
+        this.z -= 10; // Speed
+        if (this.z <= 0) {
+            this.z = 2000;
+            this.x = Math.random() * canvasWidth - canvasWidth / 2;
+            this.y = Math.random() * canvasHeight - canvasHeight / 2;
+        }
+    }
+
+    draw(ctx, canvasWidth, canvasHeight) {
+        let x = (this.x / this.z) * 1000 + canvasWidth / 2;
+        let y = (this.y / this.z) * 1000 + canvasHeight / 2;
+        let radius = (1000 / this.z) * 1.5;
+
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = (2000 - this.z) / 2000;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    }
+}
+
 export default function TimeWarpHero() {
     const canvasRef = useRef(null);
 
     useEffect(() => {
         const canvas = canvasRef.current;
+        if (!canvas) return;
         const ctx = canvas.getContext("2d");
         let animationFrameId;
         let particles = [];
@@ -17,41 +49,10 @@ export default function TimeWarpHero() {
             canvas.height = window.innerHeight * 0.6; // 60vh
         };
 
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width - canvas.width / 2;
-                this.y = Math.random() * canvas.height - canvas.height / 2;
-                this.z = Math.random() * 2000;
-                this.color = ["#3ABCB3", "#D4AF37", "#FFFFFF"][Math.floor(Math.random() * 3)];
-            }
-
-            update() {
-                this.z -= 10; // Speed
-                if (this.z <= 0) {
-                    this.z = 2000;
-                    this.x = Math.random() * canvas.width - canvas.width / 2;
-                    this.y = Math.random() * canvas.height - canvas.height / 2;
-                }
-            }
-
-            draw() {
-                let x = (this.x / this.z) * 1000 + canvas.width / 2;
-                let y = (this.y / this.z) * 1000 + canvas.height / 2;
-                let radius = (1000 / this.z) * 1.5;
-
-                ctx.beginPath();
-                ctx.arc(x, y, radius, 0, Math.PI * 2);
-                ctx.fillStyle = this.color;
-                ctx.globalAlpha = (2000 - this.z) / 2000;
-                ctx.fill();
-                ctx.globalAlpha = 1;
-            }
-        }
-
         const init = () => {
             // Create fewer particles for cleaner look
             for (let i = 0; i < 400; i++) {
-                particles.push(new Particle());
+                particles.push(new Particle(canvas.width, canvas.height));
             }
         };
 
@@ -60,8 +61,8 @@ export default function TimeWarpHero() {
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             particles.forEach((p) => {
-                p.update();
-                p.draw();
+                p.update(canvas.width, canvas.height);
+                p.draw(ctx, canvas.width, canvas.height);
             });
 
             animationFrameId = requestAnimationFrame(animate);

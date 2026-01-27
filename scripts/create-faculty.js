@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
@@ -39,7 +40,7 @@ async function bootstrapFaculty() {
     console.log(`\nCreating User: ${email}...`);
 
     // 4. Create User
-    const { data, error } = await supabase.auth.admin.createUser({
+    const { error } = await supabase.auth.admin.createUser({
         email,
         password,
         email_confirm: true,

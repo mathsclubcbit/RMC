@@ -1,7 +1,6 @@
 import { Montserrat, Inter, Playfair_Display, JetBrains_Mono, Cormorant_Garamond, Cinzel } from "next/font/google"; // [NEW IMPORTS]
 import "./globals.css";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import "./globals.css";
 
 // ... existing fonts ...
 
@@ -66,7 +65,7 @@ export const metadata = {
     },
 };
 
-import SmoothScroll from "@/components/ui/SmoothScroll";
+
 import CustomCursor from "@/components/ui/CustomCursor";
 import Preloader from "@/components/ui/Preloader";
 import ConditionalShell from "@/components/layout/ConditionalShell";

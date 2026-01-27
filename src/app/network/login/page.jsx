@@ -6,26 +6,26 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Mail, Lock, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 export default function NetworkLoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [successMessage, setSuccessMessage] = useState("");
     const router = useRouter();
-    const supabase = createClient();
+    const { signIn } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
+        setSuccessMessage("");
         setLoading(true);
 
         try {
-            const { data, error: signInError } = await supabase.auth.signInWithPassword({
-                email: email.trim().toLowerCase(),
-                password
-            });
+            // Sign In Logic
+            const { data, error: signInError } = await signIn(email, password);
 
             if (signInError) {
                 setError(signInError.message);
@@ -34,9 +34,12 @@ export default function NetworkLoginPage() {
             }
 
             if (data?.user) {
-                router.push("/network/dashboard");
+                setTimeout(() => {
+                    router.push("/network/dashboard");
+                }, 100);
             }
         } catch (err) {
+            console.error(err);
             setError("An unexpected error occurred. Please try again.");
             setLoading(false);
         }
@@ -100,6 +103,18 @@ export default function NetworkLoginPage() {
                         </motion.div>
                     )}
 
+                    {/* Success Message */}
+                    {successMessage && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mb-6 p-4 bg-teal/10 border border-teal/20 rounded-xl flex items-center gap-3 text-teal text-sm"
+                        >
+                            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                            {successMessage}
+                        </motion.div>
+                    )}
+
                     {/* Login Form */}
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Email Field */}
@@ -133,6 +148,7 @@ export default function NetworkLoginPage() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
                                     required
+                                    minLength={6}
                                     className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/10 outline-none transition-all"
                                 />
                             </div>
@@ -157,11 +173,6 @@ export default function NetworkLoginPage() {
                             )}
                         </button>
                     </form>
-
-                    {/* Footer Note */}
-                    <p className="text-center text-white/30 text-xs mt-8">
-                        Contact the President if you need access credentials.
-                    </p>
                 </div>
 
                 {/* Decorative Elements */}

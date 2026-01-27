@@ -64,6 +64,17 @@ export async function PUT(request) {
         // Use admin client to update the user
         const adminClient = createAdminClient();
 
+        // Check if the target user is a president
+        const { data: targetProfile } = await adminClient
+            .from('profiles')
+            .select('role')
+            .eq('id', userId)
+            .single();
+
+        if (targetProfile?.role === 'president') {
+            return NextResponse.json({ error: 'Forbidden: President credentials can only be changed by the developer' }, { status: 403 });
+        }
+
         const updateData = {};
         if (newPassword) updateData.password = newPassword;
         if (newEmail) updateData.email = newEmail.toLowerCase();

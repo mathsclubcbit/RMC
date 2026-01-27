@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import HolographicCard from "@/components/events/HolographicCard";
 import SectionDivider from "@/components/ui/SectionDivider";
 import EventsHero from "@/components/events/EventsHero";
-import { Search, Terminal, Filter, X } from "lucide-react";
+import { Search, Terminal, X } from "lucide-react";
 
 export default function EventsPage() {
     const [events, setEvents] = useState([]);
@@ -82,8 +82,8 @@ export default function EventsPage() {
                                     key={cat}
                                     onClick={() => setFilter(cat)}
                                     className={`px-5 py-2.5 rounded-full text-xs font-mono uppercase tracking-widest border transition-all duration-300 relative overflow-hidden group/btn ${filter === cat
-                                            ? "bg-teal/10 border-teal text-teal shadow-[0_0_20px_rgba(45,212,191,0.2)]"
-                                            : "border-white/5 text-white/40 hover:border-white/20 hover:text-white hover:bg-white/5"
+                                        ? "bg-teal/10 border-teal text-teal shadow-[0_0_20px_rgba(45,212,191,0.2)]"
+                                        : "border-white/5 text-white/40 hover:border-white/20 hover:text-white hover:bg-white/5"
                                         }`}
                                 >
                                     <span className="relative z-10">{cat}</span>
@@ -114,8 +114,8 @@ export default function EventsPage() {
                             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                         >
                             <AnimatePresence>
-                                {filteredEvents.map((event, index) => (
-                                    <HolographicCard key={event.id} event={event} index={index} />
+                                {filteredEvents.map((event, _index) => (
+                                    <HolographicCard key={event.id} event={event} index={_index} />
                                 ))}
                             </AnimatePresence>
                         </motion.div>
