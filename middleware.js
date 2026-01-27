@@ -24,7 +24,7 @@ export async function middleware(request) {
 
         if (isLoginPage && isLoggedIn) {
             const url = request.nextUrl.clone();
-            url.pathname = '/admin/scan';
+            url.pathname = '/admin';
             return NextResponse.redirect(url);
         }
     }

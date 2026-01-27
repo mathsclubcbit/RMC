@@ -27,7 +27,7 @@ export async function adminLoginAction(prevState, formData) {
             sameSite: "lax",
         });
 
-        redirect("/admin/scan");
+        redirect("/admin");
     }
 
     return { error: "Invalid credentials" };

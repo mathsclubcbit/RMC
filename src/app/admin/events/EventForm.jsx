@@ -37,6 +37,9 @@ function toNumberOrKeep(value) {
 
 export default function EventForm({ mode, initialEvent }) {
     const [event, setEvent] = useState({ ...defaultEvent, ...(initialEvent || {}) });
+    const [imgFile, setImgFile] = useState(null);
+    const [posterDesktopFile, setPosterDesktopFile] = useState(null);
+    const [posterMobileFile, setPosterMobileFile] = useState(null);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -76,10 +79,15 @@ export default function EventForm({ mode, initialEvent }) {
             const url = isEdit ? `/api/events/${encodeURIComponent(initialEvent.id)}` : "/api/events";
             const method = isEdit ? "PUT" : "POST";
 
+            const form = new FormData();
+            form.append("payload", JSON.stringify(payload));
+            if (imgFile) form.append("imgFile", imgFile);
+            if (posterDesktopFile) form.append("posterDesktopFile", posterDesktopFile);
+            if (posterMobileFile) form.append("posterMobileFile", posterMobileFile);
+
             const res = await fetch(url, {
                 method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
+                body: form,
             });
 
             const data = await res.json().catch(() => ({}));
@@ -88,6 +96,11 @@ export default function EventForm({ mode, initialEvent }) {
             }
 
             setSuccess(isEdit ? "Event updated" : "Event created");
+
+            // Clear staged uploads after successful save.
+            setImgFile(null);
+            setPosterDesktopFile(null);
+            setPosterMobileFile(null);
 
             // If created, go to edit screen for further changes.
             if (!isEdit && data?.id) {
@@ -111,7 +124,7 @@ export default function EventForm({ mode, initialEvent }) {
                     <div>
                         <h1 className="text-3xl font-bold">{isEdit ? "Edit Event" : "Create Event"}</h1>
                         <p className="text-white/60 text-sm mt-1">
-                            {isEdit ? `Event ID: ${initialEvent?.id}` : "Add a new event to src/data/events.json"}
+                            {isEdit ? `Event ID: ${initialEvent?.id}` : "Add a new event (stored in the database)"}
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -326,6 +339,14 @@ export default function EventForm({ mode, initialEvent }) {
                                 placeholder="/assets/events/my-event.jpg"
                             />
                         </Field>
+                        <Field label="Upload card image" hint={imgFile ? imgFile.name : "Optional"}>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setImgFile(e.target.files?.[0] || null)}
+                                className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
+                            />
+                        </Field>
                         <Field label="QR image path (optional)">
                             <input
                                 value={event.qrCode || ""}
@@ -341,10 +362,26 @@ export default function EventForm({ mode, initialEvent }) {
                                 className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
                             />
                         </Field>
+                        <Field label="Upload poster (desktop)" hint={posterDesktopFile ? posterDesktopFile.name : "Optional"}>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setPosterDesktopFile(e.target.files?.[0] || null)}
+                                className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
+                            />
+                        </Field>
                         <Field label="Poster mobile path (optional)">
                             <input
                                 value={event.posterMobile || ""}
                                 onChange={(e) => setField("posterMobile", e.target.value)}
+                                className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
+                            />
+                        </Field>
+                        <Field label="Upload poster (mobile)" hint={posterMobileFile ? posterMobileFile.name : "Optional"}>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setPosterMobileFile(e.target.files?.[0] || null)}
                                 className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
                             />
                         </Field>
@@ -386,7 +423,7 @@ export default function EventForm({ mode, initialEvent }) {
                 </form>
 
                 <div className="mt-6 text-xs text-white/50">
-                    Note: This edits a JSON file on the server. If you deploy to serverless hosting (like Vercel), file writes won’t persist.
+                    Note: Events are stored in Supabase (database + storage), so CRUD works after deployment.
                 </div>
             </div>
         </div>

@@ -201,6 +201,38 @@ CREATE POLICY "Only president can manage delegated permissions"
     );
 
 -- ============================================
+-- 7. PUBLIC EVENTS (RMC website events CRUD)
+-- ============================================
+-- These events are managed by the custom admin panel (cookie-based auth)
+-- via server-side service role key. We keep the schema minimal and store
+-- the flexible event shape as JSONB.
+
+CREATE TABLE IF NOT EXISTS public.events (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    date TEXT NOT NULL,
+    payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_events_date ON public.events(date);
+
+-- Keep updated_at fresh on updates
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS trigger AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_events_updated_at ON public.events;
+CREATE TRIGGER trg_events_updated_at
+BEFORE UPDATE ON public.events
+FOR EACH ROW EXECUTE PROCEDURE public.set_updated_at();
+
+-- ============================================
 -- 7. AUTO-CREATE PROFILE ON SIGNUP (Trigger)
 -- ============================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()

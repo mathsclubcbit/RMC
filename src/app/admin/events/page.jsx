@@ -25,6 +25,12 @@ export default async function AdminEventsPage() {
                     </div>
                     <div className="flex items-center gap-3">
                         <Link
+                            href="/admin"
+                            className="px-4 py-2 rounded-xl bg-white/10 border border-white/15 hover:bg-white/15 transition"
+                        >
+                            Dashboard
+                        </Link>
+                        <Link
                             href="/admin/scan"
                             className="px-4 py-2 rounded-xl bg-white/10 border border-white/15 hover:bg-white/15 transition"
                         >
