@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAnnouncements, createAnnouncement } from '@/lib/google';
+import { getAnnouncements } from '@/lib/google';
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 
 export async function GET() {
@@ -18,7 +18,7 @@ export async function GET() {
 
         const data = await getAnnouncements(SPREADSHEET_ID);
         return NextResponse.json(data);
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Failed to fetch announcements' }, { status: 500 });
     }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import NetworkSidebar from "@/components/network/Sidebar";
@@ -10,7 +10,6 @@ import {
     ListTodo,
     Calendar,
     TrendingUp,
-    Clock,
     CheckCircle,
     AlertCircle,
     RefreshCw
@@ -26,9 +25,10 @@ export default function DashboardPage() {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
-    const fetchStats = async () => {
+    const fetchStats = useCallback(async () => {
+        if (!profile?.id) return;
         setLoading(true);
         setError(false);
 
@@ -77,11 +77,11 @@ export default function DashboardPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [profile?.id, supabase]);
 
     useEffect(() => {
         fetchStats();
-    }, []);
+    }, [fetchStats]);
 
     const getGreeting = () => {
         const hour = new Date().getHours();
@@ -136,7 +136,7 @@ export default function DashboardPage() {
                         {getGreeting()}, <span className="text-teal">{profile?.full_name?.split(' ')[0] || 'Member'}</span>
                     </h1>
                     <p className="text-white/50 text-sm md:text-base">
-                        Welcome to the RMC Network. Here's your overview.
+                        Welcome to the RMC Network. Here&apos;s your overview.
                     </p>
                 </motion.div>
 

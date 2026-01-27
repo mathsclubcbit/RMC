@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import NetworkSidebar from "@/components/network/Sidebar";
@@ -16,7 +16,8 @@ import {
     Calendar,
     Users,
     User,
-    ChevronDown,
+    Edit3,
+    Trash2,
     RefreshCw
 } from "lucide-react";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
@@ -58,23 +59,12 @@ export default function TasksPage() {
         setStatusModal({ isOpen: true, title, message, type: "confirm", onConfirm, isDangerous });
     };
 
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
-    useEffect(() => {
-        fetchData();
+    const fetchData = useCallback(async () => {
+        if (!profile?.id) return;
+        setLoading(true);
 
-        // Realtime subscription
-        const channel = supabase
-            .channel("tasks-changes")
-            .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, fetchData)
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, []);
-
-    const fetchData = async () => {
         try {
             // Fetch tasks visible to the current user
             const { data: tasksData, error: tasksError } = await supabase
@@ -133,7 +123,21 @@ export default function TasksPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [profile?.id, isPresident, isCoreCouncil, supabase]);
+
+    useEffect(() => {
+        fetchData();
+
+        // Realtime subscription
+        const channel = supabase
+            .channel("tasks-changes")
+            .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, fetchData)
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [fetchData, supabase]);
 
     const handleDeleteTask = async (taskId) => {
         showConfirm(

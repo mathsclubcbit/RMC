@@ -6,14 +6,14 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import MathTitle from "@/components/ui/MathTitle";
 
+const quotes = [
+    { line1: "An equation has no meaning,", line2: "unless it expresses a thought of God." },
+    { line1: "Exploring the limits of infinity,", line2: "where logic meets unbound imagination." },
+    { line1: "Turning numbers into narratives.", line2: "Mathematics is the poetry of logical ideas." }
+];
+
 export default function SpotlightHero({ startAnimation = true, skipped = false }) {
     const [activeQuote, setActiveQuote] = useState(0);
-
-    const quotes = [
-        { line1: "An equation has no meaning,", line2: "unless it expresses a thought of God." },
-        { line1: "Exploring the limits of infinity,", line2: "where logic meets unbound imagination." },
-        { line1: "Turning numbers into narratives.", line2: "Mathematics is the poetry of logical ideas." }
-    ];
 
     useEffect(() => {
         const interval = setInterval(() => {

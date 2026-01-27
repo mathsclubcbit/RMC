@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import NetworkSidebar from "@/components/network/Sidebar";
 import { createClient } from "@/lib/supabase/client";
 import {
-    UserCog,
     Plus,
     Search,
     Trash2,
@@ -18,8 +17,7 @@ import {
     Mail,
     User,
     ChevronDown,
-    AlertCircle,
-    Check
+    AlertCircle
 } from "lucide-react";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
@@ -63,29 +61,11 @@ export default function PersonnelPage() {
         setStatusModal({ isOpen: true, title, message, type: "confirm", onConfirm, isDangerous });
     };
 
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
-    useEffect(() => {
-        fetchData();
-
-        // Realtime subscription
-        const profilesChannel = supabase
-            .channel("profiles-changes")
-            .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, fetchData)
-            .subscribe();
-
-        const membersChannel = supabase
-            .channel("team-members-changes")
-            .on("postgres_changes", { event: "*", schema: "public", table: "team_members" }, fetchData)
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(profilesChannel);
-            supabase.removeChannel(membersChannel);
-        };
-    }, []);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
+        if (!profile?.id) return;
+        setLoading(true);
         try {
             // Fetch all profiles with their team memberships
             const { data: profilesData, error: profilesError } = await supabase
@@ -121,7 +101,27 @@ export default function PersonnelPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [profile?.id, supabase]);
+
+    useEffect(() => {
+        fetchData();
+
+        // Realtime subscription
+        const profilesChannel = supabase
+            .channel("profiles-changes")
+            .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, fetchData)
+            .subscribe();
+
+        const membersChannel = supabase
+            .channel("team-members-changes")
+            .on("postgres_changes", { event: "*", schema: "public", table: "team_members" }, fetchData)
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(profilesChannel);
+            supabase.removeChannel(membersChannel);
+        };
+    }, [fetchData, supabase]);
 
     const handleDeleteMember = async (memberId, memberEmail) => {
         showConfirm(
@@ -187,7 +187,7 @@ export default function PersonnelPage() {
                     <div className="text-center">
                         <Shield className="w-16 h-16 text-red-400/50 mx-auto mb-4" />
                         <h1 className="text-2xl font-serif text-white mb-2">Access Denied</h1>
-                        <p className="text-white/50">You don't have permission to view personnel.</p>
+                        <p className="text-white/50">You don&apos;t have permission to view personnel.</p>
                     </div>
                 </main>
             </div>
@@ -299,7 +299,7 @@ export default function PersonnelPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredMembers.map((member, index) => (
+                                    {filteredMembers.map((member) => (
                                         <tr
                                             key={member.id}
                                             className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
@@ -343,24 +343,30 @@ export default function PersonnelPage() {
                                             </td>
                                             {canManageMembers() && (
                                                 <td className="px-6 py-4">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <button
-                                                            onClick={() => setShowCredentialsModal(member)}
-                                                            className="p-2 text-white/40 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
-                                                            title="Reset Password"
-                                                        >
-                                                            <Key className="w-4 h-4" />
-                                                        </button>
-                                                        {member.id !== profile?.id && (
+                                                    {member.role !== 'president' ? (
+                                                        <div className="flex items-center justify-end gap-2">
                                                             <button
-                                                                onClick={() => handleDeleteMember(member.id, member.email)}
-                                                                className="p-2 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                                                                title="Remove Member"
+                                                                onClick={() => setShowCredentialsModal(member)}
+                                                                className="p-2 text-white/40 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
+                                                                title="Reset Password"
                                                             >
-                                                                <Trash2 className="w-4 h-4" />
+                                                                <Key className="w-4 h-4" />
                                                             </button>
-                                                        )}
-                                                    </div>
+                                                            {member.id !== profile?.id && (
+                                                                <button
+                                                                    onClick={() => handleDeleteMember(member.id, member.email)}
+                                                                    className="p-2 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                                    title="Remove Member"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex justify-end pr-4">
+                                                            <Shield className="w-4 h-4 text-white/20" title="Protected Account" />
+                                                        </div>
+                                                    )}
                                                 </td>
                                             )}
                                         </tr>
@@ -414,7 +420,6 @@ export default function PersonnelPage() {
 }
 
 function AddMemberModal({ teams, onClose, onSuccess }) {
-    const { profile } = useAuth();
     const [email, setEmail] = useState("");
     const [fullName, setFullName] = useState("");
     const [role, setRole] = useState("member");

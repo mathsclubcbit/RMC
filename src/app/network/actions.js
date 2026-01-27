@@ -111,7 +111,7 @@ export async function createTeamMember(teamId, email, password, fullName) {
                 // If they are not in profiles, we are in a tough spot if we can't search Auth.
                 // However, createClient() (service role) can list users.
 
-                const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+                const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
                 const existingUser = users?.find(u => u.email?.toLowerCase() === cleanEmail);
 
                 if (existingUser) {

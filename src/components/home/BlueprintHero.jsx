@@ -2,22 +2,22 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 
 export default function BlueprintHero() {
     const [isVisible, setIsVisible] = useState(false);
-    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
     useEffect(() => {
         setIsVisible(true);
         const handleMouseMove = (e) => {
-            setMousePos({
-                x: (e.clientX / window.innerWidth - 0.5) * 20,
-                y: (e.clientY / window.innerHeight - 0.5) * 20
-            });
+            const x = (e.clientX / window.innerWidth - 0.5) * 20;
+            const y = (e.clientY / window.innerHeight - 0.5) * 20;
+            document.documentElement.style.setProperty('--blueprint-mouse-x', `${x}px`);
+            document.documentElement.style.setProperty('--blueprint-mouse-y', `${y}px`);
         };
         window.addEventListener("mousemove", handleMouseMove);
-        return () => window.removeEventListener("mousemove", handleMouseMove);
+        return () => {
+            window.removeEventListener("mousemove", handleMouseMove);
+        };
     }, []);
 
     return (
@@ -25,7 +25,7 @@ export default function BlueprintHero() {
             {/* Background Layer: The Drafting Board */}
             <div
                 className="absolute inset-0 z-0 transition-transform duration-1000 cubic-bezier(0.23, 1, 0.32, 1)"
-                style={{ transform: `translate(${mousePos.x * 0.5}px, ${mousePos.y * 0.5}px)` }}
+                style={{ transform: `translate(calc(var(--blueprint-mouse-x, 0px) * 0.5), calc(var(--blueprint-mouse-y, 0px) * 0.5))` }}
             >
                 {/* Technical Grid */}
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
@@ -41,7 +41,7 @@ export default function BlueprintHero() {
                 {/* Drafting Elements Layer with Floating Animation */}
                 <svg
                     className="absolute inset-0 w-full h-full pointer-events-none opacity-20 transition-transform duration-1000 cubic-bezier(0.23, 1, 0.32, 1) animate-subtle-drift"
-                    style={{ transform: `translate(${mousePos.x * -0.8}px, ${mousePos.y * -0.8}px)` }}
+                    style={{ transform: `translate(calc(var(--blueprint-mouse-x, 0px) * -0.8), calc(var(--blueprint-mouse-y, 0px) * -0.8))` }}
                 >
                     {/* Construction Circle 1 (Compass style) */}
                     <circle
@@ -86,7 +86,7 @@ export default function BlueprintHero() {
             {/* Content Layer: The Editorial Layout */}
             <div
                 className="relative z-20 w-full max-w-7xl mx-auto px-6 grid md:grid-cols-12 gap-12 items-center transition-transform duration-500 cubic-bezier(0.23, 1, 0.32, 1)"
-                style={{ transform: `translate(${mousePos.x * 0.15}px, ${mousePos.y * 0.15}px)` }}
+                style={{ transform: `translate(calc(var(--blueprint-mouse-x, 0px) * 0.15), calc(var(--blueprint-mouse-y, 0px) * 0.15))` }}
             >
 
                 {/* Left Side: Math Notation (Gaussian Integral) */}
@@ -188,3 +188,4 @@ export default function BlueprintHero() {
         </section>
     );
 }
+

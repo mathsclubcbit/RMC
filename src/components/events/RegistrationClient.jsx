@@ -242,7 +242,7 @@ export default function RegistrationClient({ eventId }) {
                             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-20 h-20 bg-teal/10 rounded-full flex items-center justify-center mb-6 ring-1 ring-teal/30">
                                 <CheckCircle className="w-10 h-10 text-teal" />
                             </motion.div>
-                            <h2 className="text-3xl font-serif text-white mb-2">You're In!</h2>
+                            <h2 className="text-3xl font-serif text-white mb-2">You&apos;re In!</h2>
                             <p className="text-white/50 mb-8">Registered for <span className="text-teal">{event.title}</span></p>
 
                             <div className="bg-white p-4 rounded-2xl mb-6 shadow-2xl">

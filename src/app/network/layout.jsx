@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 
 function NetworkLayoutInner({ children }) {
-    const { loading, authReady, user, signOut } = useAuth();
+    const { authReady, user, signOut } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
     const [timedOut, setTimedOut] = useState(false);
@@ -31,8 +31,8 @@ function NetworkLayoutInner({ children }) {
                     console.warn("Auth timeout - forcing sign out and redirect");
                     try {
                         await signOut();
-                    } catch (e) {
-                        console.error("Error clearing session on timeout:", e);
+                    } catch (_e) {
+                        console.error("Error clearing session on timeout:", _e);
                     }
                     router.replace("/network/login");
                 }

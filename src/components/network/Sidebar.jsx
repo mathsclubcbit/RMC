@@ -31,15 +31,9 @@ export default function NetworkSidebar() {
 
     // Close mobile menu on route change
     useEffect(() => {
-        setMobileOpen(false);
-    }, [pathname]);
+        if (mobileOpen) setMobileOpen(false);
+    }, [pathname, mobileOpen]);
 
-    const handleSignOut = async () => {
-        await signOut();
-        router.push("/network/login");
-    };
-
-    // Build navigation links based on role and permissions
     const getNavLinks = () => {
         const links = [
             { href: "/network/dashboard", label: "Dashboard", icon: LayoutDashboard, always: true },
@@ -79,7 +73,25 @@ export default function NetworkSidebar() {
 
     const navLinks = getNavLinks();
 
-    const NavContent = ({ hideLogo = false }) => (
+    const handleSignOut = async () => {
+        await signOut();
+        router.push("/network/login");
+    };
+
+    const windowReload = () => {
+        if (typeof window !== 'undefined') window.location.reload();
+    };
+
+    const commonProps = {
+        collapsed,
+        profile,
+        navLinks,
+        pathname,
+        handleSignOut,
+        windowReload
+    };
+
+    const NavContent = ({ hideLogo = false, collapsed, profile, navLinks, pathname, handleSignOut, windowReload }) => (
         <>
             {/* Logo */}
             {!hideLogo && (
@@ -135,7 +147,7 @@ export default function NetworkSidebar() {
 
                 {/* Refresh Network */}
                 <button
-                    onClick={() => window.location.reload()}
+                    onClick={windowReload}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/50 hover:bg-white/5 hover:text-white transition-all w-full ${collapsed ? 'justify-center' : ''}`}
                 >
                     <RefreshCw className="w-5 h-5 flex-shrink-0" />
@@ -220,7 +232,7 @@ export default function NetworkSidebar() {
                             </button>
                         </div>
                         <div className="flex-1 overflow-y-auto">
-                            <NavContent hideLogo={true} />
+                            <NavContent {...commonProps} hideLogo={true} />
                         </div>
                     </motion.aside>
                 )}
@@ -232,7 +244,7 @@ export default function NetworkSidebar() {
                     }`}
             >
                 <div className="flex flex-col h-full sticky top-0">
-                    <NavContent />
+                    <NavContent {...commonProps} />
 
                     {/* Collapse Toggle */}
                     <button

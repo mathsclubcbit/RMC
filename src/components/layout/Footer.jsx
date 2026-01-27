@@ -58,7 +58,7 @@ export default function Footer() {
                             </div>
                         </Link>
                         <p className="text-muted leading-relaxed font-light mb-8">
-                            "The essence of mathematics lies in its freedom."
+                            &quot;The essence of mathematics lies in its freedom.&quot;
                             <br /> <span className="text-sm italic opacity-70">— Georg Cantor</span>
                         </p>
                         <div className="flex gap-4">

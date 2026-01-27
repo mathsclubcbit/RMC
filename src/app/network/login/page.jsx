@@ -9,15 +9,13 @@ import { Mail, Lock, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function NetworkLoginPage() {
-    const [isSignUp, setIsSignUp] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [fullName, setFullName] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState("");
     const router = useRouter();
-    const { signIn, signUp } = useAuth();
+    const { signIn } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -26,44 +24,19 @@ export default function NetworkLoginPage() {
         setLoading(true);
 
         try {
-            if (isSignUp) {
-                // Sign Up Logic
-                const { data, error: signUpError } = await signUp(email, password, {
-                    data: {
-                        full_name: fullName.trim() || email.split('@')[0]
-                    }
-                });
+            // Sign In Logic
+            const { data, error: signInError } = await signIn(email, password);
 
-                if (signUpError) {
-                    setError(signUpError.message);
-                    setLoading(false);
-                    return;
-                }
+            if (signInError) {
+                setError(signInError.message);
+                setLoading(false);
+                return;
+            }
 
-                if (data?.user) {
-                    setSuccessMessage("Account created! Logging you in...");
-                    if (data.session) {
-                        setTimeout(() => router.push("/network/dashboard"), 1000);
-                    } else {
-                        setSuccessMessage("Account created! Please check your email to confirm.");
-                        setLoading(false);
-                    }
-                }
-            } else {
-                // Sign In Logic
-                const { data, error: signInError } = await signIn(email, password);
-
-                if (signInError) {
-                    setError(signInError.message);
-                    setLoading(false);
-                    return;
-                }
-
-                if (data?.user) {
-                    setTimeout(() => {
-                        router.push("/network/dashboard");
-                    }, 100);
-                }
+            if (data?.user) {
+                setTimeout(() => {
+                    router.push("/network/dashboard");
+                }, 100);
             }
         } catch (err) {
             console.error(err);
@@ -111,10 +84,10 @@ export default function NetworkLoginPage() {
                             </div>
                         </div>
                         <h1 className="text-3xl font-serif font-bold text-white mb-2">
-                            {isSignUp ? "Create Account" : "RMC Network"}
+                            RMC Network
                         </h1>
                         <p className="text-white/50 text-sm">
-                            {isSignUp ? "Sign up to join your team" : "Member Portal Access"}
+                            Member Portal Access
                         </p>
                     </div>
 
@@ -144,28 +117,6 @@ export default function NetworkLoginPage() {
 
                     {/* Login Form */}
                     <form onSubmit={handleSubmit} className="space-y-5">
-                        {/* Full Name Field (Only for Sign Up) */}
-                        {isSignUp && (
-                            <div className="space-y-2">
-                                <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono ml-1">
-                                    Full Name
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 flex items-center justify-center font-bold text-xs">
-                                        Az
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={fullName}
-                                        onChange={(e) => setFullName(e.target.value)}
-                                        placeholder="John Doe"
-                                        required={isSignUp}
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/10 outline-none transition-all"
-                                    />
-                                </div>
-                            </div>
-                        )}
-
                         {/* Email Field */}
                         <div className="space-y-2">
                             <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono ml-1">
@@ -212,30 +163,16 @@ export default function NetworkLoginPage() {
                             {loading ? (
                                 <>
                                     <Loader2 className="w-5 h-5 animate-spin" />
-                                    {isSignUp ? "Creating Account..." : "Signing In..."}
+                                    Signing In...
                                 </>
                             ) : (
                                 <>
-                                    {isSignUp ? "Create Account" : "Access Network"}
+                                    Access Network
                                     <ArrowRight className="w-5 h-5" />
                                 </>
                             )}
                         </button>
                     </form>
-
-                    {/* Toggle Mode */}
-                    <div className="text-center mt-6">
-                        <button
-                            onClick={() => {
-                                setIsSignUp(!isSignUp);
-                                setError("");
-                                setSuccessMessage("");
-                            }}
-                            className="text-teal text-sm hover:underline"
-                        >
-                            {isSignUp ? "Already have an account? Sign In" : "First time here? Create an Account"}
-                        </button>
-                    </div>
                 </div>
 
                 {/* Decorative Elements */}

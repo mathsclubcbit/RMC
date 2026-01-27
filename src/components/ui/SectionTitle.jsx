@@ -22,7 +22,7 @@ export default function SectionTitle({ title, subtitle, center = true, gradient 
                     {/* Decorative Separator */}
                     <div className="flex items-center gap-2 text-teal/40 font-mono text-xs">
                         <span className="h-[1px] w-12 bg-gradient-to-r from-transparent to-teal/40"></span>
-                        <span>//</span>
+                        <span>{"//"}</span>
                         <span className="h-[1px] w-12 bg-gradient-to-l from-transparent to-teal/40"></span>
                     </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import NetworkSidebar from "@/components/network/Sidebar";
@@ -13,7 +13,6 @@ import {
     UserPlus,
     Trash2,
     Edit3,
-    ChevronRight,
     Loader2,
     X,
     Shield
@@ -48,23 +47,8 @@ export default function TeamsPage() {
     const supabase = createClient();
 
     // Fetch teams
-    useEffect(() => {
-        fetchTeams();
-
-        // Realtime subscription
-        const channel = supabase
-            .channel("teams-changes")
-            .on("postgres_changes", { event: "*", schema: "public", table: "teams" }, () => {
-                fetchTeams();
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, []);
-
-    const fetchTeams = async () => {
+    const fetchTeams = useCallback(async () => {
+        if (!profile?.id) return;
         try {
             const { data, error } = await supabase
                 .from("teams")
@@ -91,7 +75,23 @@ export default function TeamsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [profile?.id, supabase]);
+
+    useEffect(() => {
+        fetchTeams();
+
+        // Realtime subscription
+        const channel = supabase
+            .channel("teams-changes")
+            .on("postgres_changes", { event: "*", schema: "public", table: "teams" }, () => {
+                fetchTeams();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [fetchTeams, supabase]);
 
     const handleDeleteTeam = async (teamId, teamName) => {
         showConfirm(

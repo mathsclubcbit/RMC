@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -157,7 +157,7 @@ function HiddenMathLayer() {
     const colors = ["#3ABCB3", "#AFF44A", "#E36951", "#E8B237"];
 
     // Curated "Pure Math" Equations with randomized colors
-    const equations = [
+    const equations = useMemo(() => [
         { text: "eⁱπ + 1 = 0", scale: 2.2, x: 50, y: 40, blur: 0, opacity: 1, color: colors[0] }, // Euler (Teal)
         { text: "a² + b² = c²", scale: 1.8, x: 80, y: 30, blur: 0.5, opacity: 0.8, color: colors[1] }, // Pythagorean (Lime)
         { text: "A = πr²", scale: 1.5, x: 90, y: 90, blur: 0, opacity: 0.7, color: colors[2] }, // Area (Coral)
@@ -170,7 +170,20 @@ function HiddenMathLayer() {
         { text: "(x+y)ⁿ = ∑ (n k) xⁿ⁻ᵏ yᵏ", scale: 1.1, x: 30, y: 85, blur: 1, opacity: 0.5, color: colors[1] },
         { text: "f'(x) = lim(h→0) [f(x+h)-f(x)]/h", scale: 1.2, x: 40, y: 10, blur: 0.5, opacity: 0.7, color: colors[2] },
         { text: "V - E + F = 2", scale: 1.4, x: 60, y: 50, blur: 0, opacity: 0.8, color: colors[3] }
-    ];
+    ].map(eq => ({
+        ...eq,
+        rotation: (Math.random() - 0.5) * 10
+    })), []);
+
+    const dustParticles = useMemo(() => Array.from({ length: 30 }).map((_, i) => ({
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+        width: Math.random() * 3 + "px",
+        height: Math.random() * 3 + "px",
+        backgroundColor: colors[i % 4],
+        animationDelay: `${Math.random() * 20}s`,
+        animationDuration: `${10 + Math.random() * 20}s`
+    })), []);
 
     return (
         <div className="w-full h-full flex items-center justify-center overflow-hidden relative bg-black">
@@ -215,7 +228,7 @@ function HiddenMathLayer() {
                         filter: `blur(${eq.blur}px)`,
                         opacity: eq.opacity,
                         color: eq.color,
-                        transform: `translate(-50%, -50%) rotate(${(Math.random() - 0.5) * 10}deg)`,
+                        transform: `translate(-50%, -50%) rotate(${eq.rotation}deg)`,
                         textShadow: `0 0 15px ${eq.color}40`
                     }}
                 >
@@ -224,19 +237,20 @@ function HiddenMathLayer() {
             ))}
 
             {/* 5. Floating Particles (Multicolor Dust) */}
-            {Array.from({ length: 30 }).map((_, i) => (
+            {dustParticles.map((particle, i) => (
                 <div
                     key={`dust-${i}`}
                     className="absolute rounded-full"
                     style={{
-                        top: `${Math.random() * 100}%`,
-                        left: `${Math.random() * 100}%`,
-                        width: Math.random() * 3 + "px",
-                        height: Math.random() * 3 + "px",
-                        backgroundColor: colors[i % 4],
+                        top: particle.top,
+                        left: particle.left,
+                        width: particle.width,
+                        height: particle.height,
+                        backgroundColor: particle.backgroundColor,
                         filter: "blur(0.5px)",
                         opacity: 0.6,
-                        animation: `float ${10 + Math.random() * 20}s infinite ease-in-out`
+                        animation: `float ${particle.animationDuration} infinite ease-in-out`,
+                        animationDelay: particle.animationDelay
                     }}
                 />
             ))}

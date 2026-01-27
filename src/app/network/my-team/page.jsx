@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import NetworkSidebar from "@/components/network/Sidebar";
@@ -41,13 +41,31 @@ export default function MyTeamPage() {
         memberName: ""
     });
 
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
-    useEffect(() => {
-        fetchMyTeams();
-    }, [profile]);
+    const fetchInvites = useCallback(async (teamIds) => {
+        try {
+            const { data, error } = await supabase
+                .from("team_invites")
+                .select("*")
+                .in("team_id", teamIds)
+                .eq("status", "pending");
 
-    const fetchMyTeams = async () => {
+            if (error) throw error;
+
+            // Group by team_id
+            const invitesMap = {};
+            data?.forEach(invite => {
+                if (!invitesMap[invite.team_id]) invitesMap[invite.team_id] = [];
+                invitesMap[invite.team_id].push(invite);
+            });
+            setInvites(invitesMap);
+        } catch (error) {
+            console.error("Error fetching invites:", error);
+        }
+    }, [supabase]);
+
+    const fetchMyTeams = useCallback(async () => {
         if (!profile?.id) return;
 
         try {
@@ -98,29 +116,11 @@ export default function MyTeamPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [profile?.id, supabase, fetchInvites]);
 
-    const fetchInvites = async (teamIds) => {
-        try {
-            const { data, error } = await supabase
-                .from("team_invites")
-                .select("*")
-                .in("team_id", teamIds)
-                .eq("status", "pending");
-
-            if (error) throw error;
-
-            // Group by team_id
-            const invitesMap = {};
-            data?.forEach(invite => {
-                if (!invitesMap[invite.team_id]) invitesMap[invite.team_id] = [];
-                invitesMap[invite.team_id].push(invite);
-            });
-            setInvites(invitesMap);
-        } catch (error) {
-            console.error("Error fetching invites:", error);
-        }
-    };
+    useEffect(() => {
+        fetchMyTeams();
+    }, [fetchMyTeams]);
 
     const getHead = (team) => {
         const headMember = team.team_members?.find(m => m.role === "head");
@@ -150,7 +150,7 @@ export default function MyTeamPage() {
                     <div className="text-center">
                         <Users className="w-16 h-16 text-white/10 mx-auto mb-4" />
                         <h1 className="text-2xl font-serif text-white mb-2">No Teams</h1>
-                        <p className="text-white/50">You're not part of any team yet.</p>
+                        <p className="text-white/50">You&apos;re not part of any team yet.</p>
                     </div>
                 </main>
             </div>
@@ -243,7 +243,7 @@ export default function MyTeamPage() {
                                                 <h2 className="text-xl font-serif font-bold text-white">{team.name}</h2>
                                                 {isHead && (
                                                     <span className="px-2 py-0.5 text-[10px] uppercase tracking-widest bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded-full">
-                                                        You're the Head
+                                                        You&apos;re the Head
                                                     </span>
                                                 )}
                                             </div>
@@ -420,7 +420,6 @@ export default function MyTeamPage() {
 }
 
 function AddMemberModal({ team, onClose, onSuccess }) {
-    const { profile } = useAuth();
     const [email, setEmail] = useState("");
     const [name, setName] = useState("");
     const [password, setPassword] = useState("");

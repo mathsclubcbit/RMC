@@ -144,7 +144,7 @@ export default function ResourcesPage() {
 
                                     <div className="mt-auto ml-6 relative z-10">
                                         <p className="text-white/70 text-sm leading-relaxed border-t border-white/10 pt-4 font-serif italic">
-                                            "{book.description}"
+                                            &quot;{book.description}&quot;
                                         </p>
                                     </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import NetworkSidebar from "@/components/network/Sidebar";
@@ -51,23 +51,10 @@ export default function ResourcesPage() {
         setStatusModal({ isOpen: true, title, message, type: "confirm", onConfirm, isDangerous });
     };
 
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
-    useEffect(() => {
-        fetchResources();
-
-        // Realtime subscription
-        const channel = supabase
-            .channel("resources-changes")
-            .on("postgres_changes", { event: "*", schema: "public", table: "resources" }, fetchResources)
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, []);
-
-    const fetchResources = async () => {
+    const fetchResources = useCallback(async () => {
+        if (!profile?.id) return;
         try {
             const { data, error } = await supabase
                 .from("resources")
@@ -84,7 +71,21 @@ export default function ResourcesPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [profile?.id, supabase]);
+
+    useEffect(() => {
+        fetchResources();
+
+        // Realtime subscription
+        const channel = supabase
+            .channel("resources-changes")
+            .on("postgres_changes", { event: "*", schema: "public", table: "resources" }, fetchResources)
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [fetchResources, supabase]);
 
     const handleDelete = async (resourceId) => {
         showConfirm(

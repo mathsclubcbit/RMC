@@ -162,7 +162,7 @@ export default function TeamPage() {
 
                                 <div className="mt-auto pt-4 border-t border-white/5">
                                     <div className="relative pl-3 border-l-2 border-white/10 group-hover:border-teal/50 transition-colors">
-                                        <p className="text-xs text-white/50 italic leading-relaxed font-serif">"{member.quote}"</p>
+                                        <p className="text-xs text-white/50 italic leading-relaxed font-serif">&quot;{member.quote}&quot;</p>
                                     </div>
                                 </div>
                             </SpotlightCard>

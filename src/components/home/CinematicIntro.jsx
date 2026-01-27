@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function CinematicIntro({ onComplete }) {
@@ -52,6 +52,13 @@ export default function CinematicIntro({ onComplete }) {
         return () => timeouts.forEach((t) => clearTimeout(t));
     }, [onComplete]);
 
+    const mathPositions = useMemo(() => {
+        return ["eⁱπ + 1 = 0", "V - E + F = 2", "∇ ⋅ B = 0", "∫ e⁻ˣ² dx = √π", "∑ (1/n²) = π²/6", "f(x) ≈ f(a) + f'(a)(x-a) + ...", "E = mc²", "sin²θ + cos²θ = 1"].map(() => ({
+            left: `${Math.random() * 80 + 10}%`,
+            top: `${Math.random() * 80 + 10}%`
+        }));
+    }, []);
+
     if (!isVisible) return null;
 
     return (
@@ -78,8 +85,8 @@ export default function CinematicIntro({ onComplete }) {
                             }}
                             className="absolute text-teal/40 font-serif italic text-lg md:text-3xl select-none whitespace-nowrap font-bold"
                             style={{
-                                left: `${Math.random() * 80 + 10}%`,
-                                top: `${Math.random() * 80 + 10}%`
+                                left: mathPositions[i].left,
+                                top: mathPositions[i].top
                             }}
                         >
                             {eq}

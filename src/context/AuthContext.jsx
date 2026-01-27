@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useMemo, useRef } from "react";
+import { createContext, useContext, useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const AuthContext = createContext(undefined);
@@ -11,6 +11,18 @@ export function AuthProvider({ children }) {
     const [permissions, setPermissions] = useState(null);
     const [loading, setLoading] = useState(true);
     const [authReady, setAuthReady] = useState(false);
+
+    // Create Ref for profile and user to be used in auth listener without dependencies
+    const profileRef = useRef(profile);
+    const userRef = useRef(user);
+
+    useEffect(() => {
+        profileRef.current = profile;
+    }, [profile]);
+
+    useEffect(() => {
+        userRef.current = user;
+    }, [user]);
 
     // Create supabase client once using useMemo
     const supabase = useMemo(() => createClient(), []);
@@ -70,7 +82,7 @@ export function AuthProvider({ children }) {
                 }
 
                 // If user is already set and same ID, and we have a profile, don't refetch
-                if (user?.id === session.user.id && profile) {
+                if (userRef.current?.id === session.user.id && profileRef.current) {
                     setLoading(false);
                     setAuthReady(true);
                     return;
@@ -98,7 +110,7 @@ export function AuthProvider({ children }) {
     }, [supabase]);
 
     // Unified, iterative fetchProfile function
-    const fetchProfile = async (userId) => {
+    const fetchProfile = useCallback(async (userId) => {
         const fetchKey = userId;
 
         // Return existing promise if one is already in flight
@@ -182,9 +194,9 @@ export function AuthProvider({ children }) {
         });
 
         return promise;
-    };
+    }, [supabase]);
 
-    const signIn = async (email, password) => {
+    const signIn = useCallback(async (email, password) => {
         setLoading(true);
         try {
             const { data, error } = await supabase.auth.signInWithPassword({
@@ -208,9 +220,9 @@ export function AuthProvider({ children }) {
             setLoading(false);
             return { data: null, error };
         }
-    };
+    }, [supabase, fetchProfile]);
 
-    const signOut = async () => {
+    const signOut = useCallback(async () => {
         setLoading(true);
         try {
             await supabase.auth.signOut();
@@ -223,16 +235,16 @@ export function AuthProvider({ children }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [supabase]);
 
     // Helper functions for permission checks
-    const isPresident = () => profile?.role === "president";
-    const isCoreCouncil = () => ["president", "vice_president", "general_secretary", "joint_secretary", "faculty"].includes(profile?.role);
-    const isHead = () => profile?.role === "head";
-    const canManageTeams = () => isPresident() || permissions?.can_manage_teams;
-    const canManageMembers = () => isPresident() || permissions?.can_manage_members;
+    const isPresident = useCallback(() => profile?.role === "president", [profile?.role]);
+    const isCoreCouncil = useCallback(() => ["president", "vice_president", "general_secretary", "joint_secretary", "faculty"].includes(profile?.role), [profile?.role]);
+    const isHead = useCallback(() => profile?.role === "head", [profile?.role]);
+    const canManageTeams = useCallback(() => isPresident() || permissions?.can_manage_teams, [isPresident, permissions?.can_manage_teams]);
+    const canManageMembers = useCallback(() => isPresident() || permissions?.can_manage_members, [isPresident, permissions?.can_manage_members]);
 
-    const signUp = async (email, password, options = {}) => {
+    const signUp = useCallback(async (email, password, options = {}) => {
         setLoading(true);
         try {
             const { data, error } = await supabase.auth.signUp({
@@ -246,7 +258,9 @@ export function AuthProvider({ children }) {
             setLoading(false);
             return { data: null, error };
         }
-    };
+    }, [supabase]);
+
+    const refreshProfile = useCallback(() => user && fetchProfile(user.id), [user, fetchProfile]);
 
     const value = {
         user,
@@ -262,7 +276,7 @@ export function AuthProvider({ children }) {
         isHead,
         canManageTeams,
         canManageMembers,
-        refreshProfile: () => user && fetchProfile(user.id)
+        refreshProfile
     };
 
     return (

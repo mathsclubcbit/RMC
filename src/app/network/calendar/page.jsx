@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import NetworkSidebar from "@/components/network/Sidebar";
@@ -10,7 +10,6 @@ import {
     ChevronLeft,
     ChevronRight,
     Plus,
-    Clock,
     ListTodo,
     PartyPopper,
     X,
@@ -33,13 +32,9 @@ export default function CalendarPage() {
     const [selectedDate, setSelectedDate] = useState(null);
     const [viewingDate, setViewingDate] = useState(null);
     const [myTeams, setMyTeams] = useState([]);
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
-    useEffect(() => {
-        fetchCalendarData();
-    }, [currentDate]);
-
-    const fetchCalendarData = async () => {
+    const fetchCalendarData = useCallback(async () => {
         if (!profile?.id) return;
 
         try {
@@ -67,20 +62,17 @@ export default function CalendarPage() {
             const userTeamIds = teams.map(t => t.id);
 
             // Fetch calendar events with new visibility logic
-            // Global OR (Team-specific AND User is in that team) OR (Created by user)
             let query = supabase
                 .from("calendar_events")
                 .select("*")
                 .gte("start_time", startOfMonth.toISOString())
                 .lte("start_time", endOfMonth.toISOString());
 
-            const { data: eventsData, error: eventsError } = await query;
+            const { data: eventsData } = await query;
 
-            // Client-side filtering because OR logic with unrelated columns (visibility/team_id) is complex in PostgREST simple filter string
-            // and we need to check team inclusion.
             const filteredEvents = eventsData?.filter(event => {
                 if (event.created_by === profile?.id) return true;
-                if (event.is_global) return true; // Legacy support
+                if (event.is_global) return true;
                 if (event.visibility === 'global') return true;
                 if (event.visibility === 'team' && event.team_id && userTeamIds.includes(event.team_id)) return true;
                 return false;
@@ -107,7 +99,6 @@ export default function CalendarPage() {
             // Filter tasks visible to user
             let visibleTasks = tasksData || [];
             if (!isPresident()) {
-                // We already have userTeamIds from above
                 visibleTasks = tasksData?.filter(task => {
                     if (task.assigned_to_user === profile?.id) return true;
                     if (task.assigned_to_team && userTeamIds.includes(task.assigned_to_team)) return true;
@@ -121,7 +112,11 @@ export default function CalendarPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [profile?.id, currentDate, isPresident, supabase]);
+
+    useEffect(() => {
+        fetchCalendarData();
+    }, [fetchCalendarData]);
 
     const calendarDays = useMemo(() => {
         const year = currentDate.getFullYear();
@@ -270,7 +265,6 @@ export default function CalendarPage() {
                         <div className="grid grid-cols-7">
                             {calendarDays.map((date, index) => {
                                 const { events: dayEvents, tasks: dayTasks } = getEventsForDate(date);
-                                const hasItems = dayEvents.length > 0 || dayTasks.length > 0;
 
                                 return (
                                     <button
@@ -299,7 +293,7 @@ export default function CalendarPage() {
 
                                                 {/* Event/Task Indicators */}
                                                 <div className="mt-1 space-y-1">
-                                                    {dayEvents.slice(0, 3).map((event, i) => (
+                                                    {dayEvents.slice(0, 3).map((event) => (
                                                         <div
                                                             key={event.id}
                                                             className={`
@@ -313,7 +307,7 @@ export default function CalendarPage() {
                                                             {event.title}
                                                         </div>
                                                     ))}
-                                                    {dayTasks.slice(0, 2).map((task, i) => (
+                                                    {dayTasks.slice(0, 2).map((task) => (
                                                         <div
                                                             key={task.id}
                                                             className="text-[9px] font-medium px-2 py-1 bg-amber-500/10 text-amber-300 border border-amber-500/20 rounded-md truncate"

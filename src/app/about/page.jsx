@@ -100,7 +100,7 @@ export default function AboutPage() {
                         transition={{ delay: 0.5, duration: 0.8 }}
                         className="text-white/50 font-serif italic text-xl md:text-2xl max-w-2xl mx-auto"
                     >
-                        "Empowering minds at CBIT through the beauty of mathematics and the precision of logic."
+                        &quot;Empowering minds at CBIT through the beauty of mathematics and the precision of logic.&quot;
                     </motion.p>
 
 
@@ -139,7 +139,7 @@ export default function AboutPage() {
                             </p>
 
                             <blockquote className="border-l-2 border-teal pl-6 py-2 italic text-2xl text-white/90 font-serif">
-                                "An equation means nothing to me unless it expresses a thought of God."
+                                &quot;An equation means nothing to me unless it expresses a thought of God.&quot;
                                 <footer className="text-xs text-teal mt-4 font-mono tracking-[0.2em] uppercase not-italic">— Srinivasa Ramanujan</footer>
                             </blockquote>
                         </motion.div>
