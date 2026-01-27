@@ -83,7 +83,9 @@ export async function generateQRCodeSVG(registrationId: string): Promise<string>
  * Validate QR code data format
  */
 export function validateQRData(data: string): boolean {
-    // Registration IDs typically follow pattern: REG-{eventId}-{timestamp}-{random}
-    // For now, just check it's not empty and has reasonable length
-    return Boolean(data) && data.length > 5 && data.length < 100;
+    const value = String(data || '').trim();
+    if (!value) return false;
+
+    // Ticket codes are strictly 6 digits
+    return /^\d{6}$/.test(value);
 }

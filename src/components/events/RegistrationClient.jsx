@@ -248,7 +248,7 @@ export default function RegistrationClient({ eventId }) {
                             <div className="bg-white p-4 rounded-2xl mb-6 shadow-2xl">
                                 {qrCodeUrl && <Image src={qrCodeUrl} alt="QR" width={180} height={180} unoptimized />}
                             </div>
-                            <p className="text-xs text-white/30 font-mono mb-8">ID: {registrationId?.substring(0, 8)}</p>
+                            <p className="text-xs text-white/30 font-mono mb-8">Ticket Code: {registrationId}</p>
 
                             <div className="flex gap-4">
                                 <Link href="/events" className="px-6 py-3 bg-teal text-black font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-teal/80 transition-colors">Back to Events</Link>

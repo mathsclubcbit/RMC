@@ -6,6 +6,14 @@ const SCOPES = [
     'https://www.googleapis.com/auth/spreadsheets',
 ];
 
+const SHEET_TAB = process.env.GOOGLE_SHEET_TAB || 'Sheet1';
+const sheetRange = (a1: string) => `${SHEET_TAB}!${a1}`;
+
+const isHeaderCell = (value: unknown, expected: string) =>
+    String(value ?? '').trim().toLowerCase() === expected.trim().toLowerCase();
+
+const normalizeCell = (value: unknown) => String(value ?? '').trim();
+
 /**
  * Authenticate using Service Account from Environment Variable
  */
@@ -125,7 +133,8 @@ export const checkDuplicateUTR = async (
 ): Promise<boolean> => {
     const authClient = await getAuthClient();
     const sheets = google.sheets({ version: 'v4', auth: authClient as any });
-    const range = 'Sheet1!K:K'; // Assuming UTR is in Column K
+    // UTR ID is stored in Column I in the current sheet layout
+    const range = sheetRange('I:I');
 
     const response = await sheets.spreadsheets.values.get({
         spreadsheetId,
@@ -143,6 +152,32 @@ export const checkDuplicateUTR = async (
     return existingUTRs.includes(normalizedUTR);
 };
 
+    /**
+     * Check if a registration ID (ticket code) already exists in the Google Sheet (Column B).
+     * Handles sheets with/without a header row.
+     */
+    export const checkDuplicateRegistrationId = async (spreadsheetId: string, registrationId: string): Promise<boolean> => {
+        const authClient = await getAuthClient();
+        const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: sheetRange('B:B'),
+        });
+
+        const rows = response.data.values;
+        if (!rows || rows.length === 0) return false;
+
+        const hasHeader = isHeaderCell(rows[0]?.[0], 'registration id');
+        const startIdx = hasHeader ? 1 : 0;
+        const wanted = normalizeCell(registrationId);
+
+        for (let i = startIdx; i < rows.length; i++) {
+            if (normalizeCell(rows[i]?.[0]) === wanted) return true;
+        }
+        return false;
+    };
+
 /**
  * Append a row to the Google Sheet
  */
@@ -153,14 +188,39 @@ export const appendRowToSheet = async (
     const authClient = await getAuthClient();
     const sheets = google.sheets({ version: 'v4', auth: authClient as any });
 
-    await sheets.spreadsheets.values.append({
-        spreadsheetId,
-        range: 'Sheet1!A:P',
-        valueInputOption: 'USER_ENTERED',
-        requestBody: {
-            values: [rowData],
-        },
-    });
+    try {
+        const res = await sheets.spreadsheets.values.append({
+            spreadsheetId,
+            // Anchor at A1 to avoid Sheets treating the “table” as starting elsewhere.
+            // This ensures rowData writes from column A onwards.
+            range: sheetRange('A1'),
+            insertDataOption: 'INSERT_ROWS',
+            valueInputOption: 'USER_ENTERED',
+            requestBody: {
+                values: [rowData],
+            },
+        });
+
+        const updates: any = (res as any)?.data?.updates;
+        console.info('Sheets append ok', {
+            spreadsheetId,
+            tab: SHEET_TAB,
+            updatedRange: updates?.updatedRange,
+            updatedRows: updates?.updatedRows,
+            updatedColumns: updates?.updatedColumns,
+            updatedCells: updates?.updatedCells,
+        });
+    } catch (error: any) {
+        const status = error?.code || error?.response?.status;
+        const details = error?.response?.data || error?.errors || error?.message;
+        console.error('Sheets append failed', {
+            spreadsheetId,
+            range: sheetRange('A1'),
+            status,
+            details,
+        });
+        throw error;
+    }
 };
 
 /**
@@ -183,6 +243,7 @@ export interface RegistrationData {
     status: string;
     checkedInAt?: string;
     teamMembers?: string; // JSON string of team members from Column P
+    memberAttendance?: string; // Attendance record string from Column Q
 }
 
 /**
@@ -194,31 +255,112 @@ export const getAllRegistrations = async (spreadsheetId: string): Promise<Regist
 
     const response = await sheets.spreadsheets.values.get({
         spreadsheetId,
-        range: 'Sheet1!A:P', // Include column P for teamMembers
+        range: sheetRange('A:Q'), // Include column Q for memberAttendance
     });
 
     const rows = response.data.values;
-    if (!rows || rows.length <= 1) return []; // Skip header row or empty
+    if (!rows || rows.length === 0) return [];
 
-    // Map rows to objects (skip header)
-    return rows.slice(1).map(row => ({
-        timestamp: row[0] || '',
-        registrationId: row[1] || '',
-        eventId: row[2] || '',
-        eventName: row[3] || '',
-        name: row[4] || '',
-        email: row[5] || '',
-        rollNo: row[6] || '',
-        department: row[7] || '',
-        utrId: row[8] || '',
-        amount: parseFloat(row[9]) || 0,
-        driveFileId: row[10] || '',
-        driveViewUrl: row[11] || '',
-        driveDownloadUrl: row[12] || '',
-        status: row[13] || 'PENDING',
-        checkedInAt: row[14] || '',
-        teamMembers: row[15] || '' // Column P - Team Members JSON
+    // If the sheet is new, it may not have a header row.
+    // Detect headers by common cells.
+    const firstRow = rows[0] || [];
+    const hasHeader =
+        isHeaderCell(firstRow[0], 'timestamp') ||
+        isHeaderCell(firstRow[1], 'registration id') ||
+        isHeaderCell(firstRow[3], 'event name');
+
+    const dataRows = hasHeader ? rows.slice(1) : rows;
+    if (dataRows.length === 0) return [];
+
+    return dataRows.map(row => ({
+        timestamp: normalizeCell(row[0]),
+        registrationId: normalizeCell(row[1]),
+        eventId: normalizeCell(row[2]),
+        eventName: normalizeCell(row[3]),
+        name: normalizeCell(row[4]),
+        email: normalizeCell(row[5]),
+        rollNo: normalizeCell(row[6]),
+        department: normalizeCell(row[7]),
+        utrId: normalizeCell(row[8]),
+        amount: parseFloat(normalizeCell(row[9])) || 0,
+        driveFileId: normalizeCell(row[10]),
+        driveViewUrl: normalizeCell(row[11]),
+        driveDownloadUrl: normalizeCell(row[12]),
+        status: normalizeCell(row[13]) || 'PENDING',
+        checkedInAt: normalizeCell(row[14]) || '',
+        teamMembers: normalizeCell(row[15]) || '',
+        memberAttendance: normalizeCell(row[16]) || ''
     }));
+};
+
+/**
+ * Mark attendance by updating Status (N), Checked-in timestamp (O), and Member Attendance (Q).
+ */
+export const markRegistrationAttendance = async (
+    spreadsheetId: string,
+    registrationId: string,
+    updates: { status?: string; checkedInAt?: string; memberAttendance?: string }
+): Promise<{ success: boolean; rowNumber?: number; error?: string }> => {
+    const authClient = await getAuthClient();
+    const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+
+    try {
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: sheetRange('B:B'),
+        });
+
+        const rows = response.data.values;
+        if (!rows || rows.length === 0) {
+            return { success: false, error: 'No registrations found' };
+        }
+
+        const hasHeader = isHeaderCell(rows[0]?.[0], 'registration id');
+        const startIdx = hasHeader ? 1 : 0;
+        const wantedId = normalizeCell(registrationId);
+
+        const rowIndex = rows.findIndex((row, idx) => idx >= startIdx && normalizeCell(row?.[0]) === wantedId);
+        if (rowIndex === -1) {
+            return { success: false, error: 'Registration not found' };
+        }
+
+        const sheetRowNumber = rowIndex + 1;
+
+        // Update Status (N)
+        if (updates.status != null) {
+            await sheets.spreadsheets.values.update({
+                spreadsheetId,
+                range: sheetRange(`N${sheetRowNumber}`),
+                valueInputOption: 'USER_ENTERED',
+                requestBody: { values: [[updates.status]] },
+            });
+        }
+
+        // Update Checked-in timestamp (O)
+        if (updates.checkedInAt != null) {
+            await sheets.spreadsheets.values.update({
+                spreadsheetId,
+                range: sheetRange(`O${sheetRowNumber}`),
+                valueInputOption: 'USER_ENTERED',
+                requestBody: { values: [[updates.checkedInAt]] },
+            });
+        }
+
+        // Update Member Attendance (Q)
+        if (updates.memberAttendance != null) {
+            await sheets.spreadsheets.values.update({
+                spreadsheetId,
+                range: sheetRange(`Q${sheetRowNumber}`),
+                valueInputOption: 'USER_ENTERED',
+                requestBody: { values: [[updates.memberAttendance]] },
+            });
+        }
+
+        return { success: true, rowNumber: sheetRowNumber };
+    } catch (error) {
+        console.error('Error marking registration attendance:', error);
+        return { success: false, error: 'Failed to update attendance' };
+    }
 };
 
 /**
@@ -237,7 +379,7 @@ export const updateRegistrationStatus = async (
         // First, find the row with this registration ID (Column B)
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
-            range: 'Sheet1!B:B', // Registration ID column
+            range: sheetRange('B:B'), // Registration ID column
         });
 
         const rows = response.data.values;
@@ -245,10 +387,12 @@ export const updateRegistrationStatus = async (
             return { success: false, error: 'No registrations found' };
         }
 
+        const hasHeader = isHeaderCell(rows[0]?.[0], 'registration id');
+        const startIdx = hasHeader ? 1 : 0;
+        const wantedId = normalizeCell(registrationId);
+
         // Find the row index (1-indexed for sheets, +1 for header)
-        const rowIndex = rows.findIndex((row, idx) =>
-            idx > 0 && row[0] === registrationId
-        );
+        const rowIndex = rows.findIndex((row, idx) => idx >= startIdx && normalizeCell(row?.[0]) === wantedId);
 
         if (rowIndex === -1) {
             return { success: false, error: 'Registration not found' };
@@ -260,7 +404,7 @@ export const updateRegistrationStatus = async (
         // Update the status column (N)
         await sheets.spreadsheets.values.update({
             spreadsheetId,
-            range: `Sheet1!N${sheetRowNumber}`,
+            range: sheetRange(`N${sheetRowNumber}`),
             valueInputOption: 'USER_ENTERED',
             requestBody: {
                 values: [[newStatus]]
@@ -275,14 +419,71 @@ export const updateRegistrationStatus = async (
 };
 
 /**
+ * Mark a registration as checked-in by setting checkedInAt column (O).
+ * Column mapping based on Sheet1!A:Q:
+ * - Registration ID: column B
+ * - Checked-in timestamp: column O (index 15, 1-based)
+ */
+export const markRegistrationCheckedIn = async (
+    spreadsheetId: string,
+    registrationId: string,
+    checkedInAt: string = new Date().toISOString()
+): Promise<{ success: boolean; rowNumber?: number; error?: string }> => {
+    const authClient = await getAuthClient();
+    const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+
+    try {
+        // Find row index by scanning Registration ID column (B)
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: sheetRange('B:B'),
+        });
+
+        const rows = response.data.values;
+        if (!rows || rows.length === 0) {
+            return { success: false, error: 'No registrations found' };
+        }
+
+        const hasHeader = isHeaderCell(rows[0]?.[0], 'registration id');
+        const startIdx = hasHeader ? 1 : 0;
+        const wantedId = normalizeCell(registrationId);
+
+        const rowIndex = rows.findIndex((row, idx) => idx >= startIdx && normalizeCell(row?.[0]) === wantedId);
+        if (rowIndex === -1) {
+            return { success: false, error: 'Registration not found' };
+        }
+
+        const sheetRowNumber = rowIndex + 1;
+
+        // Update checkedInAt column (O)
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: sheetRange(`O${sheetRowNumber}`),
+            valueInputOption: 'USER_ENTERED',
+            requestBody: {
+                values: [[checkedInAt]],
+            },
+        });
+
+        return { success: true, rowNumber: sheetRowNumber };
+    } catch (error) {
+        console.error('Error marking registration checked-in:', error);
+        return { success: false, error: 'Failed to mark checked-in' };
+    }
+};
+
+/**
  * Get a single registration by ID
  */
 export const getRegistrationById = async (
     spreadsheetId: string,
     registrationId: string
 ): Promise<RegistrationData | null> => {
+    const wantedId = normalizeCell(registrationId);
+    if (!/^\d{6}$/.test(wantedId)) return null;
+
     const registrations = await getAllRegistrations(spreadsheetId);
-    return registrations.find(r => r.registrationId === registrationId) || null;
+    return registrations.find(r => normalizeCell(r.registrationId) === wantedId) || null;
 };
 
 /**

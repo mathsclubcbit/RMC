@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { v4 as uuidv4 } from 'uuid';
-import { uploadToDrive, checkDuplicateUTR, appendRowToSheet, getOrCreateFolder } from '@/lib/google';
+import { randomInt } from 'crypto';
+import { uploadToDrive, checkDuplicateRegistrationId, checkDuplicateUTR, appendRowToSheet, getOrCreateFolder } from '@/lib/google';
+
+const generateTicketCode = () => String(randomInt(0, 1_000_000)).padStart(6, '0');
 
 export async function POST(req: NextRequest) {
     try {
@@ -48,6 +50,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Server misconfiguration.' }, { status: 500 });
         }
 
+        if (process.env.NODE_ENV !== 'production') {
+            console.info('Register target sheet', {
+                spreadsheetUrl: `https://docs.google.com/spreadsheets/d/${spreadsheetId}`,
+                tab: process.env.GOOGLE_SHEET_TAB || 'Sheet1',
+                driveFolderId,
+            });
+        }
+
         // 2. Duplicate Check
         const isDuplicate = await checkDuplicateUTR(spreadsheetId, normalizedUTR);
         if (isDuplicate) {
@@ -65,7 +75,19 @@ export async function POST(req: NextRequest) {
         const driveFile = await uploadToDrive(buffer, screenshot.type, fileName, eventFolderId);
 
         // 4. Append to Google Sheet
-        const registrationId = uuidv4();
+        // Generate a 6-digit ticket code (stored as Registration ID) and ensure it is unique.
+        let registrationId = '';
+        for (let attempt = 0; attempt < 10; attempt++) {
+            const candidate = generateTicketCode();
+            const exists = await checkDuplicateRegistrationId(spreadsheetId, candidate);
+            if (!exists) {
+                registrationId = candidate;
+                break;
+            }
+        }
+        if (!registrationId) {
+            return NextResponse.json({ error: 'Failed to generate ticket code. Please retry.' }, { status: 500 });
+        }
         const timestamp = new Date().toISOString();
         const status = 'PENDING';
 
@@ -85,7 +107,8 @@ export async function POST(req: NextRequest) {
             driveFile.webContentLink || '',
             status,
             '', // Column O - checkedInAt (empty initially)
-            teamMembersStr || '' // Column P - Team Members JSON
+            teamMembersStr || '', // Column P - Team Members JSON
+            '' // Column Q - Member Attendance (empty initially)
         ];
 
         await appendRowToSheet(spreadsheetId, rowData);
