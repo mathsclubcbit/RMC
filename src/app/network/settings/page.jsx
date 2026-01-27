@@ -13,6 +13,7 @@ export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(null);
     const [message, setMessage] = useState(null);
+    const supabase = useMemo(() => createClient(), []);
 
     const fetchDelegatedUsers = useCallback(async () => {
         try {
