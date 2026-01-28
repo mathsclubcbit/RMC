@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import { createAdminClient } from "@/lib/supabase/server";
 import CoordinatorNav from "./CoordinatorNav";
+import CoordinatorLayoutClient from "./CoordinatorLayoutClient";
 
 const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
 
@@ -37,17 +38,12 @@ async function getEventInfo() {
 export default async function CoordinatorLayout({ children }) {
     const eventInfo = await getEventInfo();
 
-    // Don't show nav on login page
-    const isLoginPage = false; // We can't check pathname in server component, so nav will handle this
-
     return (
-        <div className="min-h-screen bg-black text-white">
-            {eventInfo && (
-                <CoordinatorNav eventTitle={eventInfo.eventTitle} />
-            )}
-            <main className={eventInfo ? "pb-24 md:pb-0 md:pt-0" : ""}>
-                {children}
-            </main>
-        </div>
+        <CoordinatorLayoutClient
+            eventInfo={eventInfo}
+            nav={eventInfo ? <CoordinatorNav eventTitle={eventInfo.eventTitle} /> : null}
+        >
+            {children}
+        </CoordinatorLayoutClient>
     );
 }

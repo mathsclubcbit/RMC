@@ -8,6 +8,7 @@ import { Trash2, Upload, Loader2, Plus, User, Linkedin, Mail, BadgeCheck, AlertT
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { cn } from "@/lib/utils";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { saveTeamMemberAction, deleteTeamMemberAction } from "./actions";
 
 const TEAM_CATEGORIES = [
     "Faculty Advisor",
@@ -143,43 +144,26 @@ export default function TeamManager() {
             }
 
             if (editingId) {
-                // UPDATE Existing
-                const { error: dbError } = await supabase
-                    .from('rmc_council')
-                    .update(payload)
-                    .eq('id', editingId);
-
-                if (dbError) throw dbError;
-
-                showModal("Updated", "Member details updated successfully.", "success", () => {
-                    cancelEdit(); // Resets form and switches tab
-                    fetchMembers();
-                    closeModal();
-                });
-
+                payload.id = editingId;
             } else {
                 // INSERT New
-                // Ensure image_url is set for new records (it was validated above, but strictly)
                 if (!payload.image_url && publicUrl) payload.image_url = publicUrl;
-                // If logic somehow failed (shouldn't due to validation), publicUrl is required
                 if (!payload.image_url) throw new Error("Image upload failed");
-
-                const { error: dbError } = await supabase
-                    .from('rmc_council')
-                    .insert({
-                        ...payload,
-                        priority_order: 0, // Default priority
-                        image_url: publicUrl // Explicitly set
-                    });
-
-                if (dbError) throw dbError;
-
-                showModal("Success", "Team member added successfully!", "success", () => {
-                    cancelEdit();
-                    fetchMembers();
-                    closeModal();
-                });
+                payload.priority_order = 0;
             }
+
+            // USE SERVER ACTION - Bypassing Client RLS
+            const result = await saveTeamMemberAction(payload);
+
+            if (result.error) {
+                throw new Error(result.error);
+            }
+
+            showModal("Success", `Team member ${editingId ? 'updated' : 'added'} successfully.`, "success", () => {
+                cancelEdit();
+                fetchMembers(); // Refresh the list
+                closeModal();
+            });
 
         } catch (error) {
             console.error("Error saving member:", error);
@@ -191,13 +175,9 @@ export default function TeamManager() {
 
     const handleDelete = async (id, imageUrl) => {
         showModal("Delete Member?", "Are you sure? This cannot be undone.", "confirm", async () => {
-            // Try to delete image logic removed/simplified as per user request to just "Delete"
-            // Cloudinary images usually require API key on backend to delete, which we might not have exposed here.
-            // We just delete the record.
-
-            const { error } = await supabase.from('rmc_council').delete().eq('id', id);
-            if (error) {
-                showModal("Error", "Failed to delete member.", "error");
+            const result = await deleteTeamMemberAction(id);
+            if (result.error) {
+                showModal("Error", "Failed to delete member: " + result.error, "error");
             } else {
                 setMembers(prev => prev.filter(m => m.id !== id));
                 closeModal();
@@ -272,7 +252,7 @@ export default function TeamManager() {
                             >
                                 <input {...getInputProps()} />
                                 {imagePreview ? (
-                                    <Image src={imagePreview} alt="Preview" fill className="object-cover" />
+                                    <Image src={imagePreview} alt="Preview" fill className="object-cover pointer-events-none" />
                                 ) : (
                                     <div className="text-center p-2 group-hover:scale-110 transition-transform">
                                         <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-2">

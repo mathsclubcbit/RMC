@@ -7,6 +7,7 @@ import ConfirmationModal from "@/components/ui/ConfirmationModal";
 export default function AdminEventsClient({ initialEvents }) {
     const [events, setEvents] = useState(Array.isArray(initialEvents) ? initialEvents : []);
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, eventId: null, eventTitle: null });
+    const [errorModal, setErrorModal] = useState({ isOpen: false, message: "" });
     const [isDeleting, setIsDeleting] = useState(false);
 
     const sorted = useMemo(() => {
@@ -33,7 +34,7 @@ export default function AdminEventsClient({ initialEvents }) {
             setEvents((prev) => prev.filter((e) => e.id !== deleteModal.eventId));
             setDeleteModal({ isOpen: false, eventId: null, eventTitle: null });
         } catch (error) {
-            alert(error.message);
+            setErrorModal({ isOpen: true, message: error.message });
         } finally {
             setIsDeleting(false);
         }
@@ -141,6 +142,16 @@ export default function AdminEventsClient({ initialEvents }) {
                 cancelText="Cancel"
                 isDangerous={true}
                 isLoading={isDeleting}
+            />
+
+            <ConfirmationModal
+                isOpen={errorModal.isOpen}
+                onClose={() => setErrorModal({ isOpen: false, message: "" })}
+                onConfirm={() => setErrorModal({ isOpen: false, message: "" })}
+                title="Operation Failed"
+                message={errorModal.message}
+                type="error"
+                confirmText="Dismiss"
             />
         </>
     );

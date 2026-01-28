@@ -7,6 +7,7 @@ import { Check, Loader2, Users } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { markAttendanceAction } from "@/app/admin/actions";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 interface TicketCheckInFormProps {
     ticket: {
@@ -21,13 +22,19 @@ interface TicketCheckInFormProps {
 export function TicketCheckInForm({ ticket }: TicketCheckInFormProps) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [modal, setModal] = useState({
+        isOpen: false,
+        title: "",
+        message: "",
+        type: "confirm" as "confirm" | "success" | "error" | "info"
+    });
 
     const leadEntry = `${ticket.name} (${ticket.roll})`;
     const membersList = ticket.members
         ? ticket.members
-              .split(",")
-              .map(m => m.trim())
-              .filter(Boolean)
+            .split(",")
+            .map(m => m.trim())
+            .filter(Boolean)
         : [];
 
     const allMembers = [leadEntry, ...membersList];
@@ -51,13 +58,23 @@ export function TicketCheckInForm({ ticket }: TicketCheckInFormProps) {
             const result = await markAttendanceAction(ticket.id, attendanceStatus);
 
             if (result?.error) {
-                alert(result.error);
+                setModal({
+                    isOpen: true,
+                    title: "Check-in Error",
+                    message: result.error,
+                    type: "error"
+                });
             } else {
                 router.refresh();
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Check-in failed", error);
-            alert("Failed to mark attendance. Please try again.");
+            setModal({
+                isOpen: true,
+                title: "System Error",
+                message: "Failed to mark attendance. Please try again.",
+                type: "error"
+            });
         } finally {
             setIsSubmitting(false);
         }
@@ -84,25 +101,22 @@ export function TicketCheckInForm({ ticket }: TicketCheckInFormProps) {
                         <div
                             key={idx}
                             onClick={() => toggleMember(member)}
-                            className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
-                                isSelected
+                            className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all duration-200 ${isSelected
                                     ? "bg-primary/20 border-primary/50 shadow-[inset_0_0_10px_rgba(124,58,237,0.1)]"
                                     : "bg-white/5 border-white/10 hover:bg-white/10"
-                            }`}
+                                }`}
                         >
                             <span
-                                className={`text-sm ${
-                                    isSelected
+                                className={`text-sm ${isSelected
                                         ? "text-primary-foreground font-medium"
                                         : "text-muted-foreground"
-                                }`}
+                                    }`}
                             >
                                 {member}
                             </span>
                             <div
-                                className={`h-5 w-5 rounded border flex items-center justify-center transition-colors ${
-                                    isSelected ? "bg-primary border-primary" : "border-white/20"
-                                }`}
+                                className={`h-5 w-5 rounded border flex items-center justify-center transition-colors ${isSelected ? "bg-primary border-primary" : "border-white/20"
+                                    }`}
                             >
                                 {isSelected && <Check className="h-3 w-3 text-white" />}
                             </div>
@@ -121,6 +135,16 @@ export function TicketCheckInForm({ ticket }: TicketCheckInFormProps) {
                     "Confirm Attendance"
                 )}
             </Button>
-        </GlassCard>
+
+            <ConfirmationModal
+                isOpen={modal.isOpen}
+                onClose={() => setModal({ ...modal, isOpen: false })}
+                onConfirm={() => setModal({ ...modal, isOpen: false })}
+                title={modal.title}
+                message={modal.message}
+                type={modal.type}
+                confirmText="Dismiss"
+            />
+        </GlassCard >
     );
 }

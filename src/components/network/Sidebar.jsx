@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
+import { useLoading } from "@/context/LoadingContext";
 import {
     LayoutDashboard,
     Users,
@@ -91,29 +92,34 @@ export default function NetworkSidebar() {
         windowReload
     };
 
+    const { startLoading } = useLoading();
+
     const NavContent = ({ hideLogo = false, collapsed, profile, navLinks, pathname, handleSignOut, windowReload }) => (
         <>
             {/* Logo */}
             {!hideLogo && (
-                <div className={`flex items-center gap-3 px-4 py-6 border-b border-white/5 ${collapsed ? 'justify-center' : ''}`}>
-                    <Image
-                        src="/RMC logo-circular.png"
-                        alt="RMC"
-                        width={collapsed ? 36 : 40}
-                        height={collapsed ? 36 : 40}
-                        className="flex-shrink-0"
-                    />
+                <div className={`flex items-center gap-3 px-6 py-8 border-b border-white/5 ${collapsed ? 'justify-center border-none' : ''}`}>
+                    <div className="relative group">
+                        <div className="absolute -inset-2 bg-teal/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
+                        <Image
+                            src="/RMC logo-circular.png"
+                            alt="RMC"
+                            width={collapsed ? 36 : 42}
+                            height={collapsed ? 36 : 42}
+                            className="relative z-10 filter drop-shadow-[0_0_8px_rgba(45,212,191,0.3)]"
+                        />
+                    </div>
                     {!collapsed && (
                         <div>
-                            <h1 className="text-white font-serif font-bold text-lg">RMC Network</h1>
-                            <p className="text-white/40 text-[10px] uppercase tracking-widest">{profile?.role?.replace('_', ' ')}</p>
+                            <h1 className="text-white font-[family-name:var(--font-cinzel)] font-bold text-lg tracking-tighter">RMC <span className="text-teal">NETWORK</span></h1>
+                            <p className="text-white/30 text-[9px] uppercase tracking-[0.2em] font-mono mt-0.5">{profile?.role?.replace('_', ' ')}</p>
                         </div>
                     )}
                 </div>
             )}
 
             {/* Nav Links */}
-            <nav className="flex-1 px-3 py-4 space-y-1">
+            <nav className="flex-1 px-4 py-8 space-y-2">
                 {navLinks.map((link) => {
                     const isActive = pathname === link.href;
                     const Icon = link.icon;
@@ -122,14 +128,23 @@ export default function NetworkSidebar() {
                         <Link
                             key={link.href}
                             href={link.href}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${isActive
-                                ? 'bg-teal/10 text-teal'
-                                : 'text-white/50 hover:bg-white/5 hover:text-white'
+                            onClick={() => {
+                                if (!isActive) startLoading();
+                            }}
+                            className={`flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 relative group overflow-hidden ${isActive
+                                ? 'text-teal shadow-[0_0_20px_rgba(45,212,191,0.1)]'
+                                : 'text-white/40 hover:text-white'
                                 } ${collapsed ? 'justify-center' : ''}`}
                         >
-                            <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-teal' : 'group-hover:text-teal'}`} />
+                            {/* Active/Hover Glow Surface */}
+                            <div className={`absolute inset-0 bg-gradient-to-r from-teal/10 to-transparent transition-opacity duration-500 ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
+                            {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-teal rounded-r-full shadow-[0_0_15px_rgba(45,212,191,0.5)]" />}
+
+                            <Icon className={`w-5 h-5 relative z-10 transition-transform duration-500 ${isActive ? 'text-teal scale-110' : 'group-hover:text-teal group-hover:scale-110'}`} />
                             {!collapsed && (
-                                <span className="text-sm font-medium">{link.label}</span>
+                                <span className={`text-sm font-medium relative z-10 ${isActive ? 'font-semibold' : ''}`}>
+                                    {link.label}
+                                </span>
                             )}
                         </Link>
                     );
@@ -137,40 +152,40 @@ export default function NetworkSidebar() {
             </nav>
 
             {/* User & Actions */}
-            <div className="px-3 py-4 border-t border-white/5 space-y-1">
+            <div className="px-4 py-6 border-t border-white/5 space-y-2">
                 {!collapsed && (
-                    <div className="px-3 py-2 mb-2">
-                        <p className="text-white text-sm font-medium truncate">{profile?.full_name || profile?.email}</p>
-                        <p className="text-white/40 text-xs truncate">{profile?.email}</p>
+                    <div className="px-4 py-3 mb-2 rounded-2xl bg-white/[0.02] border border-white/5">
+                        <p className="text-white text-sm font-[family-name:var(--font-cormorant)] font-semibold truncate tracking-wide">{profile?.full_name || profile?.email}</p>
+                        <p className="text-white/30 text-[10px] truncate font-mono tracking-tighter">{profile?.email}</p>
                     </div>
                 )}
 
-                {/* Refresh Network */}
-                <button
-                    onClick={windowReload}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/50 hover:bg-white/5 hover:text-white transition-all w-full ${collapsed ? 'justify-center' : ''}`}
-                >
-                    <RefreshCw className="w-5 h-5 flex-shrink-0" />
-                    {!collapsed && <span className="text-sm font-medium">Refresh Network</span>}
-                </button>
+                {/* Combined Actions Container */}
+                <div className="space-y-1">
+                    <button
+                        onClick={windowReload}
+                        className={`flex items-center gap-4 px-4 py-2.5 rounded-xl text-white/30 hover:bg-white/5 hover:text-white transition-all w-full group ${collapsed ? 'justify-center' : ''}`}
+                    >
+                        <RefreshCw className="w-4 h-4 transition-transform duration-500 group-hover:rotate-180" />
+                        {!collapsed && <span className="text-xs font-medium">Refresh Sync</span>}
+                    </button>
 
-                {/* Exit to Main Website */}
-                <Link
-                    href="/"
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/50 hover:bg-white/5 hover:text-white transition-all w-full ${collapsed ? 'justify-center' : ''}`}
-                >
-                    <ExternalLink className="w-5 h-5" />
-                    {!collapsed && <span className="text-sm font-medium">Exit to Website</span>}
-                </Link>
+                    <Link
+                        href="/"
+                        className={`flex items-center gap-4 px-4 py-2.5 rounded-xl text-white/30 hover:bg-white/5 hover:text-white transition-all w-full group ${collapsed ? 'justify-center' : ''}`}
+                    >
+                        <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                        {!collapsed && <span className="text-xs font-medium">Public Website</span>}
+                    </Link>
 
-                {/* Sign Out */}
-                <button
-                    onClick={handleSignOut}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400/70 hover:bg-red-500/10 hover:text-red-400 transition-all w-full ${collapsed ? 'justify-center' : ''}`}
-                >
-                    <LogOut className="w-5 h-5" />
-                    {!collapsed && <span className="text-sm font-medium">Sign Out</span>}
-                </button>
+                    <button
+                        onClick={handleSignOut}
+                        className={`flex items-center gap-4 px-4 py-2.5 rounded-xl text-red-400/50 hover:bg-red-500/10 hover:text-red-400 transition-all w-full group ${collapsed ? 'justify-center' : ''}`}
+                    >
+                        <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                        {!collapsed && <span className="text-xs font-medium">End Session</span>}
+                    </button>
+                </div>
             </div>
         </>
     );
@@ -178,7 +193,7 @@ export default function NetworkSidebar() {
     return (
         <>
             {/* Mobile Header Bar */}
-            <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[#0f172a]/80 backdrop-blur-xl border-b border-white/5 z-[60] px-4 flex items-center justify-between">
+            <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[#020617]/80 backdrop-blur-xl border-b border-white/5 z-[60] px-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Image
                         src="/RMC logo-circular.png"
@@ -220,7 +235,7 @@ export default function NetworkSidebar() {
                         animate={{ x: 0 }}
                         exit={{ x: -280 }}
                         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                        className="lg:hidden fixed left-0 top-0 bottom-0 w-80 bg-[#0f172a] border-r border-white/5 z-[80] flex flex-col shadow-2xl"
+                        className="lg:hidden fixed left-0 top-0 bottom-0 w-80 bg-[#020617] border-r border-white/5 z-[80] flex flex-col shadow-2xl"
                     >
                         <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/5">
                             <h2 className="text-white font-serif font-bold text-lg">Navigation</h2>
@@ -240,7 +255,7 @@ export default function NetworkSidebar() {
 
             {/* Desktop Sidebar */}
             <aside
-                className={`hidden lg:flex flex-col bg-gray-900/60 backdrop-blur-xl border-r border-white/5 transition-all duration-300 relative ${collapsed ? 'w-20' : 'w-64'
+                className={`hidden lg:flex flex-col bg-white/[0.01] backdrop-blur-[30px] border-r border-white/5 transition-all duration-500 relative ${collapsed ? 'w-24' : 'w-72'
                     }`}
             >
                 <div className="flex flex-col h-full sticky top-0">
@@ -249,10 +264,13 @@ export default function NetworkSidebar() {
                     {/* Collapse Toggle */}
                     <button
                         onClick={() => setCollapsed(!collapsed)}
-                        className="absolute -right-3 top-20 p-1.5 bg-gray-800 border border-white/10 rounded-full text-white/50 hover:text-white transition-colors z-10"
+                        className="absolute -right-3 top-24 p-2 bg-black border border-white/10 rounded-full text-white/30 hover:text-teal hover:border-teal/30 hover:shadow-[0_0_15px_rgba(45,212,191,0.2)] transition-all z-10"
                     >
-                        <ChevronLeft className={`w-4 h-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
+                        <ChevronLeft className={`w-3.5 h-3.5 transition-transform duration-500 ${collapsed ? 'rotate-180' : ''}`} />
                     </button>
+
+                    {/* Bottom Aesthetic Accent */}
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-teal/20 to-transparent" />
                 </div>
             </aside>
         </>

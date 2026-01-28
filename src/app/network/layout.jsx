@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { LoadingProvider, useLoading } from "@/context/LoadingContext";
+import NetworkLoading from "@/components/network/NetworkLoading";
+import { AnimatePresence } from "framer-motion";
 
 function NetworkLayoutInner({ children }) {
     const { authReady, user, signOut } = useAuth();
@@ -59,21 +62,31 @@ function NetworkLayoutInner({ children }) {
         handleRedirects();
     }, [authReady, timedOut, user, pathname, router, signOut]);
 
+    const { isPageLoading } = useLoading();
+
     // Show loading while auth is initializing (but not forever)
     if (!authReady && !timedOut) {
-        return (
-            <div className="min-h-screen bg-[#020617] flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-2 border-teal/30 border-t-teal rounded-full animate-spin" />
-                    <p className="text-white/50 text-sm font-mono">Loading Network...</p>
-                </div>
-            </div>
-        );
+        return <NetworkLoading />;
     }
 
     return (
-        <div className="min-h-screen bg-[#020617]">
-            {children}
+        <div className="h-screen bg-[#020617] relative overflow-hidden selection:bg-teal/20 selection:text-teal font-[family-name:var(--font-montserrat)]">
+            {/* Cinematic Background Elements */}
+            <div className="fixed inset-0 pointer-events-none">
+                {/* Logic Grid Overlay */}
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(45,212,191,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(45,212,191,0.03)_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,black_70%,transparent_100%)] opacity-20" />
+
+                {/* Global Radial Glows */}
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-teal/10 blur-[120px] rounded-full opacity-30" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full opacity-30" />
+            </div>
+
+            <div className="relative z-10 w-full h-screen overflow-hidden">
+                <AnimatePresence>
+                    {isPageLoading && <NetworkLoading key="nav-loader" />}
+                </AnimatePresence>
+                {children}
+            </div>
         </div>
     );
 }
@@ -81,7 +94,9 @@ function NetworkLayoutInner({ children }) {
 export default function NetworkLayout({ children }) {
     return (
         <AuthProvider>
-            <NetworkLayoutInner>{children}</NetworkLayoutInner>
+            <LoadingProvider>
+                <NetworkLayoutInner>{children}</NetworkLayoutInner>
+            </LoadingProvider>
         </AuthProvider>
     );
 }

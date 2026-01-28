@@ -1,8 +1,18 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
 export default function Template({ children }) {
+    const pathname = usePathname();
+    const isDashboard = pathname.startsWith('/admin') || pathname.startsWith('/coordinator') || pathname.startsWith('/network');
+
+    // Dashboard routes need to break out of the transform context (framer-motion) 
+    // to allow 'fixed' elements (like the bottom dock) to work relative to the viewport.
+    if (isDashboard) {
+        return <div className="min-h-screen">{children}</div>;
+    }
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}

@@ -133,7 +133,7 @@ export default function MyTeamPage() {
 
     if (loading) {
         return (
-            <div className="flex min-h-screen">
+            <div className="flex h-full">
                 <NetworkSidebar />
                 <main className="flex-1 p-10 flex items-center justify-center">
                     <Loader2 className="w-10 h-10 text-teal animate-spin" />
@@ -144,7 +144,7 @@ export default function MyTeamPage() {
 
     if (myTeams.length === 0) {
         return (
-            <div className="flex min-h-screen">
+            <div className="flex h-full">
                 <NetworkSidebar />
                 <main className="flex-1 p-10 flex items-center justify-center">
                     <div className="text-center">
@@ -198,10 +198,10 @@ export default function MyTeamPage() {
     };
 
     return (
-        <div className="flex min-h-screen">
+        <div className="flex h-full">
             <NetworkSidebar />
 
-            <main className="flex-1 p-6 lg:p-10 pt-24 lg:pt-10 overflow-auto">
+            <main className="flex-1 p-6 lg:p-10 pt-24 lg:pt-14 overflow-y-auto">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

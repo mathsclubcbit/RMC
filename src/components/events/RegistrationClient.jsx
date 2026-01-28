@@ -6,6 +6,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, CheckCircle, Upload, FileText, Users } from "lucide-react";
 import TicketDownloadButton from "./TicketDownloadButton";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 export default function RegistrationClient({ eventId }) {
     // Event State
@@ -31,6 +32,12 @@ export default function RegistrationClient({ eventId }) {
     const [qrCodeUrl, setQrCodeUrl] = useState(null);
     const [errorMessage, setErrorMessage] = useState("");
     const [showPoster, setShowPoster] = useState(false);
+    const [modal, setModal] = useState({
+        isOpen: false,
+        title: "",
+        message: "",
+        type: "info"
+    });
 
     const fileInputRef = useRef(null);
 
@@ -258,7 +265,12 @@ export default function RegistrationClient({ eventId }) {
 
             if (!response.ok) {
                 if (response.status === 409) {
-                    alert("Duplicate UTR! This Transaction ID has already been used.");
+                    setModal({
+                        isOpen: true,
+                        title: "Duplicate Transaction",
+                        message: "This UTR / Transaction ID has already been used for this event. Please check your input or contact support.",
+                        type: "error"
+                    });
                 } else {
                     setErrorMessage(`Registration failed: ${result.error || result.message}`);
                 }
@@ -311,7 +323,7 @@ export default function RegistrationClient({ eventId }) {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                className="w-full md:max-w-6xl md:h-[90vh] bg-white/[0.02] backdrop-blur-2xl border border-white/10 rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col md:flex-row relative z-10 shadow-2xl shadow-black/50"
+                className="w-full md:max-w-6xl h-[calc(100dvh-1rem)] md:h-[90vh] bg-white/[0.02] backdrop-blur-2xl border border-white/10 rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col md:flex-row relative z-10 shadow-2xl shadow-black/50"
             >
                 {/* LEFT: Event Info - Math Noir */}
                 <div className="hidden md:flex w-[45%] bg-gradient-to-br from-black/40 to-black/20 p-12 lg:p-16 flex-col justify-center relative overflow-hidden border-r border-white/5">
@@ -349,311 +361,329 @@ export default function RegistrationClient({ eventId }) {
                 </div>
 
                 {/* RIGHT: Stepper Form */}
-                <div className="flex-1 min-h-0 h-full p-6 md:p-12 lg:p-16 pb-32 md:pb-32 overflow-y-auto relative custom-scrollbar overscroll-contain">
-                    {isSuccess ? (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.5 }}
-                            className="h-full flex flex-col items-center justify-center text-center"
-                        >
+                <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
+                    {/* Inner scroll wrapper */}
+                    <div className="flex-1 overflow-y-auto p-6 md:p-12 lg:p-16 pb-6 md:pb-8 custom-scrollbar overscroll-contain">
+                        {isSuccess ? (
                             <motion.div
-                                initial={{ scale: 0, rotate: -180 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
-                                className="w-24 h-24 bg-gradient-to-br from-teal/20 to-emerald-500/10 rounded-full flex items-center justify-center mb-8 ring-2 ring-teal/30 shadow-[0_0_40px_rgba(45,212,191,0.2)]"
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.5 }}
+                                className="h-full flex flex-col items-center justify-center text-center"
                             >
-                                <CheckCircle className="w-12 h-12 text-teal" />
+                                <motion.div
+                                    initial={{ scale: 0, rotate: -180 }}
+                                    animate={{ scale: 1, rotate: 0 }}
+                                    transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+                                    className="w-24 h-24 bg-gradient-to-br from-teal/20 to-emerald-500/10 rounded-full flex items-center justify-center mb-8 ring-2 ring-teal/30 shadow-[0_0_40px_rgba(45,212,191,0.2)]"
+                                >
+                                    <CheckCircle className="w-12 h-12 text-teal" />
+                                </motion.div>
+
+                                <h2 className="text-4xl font-serif font-bold text-white mb-3 tracking-wide">You&apos;re In!</h2>
+                                <p className="text-white/50 mb-10 text-lg">Registered for <span className="text-teal font-medium">{event.title}</span></p>
+
+                                <div className="bg-white p-5 rounded-2xl mb-4 shadow-2xl shadow-black/50">
+                                    {qrCodeUrl && <Image src={qrCodeUrl} alt="QR" width={200} height={200} unoptimized />}
+                                </div>
+                                <p className="text-xs text-white/30 font-mono mb-10 tracking-widest">TICKET: {registrationId}</p>
+
+                                <div className="flex flex-col sm:flex-row gap-4 items-center">
+                                    <Link href="/events" className="px-8 py-4 bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-white/10 hover:border-teal/30 transition-all">Back to Events</Link>
+                                    <TicketDownloadButton event={event} ticketCode={registrationId} qrCodeUrl={qrCodeUrl} />
+                                </div>
                             </motion.div>
+                        ) : (
+                            <div className="max-w-lg mx-auto pt-4 md:pt-8 flex flex-col min-h-full">
+                                {/* Stepper Header - Math Noir */}
+                                <div className="flex items-center justify-center md:justify-between mb-10 md:mb-14">
+                                    {[1, 2, 3].map((step) => {
+                                        if (step === 2 && !requiresTeamStep) return null;
 
-                            <h2 className="text-4xl font-serif font-bold text-white mb-3 tracking-wide">You&apos;re In!</h2>
-                            <p className="text-white/50 mb-10 text-lg">Registered for <span className="text-teal font-medium">{event.title}</span></p>
+                                        const isActive = step === currentStep;
+                                        const isDone = step < currentStep;
+                                        const stepLabel = step === 1 ? 'Identity' : step === 2 ? 'Squad' : 'Payment';
 
-                            <div className="bg-white p-5 rounded-2xl mb-4 shadow-2xl shadow-black/50">
-                                {qrCodeUrl && <Image src={qrCodeUrl} alt="QR" width={200} height={200} unoptimized />}
-                            </div>
-                            <p className="text-xs text-white/30 font-mono mb-10 tracking-widest">TICKET: {registrationId}</p>
-
-                            <div className="flex flex-col sm:flex-row gap-4 items-center">
-                                <Link href="/events" className="px-8 py-4 bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-white/10 hover:border-teal/30 transition-all">Back to Events</Link>
-                                <TicketDownloadButton event={event} ticketCode={registrationId} qrCodeUrl={qrCodeUrl} />
-                            </div>
-                        </motion.div>
-                    ) : (
-                        <div className="max-w-lg mx-auto pt-4 md:pt-8">
-                            {/* Stepper Header - Math Noir */}
-                            <div className="flex items-center justify-center md:justify-between mb-10 md:mb-14">
-                                {[1, 2, 3].map((step) => {
-                                    if (step === 2 && !requiresTeamStep) return null;
-
-                                    const isActive = step === currentStep;
-                                    const isDone = step < currentStep;
-                                    const stepLabel = step === 1 ? 'Identity' : step === 2 ? 'Squad' : 'Payment';
-
-                                    return (
-                                        <div key={step} className="flex items-center gap-2 md:gap-3">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold font-mono transition-all duration-300 ${isActive ? 'bg-gradient-to-br from-teal to-emerald-500 text-black scale-110 shadow-[0_0_25px_rgba(45,212,191,0.4)]' : isDone ? 'bg-teal/20 text-teal ring-1 ring-teal/30' : 'bg-white/5 text-white/30 ring-1 ring-white/10'}`}>
-                                                {isDone ? <CheckCircle className="w-5 h-5" /> : step}
-                                            </div>
-                                            <span className={`hidden md:block text-[10px] uppercase tracking-[0.15em] font-mono transition-colors ${isActive ? 'text-white' : 'text-white/30'}`}>
-                                                {stepLabel}
-                                            </span>
-                                            {step !== 3 && <div className={`hidden md:block w-8 lg:w-16 h-px transition-colors ${isDone ? 'bg-teal/40' : 'bg-white/10'}`} />}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-
-                            {/* Error Toast */}
-                            <AnimatePresence>
-                                {errorMessage && (
-                                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400 text-sm">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                                        {errorMessage}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-
-                            {/* Form Steps */}
-                            <form onSubmit={e => e.preventDefault()}>
-                                {/* STEP 1: IDENTITY */}
-                                {currentStep === 1 && (
-                                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="space-y-6">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Full Name</label>
-                                            <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300" placeholder="Enter your full name" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">College Email</label>
-                                            <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300" placeholder="you@cbit.org.in" />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-5">
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Roll Number</label>
-                                                <input type="text" value={formData.rollNo} onChange={e => setFormData({ ...formData, rollNo: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300 font-mono" placeholder="1601..." />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Department</label>
-                                                <input type="text" value={formData.department} onChange={e => setFormData({ ...formData, department: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300" placeholder="CSE" />
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                )}
-
-                                {/* STEP 2: SQUAD */}
-                                {currentStep === 2 && (
-                                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="space-y-3">
-                                        {/* Compact Team Info Banner */}
-                                        <div className="bg-gradient-to-r from-teal/10 to-emerald-500/5 rounded-lg px-4 py-3 border border-teal/20 flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <Users className="w-4 h-4 text-teal" />
-                                                <span className="text-sm text-white/70">
-                                                    {teamConstraints.minTeamSize === teamConstraints.maxTeamSize
-                                                        ? `Team of ${teamConstraints.minTeamSize}`
-                                                        : `Team: ${teamConstraints.minTeamSize}-${teamConstraints.maxTeamSize}`
-                                                    }
+                                        return (
+                                            <div key={step} className="flex items-center gap-2 md:gap-3">
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold font-mono transition-all duration-300 ${isActive ? 'bg-gradient-to-br from-teal to-emerald-500 text-black scale-110 shadow-[0_0_25px_rgba(45,212,191,0.4)]' : isDone ? 'bg-teal/20 text-teal ring-1 ring-teal/30' : 'bg-white/5 text-white/30 ring-1 ring-white/10'}`}>
+                                                    {isDone ? <CheckCircle className="w-5 h-5" /> : step}
+                                                </div>
+                                                <span className={`hidden md:block text-[10px] uppercase tracking-[0.15em] font-mono transition-colors ${isActive ? 'text-white' : 'text-white/30'}`}>
+                                                    {stepLabel}
                                                 </span>
+                                                {step !== 3 && <div className={`hidden md:block w-8 lg:w-16 h-px transition-colors ${isDone ? 'bg-teal/40' : 'bg-white/10'}`} />}
                                             </div>
-                                            <div className="flex items-center gap-3">
-                                                {event?.variablePricingEnabled && hasPricingTierForCurrentTeamSize && (
-                                                    <span className="text-teal font-bold">₹{amountToPay}</span>
-                                                )}
-                                                <span className="text-teal font-mono text-sm">{currentTeamSize}/{teamConstraints.maxTeamSize}</span>
-                                            </div>
-                                        </div>
+                                        );
+                                    })}
+                                </div>
 
-                                        {/* All Team Members in Compact Grid */}
-                                        <div className="space-y-2">
-                                            {/* Leader Row */}
-                                            <div className="grid grid-cols-[auto_1fr_1fr] gap-2 items-center bg-teal/5 border border-teal/20 rounded-lg px-3 py-2">
-                                                <div className="w-6 h-6 bg-teal/20 rounded-full flex items-center justify-center text-teal font-bold text-xs">1</div>
-                                                <div className="text-white text-sm truncate">{formData.name || 'You'}</div>
-                                                <div className="text-white/40 text-xs font-mono truncate">{formData.rollNo || 'Roll No'}</div>
-                                            </div>
+                                {/* Error Toast */}
+                                <AnimatePresence>
+                                    {errorMessage && (
+                                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400 text-sm">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                            {errorMessage}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
 
-                                            {/* Teammate Rows */}
-                                            {teamMembers.map((member, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className="grid grid-cols-[auto_1fr_1fr_auto] gap-2 items-center bg-white/[0.02] border border-white/10 rounded-lg px-3 py-2 group"
-                                                >
-                                                    <div className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center text-white/50 font-mono text-xs">{idx + 2}</div>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Name"
-                                                        value={member.name}
-                                                        onChange={e => {
-                                                            const newMembers = [...teamMembers];
-                                                            newMembers[idx].name = e.target.value;
-                                                            setTeamMembers(newMembers);
-                                                        }}
-                                                        className="bg-transparent border-b border-white/10 px-1 py-1 text-white text-sm placeholder-white/20 focus:border-teal/50 outline-none transition-all"
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Roll No"
-                                                        value={member.rollNo}
-                                                        onChange={e => {
-                                                            const newMembers = [...teamMembers];
-                                                            newMembers[idx].rollNo = e.target.value;
-                                                            setTeamMembers(newMembers);
-                                                        }}
-                                                        className="bg-transparent border-b border-white/10 px-1 py-1 text-white text-sm font-mono placeholder-white/20 focus:border-teal/50 outline-none transition-all"
-                                                    />
-                                                    {teamMembers.length > teamConstraints.minTeamSize - 1 && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeTeammate(idx)}
-                                                            className="text-red-400/40 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                                                        >
-                                                            ✕
-                                                        </button>
+                                {/* Form Steps */}
+                                <form onSubmit={e => e.preventDefault()}>
+                                    {/* STEP 1: IDENTITY */}
+                                    {currentStep === 1 && (
+                                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="space-y-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Full Name</label>
+                                                <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300" placeholder="Enter your full name" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">College Email</label>
+                                                <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300" placeholder="you@cbit.org.in" />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-5">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Roll Number</label>
+                                                    <input type="text" value={formData.rollNo} onChange={e => setFormData({ ...formData, rollNo: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300 font-mono" placeholder="1601..." />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Department</label>
+                                                    <input type="text" value={formData.department} onChange={e => setFormData({ ...formData, department: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300" placeholder="CSE" />
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+
+                                    {/* STEP 2: SQUAD */}
+                                    {currentStep === 2 && (
+                                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col min-h-0 space-y-3">
+                                            {/* Compact Team Info Banner - Fixed */}
+                                            <div className="bg-gradient-to-r from-teal/10 to-emerald-500/5 rounded-lg px-4 py-3 border border-teal/20 flex items-center justify-between flex-shrink-0">
+                                                <div className="flex items-center gap-2">
+                                                    <Users className="w-4 h-4 text-teal" />
+                                                    <span className="text-sm text-white/70">
+                                                        {teamConstraints.minTeamSize === teamConstraints.maxTeamSize
+                                                            ? `Team of ${teamConstraints.minTeamSize}`
+                                                            : `Team: ${teamConstraints.minTeamSize}-${teamConstraints.maxTeamSize}`
+                                                        }
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    {event?.variablePricingEnabled && hasPricingTierForCurrentTeamSize && (
+                                                        <span className="text-teal font-bold">₹{amountToPay}</span>
                                                     )}
+                                                    <span className="text-teal font-mono text-sm">{currentTeamSize}/{teamConstraints.maxTeamSize}</span>
                                                 </div>
-                                            ))}
-
-                                            {/* Compact Add Button */}
-                                            {currentTeamSize < teamConstraints.maxTeamSize && (
-                                                <button
-                                                    type="button"
-                                                    onClick={addTeammate}
-                                                    className="w-full py-2 border border-dashed border-white/10 rounded-lg text-white/40 hover:text-teal hover:border-teal/30 transition-all text-xs font-mono"
-                                                >
-                                                    + Add Teammate
-                                                </button>
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                )}
-
-                                {/* STEP 3: PAYMENT */}
-                                {currentStep === 3 && (
-                                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="space-y-6">
-                                        {/* Payment Summary */}
-                                        <div className="bg-gradient-to-r from-teal/10 to-emerald-500/5 rounded-xl p-5 border border-teal/20">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="text-white/50 text-sm">Team Size</span>
-                                                <span className="text-white font-medium">{currentTeamSize} member{currentTeamSize > 1 ? 's' : ''}</span>
                                             </div>
-                                            <div className="flex items-center justify-between pt-3 border-t border-white/10">
-                                                <span className="text-white font-medium">Amount to Pay</span>
-                                                <span className="text-teal font-bold text-2xl">₹{amountToPay}</span>
+
+                                            {/* Scrollable Team Members List */}
+                                            <div className="flex-1 overflow-y-auto space-y-2 min-h-0 max-h-[40vh] md:max-h-[45vh] custom-scrollbar pr-1">
+                                                {/* Leader Row */}
+                                                <div className="grid grid-cols-[auto_1fr_1fr] gap-2 items-center bg-teal/5 border border-teal/20 rounded-lg px-3 py-2">
+                                                    <div className="w-6 h-6 bg-teal/20 rounded-full flex items-center justify-center text-teal font-bold text-xs">1</div>
+                                                    <div className="text-white text-sm truncate">{formData.name || 'You'}</div>
+                                                    <div className="text-white/40 text-xs font-mono truncate">{formData.rollNo || 'Roll No'}</div>
+                                                </div>
+
+                                                {/* Teammate Rows */}
+                                                {teamMembers.map((member, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className="grid grid-cols-[auto_1fr_1fr_auto] gap-2 items-center bg-white/[0.02] border border-white/10 rounded-lg px-3 py-2 group"
+                                                    >
+                                                        <div className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center text-white/50 font-mono text-xs">{idx + 2}</div>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Name"
+                                                            value={member.name}
+                                                            onChange={e => {
+                                                                const newMembers = [...teamMembers];
+                                                                newMembers[idx].name = e.target.value;
+                                                                setTeamMembers(newMembers);
+                                                            }}
+                                                            className="bg-transparent border-b border-white/10 px-1 py-1 text-white text-sm placeholder-white/20 focus:border-teal/50 outline-none transition-all"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Roll No"
+                                                            value={member.rollNo}
+                                                            onChange={e => {
+                                                                const newMembers = [...teamMembers];
+                                                                newMembers[idx].rollNo = e.target.value;
+                                                                setTeamMembers(newMembers);
+                                                            }}
+                                                            className="bg-transparent border-b border-white/10 px-1 py-1 text-white text-sm font-mono placeholder-white/20 focus:border-teal/50 outline-none transition-all"
+                                                        />
+                                                        {teamMembers.length > teamConstraints.minTeamSize - 1 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeTeammate(idx)}
+                                                                className="text-red-400/40 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+
+                                                {/* Compact Add Button */}
+                                                {currentTeamSize < teamConstraints.maxTeamSize && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={addTeammate}
+                                                        className="w-full py-2 border border-dashed border-white/10 rounded-lg text-white/40 hover:text-teal hover:border-teal/30 transition-all text-xs font-mono"
+                                                    >
+                                                        + Add Teammate
+                                                    </button>
+                                                )}
                                             </div>
-                                            {event?.variablePricingEnabled && (
-                                                <div className="text-xs text-white/30 mt-2 font-mono">
-                                                    {hasPricingTierForCurrentTeamSize
-                                                        ? `Price configured for team of ${currentTeamSize}`
-                                                        : `⚠ No pricing for team size ${currentTeamSize}`
-                                                    }
+                                        </motion.div>
+                                    )}
+
+                                    {/* STEP 3: PAYMENT */}
+                                    {currentStep === 3 && (
+                                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col min-h-0 space-y-4">
+                                            {/* Payment Summary - Fixed at top */}
+                                            <div className="bg-gradient-to-r from-teal/10 to-emerald-500/5 rounded-xl p-5 border border-teal/20 flex-shrink-0">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-white/50 text-sm">Team Size</span>
+                                                    <span className="text-white font-medium">{currentTeamSize} member{currentTeamSize > 1 ? 's' : ''}</span>
                                                 </div>
-                                            )}
-                                        </div>
-
-                                        {/* QR Display */}
-                                        {qrImageSrc && (
-                                            <div className="relative overflow-hidden bg-white/[0.03] border border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row gap-6 items-center shadow-2xl shadow-black/50 group">
-                                                {/* Animated Gradient Background */}
-                                                <div className="absolute inset-0 bg-gradient-to-br from-teal/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
-                                                {/* QR Code Container with Scan Effect */}
-                                                <div className="relative z-10 p-3 bg-white rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.15)] group-hover:shadow-[0_0_50px_rgba(45,212,191,0.3)] transition-all duration-500">
-                                                    <div className="relative overflow-hidden rounded-lg w-32 h-32">
-                                                        <Image src={qrImageSrc} alt="Pay" width={128} height={128} className="w-full h-full object-contain" unoptimized />
-
-                                                        {/* Scanning Laser Animation */}
-                                                        <motion.div
-                                                            className="absolute top-0 left-0 w-full h-1 bg-teal shadow-[0_0_20px_rgba(45,212,191,0.8)] z-20 pointer-events-none"
-                                                            animate={{ top: ['0%', '100%', '0%'] }}
-                                                            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                                                        />
-                                                        <motion.div
-                                                            className="absolute inset-0 bg-gradient-to-b from-teal/10 to-transparent z-10 pointer-events-none"
-                                                            animate={{ top: ['-100%', '100%', '-100%'] }}
-                                                            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                                                        />
-                                                    </div>
+                                                <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                                                    <span className="text-white font-medium">Amount to Pay</span>
+                                                    <span className="text-teal font-bold text-2xl">₹{amountToPay}</span>
                                                 </div>
+                                                {event?.variablePricingEnabled && (
+                                                    <div className="text-xs text-white/30 mt-2 font-mono">
+                                                        {hasPricingTierForCurrentTeamSize
+                                                            ? `Price configured for team of ${currentTeamSize}`
+                                                            : `⚠ No pricing for team size ${currentTeamSize}`
+                                                        }
+                                                    </div>
+                                                )}
+                                            </div>
 
-                                                {/* Payment Details */}
-                                                <div className="relative z-10 text-center sm:text-left flex-1">
-                                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal/10 border border-teal/20 text-teal text-[10px] font-mono uppercase tracking-widest mb-3">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse" />
-                                                        Scan to Pay
-                                                    </div>
-                                                    <div className="text-4xl font-serif font-bold text-white mb-2 tracking-wide">
-                                                        <span className="text-teal">₹</span>{amountToPay}
-                                                    </div>
-                                                    <div className="text-xs text-white/40 font-mono tracking-wider space-y-1">
-                                                        <p>Scan with any UPI App</p>
-                                                        <div className="flex items-center justify-center sm:justify-start gap-3 opacity-50 mt-2">
-                                                            <span>GPay</span> • <span>PhonePe</span> • <span>Paytm</span>
+                                            {/* Scrollable content area */}
+                                            <div className="flex-1 overflow-y-auto space-y-5 min-h-0 max-h-[45vh] md:max-h-[50vh] custom-scrollbar pr-1">
+                                                {/* QR Display */}
+                                                {qrImageSrc && (
+                                                    <div className="relative overflow-hidden bg-white/[0.03] border border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row gap-6 items-center shadow-2xl shadow-black/50 group">
+                                                        {/* Animated Gradient Background */}
+                                                        <div className="absolute inset-0 bg-gradient-to-br from-teal/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                                                        {/* QR Code Container with Scan Effect */}
+                                                        <div className="relative z-10 p-3 bg-white rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.15)] group-hover:shadow-[0_0_50px_rgba(45,212,191,0.3)] transition-all duration-500">
+                                                            <div className="relative overflow-hidden rounded-lg w-32 h-32">
+                                                                <Image src={qrImageSrc} alt="Pay" width={128} height={128} className="w-full h-full object-contain" unoptimized />
+
+                                                                {/* Scanning Laser Animation */}
+                                                                <motion.div
+                                                                    className="absolute top-0 left-0 w-full h-1 bg-teal shadow-[0_0_20px_rgba(45,212,191,0.8)] z-20 pointer-events-none"
+                                                                    animate={{ top: ['0%', '100%', '0%'] }}
+                                                                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                                                />
+                                                                <motion.div
+                                                                    className="absolute inset-0 bg-gradient-to-b from-teal/10 to-transparent z-10 pointer-events-none"
+                                                                    animate={{ top: ['-100%', '100%', '-100%'] }}
+                                                                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Payment Details */}
+                                                        <div className="relative z-10 text-center sm:text-left flex-1">
+                                                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal/10 border border-teal/20 text-teal text-[10px] font-mono uppercase tracking-widest mb-3">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse" />
+                                                                Scan to Pay
+                                                            </div>
+                                                            <div className="text-4xl font-serif font-bold text-white mb-2 tracking-wide">
+                                                                <span className="text-teal">₹</span>{amountToPay}
+                                                            </div>
+                                                            <div className="text-xs text-white/40 font-mono tracking-wider space-y-1">
+                                                                <p>Scan with any UPI App</p>
+                                                                <div className="flex items-center justify-center sm:justify-start gap-3 opacity-50 mt-2">
+                                                                    <span>GPay</span> • <span>PhonePe</span> • <span>Paytm</span>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </div>
+                                                )}
+
+                                                <div className="space-y-5 pt-2">
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">UTR / Transaction ID</label>
+                                                        <input
+                                                            type="text"
+                                                            value={formData.utrId}
+                                                            onChange={e => setFormData({ ...formData, utrId: e.target.value.toUpperCase() })}
+                                                            className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300 font-mono text-lg tracking-widest"
+                                                            placeholder="XXXX..."
+                                                        />
+                                                    </div>
+
+                                                    <div className="relative group">
+                                                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => fileInputRef.current?.click()}
+                                                            className={`w-full h-36 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all duration-300 ${screenshot ? 'border-teal bg-teal/5' : 'border-white/10 hover:border-teal/30 hover:bg-white/[0.03]'}`}
+                                                        >
+                                                            {screenshot ? (
+                                                                <>
+                                                                    <CheckCircle className="w-10 h-10 text-teal mb-3" />
+                                                                    <span className="text-teal text-sm font-medium">{screenshot.name}</span>
+                                                                    <span className="text-xs text-white/30 mt-1">Click to change</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <Upload className="w-8 h-8 text-white/30 mb-3 group-hover:text-teal transition-colors" />
+                                                                    <span className="text-white/50 text-sm group-hover:text-white transition-colors">Upload Payment Screenshot</span>
+                                                                    <span className="text-xs text-white/30 mt-1">PNG, JPG up to 3MB</span>
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        )}
+                                        </motion.div>
+                                    )}
 
-                                        <div className="space-y-5 pt-2">
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">UTR / Transaction ID</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.utrId}
-                                                    onChange={e => setFormData({ ...formData, utrId: e.target.value.toUpperCase() })}
-                                                    className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300 font-mono text-lg tracking-widest"
-                                                    placeholder="XXXX..."
-                                                />
-                                            </div>
-
-                                            <div className="relative group">
-                                                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => fileInputRef.current?.click()}
-                                                    className={`w-full h-36 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all duration-300 ${screenshot ? 'border-teal bg-teal/5' : 'border-white/10 hover:border-teal/30 hover:bg-white/[0.03]'}`}
-                                                >
-                                                    {screenshot ? (
-                                                        <>
-                                                            <CheckCircle className="w-10 h-10 text-teal mb-3" />
-                                                            <span className="text-teal text-sm font-medium">{screenshot.name}</span>
-                                                            <span className="text-xs text-white/30 mt-1">Click to change</span>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Upload className="w-8 h-8 text-white/30 mb-3 group-hover:text-teal transition-colors" />
-                                                            <span className="text-white/50 text-sm group-hover:text-white transition-colors">Upload Payment Screenshot</span>
-                                                            <span className="text-xs text-white/30 mt-1">PNG, JPG up to 3MB</span>
-                                                        </>
-                                                    )}
+                                    {/* Navigation Actions - Sticky Footer */}
+                                    <div className="sticky bottom-0 mt-8 pt-4 pb-2 bg-gradient-to-t from-[#020617] via-[#020617]/95 to-transparent -mx-6 px-6 md:-mx-12 md:px-12 lg:-mx-16 lg:px-16">
+                                        <div className="flex items-center gap-4">
+                                            {currentStep > 1 && (
+                                                <button onClick={prevStep} className="px-6 py-4 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300 uppercase font-bold text-xs tracking-widest flex items-center gap-2 group">
+                                                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back
                                                 </button>
-                                            </div>
+                                            )}
+
+                                            {currentStep < 3 ? (
+                                                <button onClick={nextStep} className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-teal to-emerald-500 text-black hover:shadow-[0_0_30px_rgba(45,212,191,0.3)] transition-all duration-300 uppercase font-bold text-xs tracking-widest flex items-center justify-center gap-2 group">
+                                                    Continue <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                                </button>
+                                            ) : (
+                                                <button onClick={handleSubmit} disabled={isSubmitting} className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-teal to-emerald-500 text-black shadow-lg hover:shadow-[0_0_40px_rgba(45,212,191,0.4)] transition-all duration-300 uppercase font-bold text-xs tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none">
+                                                    {isSubmitting ? 'Processing...' : 'Complete Registration'} <CheckCircle className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
-                                    </motion.div>
-                                )}
-
-                                {/* Navigation Actions */}
-                                <div className="flex items-center gap-4 mt-12">
-                                    {currentStep > 1 && (
-                                        <button onClick={prevStep} className="px-6 py-4 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300 uppercase font-bold text-xs tracking-widest flex items-center gap-2 group">
-                                            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back
-                                        </button>
-                                    )}
-
-                                    {currentStep < 3 ? (
-                                        <button onClick={nextStep} className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-teal to-emerald-500 text-black hover:shadow-[0_0_30px_rgba(45,212,191,0.3)] transition-all duration-300 uppercase font-bold text-xs tracking-widest flex items-center justify-center gap-2 group">
-                                            Continue <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                        </button>
-                                    ) : (
-                                        <button onClick={handleSubmit} disabled={isSubmitting} className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-teal to-emerald-500 text-black shadow-lg hover:shadow-[0_0_40px_rgba(45,212,191,0.4)] transition-all duration-300 uppercase font-bold text-xs tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none">
-                                            {isSubmitting ? 'Processing...' : 'Complete Registration'} <CheckCircle className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                </div>
-                            </form>
-                        </div>
-                    )}
+                                    </div>
+                                </form>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </motion.div>
+
+            <ConfirmationModal
+                isOpen={modal.isOpen}
+                onClose={() => setModal({ ...modal, isOpen: false })}
+                onConfirm={() => setModal({ ...modal, isOpen: false })}
+                title={modal.title}
+                message={modal.message}
+                type={modal.type}
+                confirmText="Understand"
+            />
         </div>
     );
 }

@@ -2,10 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { Bell, BellOff } from 'lucide-react';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
 export default function NotificationManager({ className = "" }) {
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [permission, setPermission] = useState('default');
+    const [modal, setModal] = useState({
+        isOpen: false,
+        title: "",
+        message: "",
+        type: "info"
+    });
 
     useEffect(() => {
         if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -51,10 +58,20 @@ export default function NotificationManager({ className = "" }) {
             });
 
             setIsSubscribed(true);
-            alert("Subscribed to Notifications! 🔔");
+            setModal({
+                isOpen: true,
+                title: "Success! 🔔",
+                message: "You have been successfully subscribed to RMC notifications.",
+                type: "success"
+            });
         } catch (error) {
             console.error('Subscription failed', error);
-            alert("Failed to subscribe: " + error.message);
+            setModal({
+                isOpen: true,
+                title: "Subscription Failed",
+                message: "Failed to subscribe: " + error.message,
+                type: "error"
+            });
         }
     }
 
@@ -108,6 +125,17 @@ export default function NotificationManager({ className = "" }) {
 
             {/* Status Dot */}
             <span className="absolute top-2 right-2.5 md:top-2 md:right-2 w-1.5 h-1.5 bg-teal-500 rounded-full shadow-[0_0_5px_rgba(45,212,191,0.8)] animate-pulse" />
+
+            <ConfirmationModal
+                isOpen={modal.isOpen}
+                onClose={() => setModal({ ...modal, isOpen: false })}
+                onConfirm={() => setModal({ ...modal, isOpen: false })}
+                title={modal.title}
+                message={modal.message}
+                type={modal.type}
+                isToast={modal.type === "success" || modal.type === "info"}
+                duration={3000}
+            />
         </button>
     );
 }

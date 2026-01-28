@@ -43,7 +43,7 @@ export async function adminLogoutAction() {
 }
 
 // Helper to verify admin session
-async function isAdminAuthenticated() {
+export async function isAdminAuthenticated() {
     const cookieStore = await cookies();
     const token = cookieStore.get("admin_token")?.value;
     if (!token) return false;

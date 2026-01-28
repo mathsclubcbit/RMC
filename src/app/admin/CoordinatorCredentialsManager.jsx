@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, Copy, Save, Check, Key, RefreshCw } from "lucide-react";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 export default function CoordinatorCredentialsManager() {
     const [events, setEvents] = useState([]);
@@ -12,6 +13,12 @@ export default function CoordinatorCredentialsManager() {
     const [showPasswords, setShowPasswords] = useState({});
     const [copiedId, setCopiedId] = useState(null);
     const [message, setMessage] = useState(null);
+    const [modal, setModal] = useState({
+        isOpen: false,
+        title: "",
+        message: "",
+        type: "info"
+    });
 
     useEffect(() => {
         fetchEvents();
@@ -36,7 +43,12 @@ export default function CoordinatorCredentialsManager() {
     const copyCredentials = async (event) => {
         const password = event.payload?.password || "";
         if (!password) {
-            alert("No password set for this event");
+            setModal({
+                isOpen: true,
+                title: "Missing Password",
+                message: "No password has been set for this event yet.",
+                type: "info"
+            });
             return;
         }
 
@@ -62,7 +74,12 @@ export default function CoordinatorCredentialsManager() {
         } catch (error) {
             console.error("Failed to copy:", error);
             // Show the text in an alert as last resort
-            alert(`Copy this: ${password}`);
+            setModal({
+                isOpen: true,
+                title: "Copy Manual",
+                message: `Clipboard access denied. Please copy this manually:\n\n${password}`,
+                type: "info"
+            });
         }
     };
 
@@ -265,6 +282,17 @@ export default function CoordinatorCredentialsManager() {
             <div className="mt-4 text-xs text-white/40">
                 💡 Share these credentials with event coordinators for ticket scanning access.
             </div>
+
+            <ConfirmationModal
+                isOpen={modal.isOpen}
+                onClose={() => setModal({ ...modal, isOpen: false })}
+                onConfirm={() => setModal({ ...modal, isOpen: false })}
+                title={modal.title}
+                message={modal.message}
+                type={modal.type}
+                isToast={true}
+                duration={5000}
+            />
         </div>
     );
 }

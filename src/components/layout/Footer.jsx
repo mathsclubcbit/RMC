@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import NewsletterSignup from "../newsletter/NewsletterSignup";
 
 const quickLinks = [
     { href: "/about", label: "About Us" },
@@ -38,6 +39,11 @@ export default function Footer() {
             </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                {/* Newsletter Section */}
+                <div className="mb-20">
+                    <NewsletterSignup />
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
                     {/* Brand Column - Huge */}
                     <div className="lg:col-span-1">

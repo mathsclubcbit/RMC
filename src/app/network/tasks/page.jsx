@@ -18,15 +18,15 @@ import {
     User,
     Edit3,
     Trash2,
-    RefreshCw
+    RefreshCw,
+    XCircle
 } from "lucide-react";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 const STATUS_CONFIG = {
     pending: { label: "Pending", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30", icon: Clock },
-    approval_start: { label: "Waiting for Approval (Start)", color: "bg-purple-500/20 text-purple-400 border-purple-500/30", icon: Clock },
-    in_progress: { label: "In Progress", color: "bg-blue-500/20 text-blue-400 border-blue-500/30", icon: AlertCircle },
-    approval_completion: { label: "Waiting for Approval (Completion)", color: "bg-purple-500/20 text-purple-400 border-purple-500/30", icon: CheckCircle },
+    in_progress: { label: "In Progress", color: "bg-blue-500/20 text-blue-400 border-blue-400/30", icon: AlertCircle },
+    under_review: { label: "Under Review", color: "bg-purple-500/20 text-purple-400 border-purple-500/30", icon: CheckCircle },
     completed: { label: "Completed", color: "bg-green-500/20 text-green-400 border-green-500/30", icon: CheckCircle },
     overdue: { label: "Overdue", color: "bg-red-500/20 text-red-400 border-red-500/30", icon: AlertCircle }
 };
@@ -42,13 +42,23 @@ export default function TasksPage() {
     const [filterStatus, setFilterStatus] = useState("all");
     const [isHeadOfAny, setIsHeadOfAny] = useState(false);
 
-    // Global Alert/Confirm State
     const [statusModal, setStatusModal] = useState({
         isOpen: false,
         type: "confirm",
         title: "",
         message: "",
         onConfirm: null
+    });
+
+    // Feedback/Review States
+    const [reviewModal, setReviewModal] = useState({
+        isOpen: false,
+        task: null,
+        type: "approve" // 'approve' or 'reject'
+    });
+    const [submissionModal, setSubmissionModal] = useState({
+        isOpen: false,
+        task: null
     });
 
     const showAlert = (title, message, type = "success") => {
@@ -158,9 +168,13 @@ export default function TasksPage() {
         );
     };
 
-    const handleStatusChange = async (task, newStatus) => {
+    const handleStatusChange = async (task, newStatus, extraData = {}) => {
         try {
             let actualStatus = newStatus;
+            const updatePayload = {
+                status: actualStatus,
+                ...extraData
+            };
 
             // APPROVAL LOGIC
             const isHead = profile?.role === "head" || isPresident();
@@ -169,19 +183,15 @@ export default function TasksPage() {
 
             // If Member (not Head) is updating a Team Task:
             if (isTeamTask && !isHead) {
-                if (newStatus === "in_progress" && task.status === "pending") {
-                    actualStatus = "approval_start"; // Request Start
-                } else if (newStatus === "completed" && task.status === "in_progress") {
-                    actualStatus = "approval_completion"; // Request Completion
-                } else {
-                    // Allow other transitions? e.g. back to pending?
-                    // For now, trust the dropdown/buttons.
+                if (newStatus === "completed" && task.status === "in_progress") {
+                    actualStatus = "under_review"; // Move to review instead of completing
+                    updatePayload.status = actualStatus;
                 }
             }
 
             const { error } = await supabase
                 .from("tasks")
-                .update({ status: actualStatus })
+                .update(updatePayload)
                 .eq("id", task.id);
 
             if (error) throw error;
@@ -226,10 +236,10 @@ export default function TasksPage() {
     };
 
     return (
-        <div className="flex min-h-screen">
+        <div className="flex h-full">
             <NetworkSidebar />
 
-            <main className="flex-1 p-6 lg:p-10 pt-24 lg:pt-10 overflow-auto">
+            <main className="flex-1 p-6 lg:p-10 pt-24 lg:pt-14 overflow-y-auto">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -344,6 +354,28 @@ export default function TasksPage() {
                                                 <p className="text-white/50 text-sm mb-3 line-clamp-2">{task.description}</p>
                                             )}
 
+                                            {/* Submission Note (Review Context) */}
+                                            {task.submission_note && (task.status === "under_review" || task.status === "completed") && (
+                                                <div className="mb-3 p-3 bg-purple-500/5 border border-purple-500/10 rounded-xl">
+                                                    <p className="text-[10px] uppercase tracking-widest text-purple-400 font-bold mb-1">Submission Note</p>
+                                                    <p className="text-white/70 text-sm italic">"{task.submission_note}"</p>
+                                                </div>
+                                            )}
+
+                                            {/* Feedback (Correction Context) */}
+                                            {task.feedback && (
+                                                <div className={`mb-3 p-3 rounded-xl border ${task.status === "completed"
+                                                    ? "bg-green-500/5 border-green-500/10"
+                                                    : "bg-red-500/5 border-red-500/10"
+                                                    }`}>
+                                                    <p className={`text-[10px] uppercase tracking-widest font-bold mb-1 ${task.status === "completed" ? "text-green-400" : "text-red-400"
+                                                        }`}>
+                                                        {task.status === "completed" ? "Head's Appreciation" : "Corrections Required"}
+                                                    </p>
+                                                    <p className="text-white/70 text-sm">"{task.feedback}"</p>
+                                                </div>
+                                            )}
+
                                             <div className="flex flex-wrap items-center gap-4 text-sm">
                                                 <div className="flex items-center gap-2 text-white/40">
                                                     {task.assigned_team ? (
@@ -363,24 +395,24 @@ export default function TasksPage() {
 
                                         <div className="flex items-center gap-2">
                                             {/* Approval Actions for Head */}
-                                            {canApproveTask && task.assigned_team && (task.status === "approval_start" || task.status === "approval_completion") && (
+                                            {canApproveTask && task.assigned_team && task.status === "under_review" && (
                                                 <div className="flex items-center gap-2">
                                                     <button
-                                                        onClick={() => handleStatusChange(task, task.status === "approval_start" ? "in_progress" : "completed")}
+                                                        onClick={() => setReviewModal({ isOpen: true, task, type: "approve" })}
                                                         className="px-3 py-1.5 bg-green-500/20 text-green-400 text-xs font-bold rounded-lg hover:bg-green-500/30"
                                                     >
                                                         Approve
                                                     </button>
                                                     <button
-                                                        onClick={() => handleStatusChange(task, task.status === "approval_start" ? "pending" : "in_progress")}
+                                                        onClick={() => setReviewModal({ isOpen: true, task, type: "reject" })}
                                                         className="px-3 py-1.5 bg-red-500/20 text-red-400 text-xs font-bold rounded-lg hover:bg-red-500/30"
                                                     >
-                                                        Reject
+                                                        Send Back
                                                     </button>
                                                 </div>
                                             )}
 
-                                            {/* Action Buttons for Members (Request Logic) */}
+                                            {/* Action Buttons for Members (Simplified Logic) */}
                                             {!canApproveTask && task.assigned_team && (
                                                 <>
                                                     {task.status === "pending" && (
@@ -388,22 +420,22 @@ export default function TasksPage() {
                                                             onClick={() => handleStatusChange(task, "in_progress")}
                                                             className="px-3 py-1.5 bg-teal/20 text-teal text-xs font-bold rounded-lg hover:bg-teal/30"
                                                         >
-                                                            Request Start
+                                                            Start Task
                                                         </button>
                                                     )}
                                                     {task.status === "in_progress" && (
                                                         <button
-                                                            onClick={() => handleStatusChange(task, "completed")}
-                                                            className="px-3 py-1.5 bg-green-500/20 text-green-400 text-xs font-bold rounded-lg hover:bg-green-500/30"
+                                                            onClick={() => setSubmissionModal({ isOpen: true, task })}
+                                                            className="px-3 py-1.5 bg-purple-500/20 text-purple-400 text-xs font-bold rounded-lg hover:bg-purple-500/30"
                                                         >
-                                                            Request Finish
+                                                            Submit for Review
                                                         </button>
                                                     )}
                                                 </>
                                             )}
 
                                             {/* Standard Dropdown (Only for Individual Tasks OR if Head wants manual override) */}
-                                            {(!task.assigned_team || canApproveTask) && !["approval_start", "approval_completion"].includes(task.status) && (
+                                            {(!task.assigned_team || canApproveTask) && task.status !== "under_review" && (
                                                 <select
                                                     value={task.status}
                                                     onChange={(e) => handleStatusChange(task, e.target.value)}
@@ -445,6 +477,39 @@ export default function TasksPage() {
                     </div>
                 )}
             </main>
+
+            {/* Review Modal (Heads) */}
+            <AnimatePresence>
+                {reviewModal.isOpen && (
+                    <ReviewTaskModal
+                        task={reviewModal.task}
+                        type={reviewModal.type}
+                        onClose={() => setReviewModal({ isOpen: false, task: null, type: "approve" })}
+                        onConfirm={async (feedback) => {
+                            await handleStatusChange(
+                                reviewModal.task,
+                                reviewModal.type === "approve" ? "completed" : "in_progress",
+                                { feedback }
+                            );
+                            setReviewModal({ isOpen: false, task: null, type: "approve" });
+                        }}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Submission Modal (Members) */}
+            <AnimatePresence>
+                {submissionModal.isOpen && (
+                    <SubmissionModal
+                        task={submissionModal.task}
+                        onClose={() => setSubmissionModal({ isOpen: false, task: null })}
+                        onConfirm={async (note) => {
+                            await handleStatusChange(submissionModal.task, "completed", { submission_note: note });
+                            setSubmissionModal({ isOpen: false, task: null });
+                        }}
+                    />
+                )}
+            </AnimatePresence>
 
             {/* Create/Edit Task Modal */}
             <AnimatePresence>
@@ -737,6 +802,155 @@ function CreateTaskModal({ task, teams, members, onClose, onSuccess }) {
                         )}
                     </button>
                 </form>
+            </motion.div>
+        </motion.div>
+    );
+}
+
+function ReviewTaskModal({ task, type, onClose, onConfirm }) {
+    const [feedback, setFeedback] = useState("");
+    const [saving, setSaving] = useState(false);
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+        >
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl w-full max-w-md overflow-hidden"
+            >
+                <div className="p-6 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                    <div>
+                        <h2 className="text-xl font-serif font-bold text-white uppercase tracking-tight">
+                            {type === "approve" ? "Approve Work" : "Send Back for Correction"}
+                        </h2>
+                        <p className="text-white/40 text-xs mt-1">
+                            Task: {task?.title}
+                        </p>
+                    </div>
+                    <button onClick={onClose} className="text-white/50 hover:text-white">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div className="p-6 space-y-4">
+                    <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono font-bold">
+                            {type === "approve" ? "Appreciation/Feedback (Optional)" : "Reason for Rejection *"}
+                        </label>
+                        <textarea
+                            value={feedback}
+                            onChange={(e) => setFeedback(e.target.value)}
+                            placeholder={type === "approve" ? "Well done! Any final notes?" : "Please explain what needs to be fixed..."}
+                            rows={4}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:border-teal/50 outline-none resize-none"
+                            autoFocus
+                        />
+                    </div>
+
+                    <button
+                        onClick={async () => {
+                            if (type === "reject" && !feedback.trim()) return;
+                            setSaving(true);
+                            await onConfirm(feedback);
+                            setSaving(false);
+                        }}
+                        disabled={saving || (type === "reject" && !feedback.trim())}
+                        className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 ${type === "approve" ? "bg-green-500 text-white hover:bg-green-600 shadow-lg shadow-green-500/20" : "bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/20"
+                            }`}
+                    >
+                        {saving ? (
+                            <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                Processing...
+                            </>
+                        ) : (
+                            type === "approve" ? <><CheckCircle className="w-5 h-5" /> Approve & Complete</> : <><XCircle className="w-5 h-5" /> Send Back</>
+                        )}
+                    </button>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+}
+
+function SubmissionModal({ task, onClose, onConfirm }) {
+    const [note, setNote] = useState("");
+    const [saving, setSaving] = useState(false);
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+        >
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl w-full max-w-md overflow-hidden"
+            >
+                <div className="p-6 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                    <div>
+                        <h2 className="text-xl font-serif font-bold text-white uppercase tracking-tight">
+                            Submit for Review
+                        </h2>
+                        <p className="text-white/40 text-xs mt-1">
+                            Add a quick note about your progress
+                        </p>
+                    </div>
+                    <button onClick={onClose} className="text-white/50 hover:text-white">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div className="p-6 space-y-4">
+                    <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono font-bold">
+                            Submission Note (Optional)
+                        </label>
+                        <textarea
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            placeholder="e.g. Completed the designs, files are in the shared drive."
+                            rows={3}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:border-purple-500/50 outline-none resize-none"
+                            autoFocus
+                        />
+                    </div>
+
+                    <button
+                        onClick={async () => {
+                            setSaving(true);
+                            await onConfirm(note);
+                            setSaving(false);
+                        }}
+                        disabled={saving}
+                        className="w-full bg-purple-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-purple-600 shadow-lg shadow-purple-500/20 transition-all disabled:opacity-50"
+                    >
+                        {saving ? (
+                            <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                Submitting...
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle className="w-5 h-5" />
+                                Submit Work
+                            </>
+                        )}
+                    </button>
+                </div>
             </motion.div>
         </motion.div>
     );

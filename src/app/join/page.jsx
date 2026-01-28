@@ -6,6 +6,7 @@ import SectionDivider from "@/components/ui/SectionDivider";
 import SpotlightCard from "@/components/ui/SpotlightCard";
 import { useState } from "react";
 import { ChevronRight, Terminal, User, Mail, Phone, Hash, BookOpen } from "lucide-react";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 export default function JoinPage() {
     const [formData, setFormData] = useState({
@@ -18,10 +19,21 @@ export default function JoinPage() {
         interests: [],
         whyJoin: "",
     });
+    const [modal, setModal] = useState({
+        isOpen: false,
+        title: "",
+        message: "",
+        type: "success"
+    });
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        alert("Transmission Received. Standing by for protocol initiation...");
+        setModal({
+            isOpen: true,
+            title: "Transmission Received",
+            message: "Protocol initiated. Standing by for administrative verification. You will receive an update via your comms channel shortly.",
+            type: "success"
+        });
         setFormData({
             name: "",
             email: "",
@@ -266,6 +278,18 @@ export default function JoinPage() {
                     </div>
                 </div>
             </section>
+
+            <ConfirmationModal
+                isOpen={modal.isOpen}
+                onClose={() => setModal({ ...modal, isOpen: false })}
+                onConfirm={() => setModal({ ...modal, isOpen: false })}
+                title={modal.title}
+                message={modal.message}
+                type={modal.type}
+                confirmText="Acknowledge"
+                isToast={true}
+                duration={4000}
+            />
         </div>
     );
 }

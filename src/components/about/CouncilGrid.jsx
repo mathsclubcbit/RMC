@@ -20,11 +20,20 @@ export default function CouncilGrid({ members }) {
 
                     {/* Member Image (Placeholder or Actual) */}
                     <div className="absolute inset-0 z-0">
-                        {/* Fallback pattern if no image */}
-                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-teal/20 via-black to-black opacity-50" />
-                        <div className="w-full h-full bg-black/50 flex items-center justify-center text-8xl font-serif text-white/5 font-bold group-hover:scale-110 transition-transform duration-700">
-                            {member.name[0]}
-                        </div>
+                        {member.image ? (
+                            <img
+                                src={member.image}
+                                alt={member.name}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                            />
+                        ) : (
+                            <>
+                                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-teal/20 via-black to-black opacity-50" />
+                                <div className="w-full h-full bg-black/50 flex items-center justify-center text-8xl font-serif text-white/5 font-bold group-hover:scale-110 transition-transform duration-700">
+                                    {member.name?.[0] || "?"}
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     {/* Content */}

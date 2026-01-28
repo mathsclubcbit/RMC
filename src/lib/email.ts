@@ -252,31 +252,31 @@ export const sendVerificationEmail = async (
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #000000;">
         <tr>
             <td style="padding: 60px 20px;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; border: 1px solid rgba(245, 158, 11, 0.2); background: #050505; border-radius: 4px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; border: 1px solid rgba(45, 212, 191, 0.2); background: #050505; border-radius: 4px; box-shadow: 0 0 50px rgba(45, 212, 191, 0.05);">
                     <tr>
                         <td style="padding: 40px; text-align: center;">
-                            <h1 style="margin: 0; color: #f59e0b; font-size: 32px; font-weight: 300; letter-spacing: 4px; text-transform: uppercase;">
+                            <h1 style="margin: 0; color: #2dd4bf; font-size: 32px; font-weight: 300; letter-spacing: 4px; text-transform: uppercase;">
                                 Verification <span style="font-weight: 600;">Initiated</span>
                             </h1>
-                            <div style="width: 40px; height: 1px; background: #f59e0b; margin: 20px auto;"></div>
+                            <div style="width: 40px; height: 1px; background: #2dd4bf; margin: 20px auto;"></div>
                             <p style="color: #a1a1aa; font-size: 16px; line-height: 1.6;">
                                 Greetings, ${name}. Your request to join <strong>${eventName}</strong> has been logged in our systems.
                             </p>
                             
-                            <div style="margin: 30px 0; padding: 20px; background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 8px;">
-                                <p style="margin: 0; color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;">Sequence ID</p>
-                                <p style="margin: 5px 0 0; color: #f59e0b; font-size: 20px; font-family: monospace;">${registrationId}</p>
+                            <div style="margin: 30px 0; padding: 20px; background: rgba(45, 212, 191, 0.05); border: 1px solid rgba(45, 212, 191, 0.2); border-radius: 8px;">
+                                <p style="margin: 0; color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;">Registration ID</p>
+                                <p style="margin: 5px 0 0; color: #2dd4bf; font-size: 20px; font-family: monospace;">${registrationId}</p>
                                 <p style="margin: 15px 0 0; color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;">Status</p>
-                                <p style="margin: 5px 0 0; color: #ffffff; font-size: 16px;">PENDING_CALCULATION</p>
+                                <p style="margin: 5px 0 0; color: #ffffff; font-size: 16px;">PENDING VERIFICATION</p>
                             </div>
 
                             <p style="color: #71717a; font-size: 14px; font-style: italic;">
-                                Our architects are currently verifying your credentials. You will receive the final fractal sequence shortly.
+                                Our team is currently verifying your details. You will receive the final confirmation shortly.
                             </p>
                         </td>
                     </tr>
                     <tr>
-                        <td style="padding: 30px; text-align: center; border-top: 1px solid rgba(245, 158, 11, 0.1);">
+                        <td style="padding: 30px; text-align: center; border-top: 1px solid rgba(45, 212, 191, 0.1);">
                             <p style="margin: 0; color: #3f3f46; font-size: 11px;">
                                 Ramanujan Mathematical Club &copy; 2026
                             </p>
@@ -296,5 +296,75 @@ export const sendVerificationEmail = async (
     } catch (error) {
         console.error("Error sending email:", error);
         // Don't throw error to prevent failing the entire registration if email fails
+    }
+};
+
+/**
+ * Send Welcome Email to new Newsletter Subscriber
+ */
+export const sendWelcomeEmail = async (toEmail: string, name: string = "Member") => {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.warn("Skipping welcome email: Credentials missing");
+        return;
+    }
+
+    const mailOptions = {
+        from: `"RMC Updates" <${process.env.EMAIL_USER}>`,
+        to: toEmail,
+        subject: `Welcome to Ramanujan Math Club Updates`,
+        html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&display=swap');
+    </style>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Cormorant Garamond', serif; background-color: #000000; color: #ffffff;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #000000;">
+        <tr>
+            <td style="padding: 60px 20px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; border: 1px solid rgba(45, 212, 191, 0.2); background: #050505; border-radius: 4px; box-shadow: 0 0 50px rgba(45, 212, 191, 0.05);">
+                    <tr>
+                        <td style="padding: 40px; text-align: center;">
+                             <p style="margin: 0; color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 3px;">RMC Updates</p>
+                            <h1 style="margin: 20px 0 0; color: #2dd4bf; font-size: 32px; font-weight: 300; letter-spacing: 2px;">
+                                Subscription <span style="font-weight: 600;">Confirmed</span>
+                            </h1>
+                            <div style="width: 40px; height: 1px; background: #2dd4bf; margin: 30px auto;"></div>
+                            
+                            <p style="color: #d4d4d8; font-size: 18px; line-height: 1.6; font-style: italic;">
+                                "Welcome to the community, ${name}."
+                            </p>
+                            
+                            <p style="color: #a1a1aa; font-size: 16px; line-height: 1.6; margin-top: 20px;">
+                                You have successfully subscribed to the Ramanujan Math Club newsletter. You will now receive updates regarding upcoming events, challenges, and club activities.
+                            </p>
+
+                            <div style="margin: 40px 0; padding: 20px; border: 1px solid rgba(45, 212, 191, 0.2); background: rgba(45, 212, 191, 0.05);">
+                                <p style="margin: 0; color: #2dd4bf; font-size: 14px; letter-spacing: 2px;">STATUS: SUBSCRIBED</p>
+                            </div>
+
+                             <p style="margin: 0; color: #3f3f46; font-size: 12px;">
+                                Thank you for joining us.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`Welcome email sent to ${toEmail}`);
+    } catch (error) {
+        console.error("Error sending welcome email:", error);
     }
 };

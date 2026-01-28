@@ -17,9 +17,11 @@ import {
     Mail,
     User,
     ChevronDown,
-    AlertCircle
+    AlertCircle,
+    UserPlus
 } from "lucide-react";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
+import { promoteMemberToTeamAction } from "@/app/admin/team/actions";
 
 const CORE_COUNCIL_ROLES = [
     { value: "president", label: "President" },
@@ -38,6 +40,7 @@ export default function PersonnelPage() {
     const { profile, canManageMembers, isPresident } = useAuth();
     const [members, setMembers] = useState([]);
     const [teams, setTeams] = useState([]);
+    const [councilEmails, setCouncilEmails] = useState(new Set());
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [filterRole, setFilterRole] = useState("all");
@@ -96,6 +99,13 @@ export default function PersonnelPage() {
 
             if (teamsError) throw teamsError;
             setTeams(teamsData || []);
+
+            // Fetch existing council members to prevent duplicates
+            const { data: councilData } = await supabase
+                .from("rmc_council")
+                .select("email");
+
+            setCouncilEmails(new Set(councilData?.map(m => m.email?.toLowerCase()) || []));
         } catch (error) {
             console.error("Error fetching data:", error);
         } finally {
@@ -151,6 +161,27 @@ export default function PersonnelPage() {
         );
     };
 
+    const handlePromote = async (member) => {
+        showConfirm(
+            "Promote to Team",
+            `Do you want to promote "${member.full_name || member.email}" to the public Team Showcase? This will copy them to the Council list where you can manage their professional photo and bio.`,
+            async () => {
+                try {
+                    const res = await promoteMemberToTeamAction(member.id);
+                    if (res.error) throw new Error(res.error);
+
+                    // Update local state immediately
+                    setCouncilEmails(prev => new Set([...prev, member.email?.toLowerCase()]));
+
+                    showAlert("Promoted!", "Member successfully added to the Team list. Go to Admin > Team to finalize their bio and photo.", "success");
+                } catch (error) {
+                    console.error("Error promoting member:", error);
+                    showAlert("Error", error.message, "error");
+                }
+            }
+        );
+    };
+
     const filteredMembers = members.filter(member => {
         const matchesSearch =
             member.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -195,29 +226,33 @@ export default function PersonnelPage() {
     }
 
     return (
-        <div className="flex min-h-screen">
+        <div className="flex h-full">
             <NetworkSidebar />
 
-            <main className="flex-1 p-6 lg:p-10 pt-24 lg:pt-10 overflow-auto">
+            <main className="flex-1 p-6 lg:p-10 pt-24 lg:pt-14 overflow-y-auto">
                 {/* Header */}
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12"
                 >
                     <div>
-                        <h1 className="text-3xl lg:text-4xl font-serif font-bold text-white mb-2">
-                            Personnel
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="h-[1px] w-8 bg-teal/40" />
+                            <span className="text-teal font-mono text-xs uppercase tracking-[0.3em]">Directory Analysis</span>
+                        </div>
+                        <h1 className="text-4xl lg:text-6xl font-[family-name:var(--font-cinzel)] font-bold text-white mb-4 tracking-tighter">
+                            PERSONNEL
                         </h1>
-                        <p className="text-white/50">
-                            Manage all club members and their roles
+                        <p className="text-white/40 font-[family-name:var(--font-cormorant)] text-lg italic max-w-xl">
+                            The human capital of RMC. Structured by logic, defined by contribution.
                         </p>
                     </div>
 
                     {canManageMembers() && (
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-2 px-5 py-3 bg-teal text-black font-bold rounded-xl hover:bg-teal/80 transition-colors"
+                            className="flex items-center gap-2 px-8 py-4 bg-teal text-black font-bold rounded-2xl hover:bg-teal/80 transition-all duration-300 shadow-[0_0_20px_rgba(45,212,191,0.2)] hover:scale-105 active:scale-95"
                         >
                             <Plus className="w-5 h-5" />
                             Add Member
@@ -230,151 +265,161 @@ export default function PersonnelPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="flex flex-col md:flex-row gap-4 mb-6"
+                    className="flex flex-col md:flex-row gap-6 mb-10"
                 >
                     {/* Search */}
-                    <div className="relative flex-1">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
+                    <div className="relative flex-1 group">
+                        <div className="absolute inset-0 bg-teal/5 blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity rounded-full pointer-events-none" />
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-teal transition-colors" />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search by name or email..."
-                            className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white placeholder-white/20 focus:border-teal/50 outline-none"
+                            placeholder="Search by name or email identifier..."
+                            className="w-full bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-2xl pl-13 pr-6 py-4 text-white placeholder-white/20 focus:border-teal/30 outline-none transition-all duration-300 focus:bg-white/[0.04]"
                         />
                     </div>
 
                     {/* Role Filter */}
-                    <div className="relative">
+                    <div className="relative min-w-[220px]">
                         <select
                             value={filterRole}
                             onChange={(e) => setFilterRole(e.target.value)}
-                            className="appearance-none bg-gray-800 border border-white/10 rounded-xl px-4 py-3 pr-10 text-white focus:border-teal/50 outline-none min-w-[180px]"
+                            className="w-full appearance-none bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-2xl px-6 py-4 pr-12 text-white focus:border-teal/30 outline-none hover:bg-white/[0.04] transition-all"
                             style={{ colorScheme: 'dark' }}
                         >
-                            <option value="all" className="bg-gray-800 text-white">All Roles</option>
-                            <optgroup label="Core Council" className="bg-gray-800 text-white">
+                            <option value="all" className="bg-[#020617] text-white">All Subsets</option>
+                            <optgroup label="Core Council" className="bg-[#020617] text-white/50">
                                 {CORE_COUNCIL_ROLES.map(role => (
-                                    <option key={role.value} value={role.value} className="bg-gray-800 text-white">{role.label}</option>
+                                    <option key={role.value} value={role.value} className="bg-[#020617] text-white">{role.label}</option>
                                 ))}
                             </optgroup>
-                            <optgroup label="Team Roles" className="bg-gray-800 text-white">
+                            <optgroup label="Team Roles" className="bg-[#020617] text-white/50">
                                 {TEAM_ROLES.map(role => (
-                                    <option key={role.value} value={role.value} className="bg-gray-800 text-white">{role.label}</option>
+                                    <option key={role.value} value={role.value} className="bg-[#020617] text-white">{role.label}</option>
                                 ))}
                             </optgroup>
                         </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none" />
+                        <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 pointer-events-none" />
                     </div>
                 </motion.div>
 
-                {/* Members Table */}
+                {/* Members List (Grid-based for Cinematic Look) */}
                 {loading ? (
-                    <div className="flex items-center justify-center py-20">
-                        <Loader2 className="w-10 h-10 text-teal animate-spin" />
+                    <div className="flex items-center justify-center py-32">
+                        <div className="w-12 h-12 border-2 border-teal/20 border-t-teal rounded-full animate-spin" />
                     </div>
                 ) : filteredMembers.length === 0 ? (
-                    <div className="text-center py-20">
-                        <Users className="w-16 h-16 text-white/10 mx-auto mb-4" />
-                        <h3 className="text-xl text-white/50 mb-2">No Members Found</h3>
-                        <p className="text-white/30">Try adjusting your search or filters</p>
+                    <div className="text-center py-32 border border-dashed border-white/5 rounded-[3rem]">
+                        <Users className="w-16 h-16 text-white/5 mx-auto mb-6" />
+                        <h3 className="text-2xl font-[family-name:var(--font-cinzel)] text-white/40 mb-2">No Vectors Identified</h3>
+                        <p className="text-white/20 font-[family-name:var(--font-cormorant)] italic">Adjust your search parameters...</p>
                     </div>
                 ) : (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="bg-gray-900/40 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden"
-                    >
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b border-white/5">
-                                        <th className="text-left px-6 py-4 text-[10px] uppercase tracking-widest text-white/40 font-mono">Member</th>
-                                        <th className="text-left px-6 py-4 text-[10px] uppercase tracking-widest text-white/40 font-mono">Role</th>
-                                        <th className="text-left px-6 py-4 text-[10px] uppercase tracking-widest text-white/40 font-mono">Team(s)</th>
-                                        {canManageMembers() && (
-                                            <th className="text-right px-6 py-4 text-[10px] uppercase tracking-widest text-white/40 font-mono">Actions</th>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredMembers.map((member, index) => (
+                            <motion.div
+                                key={member.id}
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: index * 0.05 }}
+                                className="group relative"
+                            >
+                                {/* Active Promotion Glow */}
+                                {councilEmails.has(member.email?.toLowerCase()) && (
+                                    <div className="absolute -inset-0.5 bg-teal/20 blur-xl opacity-30 rounded-3xl" />
+                                )}
+
+                                <div className="relative bg-white/[0.02] backdrop-blur-[40px] border border-white/5 rounded-3xl p-6 hover:bg-white/[0.05] transition-all duration-500 overflow-hidden">
+                                    {/* Action Hover Overlay */}
+                                    <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                                        {councilEmails.has(member.email?.toLowerCase()) ? (
+                                            <div className="p-2 bg-teal/10 text-teal rounded-xl border border-teal/20" title="Already on Team Page">
+                                                <Shield className="w-4 h-4" />
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => handlePromote(member)}
+                                                className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors"
+                                                title="Promote to Showcase"
+                                            >
+                                                <UserPlus className="w-4 h-4" />
+                                            </button>
                                         )}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredMembers.map((member) => (
-                                        <tr
-                                            key={member.id}
-                                            className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
+                                        <button
+                                            onClick={() => setShowCredentialsModal(member)}
+                                            className="p-2 bg-teal/10 text-teal rounded-xl border border-teal/20 hover:bg-teal/20 transition-colors"
+                                            title="Update Credentials"
                                         >
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-gradient-to-br from-teal/20 to-purple-500/20 rounded-full flex items-center justify-center">
-                                                        <span className="text-white font-bold text-sm">
-                                                            {member.full_name?.[0] || member.email?.[0] || "?"}
-                                                        </span>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-white font-medium">{member.full_name || "Unnamed"}</p>
-                                                        <p className="text-white/40 text-sm">{member.email}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`inline-block px-2 py-1 text-[10px] uppercase tracking-widest rounded-full border ${getRoleBadge(member.role)}`}>
-                                                    {formatRole(member.role)}
+                                            <Key className="w-4 h-4" />
+                                        </button>
+                                        {member.id !== profile?.id && member.role !== 'president' && (
+                                            <button
+                                                onClick={() => handleDeleteMember(member.id, member.email)}
+                                                className="p-2 bg-red-400/10 text-red-400 rounded-xl border border-red-500/20 hover:bg-red-500/20 transition-colors"
+                                                title="Remove Vector"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-start gap-5">
+                                        {/* Avatar */}
+                                        <div className="relative flex-shrink-0">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-teal/40 to-indigo-500/40 blur-lg opacity-20 group-hover:opacity-40 transition-opacity rounded-full" />
+                                            <div className="relative w-16 h-16 bg-[#020617] border border-white/10 rounded-2xl flex items-center justify-center overflow-hidden">
+                                                <span className="text-white font-[family-name:var(--font-cinzel)] text-2xl font-bold opacity-80 group-hover:scale-110 transition-transform duration-500">
+                                                    {member.full_name?.[0] || member.email?.[0] || "?"}
                                                 </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-wrap gap-1">
+                                            </div>
+                                        </div>
+
+                                        {/* Info */}
+                                        <div className="flex-1 min-w-0 pr-12">
+                                            <h3 className="text-xl font-[family-name:var(--font-cinzel)] font-bold text-white truncate mb-1">
+                                                {member.full_name || "Unnamed"}
+                                            </h3>
+                                            <p className="text-white/30 text-xs font-mono truncate mb-4 tracking-tighter">
+                                                {member.email}
+                                            </p>
+
+                                            <div className="flex flex-col gap-3">
+                                                {/* Role Badge */}
+                                                <div>
+                                                    <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-mono uppercase tracking-[0.2em] border ${getRoleBadge(member.role)}`}>
+                                                        {formatRole(member.role)}
+                                                    </span>
+                                                </div>
+
+                                                {/* Teams */}
+                                                <div className="flex flex-wrap gap-2">
                                                     {member.team_members?.length > 0 ? (
                                                         member.team_members.map(tm => (
-                                                            <span
+                                                            <div
                                                                 key={tm.id}
-                                                                className={`inline-block px-2 py-0.5 text-xs rounded ${tm.teams?.type === "fest"
-                                                                    ? "bg-purple-500/20 text-purple-400"
-                                                                    : "bg-teal/20 text-teal"
+                                                                className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded bg-white/[0.03] border border-white/5 ${tm.teams?.type === "fest"
+                                                                    ? "text-purple-400/70"
+                                                                    : "text-teal/70"
                                                                     }`}
                                                             >
-                                                                {tm.teams?.name} {tm.role === "head" && "(Head)"}
-                                                            </span>
+                                                                {tm.teams?.name}
+                                                            </div>
                                                         ))
                                                     ) : (
-                                                        <span className="text-white/30 text-sm">—</span>
+                                                        <span className="text-white/10 text-[10px] italic">Not Assigned</span>
                                                     )}
                                                 </div>
-                                            </td>
-                                            {canManageMembers() && (
-                                                <td className="px-6 py-4">
-                                                    {member.role !== 'president' ? (
-                                                        <div className="flex items-center justify-end gap-2">
-                                                            <button
-                                                                onClick={() => setShowCredentialsModal(member)}
-                                                                className="p-2 text-white/40 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
-                                                                title="Reset Password"
-                                                            >
-                                                                <Key className="w-4 h-4" />
-                                                            </button>
-                                                            {member.id !== profile?.id && (
-                                                                <button
-                                                                    onClick={() => handleDeleteMember(member.id, member.email)}
-                                                                    className="p-2 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                                                                    title="Remove Member"
-                                                                >
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex justify-end pr-4">
-                                                            <Shield className="w-4 h-4 text-white/20" title="Protected Account" />
-                                                        </div>
-                                                    )}
-                                                </td>
-                                            )}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </motion.div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Bottom Aesthetic Accent */}
+                                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/5 to-transparent group-hover:via-teal/20 transition-all duration-700" />
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
                 )}
             </main>
 

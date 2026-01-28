@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle, X, Check, Loader2, CheckCircle, XCircle, Info } from "lucide-react";
+import { useEffect } from 'react';
 
 export default function ConfirmationModal({
     isOpen,
@@ -13,8 +14,19 @@ export default function ConfirmationModal({
     cancelText = "Cancel",
     type = "confirm", // 'confirm', 'success', 'error', 'info'
     isDangerous = false,
-    isLoading = false
+    isLoading = false,
+    isToast = false,
+    duration = 0 // Auto-close duration in ms. 0 = manual.
 }) {
+    // Auto-close logic
+    useEffect(() => {
+        if (isOpen && isToast && duration > 0) {
+            const timer = setTimeout(() => {
+                onClose();
+            }, duration);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen, isToast, duration, onClose]);
     // Prevent closing if loading
     const handleClose = () => {
         if (!isLoading) onClose();
@@ -65,33 +77,33 @@ export default function ConfirmationModal({
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    {/* Backdrop */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={handleClose}
-                        className="absolute inset-0 bg-black/80 backdrop-blur-md"
-                    />
+                <div className={`fixed z-[100] p-4 pointer-events-none flex ${isToast ? "inset-y-0 right-0 items-start justify-end pt-24" : "inset-0 items-center justify-center"}`}>
+                    {!isToast && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={handleClose}
+                            className="absolute inset-0 bg-black/80 backdrop-blur-md pointer-events-auto"
+                        />
+                    )}
 
-                    {/* Modal Content */}
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="relative w-full max-w-md bg-[#0f172a]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+                        initial={isToast ? { opacity: 0, x: 50, scale: 0.9 } : { opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, x: 0, scale: 1, y: 0 }}
+                        exit={isToast ? { opacity: 0, x: 20, scale: 0.9 } : { opacity: 0, scale: 0.95, y: 20 }}
+                        className={`relative w-full ${isToast ? "max-w-xs" : "max-w-md"} bg-[#0f172a]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto`}
                     >
                         <div className="p-6">
                             <div className="flex flex-col items-center text-center gap-4">
                                 {/* Icon */}
-                                <div className={`flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center border-2 ${config.iconClass}`}>
-                                    <Icon className="w-8 h-8" />
+                                <div className={`flex-shrink-0 ${isToast ? "w-10 h-10" : "w-16 h-16"} rounded-full flex items-center justify-center border-2 ${config.iconClass}`}>
+                                    <Icon className={isToast ? "w-5 h-5" : "w-8 h-8"} />
                                 </div>
 
                                 {/* Text */}
                                 <div className="flex-1">
-                                    <h3 className="text-2xl font-serif font-bold text-white mb-2">
+                                    <h3 className={`${isToast ? "text-lg" : "text-2xl"} font-serif font-bold text-white mb-2`}>
                                         {title}
                                     </h3>
                                     <p className="text-white/60 text-sm leading-relaxed whitespace-pre-wrap">

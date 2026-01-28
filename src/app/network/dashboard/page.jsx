@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import NetworkSidebar from "@/components/network/Sidebar";
 import { createClient } from "@/lib/supabase/client";
@@ -122,21 +123,25 @@ export default function DashboardPage() {
     ];
 
     return (
-        <div className="flex min-h-screen">
+        <div className="flex h-full">
             <NetworkSidebar />
 
-            <main className="flex-1 p-4 lg:p-10 pt-24 lg:pt-10 overflow-auto">
+            <main className="flex-1 p-4 lg:p-10 pt-24 lg:pt-14 overflow-y-auto">
                 {/* Header */}
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 md:mb-10"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="mb-8 md:mb-12"
                 >
-                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold text-white mb-2">
-                        {getGreeting()}, <span className="text-teal">{profile?.full_name?.split(' ')[0] || 'Member'}</span>
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="h-[1px] w-8 bg-teal/40" />
+                        <span className="text-teal font-mono text-xs uppercase tracking-[0.3em]">Operational Overview</span>
+                    </div>
+                    <h1 className="text-3xl md:text-5xl lg:text-6xl font-[family-name:var(--font-cinzel)] font-bold text-white mb-4 tracking-tighter">
+                        {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white/80 to-teal/40">{profile?.full_name?.split(' ')[0] || 'Member'}</span>
                     </h1>
-                    <p className="text-white/50 text-sm md:text-base">
-                        Welcome to the RMC Network. Here&apos;s your overview.
+                    <p className="text-white/40 font-[family-name:var(--font-cormorant)] text-lg md:text-xl italic max-w-2xl">
+                        Welcome to the Ramanujan Math Club Dashboard. Precision in logic, excellence in execution.
                     </p>
                 </motion.div>
 
@@ -162,95 +167,105 @@ export default function DashboardPage() {
                 )}
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-10">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10 md:mb-16">
                     {statCards.filter(card => card.visible).map((card, index) => {
                         const Icon = card.icon;
-                        const colorClass = {
-                            teal: 'from-teal/20 to-teal/5 border-teal/20',
-                            lime: 'from-lime/20 to-lime/5 border-lime/20',
-                            orange: 'from-orange/20 to-orange/5 border-orange/20',
-                            purple: 'from-purple-500/20 to-purple-500/5 border-purple-500/20'
-                        }[card.color];
-
-                        const iconColor = {
-                            teal: 'text-teal',
-                            lime: 'text-lime',
-                            orange: 'text-orange',
-                            purple: 'text-purple-400'
+                        const accentColor = {
+                            teal: 'teal',
+                            lime: 'lime',
+                            orange: 'orange-400',
+                            purple: 'purple-500'
                         }[card.color];
 
                         return (
                             <motion.div
                                 key={card.title}
-                                initial={{ opacity: 0, y: 20 }}
+                                initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.1 }}
-                                className={`bg-gradient-to-br ${colorClass} backdrop-blur-xl border rounded-xl md:rounded-2xl p-4 md:p-6`}
+                                className="relative group"
                             >
-                                <div className="flex items-center justify-between mb-2 md:mb-4">
-                                    <Icon className={`w-6 h-6 md:w-8 md:h-8 ${iconColor}`} />
-                                    {loading ? (
-                                        <div className="w-6 h-6 md:w-8 md:h-8 bg-white/10 rounded animate-pulse" />
-                                    ) : (
-                                        <span className="text-2xl md:text-3xl font-bold text-white">{card.value}</span>
-                                    )}
+                                {/* Hover Glow */}
+                                <div className={`absolute -inset-0.5 bg-${accentColor}/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-3xl`} />
+
+                                <div className="relative h-full bg-white/[0.02] backdrop-blur-[40px] border border-white/5 rounded-2xl md:rounded-[2rem] p-6 md:p-8 flex flex-col justify-between hover:bg-white/[0.04] transition-all duration-500">
+                                    <div className={`w-12 h-12 rounded-2xl bg-${accentColor}/10 border border-${accentColor}/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_20px_rgba(0,0,0,0.3)]`}>
+                                        <Icon className={`w-6 h-6 text-${accentColor}`} />
+                                    </div>
+                                    <div>
+                                        {loading ? (
+                                            <div className="w-16 h-8 bg-white/5 rounded-lg animate-pulse mb-2" />
+                                        ) : (
+                                            <div className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 tracking-tighter">
+                                                {card.value}
+                                            </div>
+                                        )}
+                                        <h3 className="text-white/30 text-xs md:text-sm font-mono uppercase tracking-[0.2em]">{card.title}</h3>
+                                    </div>
                                 </div>
-                                <h3 className="text-white/60 text-xs md:text-sm font-medium">{card.title}</h3>
                             </motion.div>
                         );
                     })}
                 </div>
 
-                {/* Quick Actions */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="bg-gray-900/40 backdrop-blur-xl border border-white/5 rounded-xl md:rounded-2xl p-4 md:p-6"
-                >
-                    <h2 className="text-lg md:text-xl font-serif font-bold text-white mb-3 md:mb-4">Quick Actions</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-                        <QuickAction
-                            href="/network/tasks"
-                            icon={ListTodo}
-                            label="View Tasks"
-                            color="teal"
-                        />
-                        <QuickAction
-                            href="/network/calendar"
-                            icon={Calendar}
-                            label="Calendar"
-                            color="lime"
-                        />
-                        <QuickAction
-                            href="/network/resources"
-                            icon={CheckCircle}
-                            label="Resources"
-                            color="orange"
-                        />
-                        {isPresident() && (
+                {/* Bottom Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Quick Actions */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="lg:col-span-1 bg-white/[0.02] backdrop-blur-[30px] border border-white/5 rounded-3xl p-8"
+                    >
+                        <h2 className="text-xl font-[family-name:var(--font-cinzel)] font-bold text-white mb-8 tracking-tight">Standard Vectors</h2>
+                        <div className="grid grid-cols-1 gap-4">
                             <QuickAction
-                                href="/network/settings"
-                                icon={AlertCircle}
-                                label="Settings"
-                                color="purple"
+                                href="/network/tasks"
+                                icon={ListTodo}
+                                label="View Active Tasks"
+                                color="teal"
                             />
-                        )}
-                    </div>
-                </motion.div>
+                            <QuickAction
+                                href="/network/calendar"
+                                icon={Calendar}
+                                label="Operational Calendar"
+                                color="lime"
+                            />
+                            <QuickAction
+                                href="/network/resources"
+                                icon={CheckCircle}
+                                label="Resource Repository"
+                                color="orange"
+                            />
+                            {isPresident() && (
+                                <QuickAction
+                                    href="/network/settings"
+                                    icon={AlertCircle}
+                                    label="Network Parameters"
+                                    color="purple"
+                                />
+                            )}
+                        </div>
+                    </motion.div>
 
-                {/* Upcoming Widget */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="mt-4 md:mt-8 bg-gray-900/40 backdrop-blur-xl border border-white/5 rounded-xl md:rounded-2xl p-4 md:p-6"
-                >
-                    <h2 className="text-lg md:text-xl font-serif font-bold text-white mb-3 md:mb-4">Upcoming</h2>
-                    <div className="flex items-center justify-center h-32 md:h-48 border border-dashed border-white/10 rounded-xl">
-                        <p className="text-white/30 text-xs md:text-sm">Calendar widget coming soon...</p>
-                    </div>
-                </motion.div>
+                    {/* Upcoming Widget */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 }}
+                        className="lg:col-span-2 bg-white/[0.02] backdrop-blur-[30px] border border-white/5 rounded-3xl p-8 flex flex-col"
+                    >
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-xl font-[family-name:var(--font-cinzel)] font-bold text-white tracking-tight">Timeline Analysis</h2>
+                            <span className="text-white/20 font-mono text-[10px] uppercase">Alpha Build 1.0</span>
+                        </div>
+                        <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-white/5 rounded-2xl relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-teal/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <Calendar className="w-12 h-12 text-white/5 mb-4 group-hover:text-teal/10 transition-colors duration-700" />
+                            <p className="text-white/20 text-sm font-[family-name:var(--font-cormorant)] italic">Data stream initialization in progress...</p>
+                        </div>
+                    </motion.div>
+                </div>
             </main>
         </div>
     );
@@ -272,12 +287,14 @@ function QuickAction({ href, icon: Icon, label, color }) {
     }[color];
 
     return (
-        <a
+        <Link
             href={href}
-            className={`group flex flex-col items-center gap-2 p-3 md:p-4 bg-white/5 border border-white/10 rounded-xl transition-all ${colorClass}`}
+            className={`group flex items-center gap-4 p-4 bg-white/[0.03] border border-white/5 rounded-2xl transition-all duration-300 ${colorClass}`}
         >
-            <Icon className={`w-5 h-5 md:w-6 md:h-6 text-white/50 ${iconColor} transition-colors`} />
-            <span className="text-white/70 text-xs md:text-sm text-center group-hover:text-white transition-colors">{label}</span>
-        </a>
+            <div className={`p-3 rounded-xl bg-white/[0.02] border border-white/5 group-hover:scale-110 transition-transform ${iconColor}`}>
+                <Icon className="w-5 h-5 text-current opacity-70 group-hover:opacity-100" />
+            </div>
+            <span className="text-white/60 text-sm font-medium group-hover:text-white transition-colors">{label}</span>
+        </Link>
     );
 }

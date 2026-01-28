@@ -194,10 +194,10 @@ export default function ResourcesPage() {
 
 
     return (
-        <div className="flex min-h-screen">
+        <div className="flex h-full">
             <NetworkSidebar />
 
-            <main className="flex-1 p-6 lg:p-10 pt-24 lg:pt-10 overflow-auto">
+            <main className="flex-1 p-6 lg:p-10 pt-24 lg:pt-14 overflow-y-auto">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                     <div>
@@ -228,7 +228,7 @@ export default function ResourcesPage() {
                 </div>
 
                 {/* Breadcrumbs & Navigation */}
-                <div className="flex items-center gap-2 mb-6 text-sm overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex items-center gap-2 mb-6 text-sm overflow-x-auto pb-2">
                     {currentFolder && (
                         <button onClick={handleNavigateUp} className="mr-2 p-1 hover:bg-white/10 rounded-lg">
                             <ArrowLeft className="w-4 h-4 text-white/70" />

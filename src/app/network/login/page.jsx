@@ -46,7 +46,7 @@ export default function NetworkLoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#020617] flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="h-full bg-[#020617] flex items-center justify-center p-4 relative overflow-y-auto">
             {/* Background Effects */}
             <div className="fixed inset-0 pointer-events-none">
                 <div className="absolute top-[-30%] left-[-20%] w-[60%] h-[60%] bg-teal/5 rounded-full blur-[150px]" />

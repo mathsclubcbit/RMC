@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Calendar, QrCode, Home, LogOut, Image as ImageIcon, Users, Bell } from "lucide-react";
+import { LayoutDashboard, Calendar, QrCode, Home, LogOut, Image as ImageIcon, Users, Bell, Mail, ChevronRight } from "lucide-react";
 import { adminLogoutAction } from "./actions";
+import { useLoading } from "@/context/LoadingContext";
 
 const navItems = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -11,11 +12,13 @@ const navItems = [
     { href: "/admin/gallery", label: "Gallery", icon: ImageIcon },
     { href: "/admin/team", label: "Team", icon: Users },
     { href: "/admin/announcements", label: "Notify", icon: Bell },
+    { href: "/admin/newsletter", label: "Email", icon: Mail },
     { href: "/admin/scan", label: "Scan", icon: QrCode },
 ];
 
 export default function AdminNav() {
     const pathname = usePathname();
+    const { startLoading } = useLoading();
 
     return (
         <>
@@ -37,6 +40,9 @@ export default function AdminNav() {
                                 <Link
                                     key={item.href}
                                     href={item.href}
+                                    onClick={() => {
+                                        if (pathname !== item.href) startLoading();
+                                    }}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${isActive
                                         ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
                                         : "text-white/60 hover:text-white hover:bg-white/10"
@@ -69,11 +75,16 @@ export default function AdminNav() {
             </nav>
 
             {/* Mobile Bottom Floating Dock */}
-            <nav className="md:hidden fixed bottom-6 left-4 right-4 z-50 bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-2xl shadow-black/50 safe-area-inset-bottom">
-                <div className="flex items-center justify-around py-3 px-2">
+            <nav className="md:hidden fixed bottom-6 left-4 right-4 z-50 bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-2xl shadow-black/50 safe-area-inset-bottom overflow-hidden group">
+                {/* Scroll Indicator Gradient */}
+                <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-black to-transparent pointer-events-none z-10 flex items-center justify-end pr-1">
+                    <ChevronRight className="w-4 h-4 text-white/50 animate-pulse" />
+                </div>
+
+                <div className="flex items-center gap-6 overflow-x-auto py-3 px-6 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
                     <Link
                         href="/"
-                        className="flex flex-col items-center gap-1 transition-all text-white/50 active:text-white relative"
+                        className="flex flex-col items-center gap-1 transition-all text-white/50 active:text-white relative flex-shrink-0"
                     >
                         <div className="p-2 rounded-xl">
                             <Home className="w-5 h-5" />
@@ -88,7 +99,7 @@ export default function AdminNav() {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`flex flex-col items-center gap-1 transition-all relative ${isActive
+                                className={`flex flex-col items-center gap-1 transition-all relative flex-shrink-0 ${isActive
                                     ? "text-indigo-400"
                                     : "text-white/50 active:text-white"
                                     }`}
@@ -102,7 +113,7 @@ export default function AdminNav() {
                         );
                     })}
 
-                    <form action={adminLogoutAction}>
+                    <form action={adminLogoutAction} className="flex-shrink-0">
                         <button
                             className="flex flex-col items-center gap-1 transition-all text-red-400/70 active:text-red-400 relative"
                         >
@@ -117,7 +128,6 @@ export default function AdminNav() {
 
             {/* Spacers */}
             <div className="hidden md:block h-16" />
-            <div className="md:hidden h-28" />
         </>
     );
 }

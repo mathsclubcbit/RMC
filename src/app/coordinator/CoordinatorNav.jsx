@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, QrCode, Edit3, LogOut, Home } from "lucide-react";
+import { LayoutDashboard, QrCode, Edit3, LogOut, Home, ChevronRight } from "lucide-react";
+import { useLoading } from "@/context/LoadingContext";
 
 const navItems = [
     { href: "/coordinator/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -12,6 +13,7 @@ const navItems = [
 
 export default function CoordinatorNav({ eventTitle }) {
     const pathname = usePathname();
+    const { startLoading } = useLoading();
 
     const handleLogout = async () => {
         try {
@@ -47,6 +49,9 @@ export default function CoordinatorNav({ eventTitle }) {
                                 <Link
                                     key={item.href}
                                     href={item.href}
+                                    onClick={() => {
+                                        if (pathname !== item.href) startLoading();
+                                    }}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${isActive
                                         ? "bg-teal-500/20 text-teal-300 border border-teal-500/30"
                                         : "text-white/60 hover:text-white hover:bg-white/10"
@@ -80,11 +85,15 @@ export default function CoordinatorNav({ eventTitle }) {
             </nav>
 
             {/* Mobile Bottom Floating Dock */}
-            <nav className="md:hidden fixed bottom-6 left-4 right-4 z-50 bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-2xl shadow-black/50 safe-area-inset-bottom">
-                <div className="flex items-center justify-around py-2 px-2">
+            <nav className="md:hidden fixed bottom-6 left-4 right-4 z-50 bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-2xl shadow-black/50 safe-area-inset-bottom overflow-hidden group">
+                {/* Scroll Indicator Gradient - Only show if content overflows (checked via CSS assumption or always show as hint) */}
+                <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-black to-transparent pointer-events-none z-10 flex items-center justify-end pr-1">
+                    <ChevronRight className="w-4 h-4 text-white/50 animate-pulse" />
+                </div>
+                <div className="flex items-center gap-8 overflow-x-auto py-2 px-6 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', justifyContent: navItems.length < 4 ? 'center' : 'flex-start' }}>
                     <Link
                         href="/"
-                        className="flex flex-col items-center gap-1 transition-all text-white/50 active:text-white relative"
+                        className="flex flex-col items-center gap-1 transition-all text-white/50 active:text-white relative flex-shrink-0"
                     >
                         <div className="p-2 rounded-xl">
                             <Home className="w-5 h-5" />
@@ -99,7 +108,7 @@ export default function CoordinatorNav({ eventTitle }) {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`flex flex-col items-center gap-1 transition-all relative ${isActive
+                                className={`flex flex-col items-center gap-1 transition-all relative flex-shrink-0 ${isActive
                                     ? "text-teal-400"
                                     : "text-white/50 active:text-white"
                                     }`}
@@ -114,7 +123,7 @@ export default function CoordinatorNav({ eventTitle }) {
                     })}
                     <button
                         onClick={handleLogout}
-                        className="flex flex-col items-center gap-1 transition-all text-red-400/70 active:text-red-400 relative"
+                        className="flex flex-col items-center gap-1 transition-all text-red-400/70 active:text-red-400 relative flex-shrink-0"
                     >
                         <div className="p-2 rounded-xl">
                             <LogOut className="w-5 h-5" />
@@ -126,7 +135,6 @@ export default function CoordinatorNav({ eventTitle }) {
 
             {/* Spacers for fixed navigation */}
             <div className="hidden md:block h-16" /> {/* Top spacer for desktop */}
-            <div className="md:hidden h-28" /> {/* Bottom spacer for mobile (increased for dock) */}
         </>
     );
 }

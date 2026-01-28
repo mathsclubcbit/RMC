@@ -8,6 +8,8 @@ import SectionDivider from "@/components/ui/SectionDivider";
 import HeroParticles from "@/components/about/HeroParticles";
 import CouncilGrid from "@/components/about/CouncilGrid";
 import { Target, Telescope, Users, Award, Brain, BookOpen, Calculator, Sigma, Variable } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { useState, useEffect } from "react";
 
 export default function AboutPage() {
     const containerRef = useRef(null);
@@ -71,6 +73,35 @@ export default function AboutPage() {
         { name: "Ada Lovelace", role: "Vice President", icon: Calculator, color: "text-lime" },
         { name: "Alan Turing", role: "Tech Lead", icon: Brain, color: "text-blue-400" },
     ];
+
+    const [council, setCouncil] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchLeadership() {
+            const supabase = createClient();
+            const { data, error } = await supabase
+                .from('rmc_council')
+                .select('*')
+                .eq('category', 'Core Committee')
+                .order('priority_order', { ascending: true });
+
+            if (!error && data) {
+                // Map to CouncilGrid format
+                const mapped = data.map(m => ({
+                    name: m.name,
+                    role: m.position,
+                    image: m.image_url,
+                    linkedin: m.linkedin_url,
+                    email: m.email,
+                    color: "text-teal" // Default color
+                }));
+                setCouncil(mapped);
+            }
+            setLoading(false);
+        }
+        fetchLeadership();
+    }, []);
 
     return (
         <div ref={containerRef} className="relative min-h-screen bg-black overflow-hidden selection:bg-teal/20 selection:text-teal">
@@ -261,7 +292,15 @@ export default function AboutPage() {
                         variant="gold"
                     />
                     <div className="mt-20">
-                        <CouncilGrid members={team} />
+                        {loading ? (
+                            <div className="flex justify-center py-20">
+                                <div className="w-8 h-8 border-2 border-teal border-t-transparent rounded-full animate-spin" />
+                            </div>
+                        ) : council.length > 0 ? (
+                            <CouncilGrid members={council} />
+                        ) : (
+                            <p className="text-center text-white/20 italic">The council is convening...</p>
+                        )}
                     </div>
                 </div>
             </section>
