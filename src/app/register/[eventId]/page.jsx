@@ -1,7 +1,7 @@
 import RegistrationClient from "@/components/events/RegistrationClient";
 
 export async function generateMetadata({ params }) {
-    const eventId = params.eventId;
+    const { eventId } = await params;
 
     // Fetch event data
     const product = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/events`).then((res) => res.json()).catch(() => []);

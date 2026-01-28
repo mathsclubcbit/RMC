@@ -15,7 +15,7 @@ export interface QRTicketData {
 export async function generateQRCode(registrationId: string): Promise<string> {
     try {
         const qrDataUrl = await QRCode.toDataURL(registrationId, {
-            errorCorrectionLevel: 'M',
+            errorCorrectionLevel: 'H',
             type: 'image/png',
             width: 300,
             margin: 2,

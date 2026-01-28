@@ -2,17 +2,32 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/server";
-import { LogOut } from "lucide-react";
+import { LogOut, QrCode, Edit3, Settings } from "lucide-react";
+import { jwtVerify } from "jose";
 
 import { getAllRegistrations } from "@/lib/google";
 
 export const dynamic = 'force-dynamic';
 
+const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
+
 async function getCoordinatorEventAndStats() {
     const cookieStore = await cookies();
-    const eventId = cookieStore.get("coordinator_session")?.value;
+    const token = cookieStore.get("coordinator_token")?.value;
 
-    if (!eventId) return null;
+    if (!token) return null;
+
+    // Verify JWT and extract eventId
+    let eventId;
+    try {
+        const { payload } = await jwtVerify(token, getJwtSecret());
+        if (payload?.type !== 'coordinator' || !payload?.eventId) {
+            return null;
+        }
+        eventId = payload.eventId;
+    } catch {
+        return null;
+    }
 
     const supabase = createAdminClient();
 
@@ -84,210 +99,85 @@ export default async function CoordinatorDashboard() {
 
     return (
         <div className="min-h-[100dvh] bg-black text-white relative overflow-hidden">
-            {/* Tech background - Cloned from Admin */}
+            {/* Tech background - Coordinator Style (Teal) */}
             <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_20%_10%,rgba(45,212,191,0.20),transparent_45%),radial-gradient(circle_at_80%_20%,rgba(168,85,247,0.18),transparent_55%),radial-gradient(circle_at_60%_90%,rgba(59,130,246,0.16),transparent_55%)]" />
-                <div className="absolute inset-0 opacity-[0.25] [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:28px_28px]" />
-                <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[1200px] h-[1200px] rounded-full bg-teal-400/10 blur-3xl" />
+                <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_20%_10%,rgba(45,212,191,0.15),transparent_45%),radial-gradient(circle_at_80%_20%,rgba(168,85,247,0.15),transparent_55%),radial-gradient(circle_at_60%_90%,rgba(59,130,246,0.15),transparent_55%)]" />
+                <div className="absolute inset-0 opacity-[0.2] [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:28px_28px]" />
+                <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[1200px] h-[1200px] rounded-full bg-teal-400/5 blur-3xl" />
             </div>
 
-            <div className="relative z-10 px-4 py-8 md:py-10">
+            <div className="relative z-10 px-4 py-8 md:py-12">
                 <div className="max-w-6xl mx-auto">
-                    <header className="flex items-start justify-between gap-4 mb-8">
-                        <div>
-                            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-mono text-white/70">
-                                <span className="w-1.5 h-1.5 rounded-full bg-teal-400 shadow-[0_0_12px_rgba(45,212,191,0.9)]" />
-                                Coordinator Console
-                            </div>
-                            <h1 className="mt-4 text-3xl md:text-5xl font-black tracking-tight">
-                                {event.title}
-                                <span className="text-teal-300">.</span>
-                            </h1>
-                            <p className="mt-2 text-sm md:text-base text-white/60 max-w-xl">
-                                Event ID: {event.id} • {new Date(event.date).toLocaleDateString()}
-                            </p>
+                    {/* Header */}
+                    <header className="mb-10">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-mono text-white/70 backdrop-blur-md">
+                            <span className="w-1.5 h-1.5 rounded-full bg-teal-400 shadow-[0_0_12px_rgba(45,212,191,0.9)]" />
+                            Coordinator Console
                         </div>
-
-                        <div className="flex items-center gap-3">
-                            <Link
-                                href="/"
-                                className="hidden sm:inline-flex px-4 py-2 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15 transition text-sm"
-                            >
-                                Site
-                            </Link>
-                            <form action={async () => {
-                                "use server";
-                                const cookieStore = await cookies();
-                                cookieStore.delete("coordinator_session");
-                                redirect("/coordinator/login");
-                            }}>
-                                <button className="px-4 py-2 rounded-2xl bg-red-500/15 border border-red-500/20 hover:bg-red-500/25 transition text-sm text-red-100">
-                                    Logout
-                                </button>
-                            </form>
-                        </div>
+                        <h1 className="mt-4 text-3xl md:text-5xl font-black tracking-tight">
+                            {event.title}
+                            <span className="text-teal-400">.</span>
+                        </h1>
+                        <p className="mt-2 text-white/50 max-w-xl font-mono text-xs md:text-sm">
+                            ID: <span className="text-white/80">{event.id}</span>
+                        </p>
                     </header>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                        <div className="lg:col-span-2 space-y-5">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                <ActionCard
-                                    title="Scan QR"
-                                    description="Camera scanner → verification"
-                                    href="/coordinator/scan"
-                                    accent="teal"
-                                    meta="Live"
-                                />
-                                <ActionCard
-                                    title="Edit Event"
-                                    description="Update details & posters"
-                                    href="/coordinator/edit"
-                                    accent="violet"
-                                    meta="Config"
-                                />
+                    {/* Offline Warning */}
+                    {!stats.enabled && (
+                        <div className="mb-8 min-h-[80px] rounded-2xl border border-amber-500/20 bg-amber-500/5 backdrop-blur-xl p-4 flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 font-bold border border-amber-500/20">!</div>
+                            <div>
+                                <h3 className="text-sm font-semibold text-amber-200">Live Statistics Offline</h3>
+                                <p className="text-xs text-amber-200/60 mt-0.5">
+                                    System could not connect to the database. Contact Admin.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* KPI Stats Row (Single Event Context) */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-5 mb-10">
+                        <StatCard label="Registrations" value={stats.totalRegistrations} accent="teal" />
+                        <StatCard label="Checked In" value={stats.totalCheckedIn} accent="emerald" />
+                        <StatCard label="Est. Revenue" value={stats.totalRevenue} isCurrency accent="amber" />
+                    </div>
+
+                    {/* Action Modules */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        {/* Primary Action: Scan */}
+                        <Link
+                            href="/coordinator/scan"
+                            className="group relative h-[200px] rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden hover:border-teal-400/30 transition-all duration-500"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-br from-teal-400/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                            <div className="absolute top-6 right-6 p-3 rounded-2xl bg-teal-400/10 text-teal-300 border border-teal-400/20 group-hover:scale-110 transition-transform duration-500">
+                                <QrCode className="w-6 h-6" />
                             </div>
 
-                            <StatsPanel stats={stats} />
-
-                        </div>
-
-                        <div className="space-y-5">
-                            <StatusCard user="Coordinator" />
-                            <MiniLinks />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// --- Shared Components Cloned from Admin ---
-
-function ActionCard({ title, description, href, accent, meta }) {
-    const accentStyles =
-        accent === "teal"
-            ? "from-teal-400/25 to-transparent"
-            : accent === "violet"
-                ? "from-violet-400/25 to-transparent"
-                : "from-blue-400/25 to-transparent";
-
-    return (
-        <Link
-            href={href}
-            className="group rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl overflow-hidden relative"
-        >
-            <div className={`absolute inset-0 bg-gradient-to-br ${accentStyles} opacity-70`} />
-            <div className="relative p-5 md:p-6">
-                <div className="flex items-center justify-between">
-                    <div className="text-[11px] font-mono text-white/60 uppercase tracking-widest">{meta}</div>
-                    <div className="w-8 h-8 rounded-2xl border border-white/10 bg-black/30 flex items-center justify-center text-white/70 group-hover:text-white transition">
-                        →
-                    </div>
-                </div>
-                <div className="mt-4">
-                    <h3 className="text-lg md:text-xl font-bold tracking-tight">{title}</h3>
-                    <p className="mt-1 text-sm text-white/60">{description}</p>
-                </div>
-            </div>
-        </Link>
-    );
-}
-
-function StatusCard({ user }) {
-    const now = new Date();
-
-    return (
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-5 md:p-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <div className="text-[11px] font-mono text-white/50 uppercase tracking-widest">System</div>
-                    <div className="mt-2 text-lg font-semibold">Online</div>
-                </div>
-                <div className="w-12 h-12 rounded-3xl bg-teal-400/15 border border-teal-400/20 flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 rounded-full bg-teal-400 shadow-[0_0_18px_rgba(45,212,191,0.9)]" />
-                </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
-                    <div className="text-[11px] font-mono text-white/50">Mode</div>
-                    <div className="mt-1 text-sm text-white/80">{user}</div>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
-                    <div className="text-[11px] font-mono text-white/50">Clock</div>
-                    <div className="mt-1 text-sm text-white/80">{now.toLocaleTimeString()}</div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function MiniLinks() {
-    return (
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-5 md:p-6">
-            <div className="text-[11px] font-mono text-white/50 uppercase tracking-widest">Shortcuts</div>
-            <div className="mt-4 grid grid-cols-1 gap-3">
-                <Link
-                    href="/coordinator/scan"
-                    className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm hover:bg-black/40 transition"
-                >
-                    Ticket Scanner
-                </Link>
-                <Link
-                    href="/coordinator/edit"
-                    className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm hover:bg-black/40 transition"
-                >
-                    Edit Event
-                </Link>
-            </div>
-        </div>
-    );
-}
-
-function StatsPanel({ stats }) {
-    if (!stats?.enabled) return null;
-
-    return (
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-5 md:p-6">
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <div className="text-[11px] font-mono text-white/50 uppercase tracking-widest">Stats</div>
-                    <div className="mt-2 text-base md:text-lg font-semibold">Registrations & Check-ins</div>
-                    <div className="mt-1 text-sm text-white/60">Live database stats.</div>
-                </div>
-                <div className="text-[11px] font-mono text-white/50">DB</div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <StatBox label="Reg (total)" value={stats.totalRegistrations} accent="violet" />
-                <StatBox label="Check-in" value={stats.totalCheckedIn} accent="violet" />
-                <StatBox label="Revenue" value={stats.totalRevenue} accent="amber" format="currency" />
-            </div>
-
-            <div className="mt-5">
-                <div className="flex items-center justify-between">
-                    <div className="text-[11px] font-mono text-white/50 uppercase tracking-widest">Breakdown</div>
-                    <div className="text-[11px] font-mono text-white/40">reg • in • rev</div>
-                </div>
-                <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 overflow-hidden">
-                    <div className="grid grid-cols-12 gap-2 px-4 py-3 text-[11px] font-mono text-white/50 uppercase tracking-widest border-b border-white/10">
-                        <div className="col-span-6">Event</div>
-                        <div className="col-span-2 text-right">Reg</div>
-                        <div className="col-span-2 text-right">In</div>
-                        <div className="col-span-2 text-right">Rev</div>
-                    </div>
-                    <div className="max-h-[280px] overflow-auto custom-scrollbar">
-                        {(stats.eventBreakdown || []).map((e) => (
-                            <div key={(e.eventId || "_") + "::" + e.eventName} className="grid grid-cols-12 gap-2 px-4 py-3 border-b border-white/5 items-center">
-                                <div className="col-span-6">
-                                    <div className="text-sm font-semibold text-white/90 truncate">{e.eventName}</div>
-                                </div>
-                                <div className="col-span-2 text-right text-sm text-white/80">{Number(e.registrations || 0).toLocaleString()}</div>
-                                <div className="col-span-2 text-right text-sm text-white/80">{Number(e.checkedIn || 0).toLocaleString()}</div>
-                                <div className="col-span-2 text-right text-sm text-white/80">₹{Number(e.revenue || 0).toLocaleString()}</div>
+                            <div className="absolute bottom-6 left-6 right-6">
+                                <div className="text-[11px] font-mono text-teal-300/80 uppercase tracking-widest mb-1">Primary Task</div>
+                                <h3 className="text-2xl font-bold text-white group-hover:text-teal-50 transition-colors">Scan Tickets</h3>
+                                <p className="mt-1 text-sm text-white/50 group-hover:text-white/70">Launch camera to verify attendees.</p>
                             </div>
-                        ))}
+                        </Link>
+
+                        {/* Secondary Action: Edit */}
+                        <Link
+                            href="/coordinator/edit"
+                            className="group relative h-[200px] rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden hover:border-violet-400/30 transition-all duration-500"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-br from-violet-400/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                            <div className="absolute top-6 right-6 p-3 rounded-2xl bg-violet-400/10 text-violet-300 border border-violet-400/20 group-hover:scale-110 transition-transform duration-500">
+                                <Edit3 className="w-6 h-6" />
+                            </div>
+
+                            <div className="absolute bottom-6 left-6 right-6">
+                                <div className="text-[11px] font-mono text-violet-300/80 uppercase tracking-widest mb-1">Configuration</div>
+                                <h3 className="text-2xl font-bold text-white group-hover:text-violet-50 transition-colors">Edit Event</h3>
+                                <p className="mt-1 text-sm text-white/50 group-hover:text-white/70">Update description, posters, and details.</p>
+                            </div>
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -295,28 +185,37 @@ function StatsPanel({ stats }) {
     );
 }
 
-function StatBox({ label, value, accent, format }) {
-    const ring =
-        accent === "teal"
-            ? "border-teal-400/20"
-            : accent === "amber"
-                ? "border-amber-300/20"
-                : "border-violet-400/20";
+// --- Components ---
 
-    const glow =
-        accent === "teal"
-            ? "shadow-[0_0_20px_rgba(45,212,191,0.12)]"
-            : accent === "amber"
-                ? "shadow-[0_0_20px_rgba(252,211,77,0.10)]"
-                : "shadow-[0_0_20px_rgba(168,85,247,0.12)]";
+function StatCard({ label, value, accent, isCurrency }) {
+    const colors = {
+        teal: "text-teal-400 border-teal-500/20 bg-teal-500/5",
+        emerald: "text-emerald-400 border-emerald-500/20 bg-emerald-500/5",
+        amber: "text-amber-400 border-amber-500/20 bg-amber-500/5",
+        violet: "text-violet-400 border-violet-500/20 bg-violet-500/5",
+    };
 
-    const formatted =
-        format === "currency" ? `₹${Number(value || 0).toLocaleString()}` : Number(value || 0).toLocaleString();
+    const glows = {
+        teal: "bg-teal-500/10",
+        emerald: "bg-emerald-500/10",
+        amber: "bg-amber-500/10",
+        violet: "bg-violet-500/10",
+    };
+
+    const theme = colors[accent] || colors.teal;
+    const glowColor = glows[accent] || glows.teal;
+
+    const formatted = isCurrency
+        ? `₹${Number(value || 0).toLocaleString()}`
+        : Number(value || 0).toLocaleString();
 
     return (
-        <div className={`rounded-2xl border border-white/10 bg-black/30 p-3 ${ring} ${glow}`}>
-            <div className="text-[11px] font-mono text-white/50 uppercase tracking-widest">{label}</div>
-            <div className="mt-1 text-xl md:text-2xl font-black tracking-tight">{formatted}</div>
+        <div className={`rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-4 md:p-6 relative overflow-hidden group hover:border-white/20 transition-all duration-300`}>
+            <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest mb-1">{label}</div>
+            <div className="text-2xl md:text-4xl font-black tracking-tight text-white/90 group-hover:text-white transition-colors">{formatted}</div>
+
+            {/* Glow effect */}
+            <div className={`absolute -top-4 -right-4 w-20 h-20 ${glowColor} blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
         </div>
     );
 }

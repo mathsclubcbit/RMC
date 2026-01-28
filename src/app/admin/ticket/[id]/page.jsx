@@ -1,14 +1,30 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { XCircle } from "lucide-react";
+import { jwtVerify } from "jose";
 
 import { getRegistrationById } from "@/lib/google";
 import { GlassCard } from "@/components/ui/glass-card";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { Button } from "@/components/ui/button";
 import { AdminTicketManager } from "@/components/admin-ticket-manager";
-import { TicketDetailsCard } from "@/components/ticket-details-card";
 import { TicketExpiredView } from "@/components/ticket-expired-view";
+
+const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
+
+async function isAdminAuthenticated() {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("admin_token")?.value;
+
+    if (!token) return false;
+
+    try {
+        const { payload } = await jwtVerify(token, getJwtSecret());
+        return payload?.type === 'admin';
+    } catch {
+        return false;
+    }
+}
 
 export default async function AdminTicketPage({ params }) {
     const { id } = await params;
@@ -17,8 +33,7 @@ export default async function AdminTicketPage({ params }) {
     const spreadsheetId = process.env.GOOGLE_SHEET_ID;
     const ticketRow = spreadsheetId ? await getRegistrationById(spreadsheetId, registrationId) : null;
 
-    const cookieStore = await cookies();
-    const isAdmin = cookieStore.get("admin_session")?.value === "true";
+    const isAdmin = await isAdminAuthenticated();
 
     if (!isAdmin) {
         return (
@@ -66,16 +81,16 @@ export default async function AdminTicketPage({ params }) {
 
     const membersString = Array.isArray(teamMembers)
         ? teamMembers
-              .map(m => {
-                  if (!m) return "";
-                  const name = m.name || m.fullName || m.memberName;
-                  const roll = m.rollNo || m.roll || m.rollNumber;
-                  if (name && roll) return `${name} (${roll})`;
-                  if (name) return String(name);
-                  return "";
-              })
-              .filter(Boolean)
-              .join(", ")
+            .map(m => {
+                if (!m) return "";
+                const name = m.name || m.fullName || m.memberName;
+                const roll = m.rollNo || m.roll || m.rollNumber;
+                if (name && roll) return `${name} (${roll})`;
+                if (name) return String(name);
+                return "";
+            })
+            .filter(Boolean)
+            .join(", ")
         : "";
 
     const uiTicket = {

@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
+import { jwtVerify } from 'jose';
 
 export const runtime = 'nodejs';
 
 const STORAGE_BUCKET = 'event-images';
+
+const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
 
 function hasSupabaseConfig() {
     return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -13,12 +16,21 @@ function isMissingTableError(error) {
     return Boolean(error && (error.code === 'PGRST205' || String(error.message || '').includes("Could not find the table 'public.events'")));
 }
 
-function requireAdmin(request) {
-    const isLoggedIn = request.cookies.get('admin_session')?.value === 'true';
-    if (!isLoggedIn) {
+async function requireAdmin(request) {
+    const token = request.cookies.get('admin_token')?.value;
+    if (!token) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    return null;
+
+    try {
+        const { payload } = await jwtVerify(token, getJwtSecret());
+        if (payload?.type !== 'admin') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        return null;
+    } catch {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 }
 
 function generateEventId() {
@@ -64,7 +76,7 @@ export async function GET() {
 }
 
 export async function POST(request) {
-    const auth = requireAdmin(request);
+    const auth = await requireAdmin(request);
     if (auth) return auth;
 
     if (!hasSupabaseConfig()) {

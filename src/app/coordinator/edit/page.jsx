@@ -2,24 +2,55 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/server";
 import EventForm from "@/app/admin/events/EventForm";
+import { jwtVerify } from "jose";
+
+const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
+
+async function getCoordinatorEventId() {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("coordinator_token")?.value;
+
+    if (!token) return null;
+
+    try {
+        const { payload } = await jwtVerify(token, getJwtSecret());
+        if (payload?.type !== 'coordinator' || !payload?.eventId) {
+            return null;
+        }
+        return payload.eventId;
+    } catch {
+        return null;
+    }
+}
 
 export default async function CoordinatorEditPage() {
-    const cookieStore = await cookies();
-    const eventId = cookieStore.get("coordinator_session")?.value;
+    const eventId = await getCoordinatorEventId();
 
-    if (!eventId) redirect("/coordinator/login");
+    if (!eventId) {
+        redirect("/coordinator/login");
+    }
 
     const supabase = createAdminClient();
 
-    // Fetch Event Details (payload includes password, descriptions etc)
+    // Fetch Event Details
     const { data: eventRow, error } = await supabase
         .from("events")
         .select("*")
         .eq("id", eventId)
         .single();
 
-    if (error || !eventRow) return <div>Error loading event</div>;
+    if (error || !eventRow) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center px-4">
+                <div className="text-center rounded-3xl border border-red-500/30 bg-red-500/10 p-8 max-w-md">
+                    <div className="text-red-400 text-lg font-semibold mb-2">Error loading event</div>
+                    <p className="text-white/60 text-sm">Could not fetch event details. Please try again.</p>
+                </div>
+            </div>
+        );
+    }
 
+    // Prepare event data for the form
     const eventData = {
         ...eventRow.payload,
         id: String(eventRow.id),
@@ -30,31 +61,20 @@ export default async function CoordinatorEditPage() {
 
     return (
         <div className="min-h-screen bg-black relative">
-            {/* Custom Header to replace Admin Layout */}
-            <div className="absolute top-6 right-6 z-50">
-                {/* Just a spacer, the form has its own layout */}
+            {/* Tech background */}
+            <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_20%_10%,rgba(45,212,191,0.20),transparent_45%),radial-gradient(circle_at_80%_20%,rgba(168,85,247,0.18),transparent_55%),radial-gradient(circle_at_60%_90%,rgba(59,130,246,0.16),transparent_55%)]" />
+                <div className="absolute inset-0 opacity-[0.25] [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:28px_28px]" />
             </div>
 
-            {/* Reuse Admin Form. 
-                We might need to adjust styles or context, but since EventForm 
-                is self-contained with its own API calls (which check session), 
-                we need to ensure the /api/events/[id] endpoint allows coordinator session too.
-            */}
-
-            <EventForm
-                mode="edit"
-                initialEvent={eventData}
-                backLink="/coordinator/dashboard"
-            />
-
-            {/* Note: The /api/events routes currently require Admin Cookie. 
-                We need to patch them or providing a special coordinator endpoint?
-                
-                 ACTUALLY: The easiest way is to let the API Route check for EITHER admin_session OR coordinator_session.
-                 I will need to update /src/app/api/events/[id]/route.js (and POST route) to allow this.
-                 
-                 Let's assume for this specific task I should also ensure the API works for them.
-            */}
+            {/* Form content - navigation is handled by layout */}
+            <div className="relative z-10">
+                <EventForm
+                    mode="edit"
+                    initialEvent={eventData}
+                    backLink="/coordinator/dashboard"
+                />
+            </div>
         </div>
     );
 }

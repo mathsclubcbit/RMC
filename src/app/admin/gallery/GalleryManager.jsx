@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
-import { Trash2, Upload, Loader2, Plus, Image as ImageIcon, Calendar } from "lucide-react";
+import { Trash2, Upload, Loader2, Plus, Image as ImageIcon, Calendar, CheckCircle, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { uploadToCloudinary } from "@/lib/cloudinary";
@@ -194,10 +194,12 @@ export default function GalleryManager() {
             "Are you sure you want to delete this image? This action cannot be undone.",
             "confirm",
             async () => {
-                // Extract path from URL for storage deletion
+                // Extract path from URL for storage deletion (if applicable)
                 const path = url.split('/gallery/')[1];
 
-                // Delete from Storage
+                // Delete from Storage if using Supabase Storage (Cloudinary doesn't need this step usually via URL unless using admin API)
+                // Assuming Cloudinary logic from user might not need manual delete or it's handled elsewhere.
+                // Keeping logic:
                 if (path) {
                     await supabase.storage.from('gallery').remove([path]);
                 }
@@ -232,13 +234,23 @@ export default function GalleryManager() {
             <div className="flex gap-4 border-b border-white/10 pb-4">
                 <button
                     onClick={() => setActiveTab("upload")}
-                    className={cn("px-4 py-2 rounded-lg transition-all", activeTab === "upload" ? "bg-teal-500/20 text-teal-300" : "text-white/60 hover:bg-white/5")}
+                    className={cn(
+                        "px-4 py-2 rounded-xl transition-all font-medium text-sm",
+                        activeTab === "upload"
+                            ? "bg-indigo-500/10 text-indigo-300 border border-indigo-500/20"
+                            : "text-white/60 hover:bg-white/5 hover:text-white"
+                    )}
                 >
-                    Upload Photos
+                    Manage & Upload
                 </button>
                 <button
                     onClick={() => setActiveTab("create")}
-                    className={cn("px-4 py-2 rounded-lg transition-all flex items-center gap-2", activeTab === "create" ? "bg-teal-500/20 text-teal-300" : "text-white/60 hover:bg-white/5")}
+                    className={cn(
+                        "px-4 py-2 rounded-xl transition-all font-medium text-sm flex items-center gap-2",
+                        activeTab === "create"
+                            ? "bg-indigo-500/10 text-indigo-300 border border-indigo-500/20"
+                            : "text-white/60 hover:bg-white/5 hover:text-white"
+                    )}
                 >
                     <Plus className="w-4 h-4" /> Create New Album
                 </button>
@@ -246,75 +258,82 @@ export default function GalleryManager() {
 
             {/* CREATE ALBUM TAB */}
             {activeTab === "create" && (
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 max-w-2xl">
+                <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:p-8 max-w-2xl backdrop-blur-xl">
                     <h2 className="text-xl font-bold text-white mb-6">Create New Gallery Album</h2>
-                    <form onSubmit={handleCreateAlbum} className="space-y-4">
+                    <form onSubmit={handleCreateAlbum} className="space-y-5">
                         <div>
-                            <label className="block text-xs uppercase tracking-widest text-white/50 mb-2">Album Title</label>
+                            <label className="block text-[11px] uppercase tracking-widest text-white/50 mb-2 font-mono">Album Title</label>
                             <input
                                 value={newAlbum.title}
                                 onChange={e => setNewAlbum({ ...newAlbum, title: e.target.value })}
-                                className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:border-teal-500/50 outline-none"
+                                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-indigo-500/50 outline-none transition-all focus:bg-indigo-500/5"
                                 placeholder="e.g. Math Olympiad 2025"
                                 required
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-5">
                             <div>
-                                <label className="block text-xs uppercase tracking-widest text-white/50 mb-2">Category</label>
+                                <label className="block text-[11px] uppercase tracking-widest text-white/50 mb-2 font-mono">Category</label>
                                 <select
                                     value={newAlbum.category}
                                     onChange={e => setNewAlbum({ ...newAlbum, category: e.target.value })}
-                                    className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white outline-none"
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-indigo-500/50 transition-all focus:bg-indigo-500/5"
                                 >
                                     {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs uppercase tracking-widest text-white/50 mb-2">Event Date</label>
+                                <label className="block text-[11px] uppercase tracking-widest text-white/50 mb-2 font-mono">Event Date</label>
                                 <input
                                     type="date"
                                     value={newAlbum.date}
                                     onChange={e => setNewAlbum({ ...newAlbum, date: e.target.value })}
-                                    className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white outline-none"
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-indigo-500/50 transition-all focus:bg-indigo-500/5 [color-scheme:dark]"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-xs uppercase tracking-widest text-white/50 mb-2">Description</label>
+                            <label className="block text-[11px] uppercase tracking-widest text-white/50 mb-2 font-mono">Description</label>
                             <textarea
                                 value={newAlbum.description}
                                 onChange={e => setNewAlbum({ ...newAlbum, description: e.target.value })}
-                                className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:border-teal-500/50 outline-none h-24"
+                                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-indigo-500/50 outline-none h-24 transition-all focus:bg-indigo-500/5 resize-none"
                                 placeholder="Brief description of the event..."
                             />
                         </div>
 
                         <div>
-                            <label className="block text-xs uppercase tracking-widest text-white/50 mb-2">Cover Image</label>
-                            <div className="border border-dashed border-white/20 rounded-lg p-4 text-center cursor-pointer hover:bg-white/5 transition-colors relative">
+                            <label className="block text-[11px] uppercase tracking-widest text-white/50 mb-2 font-mono">Cover Image</label>
+                            <div className="border border-dashed border-white/20 rounded-xl p-6 text-center cursor-pointer hover:bg-white/5 hover:border-white/30 transition-all relative group">
                                 <input
                                     type="file"
                                     onChange={e => setCoverImage(e.target.files[0])}
-                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                                     accept="image/*"
                                 />
-                                {coverImage ? (
-                                    <span className="text-teal-400">{coverImage.name}</span>
-                                ) : (
-                                    <span className="text-white/40 text-sm">Click to select cover image</span>
-                                )}
+                                <div className="pointer-events-none">
+                                    {coverImage ? (
+                                        <div className="flex items-center justify-center gap-2 text-indigo-400">
+                                            <CheckCircle className="w-5 h-5" />
+                                            <span className="font-medium">{coverImage.name}</span>
+                                        </div>
+                                    ) : (
+                                        <div className="text-white/40 text-sm group-hover:text-white/60 transition-colors">
+                                            Click to select cover image
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
                         <button
                             type="submit"
                             disabled={creatingAlbum}
-                            className="w-full bg-teal-500 hover:bg-teal-400 text-black font-bold py-3 rounded-xl transition-all disabled:opacity-50 mt-4"
+                            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50 mt-4 shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)]"
                         >
-                            {creatingAlbum ? "Creating..." : "Create Album"}
+                            {creatingAlbum ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Creating...</span> : "Create Album"}
                         </button>
                     </form>
                 </div>
@@ -324,52 +343,61 @@ export default function GalleryManager() {
             {activeTab === "upload" && (
                 <div className="space-y-8">
                     {/* Album Selector */}
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                        <label className="block text-xs uppercase tracking-widest text-white/50 mb-2">Select Album to Manage</label>
-                        {loading ? <div className="text-white/50">Loading albums...</div> : (
+                    <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
+                        <label className="block text-[11px] uppercase tracking-widest text-white/50 mb-2 font-mono">Select Album to Manage</label>
+                        {loading ? <div className="text-white/50 flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Loading albums...</div> : (
                             <div className="flex gap-4">
-                                <select
-                                    value={selectedAlbumId}
-                                    onChange={e => setSelectedAlbumId(e.target.value)}
-                                    className="flex-1 bg-black/40 border border-white/10 rounded-lg p-3 text-white outline-none"
-                                >
-                                    <option value="">-- Select an Album --</option>
-                                    {albums.map(album => (
-                                        <option key={album.id} value={album.id}>{album.title} ({new Date(album.created_at).toLocaleDateString()})</option>
-                                    ))}
-                                </select>
-                                <button onClick={fetchAlbums} className="p-3 bg-white/10 rounded-lg hover:bg-white/20 text-white"><ImageIcon className="w-5 h-5" /></button>
+                                <div className="relative flex-1">
+                                    <select
+                                        value={selectedAlbumId}
+                                        onChange={e => setSelectedAlbumId(e.target.value)}
+                                        className="w-full appearance-none bg-black/40 border border-white/10 rounded-xl p-3 px-4 text-white outline-none focus:border-indigo-500/50 transition-all"
+                                    >
+                                        <option value="">-- Select an Album --</option>
+                                        {albums.map(album => (
+                                            <option key={album.id} value={album.id}>{album.title} ({new Date(album.created_at).toLocaleDateString()})</option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
+                                        ▼
+                                    </div>
+                                </div>
+                                <button onClick={fetchAlbums} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 text-white transition-all"><ImageIcon className="w-5 h-5" /></button>
                             </div>
                         )}
                         {albums.length === 0 && !loading && (
-                            <div className="mt-2 text-amber-400 text-sm">No albums found. Create one first!</div>
+                            <div className="mt-3 text-amber-400 text-sm flex items-center gap-2">
+                                <AlertTriangle className="w-4 h-4" /> No albums found. Create one first!
+                            </div>
                         )}
                     </div>
 
                     {selectedAlbumId && (
                         <>
                             {/* Upload Area */}
-                            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                            <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
                                 <h3 className="text-lg font-bold text-white mb-4">Add Photos</h3>
                                 <div
                                     {...getRootProps()}
                                     className={cn(
-                                        "border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all duration-300",
-                                        isDragActive ? "border-teal-500 bg-teal-500/10" : "border-white/10 hover:border-white/30 bg-black/20"
+                                        "border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 group",
+                                        isDragActive ? "border-indigo-500 bg-indigo-500/10" : "border-white/10 hover:border-indigo-500/50 bg-black/20 hover:bg-black/30"
                                     )}
                                 >
                                     <input {...getInputProps()} />
-                                    <Upload className="w-10 h-10 text-white/30 mx-auto mb-4" />
-                                    <p className="text-white/60 font-mono text-sm">Drag & drop photos here, or click to select</p>
-                                    <p className="text-white/30 text-xs mt-2">Supports JPG, PNG, WEBP</p>
+                                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 border border-white/10">
+                                        <Upload className={cn("w-8 h-8 transition-colors", isDragActive ? "text-indigo-400" : "text-white/30 group-hover:text-white/60")} />
+                                    </div>
+                                    <p className="text-white/80 font-medium">Drag & drop photos here, or click to select</p>
+                                    <p className="text-white/40 text-xs mt-2 font-mono">Supports high-res JPG, PNG, WEBP</p>
                                 </div>
 
                                 {/* Preview Queue */}
                                 {files.length > 0 && (
-                                    <div className="mt-6">
-                                        <div className="flex flex-wrap gap-2 mb-4">
+                                    <div className="mt-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                                        <div className="flex flex-wrap gap-3 mb-6">
                                             {files.map((file, i) => (
-                                                <div key={i} className="relative w-16 h-16 rounded-md overflow-hidden group">
+                                                <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden group border border-white/10">
                                                     <Image src={file.preview} alt="preview" fill className="object-cover" />
                                                 </div>
                                             ))}
@@ -377,7 +405,7 @@ export default function GalleryManager() {
                                         <button
                                             onClick={handleUploadPhotos}
                                             disabled={uploading}
-                                            className="bg-teal-500 hover:bg-teal-400 text-black font-bold px-6 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
+                                            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-3 rounded-xl flex items-center gap-2 disabled:opacity-50 transition-all shadow-lg shadow-indigo-500/20"
                                         >
                                             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                                             Upload {files.length} Images
@@ -388,29 +416,34 @@ export default function GalleryManager() {
 
                             {/* Existing Images Grid */}
                             <div>
-                                <h3 className="text-lg font-bold text-white mb-4">Gallery Images ({uploadedImages.length})</h3>
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-xl font-bold text-white">Gallery Images <span className="text-white/40 text-lg font-normal ml-2">({uploadedImages.length})</span></h3>
+                                </div>
+
                                 {uploadedImages.length === 0 ? (
-                                    <p className="text-white/30 italic">No images in this album yet.</p>
+                                    <div className="text-center py-12 rounded-3xl border border-dashed border-white/10">
+                                        <p className="text-white/30 italic">No images in this album yet.</p>
+                                    </div>
                                 ) : (
                                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                         {uploadedImages.map((img) => (
-                                            <div key={img.id} className="relative group aspect-square bg-black/40 rounded-xl overflow-hidden border border-white/5">
+                                            <div key={img.id} className="relative group aspect-square bg-black/40 rounded-2xl overflow-hidden border border-white/10 shadow-sm">
                                                 <Image
                                                     src={img.url}
                                                     alt="uploaded"
                                                     fill
-                                                    className="object-cover transition-transform group-hover:scale-110"
+                                                    className="object-cover transition-transform duration-500 group-hover:scale-110"
                                                 />
-                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                                                     <button
                                                         onClick={() => handleDeleteImage(img.id, img.url)}
-                                                        className="p-2 bg-red-500/20 text-red-400 rounded-full hover:bg-red-500 hover:text-white transition-all"
+                                                        className="p-3 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-red-500/20 hover:border-red-500/50"
                                                     >
                                                         <Trash2 className="w-5 h-5" />
                                                     </button>
                                                 </div>
-                                                <div className="absolute bottom-0 left-0 right-0 p-1 bg-black/50 text-[10px] text-white/70 text-center truncate">
-                                                    {img.width}x{img.height}
+                                                <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/90 to-transparent text-[10px] text-white/70 text-center truncate font-mono">
+                                                    {img.width} × {img.height}
                                                 </div>
                                             </div>
                                         ))}

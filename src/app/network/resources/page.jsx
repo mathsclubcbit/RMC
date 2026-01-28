@@ -6,7 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 import NetworkSidebar from "@/components/network/Sidebar";
 import { createClient } from "@/lib/supabase/client";
 import {
-    FolderOpen,
+    Folder,
+    FolderPlus,
     Plus,
     Link as LinkIcon,
     FileText,
@@ -16,7 +17,10 @@ import {
     Loader2,
     X,
     Search,
-    Check
+    ChevronRight,
+    ArrowLeft,
+    UploadCloud,
+    Download
 } from "lucide-react";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
@@ -28,9 +32,19 @@ const TYPE_CONFIG = {
 
 export default function ResourcesPage() {
     const { profile, isPresident } = useAuth();
+
+    // Data State
+    const [folders, setFolders] = useState([]);
     const [resources, setResources] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [showModal, setShowModal] = useState(false);
+
+    // Navigation State
+    const [currentFolder, setCurrentFolder] = useState(null); // null = root
+    const [breadcrumbs, setBreadcrumbs] = useState([{ id: null, name: "Home" }]);
+
+    // UI State
+    const [showResourceModal, setShowResourceModal] = useState(false);
+    const [showFolderModal, setShowFolderModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [filterType, setFilterType] = useState("all");
 
@@ -53,10 +67,16 @@ export default function ResourcesPage() {
 
     const supabase = useMemo(() => createClient(), []);
 
-    const fetchResources = useCallback(async () => {
+    const fetchData = useCallback(async () => {
         if (!profile?.id) return;
+        setLoading(true);
         try {
-            const { data, error } = await supabase
+            let folderQuery = supabase
+                .from("folders")
+                .select("*")
+                .order("name", { ascending: true });
+
+            let resourceQuery = supabase
                 .from("resources")
                 .select(`
                     *,
@@ -64,54 +84,114 @@ export default function ResourcesPage() {
                 `)
                 .order("created_at", { ascending: false });
 
-            if (error) throw error;
-            setResources(data || []);
+            // Search Logic
+            if (searchQuery.trim()) {
+                // GLOBAL SEARCH: Ignore folder structure
+                const term = `%${searchQuery.trim()}%`;
+                folderQuery = folderQuery.ilike("name", term);
+                resourceQuery = resourceQuery.or(`title.ilike.${term},description.ilike.${term}`);
+            } else {
+                // NAVIGATION MODE: Respect current folder
+                if (currentFolder?.id) {
+                    folderQuery = folderQuery.eq("parent_id", currentFolder.id);
+                    resourceQuery = resourceQuery.eq("folder_id", currentFolder.id);
+                } else {
+                    folderQuery = folderQuery.is("parent_id", null);
+                    resourceQuery = resourceQuery.is("folder_id", null);
+                }
+            }
+
+            const [{ data: folderData }, { data: resourceData }] = await Promise.all([
+                folderQuery,
+                resourceQuery
+            ]);
+
+            setFolders(folderData || []);
+            setResources(resourceData || []);
         } catch (error) {
-            console.error("Error fetching resources:", error);
+            console.error("Error fetching data:", error);
+            showAlert("Error", "Failed to load resources.", "error");
         } finally {
             setLoading(false);
         }
-    }, [profile?.id, supabase]);
+    }, [profile?.id, supabase, currentFolder, searchQuery]);
 
     useEffect(() => {
-        fetchResources();
+        // Debounce Search
+        const timer = setTimeout(() => {
+            fetchData();
+        }, 300); // 300ms debounce
+        return () => clearTimeout(timer);
+    }, [fetchData]);
 
-        // Realtime subscription
-        const channel = supabase
-            .channel("resources-changes")
-            .on("postgres_changes", { event: "*", schema: "public", table: "resources" }, fetchResources)
-            .subscribe();
+    // Navigation Handlers
+    const handleEnterFolder = (folder) => {
+        setCurrentFolder(folder);
+        setBreadcrumbs(prev => [...prev, folder]);
+    };
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [fetchResources, supabase]);
+    const handleNavigateBreadcrumb = (index) => {
+        const newBreadcrumbs = breadcrumbs.slice(0, index + 1);
+        setBreadcrumbs(newBreadcrumbs);
+        setCurrentFolder(newBreadcrumbs[index].id ? newBreadcrumbs[index] : null);
+    };
 
-    const handleDelete = async (resourceId) => {
+    const handleNavigateUp = () => {
+        if (breadcrumbs.length > 1) {
+            handleNavigateBreadcrumb(breadcrumbs.length - 2);
+        }
+    };
+
+    // Delete Handlers
+    const handleDeleteResource = async (resourceId) => {
         showConfirm(
             "Delete Resource",
-            "Are you sure you want to delete this resource? This action cannot be undone.",
+            "Are you sure? This database record will be removed. (Note: Drive files might need manual cleanup if not owned by service account)",
             async () => {
                 try {
                     const { error } = await supabase.from("resources").delete().eq("id", resourceId);
                     if (error) throw error;
-                    fetchResources();
-                    showAlert("Deleted", "Resource has been removed successfully.", "success");
-                } catch (error) {
-                    console.error("Error deleting resource:", error);
-                    showAlert("Error", "Failed to delete resource.", "error");
+                    fetchData();
+                    showAlert("Deleted", "Resource removed.", "success");
+                } catch (err) {
+                    console.error(err);
+                    showAlert("Error", "Failed to delete.", "error");
                 }
             },
             true
         );
     };
 
-    const filteredResources = resources.filter(resource => {
-        const matchesSearch = resource.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            resource.description?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesType = filterType === "all" || resource.type === filterType;
-        return matchesSearch && matchesType;
-    });
+    const handleDeleteFolder = async (folderId) => {
+        showConfirm(
+            "Delete Folder",
+            "Warning: This will delete the folder AND ALL its contents (subfolders and resources). This cannot be undone.",
+            async () => {
+                try {
+                    const { error } = await supabase.from("folders").delete().eq("id", folderId);
+                    if (error) throw error;
+                    fetchData();
+                    showAlert("Deleted", "Folder removed.", "success");
+                } catch (err) {
+                    console.error(err);
+                    showAlert("Error", "Failed to delete folder.", "error");
+                }
+            },
+            true
+        );
+    };
+
+    // Filtering (Client-side Type filtering only now)
+    const filteredContent = useMemo(() => {
+        // We rely on Server-Side search now, so we only filter by TYPE locally
+        const filteredResources = resources.filter(r => {
+            const matchesType = filterType === "all" || r.type === filterType;
+            return matchesType;
+        });
+
+        return { folders, resources: filteredResources };
+    }, [filterType, folders, resources]);
+
 
     return (
         <div className="flex min-h-screen">
@@ -119,333 +199,452 @@ export default function ResourcesPage() {
 
             <main className="flex-1 p-6 lg:p-10 pt-24 lg:pt-10 overflow-auto">
                 {/* Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10"
-                >
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                     <div>
                         <h1 className="text-3xl lg:text-4xl font-serif font-bold text-white mb-2">
                             Resources
                         </h1>
                         <p className="text-white/50">
-                            Shared documents, templates, and important links
+                            Central knowledge base: Papers, Reels, Docs & Templates
                         </p>
                     </div>
 
-                    {isPresident() && (
+                    <div className="flex gap-3">
                         <button
-                            onClick={() => setShowModal(true)}
-                            className="flex items-center gap-2 px-5 py-3 bg-teal text-black font-bold rounded-xl hover:bg-teal/80 transition-colors"
+                            onClick={() => setShowFolderModal(true)}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-white/10 text-white font-medium rounded-xl hover:bg-white/20 transition-colors"
+                        >
+                            <FolderPlus className="w-5 h-5" />
+                            New Folder
+                        </button>
+                        <button
+                            onClick={() => setShowResourceModal(true)}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-teal text-black font-bold rounded-xl hover:bg-teal/80 transition-colors"
                         >
                             <Plus className="w-5 h-5" />
                             Add Resource
                         </button>
+                    </div>
+                </div>
+
+                {/* Breadcrumbs & Navigation */}
+                <div className="flex items-center gap-2 mb-6 text-sm overflow-x-auto pb-2 scrollbar-hide">
+                    {currentFolder && (
+                        <button onClick={handleNavigateUp} className="mr-2 p-1 hover:bg-white/10 rounded-lg">
+                            <ArrowLeft className="w-4 h-4 text-white/70" />
+                        </button>
                     )}
-                </motion.div>
+                    {breadcrumbs.map((crumb, index) => (
+                        <div key={index} className="flex items-center whitespace-nowrap">
+                            <button
+                                onClick={() => handleNavigateBreadcrumb(index)}
+                                className={`hover:text-teal transition-colors ${index === breadcrumbs.length - 1 ? "text-white font-bold" : "text-white/50"
+                                    }`}
+                            >
+                                {crumb.name}
+                            </button>
+                            {index < breadcrumbs.length - 1 && (
+                                <ChevronRight className="w-4 h-4 text-white/30 mx-1" />
+                            )}
+                        </div>
+                    ))}
+                </div>
 
                 {/* Filters */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="flex flex-col md:flex-row gap-4 mb-6"
-                >
-                    {/* Search */}
+                <div className="flex flex-col md:flex-row gap-4 mb-8">
                     <div className="relative flex-1">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search resources..."
+                            placeholder="Search in current folder..."
                             className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white placeholder-white/20 focus:border-teal/50 outline-none"
                         />
                     </div>
-
-                    {/* Type Filter */}
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setFilterType("all")}
-                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${filterType === "all"
-                                ? "bg-white/10 text-white"
-                                : "text-white/50 hover:text-white"
-                                }`}
-                        >
-                            All
-                        </button>
-                        {Object.entries(TYPE_CONFIG).map(([key, config]) => (
+                    <div className="flex gap-2 text-sm">
+                        {["all", "link", "file"].map(t => (
                             <button
-                                key={key}
-                                onClick={() => setFilterType(key)}
-                                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${filterType === key
-                                    ? config.color
-                                    : "text-white/50 hover:text-white"
+                                key={t}
+                                onClick={() => setFilterType(t)}
+                                className={`px-4 py-2 rounded-xl capitalize transition-colors ${filterType === t
+                                    ? "bg-teal/20 text-teal border border-teal/30"
+                                    : "bg-white/5 text-white/50 hover:text-white"
                                     }`}
                             >
-                                {config.label}
+                                {t}
                             </button>
                         ))}
                     </div>
-                </motion.div>
+                </div>
 
-                {/* Resources Grid */}
+                {/* Content Grid */}
                 {loading ? (
-                    <div className="flex items-center justify-center py-20">
+                    <div className="flex justify-center py-20">
                         <Loader2 className="w-10 h-10 text-teal animate-spin" />
                     </div>
-                ) : filteredResources.length === 0 ? (
-                    <div className="text-center py-20">
-                        <FolderOpen className="w-16 h-16 text-white/10 mx-auto mb-4" />
-                        <h3 className="text-xl text-white/50 mb-2">No Resources Found</h3>
-                        <p className="text-white/30">
-                            {searchQuery || filterType !== "all" ? "Try adjusting your search or filters" : "Add your first resource"}
-                        </p>
-                    </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredResources.map((resource, index) => {
-                            const typeConfig = TYPE_CONFIG[resource.type] || TYPE_CONFIG.link;
-                            const Icon = typeConfig.icon;
+                    <div className="space-y-8">
 
-                            return (
-                                <motion.div
-                                    key={resource.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.03 }}
-                                    className="bg-gray-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-5 hover:border-teal/20 transition-colors group"
-                                >
-                                    <div className="flex items-start justify-between mb-3">
-                                        <div className={`p-2 rounded-lg ${typeConfig.color.split(' ')[0]}`}>
-                                            <Icon className={`w-5 h-5 ${typeConfig.color.split(' ')[1]}`} />
+                        {/* 1. Folders Section */}
+                        {filteredContent.folders.length > 0 && (
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                {filteredContent.folders.map(folder => (
+                                    <motion.div
+                                        key={folder.id}
+                                        layout
+                                        onDoubleClick={() => handleEnterFolder(folder)}
+                                        className="group cursor-pointer bg-white/5 border border-white/5 p-4 rounded-xl hover:bg-white/10 hover:border-teal/30 transition-all"
+                                    >
+                                        <div className="flex justify-between items-start mb-2">
+                                            <Folder className="w-8 h-8 text-teal/80 fill-teal/20" />
+                                            {/* Context Menu Placeholder (for delete) */}
+                                            {(isPresident() || folder.created_by === profile?.id) && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id); }}
+                                                    className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-400"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
-                                        <span className={`px-2 py-0.5 text-[10px] uppercase tracking-widest rounded-full border ${typeConfig.color}`}>
-                                            {typeConfig.label}
-                                        </span>
-                                    </div>
+                                        <h3 className="text-white font-medium truncate" title={folder.name}>
+                                            {folder.name}
+                                        </h3>
+                                        <p className="text-white/30 text-xs mt-1">Folder</p>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
 
-                                    <h3 className="text-white font-medium mb-2 line-clamp-1">{resource.title}</h3>
-                                    {resource.description && (
-                                        <p className="text-white/40 text-sm mb-4 line-clamp-2">{resource.description}</p>
-                                    )}
+                        {/* 2. Resources Section */}
+                        {filteredContent.resources.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {filteredContent.resources.map((resource, index) => {
+                                    const typeConfig = TYPE_CONFIG[resource.type] || TYPE_CONFIG.link;
+                                    const Icon = typeConfig.icon;
 
-                                    <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
-                                        {resource.url && (
-                                            <a
-                                                href={resource.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center gap-1.5 text-teal text-sm hover:underline"
-                                            >
-                                                <ExternalLink className="w-4 h-4" />
-                                                Open
-                                            </a>
-                                        )}
+                                    return (
+                                        <motion.div
+                                            key={resource.id}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: index * 0.05 }}
+                                            className="bg-gray-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-5 hover:border-teal/20 transition-all group"
+                                        >
+                                            <div className="flex items-start justify-between mb-3">
+                                                <div className={`p-2 rounded-lg ${typeConfig.color.split(' ')[0]}`}>
+                                                    <Icon className={`w-5 h-5 ${typeConfig.color.split(' ')[1]}`} />
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    {(isPresident() || resource.created_by === profile?.id) && (
+                                                        <button
+                                                            onClick={() => handleDeleteResource(resource.id)}
+                                                            className="p-1.5 text-white/30 hover:text-red-400 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
 
-                                        {isPresident() && (
-                                            <button
-                                                onClick={() => handleDelete(resource.id)}
-                                                className="p-1.5 text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                    </div>
-                                </motion.div>
-                            );
-                        })}
+                                            <h3 className="text-white font-medium mb-1 line-clamp-1" title={resource.title}>
+                                                {resource.title}
+                                            </h3>
+                                            <p className="text-white/40 text-sm mb-4 line-clamp-2 min-h-[40px]">
+                                                {resource.description || "No description provided."}
+                                            </p>
+
+                                            <div className="pt-4 border-t border-white/5">
+                                                <a
+                                                    href={resource.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex w-full items-center justify-center gap-2 px-4 py-2 bg-white/5 hover:bg-teal/20 hover:text-teal rounded-xl text-white/70 text-sm transition-colors"
+                                                >
+                                                    {resource.type === 'file' ? (
+                                                        <>
+                                                            <Download className="w-4 h-4" /> View / Download
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <ExternalLink className="w-4 h-4" /> Open Link
+                                                        </>
+                                                    )}
+                                                </a>
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            // Empty State (only if no resources AND no folders match)
+                            filteredContent.folders.length === 0 && (
+                                <div className="text-center py-20 border-2 border-dashed border-white/5 rounded-3xl">
+                                    <FolderPlus className="w-16 h-16 text-white/10 mx-auto mb-4" />
+                                    <h3 className="text-xl text-white/50 mb-2">This folder is empty</h3>
+                                    <p className="text-white/30">Start by creating a folder or adding a resource.</p>
+                                </div>
+                            )
+                        )}
                     </div>
                 )}
             </main>
 
-            {/* Add Resource Modal */}
+            {/* Modals */}
             <AnimatePresence>
-                {showModal && (
+                {showFolderModal && (
+                    <CreateFolderModal
+                        parentId={currentFolder?.id}
+                        onClose={() => setShowFolderModal(false)}
+                        onSuccess={() => { setShowFolderModal(false); fetchData(); }}
+                    />
+                )}
+                {showResourceModal && (
                     <AddResourceModal
-                        onClose={() => setShowModal(false)}
-                        onSuccess={() => {
-                            setShowModal(false);
-                            fetchResources();
-                        }}
+                        folderId={currentFolder?.id}
+                        onClose={() => setShowResourceModal(false)}
+                        onSuccess={() => { setShowResourceModal(false); fetchData(); }}
                     />
                 )}
             </AnimatePresence>
-            {/* Global Status/Confirmation Modal */}
-            <ConfirmationModal
-                isOpen={statusModal.isOpen}
-                type={statusModal.type}
-                title={statusModal.title}
-                message={statusModal.message}
-                isDangerous={statusModal.isDangerous}
-                onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))}
-                onConfirm={statusModal.onConfirm ? () => {
-                    statusModal.onConfirm();
-                    setStatusModal(prev => ({ ...prev, isOpen: false }));
-                } : null}
-            />
+
+            <ConfirmationModal {...statusModal} onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))} />
         </div>
     );
 }
 
-function AddResourceModal({ onClose, onSuccess }) {
+// --- MODALS ---
+
+function CreateFolderModal({ parentId, onClose, onSuccess }) {
     const { profile } = useAuth();
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
-    const [type, setType] = useState("link");
-    const [url, setUrl] = useState("");
+    const [name, setName] = useState("");
     const [saving, setSaving] = useState(false);
-    const [error, setError] = useState("");
     const supabase = createClient();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError("");
-
-        if (!title.trim()) {
-            setError("Title is required");
-            return;
-        }
-
-        if (!url.trim()) {
-            setError("URL is required");
-            return;
-        }
-
         setSaving(true);
-
         try {
-            const { error: insertError } = await supabase
-                .from("resources")
-                .insert({
-                    title: title.trim(),
-                    description: description.trim() || null,
-                    type,
-                    url: url.trim(),
-                    created_by: profile.id
-                });
-
-            if (insertError) throw insertError;
+            const { error } = await supabase.from("folders").insert({
+                name: name.trim(),
+                parent_id: parentId || null,
+                created_by: profile.id
+            });
+            if (error) throw error;
             onSuccess();
         } catch (err) {
-            console.error("Error creating resource:", err);
-            setError(err.message || "Failed to create resource");
+            console.error(err);
         } finally {
             setSaving(false);
         }
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        >
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
             <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                onClick={(e) => e.stopPropagation()}
-                className="bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl w-full max-w-md overflow-hidden"
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                onClick={e => e.stopPropagation()}
+                className="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-sm p-6"
             >
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-                    <h2 className="text-xl font-serif font-bold text-white">Add Resource</h2>
-                    <button onClick={onClose} className="text-white/50 hover:text-white">
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-
-                {/* Body */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                    {error && (
-                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
-                            {error}
-                        </div>
-                    )}
-
-                    <div className="space-y-2">
-                        <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
-                            Title *
-                        </label>
-                        <input
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="Resource title"
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:border-teal/50 outline-none"
-                        />
+                <h2 className="text-xl font-bold text-white mb-4">Create New Folder</h2>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <input
+                        autoFocus
+                        value={name} onChange={e => setName(e.target.value)}
+                        placeholder="Folder Name"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-teal/50"
+                    />
+                    <div className="flex gap-2">
+                        <button type="button" onClick={onClose} className="flex-1 py-3 text-white/50 hover:text-white">Cancel</button>
+                        <button type="submit" disabled={!name.trim() || saving} className="flex-1 bg-teal text-black font-bold rounded-xl disabled:opacity-50">
+                            {saving ? "Creating..." : "Create"}
+                        </button>
                     </div>
-
-                    <div className="space-y-2">
-                        <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
-                            Description
-                        </label>
-                        <textarea
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Brief description..."
-                            rows={2}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:border-teal/50 outline-none resize-none"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
-                            Type
-                        </label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {Object.entries(TYPE_CONFIG).map(([key, config]) => {
-                                const Icon = config.icon;
-                                return (
-                                    <button
-                                        key={key}
-                                        type="button"
-                                        onClick={() => setType(key)}
-                                        className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border transition-all text-sm ${type === key
-                                            ? config.color
-                                            : "bg-white/5 border-white/10 text-white/50"
-                                            }`}
-                                    >
-                                        <Icon className="w-4 h-4" />
-                                        {config.label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
-                            URL *
-                        </label>
-                        <input
-                            type="url"
-                            value={url}
-                            onChange={(e) => setUrl(e.target.value)}
-                            placeholder="https://..."
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:border-teal/50 outline-none"
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={saving}
-                        className="w-full bg-teal text-black font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-teal/80 transition-colors disabled:opacity-50"
-                    >
-                        {saving ? (
-                            <>
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                                Adding...
-                            </>
-                        ) : (
-                            "Add Resource"
-                        )}
-                    </button>
                 </form>
             </motion.div>
-        </motion.div>
+        </div>
+    );
+}
+
+function AddResourceModal({ folderId, onClose, onSuccess }) {
+    const { profile } = useAuth();
+    const [mode, setMode] = useState("link"); // link | file
+
+    // Form State
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const [url, setUrl] = useState("");
+    const [file, setFile] = useState(null);
+
+    const [uploading, setUploading] = useState(false);
+    const [error, setError] = useState("");
+
+    const supabase = createClient();
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+        if (!title.trim()) return setError("Title required");
+
+        setUploading(true);
+
+        try {
+            let finalUrl = url;
+            let driveFileId = null;
+            let resourceType = mode === 'file' ? 'file' : 'link';
+
+            // 1. Handle File Upload (Direct to Drive)
+            if (mode === "file") {
+                if (!file) throw new Error("Please select a file");
+
+                // Step A: Get Resumable Upload URL
+                const initRes = await fetch("/api/network/resources/upload/get-url", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fileName: file.name,
+                        fileType: file.type
+                    })
+                });
+
+                const initData = await initRes.json();
+                if (!initRes.ok) throw new Error(initData.error || "Failed to initiate upload");
+
+                const uploadUrl = initData.uploadUrl;
+
+                // Step B: Upload directly to Google Drive
+                const uploadRes = await fetch(uploadUrl, {
+                    method: "PUT",
+                    headers: {
+                        'Content-Type': file.type
+                    },
+                    body: file
+                });
+
+                if (!uploadRes.ok) throw new Error("Failed to upload file to Drive");
+
+                // Step C: Get File Metadata
+                const driveData = await uploadRes.json();
+
+                finalUrl = driveData.webViewLink;
+                driveFileId = driveData.id;
+            } else {
+                if (!url.trim()) throw new Error("URL required");
+            }
+
+            // 2. Insert to Supabase
+            const { error: dbError } = await supabase.from("resources").insert({
+                title: title.trim(),
+                description: description.trim(),
+                type: resourceType,
+                url: finalUrl,
+                drive_file_id: driveFileId,
+                folder_id: folderId || null,
+                created_by: profile.id
+            });
+
+            if (dbError) throw dbError;
+            onSuccess();
+
+        } catch (err) {
+            console.error(err);
+            setError(err.message);
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
+                onClick={e => e.stopPropagation()}
+                className="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden"
+            >
+                <div className="p-6 border-b border-white/5 flex justify-between items-center">
+                    <h2 className="text-xl font-bold text-white">Add Resource</h2>
+                    <button onClick={onClose}><X className="w-5 h-5 text-white/50 hover:text-white" /></button>
+                </div>
+
+                <div className="p-6">
+                    {/* Mode Toggle */}
+                    <div className="flex bg-white/5 rounded-xl p-1 mb-6">
+                        <button
+                            onClick={() => setMode("link")}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${mode === "link" ? "bg-teal text-black shadow-lg" : "text-white/50 hover:text-white"}`}
+                        >
+                            External Link
+                        </button>
+                        <button
+                            onClick={() => setMode("file")}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${mode === "file" ? "bg-teal text-black shadow-lg" : "text-white/50 hover:text-white"}`}
+                        >
+                            Upload File
+                        </button>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {error && <div className="text-red-400 text-sm bg-red-500/10 p-3 rounded-lg">{error}</div>}
+
+                        <div>
+                            <label className="text-xs uppercase text-white/40 font-bold mb-1 block">Title</label>
+                            <input
+                                value={title} onChange={e => setTitle(e.target.value)}
+                                placeholder="e.g. Advanced Calculus Paper"
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-teal/50"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="text-xs uppercase text-white/40 font-bold mb-1 block">Description</label>
+                            <textarea
+                                value={description} onChange={e => setDescription(e.target.value)}
+                                placeholder="Optional details..."
+                                rows={2}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-teal/50 resize-none"
+                            />
+                        </div>
+
+                        {mode === "link" ? (
+                            <div>
+                                <label className="text-xs uppercase text-white/40 font-bold mb-1 block">URL</label>
+                                <input
+                                    value={url} onChange={e => setUrl(e.target.value)}
+                                    placeholder="https://instagram.com/reel/..."
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-teal/50"
+                                />
+                            </div>
+                        ) : (
+                            <div>
+                                <label className="text-xs uppercase text-white/40 font-bold mb-1 block">File (PDF, Doc, Zip)</label>
+                                <div className="border-2 border-dashed border-white/10 rounded-xl p-8 text-center hover:border-teal/30 transition-colors relative">
+                                    <input
+                                        type="file"
+                                        onChange={e => setFile(e.target.files[0])}
+                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                    />
+                                    <UploadCloud className="w-8 h-8 text-teal mx-auto mb-2" />
+                                    {file ? (
+                                        <p className="text-teal font-medium">{file.name}</p>
+                                    ) : (
+                                        <p className="text-white/40 text-sm">Click or drag file to upload</p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={uploading}
+                            className="w-full mt-4 bg-teal text-black font-bold py-3 rounded-xl hover:bg-teal/80 transition-colors disabled:opacity-50 flex justify-center items-center gap-2"
+                        >
+                            {uploading && <Loader2 className="animate-spin w-4 h-4" />}
+                            {uploading ? "Processing..." : "Add Resource"}
+                        </button>
+                    </form>
+                </div>
+            </motion.div>
+        </div>
     );
 }

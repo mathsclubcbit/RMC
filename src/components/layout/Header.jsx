@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import NotificationManager from "@/components/notifications/NotificationManager";
 
 const navLinks = [
     { href: "/", label: "Home" },
@@ -57,6 +58,9 @@ export default function Header() {
                                 </Link>
                             );
                         })}
+                        <div className="pl-2 border-l border-white/10 ml-2">
+                            <NotificationManager />
+                        </div>
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -110,6 +114,11 @@ export default function Header() {
                                     </Link>
                                 );
                             })}
+
+                            <div className="px-4 py-3 flex items-center justify-between text-foreground/80">
+                                <span className="text-sm font-medium">Notifications</span>
+                                <NotificationManager />
+                            </div>
                         </div>
                     </div>
                 )}

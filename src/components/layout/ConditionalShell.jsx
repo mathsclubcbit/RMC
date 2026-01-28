@@ -9,14 +9,17 @@ import SmoothScroll from "@/components/ui/SmoothScroll";
 export default function ConditionalShell({ children }) {
     const pathname = usePathname();
 
-    // Check if we're in the network section
+    // Check if we're in specific specialized sections
     const isNetworkRoute = pathname?.startsWith("/network");
+    const isCoordinatorRoute = pathname?.startsWith("/coordinator");
+    const isAdminRoute = pathname?.startsWith("/admin");
+    const isSpecialRoute = isNetworkRoute || isCoordinatorRoute || isAdminRoute;
 
-    // For network routes, render without header/footer/smooth scroll
-    if (isNetworkRoute) {
+    // For these routes, render without public header/footer/smooth scroll
+    if (isSpecialRoute) {
         return (
             <>
-                {/* Math background disabled for network pages for performance */}
+                {/* Math background disabled for performance and clean UI */}
                 {/* <MathBackground /> */}
                 <div className="fixed inset-0 pointer-events-none z-0 bg-[url('/noise.png')] opacity-[0.15] mix-blend-overlay" />
                 <main className="flex-1 w-full overflow-x-hidden relative z-10">

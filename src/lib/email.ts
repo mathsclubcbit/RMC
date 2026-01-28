@@ -39,93 +39,91 @@ const generateTicketEmailHTML = (data: TicketEmailData, qrCodeDataUrl: string): 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Event Ticket - ${data.eventName}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&display=swap');
+    </style>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a;">
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #0f172a;">
+<body style="margin: 0; padding: 0; font-family: 'Cormorant Garamond', serif; background-color: #000000; color: #ffffff;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #000000;">
         <tr>
-            <td style="padding: 40px 20px;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 20px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+            <td style="padding: 60px 20px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; border: 1px solid rgba(45, 212, 191, 0.2); background: #050505; border-radius: 4px; box-shadow: 0 0 50px rgba(45, 212, 191, 0.1);">
                     
-                    <!-- Header with Gradient -->
+                    <!-- Top Symbol Decor -->
                     <tr>
-                        <td style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 50%, #f59e0b 100%); padding: 30px 40px; text-align: center;">
-                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                                🎫 Your Event Ticket
+                        <td style="padding: 20px 0 0; text-align: center; color: rgba(45, 212, 191, 0.3); font-size: 24px; letter-spacing: 15px;">
+                            ∫ ∞ ∑
+                        </td>
+                    </tr>
+
+                    <!-- Logo / Header -->
+                    <tr>
+                        <td style="padding: 20px 40px; text-align: center;">
+                            <h1 style="margin: 0; color: #2dd4bf; font-size: 38px; font-weight: 300; letter-spacing: 4px; text-transform: uppercase;">
+                                RMC <span style="font-weight: 600;">Events</span>
                             </h1>
-                            <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">
-                                Registration Approved - You're all set!
-                            </p>
+                            <div style="width: 60px; height: 1px; background: #2dd4bf; margin: 15px auto;"></div>
                         </td>
                     </tr>
 
-                    <!-- Greeting -->
+                    <!-- Hero Message -->
                     <tr>
-                        <td style="padding: 30px 40px 10px;">
-                            <p style="margin: 0; color: #94a3b8; font-size: 16px;">
-                                Hello <span style="color: #2dd4bf; font-weight: 600;">${data.participantName}</span>,
+                        <td style="padding: 20px 40px; text-align: center;">
+                            <p style="margin: 0; color: #a1a1aa; font-size: 16px; font-style: italic; letter-spacing: 1px;">
+                                "The Art of the Infinite."
                             </p>
-                            <p style="margin: 15px 0 0; color: #cbd5e1; font-size: 15px; line-height: 1.6;">
-                                Great news! Your registration has been approved. Here's your digital ticket for the event.
-                            </p>
+                            <h2 style="margin: 20px 0 0; color: #ffffff; font-size: 24px; font-weight: 400; letter-spacing: 1px;">
+                                Welcome to the Enigma, ${data.participantName}
+                            </h2>
                         </td>
                     </tr>
 
-                    <!-- QR Code Section -->
+                    <!-- Ticket Card (Glassmorphism Simulation) -->
                     <tr>
-                        <td style="padding: 20px 40px;">
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                        <td style="padding: 30px 40px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid rgba(45, 212, 191, 0.4); background: linear-gradient(135deg, rgba(6, 78, 59, 0.4) 0%, rgba(0, 0, 0, 0.8) 100%); border-radius: 12px; overflow: hidden;">
                                 <tr>
-                                    <td style="background: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%); border: 2px solid rgba(20, 184, 166, 0.3); border-radius: 16px; padding: 25px; text-align: center;">
-                                        <p style="margin: 0 0 15px; color: #f59e0b; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;">
-                                            ✨ SCAN FOR ENTRY
-                                        </p>
-                                        <img src="${qrCodeDataUrl}" alt="QR Code" style="width: 200px; height: 200px; border-radius: 12px; border: 4px solid #14b8a6; box-shadow: 0 0 30px rgba(20, 184, 166, 0.3);" />
-                                        <p style="margin: 15px 0 0; color: #64748b; font-size: 12px;">
-                                            Present this QR code at the venue for entry
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-                    <!-- Event Details Card -->
-                    <tr>
-                        <td style="padding: 10px 40px 30px;">
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; overflow: hidden;">
-                                <tr>
-                                    <td style="background: linear-gradient(90deg, #14b8a6 0%, #0d9488 100%); padding: 12px 20px;">
-                                        <h2 style="margin: 0; color: #ffffff; font-size: 16px; font-weight: 600;">
-                                            📅 Event Details
-                                        </h2>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 20px;">
+                                    <td style="padding: 0;">
+                                        <!-- QR Section -->
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                             <tr>
-                                                <td style="padding: 8px 0; border-bottom: 1px solid rgba(148, 163, 184, 0.1);">
-                                                    <span style="color: #64748b; font-size: 13px;">Event</span><br>
-                                                    <span style="color: #f1f5f9; font-size: 16px; font-weight: 600;">${data.eventName}</span>
+                                                <td style="padding: 40px; text-align: center;">
+                                                    <div style="display: inline-block; padding: 10px; border: 1px solid #2dd4bf; box-shadow: 0 0 20px rgba(45, 212, 191, 0.4); background: #ffffff;">
+                                                        <img src="${qrCodeDataUrl}" alt="Access QR" style="display: block; width: 180px; height: 180px;" />
+                                                    </div>
+                                                    <p style="margin: 20px 0 0; color: #2dd4bf; font-size: 12px; letter-spacing: 3px; font-weight: 600;">
+                                                        ACCESS CODE: <span style="color: #ffffff;">${data.registrationId}</span>
+                                                    </p>
                                                 </td>
                                             </tr>
+                                        </table>
+
+                                        <!-- Event Details -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-top: 1px solid rgba(45, 212, 191, 0.2);">
                                             <tr>
-                                                <td style="padding: 8px 0; border-bottom: 1px solid rgba(148, 163, 184, 0.1);">
-                                                    <span style="color: #64748b; font-size: 13px;">Date & Time</span><br>
-                                                    <span style="color: #f1f5f9; font-size: 15px;">${data.eventDate} at ${data.eventTime}</span>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 8px 0; border-bottom: 1px solid rgba(148, 163, 184, 0.1);">
-                                                    <span style="color: #64748b; font-size: 13px;">Venue</span><br>
-                                                    <span style="color: #f1f5f9; font-size: 15px;">${data.eventVenue}</span>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 8px 0;">
-                                                    <span style="color: #64748b; font-size: 13px;">Ticket Code</span><br>
-                                                    <span style="color: #14b8a6; font-size: 14px; font-family: 'Courier New', monospace; background: rgba(20, 184, 166, 0.1); padding: 4px 8px; border-radius: 4px;">${data.registrationId}</span>
+                                                <td style="padding: 30px; background: rgba(0,0,0,0.5);">
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td width="50%" style="padding-bottom: 20px;">
+                                                                <span style="color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Event</span><br>
+                                                                <span style="color: #ffffff; font-size: 18px;">${data.eventName}</span>
+                                                            </td>
+                                                            <td width="50%" style="padding-bottom: 20px; text-align: right;">
+                                                                <span style="color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Row / Seat</span><br>
+                                                                <span style="color: #2dd4bf; font-size: 18px;">π / e</span>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td width="50%">
+                                                                <span style="color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Date & Time</span><br>
+                                                                <span style="color: #ffffff; font-size: 15px;">${data.eventDate} | ${data.eventTime}</span>
+                                                            </td>
+                                                            <td width="50%" style="text-align: right;">
+                                                                <span style="color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Venue</span><br>
+                                                                <span style="color: #ffffff; font-size: 15px;">${data.eventVenue}</span>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
                                                 </td>
                                             </tr>
                                         </table>
@@ -135,64 +133,17 @@ const generateTicketEmailHTML = (data: TicketEmailData, qrCodeDataUrl: string): 
                         </td>
                     </tr>
 
-                    <!-- Participant Details -->
+                    <!-- Mathematical Notes -->
                     <tr>
-                        <td style="padding: 0 40px 30px;">
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; overflow: hidden;">
+                        <td style="padding: 0 40px 40px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-left: 2px solid #2dd4bf; padding-left: 20px;">
                                 <tr>
-                                    <td style="background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); padding: 12px 20px;">
-                                        <h2 style="margin: 0; color: #ffffff; font-size: 16px; font-weight: 600;">
-                                            👤 Participant Details
-                                        </h2>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 20px;">
-                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                            <tr>
-                                                <td style="padding: 8px 0; border-bottom: 1px solid rgba(148, 163, 184, 0.1);">
-                                                    <span style="color: #64748b; font-size: 13px;">Name</span><br>
-                                                    <span style="color: #f1f5f9; font-size: 16px; font-weight: 600;">${data.participantName}</span>
-                                                </td>
-                                            </tr>
-                                            ${data.rollNo ? `
-                                            <tr>
-                                                <td style="padding: 8px 0; border-bottom: 1px solid rgba(148, 163, 184, 0.1);">
-                                                    <span style="color: #64748b; font-size: 13px;">Roll Number</span><br>
-                                                    <span style="color: #f1f5f9; font-size: 15px;">${data.rollNo}</span>
-                                                </td>
-                                            </tr>
-                                            ` : ''}
-                                            ${data.department ? `
-                                            <tr>
-                                                <td style="padding: 8px 0;">
-                                                    <span style="color: #64748b; font-size: 13px;">Department</span><br>
-                                                    <span style="color: #f1f5f9; font-size: 15px;">${data.department}</span>
-                                                </td>
-                                            </tr>
-                                            ` : ''}
-                                        </table>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-
-                    <!-- Important Notes -->
-                    <tr>
-                        <td style="padding: 0 40px 30px;">
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px;">
-                                <tr>
-                                    <td style="padding: 20px;">
-                                        <h3 style="margin: 0 0 10px; color: #f59e0b; font-size: 14px; font-weight: 600;">
-                                            ⚠️ Important Notes
-                                        </h3>
-                                        <ul style="margin: 0; padding-left: 20px; color: #94a3b8; font-size: 13px; line-height: 1.8;">
-                                            <li>Please arrive at least 15 minutes before the event starts</li>
-                                            <li>Keep this QR code ready for scanning at entry</li>
-                                            <li>This ticket is valid for one-time entry only</li>
-                                            <li>Carry a valid ID proof along with this ticket</li>
+                                    <td>
+                                        <h3 style="margin: 0 0 10px; color: #2dd4bf; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Protocol</h3>
+                                        <ul style="margin: 0; padding: 0; list-style: none; color: #71717a; font-size: 13px; line-height: 1.8;">
+                                            <li>• Present this fractal signature at the gate for entry.</li>
+                                            <li>• Arrival timestamp: T-15 minutes prior to commencement.</li>
+                                            <li>• This sequence is unique and allows singular admission.</li>
                                         </ul>
                                     </td>
                                 </tr>
@@ -202,15 +153,15 @@ const generateTicketEmailHTML = (data: TicketEmailData, qrCodeDataUrl: string): 
 
                     <!-- Footer -->
                     <tr>
-                        <td style="background: rgba(15, 23, 42, 0.8); padding: 25px 40px; text-align: center; border-top: 1px solid rgba(148, 163, 184, 0.1);">
-                            <p style="margin: 0; color: #64748b; font-size: 13px;">
-                                Ramanujan Mathematical Club
+                        <td style="padding: 40px; text-align: center; border-top: 1px solid rgba(45, 212, 191, 0.1); background: #000000;">
+                            <p style="margin: 0; color: #52525b; font-size: 12px; letter-spacing: 1px;">
+                                CALCULATING... SUCCESS.
                             </p>
-                            <p style="margin: 8px 0 0; color: #475569; font-size: 12px;">
-                                Questions? Contact us at <a href="mailto:${process.env.EMAIL_USER}" style="color: #14b8a6; text-decoration: none;">${process.env.EMAIL_USER}</a>
+                            <p style="margin: 10px 0 0; color: #3f3f46; font-size: 11px;">
+                                Ramanujan Mathematical Club &copy; ${new Date().getFullYear()}
                             </p>
-                            <p style="margin: 15px 0 0; color: #334155; font-size: 11px;">
-                                © ${new Date().getFullYear()} RMC. All rights reserved.
+                            <p style="margin: 15px 0 0; color: #2dd4bf; font-size: 14px; text-decoration: none;">
+                                ∇ &Delta; &Pi; &Phi;
                             </p>
                         </td>
                     </tr>
@@ -234,20 +185,22 @@ export const sendTicketEmail = async (data: TicketEmailData): Promise<boolean> =
     }
 
     try {
-        // Generate QR code with registration ID
-        const qrCodeDataUrl = await generateQRCode(data.registrationId);
+        // Generate QR code with cyan dark color for theme consistency
+        const qrCodeDataUrl = await generateStyledQRCode(data.registrationId, {
+            darkColor: '#000000', // Still use black for best scan reliability, but the frame is cyan
+            lightColor: '#FFFFFF'
+        });
 
         // Convert data URL to buffer for attachment
         const qrBase64 = qrCodeDataUrl.split(',')[1];
         const qrBuffer = Buffer.from(qrBase64, 'base64');
 
-        // Use CID for embedding image in email (data URLs are blocked by most email clients)
         const htmlContent = generateTicketEmailHTML(data, 'cid:qrcode');
 
         const mailOptions = {
             from: `"RMC Events" <${process.env.EMAIL_USER}>`,
             to: data.toEmail,
-            subject: `🎫 Your Ticket for ${data.eventName} - Registration Confirmed!`,
+            subject: `🎫 [SECRET SEQUENCE] Your Entrance for ${data.eventName}`,
             html: htmlContent,
             attachments: [
                 {
@@ -284,31 +237,65 @@ export const sendVerificationEmail = async (
     const mailOptions = {
         from: `"RMC Events" <${process.env.EMAIL_USER}>`,
         to: toEmail,
-        subject: `Registration Confirmed: ${eventName}`,
+        subject: `Verification Pending: ${eventName}`,
         html: `
-            <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-                <h2 style="color: #2dd4bf; text-align: center;">Registration Confirmed</h2>
-                <p>Hello <strong>${name}</strong>,</p>
-                <p>Your registration for <strong>${eventName}</strong> has been successfully received.</p>
-                
-                <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                    <p style="margin: 0;"><strong>Registration ID:</strong> <span style="font-family: monospace;">${registrationId}</span></p>
-                    <p style="margin: 5px 0 0;"><strong>Status:</strong> Pending Verification</p>
-                </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&display=swap');
+    </style>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Cormorant Garamond', serif; background-color: #000000; color: #ffffff;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #000000;">
+        <tr>
+            <td style="padding: 60px 20px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; border: 1px solid rgba(245, 158, 11, 0.2); background: #050505; border-radius: 4px;">
+                    <tr>
+                        <td style="padding: 40px; text-align: center;">
+                            <h1 style="margin: 0; color: #f59e0b; font-size: 32px; font-weight: 300; letter-spacing: 4px; text-transform: uppercase;">
+                                Verification <span style="font-weight: 600;">Initiated</span>
+                            </h1>
+                            <div style="width: 40px; height: 1px; background: #f59e0b; margin: 20px auto;"></div>
+                            <p style="color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                                Greetings, ${name}. Your request to join <strong>${eventName}</strong> has been logged in our systems.
+                            </p>
+                            
+                            <div style="margin: 30px 0; padding: 20px; background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 8px;">
+                                <p style="margin: 0; color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;">Sequence ID</p>
+                                <p style="margin: 5px 0 0; color: #f59e0b; font-size: 20px; font-family: monospace;">${registrationId}</p>
+                                <p style="margin: 15px 0 0; color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;">Status</p>
+                                <p style="margin: 5px 0 0; color: #ffffff; font-size: 16px;">PENDING_CALCULATION</p>
+                            </div>
 
-                <p>Our team will verify your payment details. You will receive further updates shortly.</p>
-                
-                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-                <p style="font-size: 12px; color: #888; text-align: center;">RMC Event Team</p>
-            </div>
+                            <p style="color: #71717a; font-size: 14px; font-style: italic;">
+                                Our architects are currently verifying your credentials. You will receive the final fractal sequence shortly.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 30px; text-align: center; border-top: 1px solid rgba(245, 158, 11, 0.1);">
+                            <p style="margin: 0; color: #3f3f46; font-size: 11px;">
+                                Ramanujan Mathematical Club &copy; 2026
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
         `,
     };
 
     try {
         await transporter.sendMail(mailOptions);
-
     } catch (error) {
         console.error("Error sending email:", error);
         // Don't throw error to prevent failing the entire registration if email fails
     }
 };
+```

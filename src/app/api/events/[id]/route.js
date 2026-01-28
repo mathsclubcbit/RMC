@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
+import { jwtVerify } from 'jose';
 
 export const runtime = 'nodejs';
 
 const STORAGE_BUCKET = 'event-images';
+
+const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
 
 function hasSupabaseConfig() {
     return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -13,12 +16,49 @@ function isMissingTableError(error) {
     return Boolean(error && (error.code === 'PGRST205' || String(error.message || '').includes("Could not find the table 'public.events'")));
 }
 
-function requireAdmin(request) {
-    const isLoggedIn = request.cookies.get('admin_session')?.value === 'true';
-    if (!isLoggedIn) {
+async function requireAdmin(request) {
+    const token = request.cookies.get('admin_token')?.value;
+    if (!token) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    return null;
+
+    try {
+        const { payload } = await jwtVerify(token, getJwtSecret());
+        if (payload?.type !== 'admin') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        return null;
+    } catch {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+}
+
+async function verifyAdminOrCoordinator(request, eventId) {
+    // Check admin JWT
+    const adminToken = request.cookies.get('admin_token')?.value;
+    if (adminToken) {
+        try {
+            const { payload } = await jwtVerify(adminToken, getJwtSecret());
+            if (payload?.type === 'admin') return { authorized: true, isAdmin: true };
+        } catch {
+            // Invalid admin token, continue to check coordinator
+        }
+    }
+
+    // Check coordinator JWT
+    const coordinatorToken = request.cookies.get('coordinator_token')?.value;
+    if (coordinatorToken) {
+        try {
+            const { payload } = await jwtVerify(coordinatorToken, getJwtSecret());
+            if (payload?.type === 'coordinator' && payload?.eventId === eventId) {
+                return { authorized: true, isAdmin: false };
+            }
+        } catch {
+            // Invalid coordinator token
+        }
+    }
+
+    return { authorized: false };
 }
 
 export async function GET(_request, { params }) {
@@ -56,19 +96,13 @@ export async function GET(_request, { params }) {
 }
 
 export async function PUT(request, { params }) {
-    // Authorization Check
     const { id } = await params;
-    const cookieStore = await request.cookies;
-    const isAdmin = cookieStore.get('admin_session')?.value === 'true';
-    const coordinatorEventId = cookieStore.get('coordinator_session')?.value;
 
-    const isCoordinatorForEvent = coordinatorEventId && String(coordinatorEventId) === String(id);
-
-    // If NEITHER admin NOR owner, return 401
-    if (!isAdmin && !isCoordinatorForEvent) {
+    // Authorization Check using JWT
+    const { authorized } = await verifyAdminOrCoordinator(request, String(id));
+    if (!authorized) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    // Otherwise proceed...
 
     if (!hasSupabaseConfig()) {
         return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 });
@@ -205,7 +239,7 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-    const auth = requireAdmin(request);
+    const auth = await requireAdmin(request);
     if (auth) return auth;
 
     if (!hasSupabaseConfig()) {

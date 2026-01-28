@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getRegistrationById, markRegistrationAttendance, markRegistrationCheckedIn } from "@/lib/google";
+import { signToken, verifyToken } from "@/lib/jwt";
 
 const getAdminCredentials = () => {
     const username = process.env.ADMIN_USERNAME || "admin";
@@ -18,8 +19,11 @@ export async function adminLoginAction(prevState, formData) {
     const password = String(formData.get("password") || "");
 
     if (username === expectedUser && password === expectedPass) {
+        // Sign JWT token
+        const token = await signToken({ type: 'admin', role: 'admin' }, '24h');
+
         const cookieStore = await cookies();
-        cookieStore.set("admin_session", "true", {
+        cookieStore.set("admin_token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             maxAge: 60 * 60 * 24,
@@ -34,14 +38,22 @@ export async function adminLoginAction(prevState, formData) {
 }
 
 export async function adminLogoutAction() {
-    (await cookies()).delete("admin_session");
+    (await cookies()).delete("admin_token");
     redirect("/admin/login");
 }
 
-export async function markCheckedInAction(formData) {
+// Helper to verify admin session
+async function isAdminAuthenticated() {
     const cookieStore = await cookies();
-    const isAdmin = cookieStore.get("admin_session")?.value === "true";
-    if (!isAdmin) {
+    const token = cookieStore.get("admin_token")?.value;
+    if (!token) return false;
+
+    const payload = await verifyToken(token);
+    return payload?.type === 'admin';
+}
+
+export async function markCheckedInAction(formData) {
+    if (!(await isAdminAuthenticated())) {
         return { error: "Unauthorized" };
     }
 
@@ -78,9 +90,7 @@ export async function markCheckedInAction(formData) {
 }
 
 export async function markAttendanceAction(ticketId, attendanceStatus) {
-    const cookieStore = await cookies();
-    const isAdmin = cookieStore.get("admin_session")?.value === "true";
-    if (!isAdmin) {
+    if (!(await isAdminAuthenticated())) {
         return { error: "Unauthorized" };
     }
 

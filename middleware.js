@@ -1,10 +1,24 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
+import { jwtVerify } from 'jose';
 
 // Simple in-memory rate limiter (Token Bucket-ish)
 // Note: In a serverless environment (Vercel), this map might be reset frequently.
 // For production scale, use Redis (Upstash) or a database.
 const rateLimitMap = new Map();
+
+// JWT Secret for verification
+const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
+
+// Helper to verify JWT token
+async function verifyJwt(token) {
+    try {
+        const { payload } = await jwtVerify(token, getJwtSecret());
+        return payload;
+    } catch {
+        return null;
+    }
+}
 
 export async function middleware(request) {
     let supabaseResponse = NextResponse.next({ request });
@@ -14,7 +28,9 @@ export async function middleware(request) {
     // ==========================================
     if (request.nextUrl.pathname.startsWith('/admin')) {
         const isLoginPage = request.nextUrl.pathname === '/admin/login';
-        const isLoggedIn = request.cookies.get('admin_session')?.value === 'true';
+        const token = request.cookies.get('admin_token')?.value;
+        const payload = token ? await verifyJwt(token) : null;
+        const isLoggedIn = payload?.type === 'admin';
 
         if (!isLoginPage && !isLoggedIn) {
             const url = request.nextUrl.clone();
@@ -25,6 +41,28 @@ export async function middleware(request) {
         if (isLoginPage && isLoggedIn) {
             const url = request.nextUrl.clone();
             url.pathname = '/admin';
+            return NextResponse.redirect(url);
+        }
+    }
+
+    // ==========================================
+    // 0.5. COORDINATOR SESSION PROTECTION
+    // ==========================================
+    if (request.nextUrl.pathname.startsWith('/coordinator')) {
+        const isLoginPage = request.nextUrl.pathname === '/coordinator/login';
+        const token = request.cookies.get('coordinator_token')?.value;
+        const payload = token ? await verifyJwt(token) : null;
+        const isLoggedIn = payload?.type === 'coordinator';
+
+        if (!isLoginPage && !isLoggedIn) {
+            const url = request.nextUrl.clone();
+            url.pathname = '/coordinator/login';
+            return NextResponse.redirect(url);
+        }
+
+        if (isLoginPage && isLoggedIn) {
+            const url = request.nextUrl.clone();
+            url.pathname = '/coordinator/dashboard';
             return NextResponse.redirect(url);
         }
     }
@@ -120,6 +158,7 @@ export const config = {
     matcher: [
         '/api/:path*',
         '/admin/:path*',
+        '/coordinator/:path*',
         '/network/:path*',
     ],
 };

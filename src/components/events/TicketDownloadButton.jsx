@@ -202,6 +202,24 @@ export default function TicketDownloadButton({
             const inset = 26;
             ctx.drawImage(qr, qrBoxX + inset, qrBoxY + inset, qrBoxSize - inset * 2, qrBoxSize - inset * 2);
 
+            // RMC Logo overlay on QR
+            const qrCenterLogoSize = 130;
+            const qrCenterX = qrBoxX + qrBoxSize / 2;
+            const qrCenterY = qrBoxY + qrBoxSize / 2;
+
+            ctx.save();
+            // White background circle for readability
+            ctx.shadowColor = "rgba(0,0,0,0.2)";
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(qrCenterX, qrCenterY, qrCenterLogoSize / 2 + 8, 0, Math.PI * 2);
+            ctx.fillStyle = "#ffffff";
+            ctx.fill();
+
+            // Draw logo
+            ctx.drawImage(logo, qrCenterX - qrCenterLogoSize / 2, qrCenterY - qrCenterLogoSize / 2, qrCenterLogoSize, qrCenterLogoSize);
+            ctx.restore();
+
             // Ticket code
             const codeY = qrBoxY + qrBoxSize + 86;
             ctx.fillStyle = "rgba(255,255,255,0.55)";

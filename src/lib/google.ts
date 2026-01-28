@@ -124,6 +124,47 @@ export const getOrCreateFolder = async (folderName: string, parentFolderId: stri
 };
 
 /**
+ * Get a Resumable Upload URL for direct client-side upload.
+ * This bypasses the server for the file body transfer, speeding up large uploads.
+ */
+export const getResumableUploadUrl = async (
+    fileName: string,
+    mimeType: string,
+    parentFolderId: string
+): Promise<string> => {
+    const authClient = await getAuthClient();
+
+    // Metadata for the file to be created
+    const metadata = {
+        name: fileName,
+        mimeType: mimeType,
+        parents: [parentFolderId]
+    };
+
+    try {
+        const response = await authClient.request({
+            url: 'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id,webViewLink,webContentLink',
+            method: 'POST',
+            headers: {
+                'X-Upload-Content-Type': mimeType,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(metadata)
+        });
+
+        const uploadUrl = response.headers.location;
+        if (!uploadUrl) {
+            throw new Error('No upload URL returned from Google');
+        }
+
+        return uploadUrl;
+    } catch (error) {
+        console.error('Error getting resumable upload URL:', error);
+        throw error;
+    }
+};
+
+/**
  * Check if the UTR already exists in the Google Sheet.
  * Current sheet layout stores UTR in Column I.
  */
@@ -152,31 +193,31 @@ export const checkDuplicateUTR = async (
     return existingUTRs.includes(normalizedUTR);
 };
 
-    /**
-     * Check if a registration ID (ticket code) already exists in the Google Sheet (Column B).
-     * Handles sheets with/without a header row.
-     */
-    export const checkDuplicateRegistrationId = async (spreadsheetId: string, registrationId: string): Promise<boolean> => {
-        const authClient = await getAuthClient();
-        const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+/**
+ * Check if a registration ID (ticket code) already exists in the Google Sheet (Column B).
+ * Handles sheets with/without a header row.
+ */
+export const checkDuplicateRegistrationId = async (spreadsheetId: string, registrationId: string): Promise<boolean> => {
+    const authClient = await getAuthClient();
+    const sheets = google.sheets({ version: 'v4', auth: authClient as any });
 
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId,
-            range: sheetRange('B:B'),
-        });
+    const response = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: sheetRange('B:B'),
+    });
 
-        const rows = response.data.values;
-        if (!rows || rows.length === 0) return false;
+    const rows = response.data.values;
+    if (!rows || rows.length === 0) return false;
 
-        const hasHeader = isHeaderCell(rows[0]?.[0], 'registration id');
-        const startIdx = hasHeader ? 1 : 0;
-        const wanted = normalizeCell(registrationId);
+    const hasHeader = isHeaderCell(rows[0]?.[0], 'registration id');
+    const startIdx = hasHeader ? 1 : 0;
+    const wanted = normalizeCell(registrationId);
 
-        for (let i = startIdx; i < rows.length; i++) {
-            if (normalizeCell(rows[i]?.[0]) === wanted) return true;
-        }
-        return false;
-    };
+    for (let i = startIdx; i < rows.length; i++) {
+        if (normalizeCell(rows[i]?.[0]) === wanted) return true;
+    }
+    return false;
+};
 
 /**
  * Append a row to the Google Sheet

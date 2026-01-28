@@ -1,21 +1,39 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { XCircle } from "lucide-react";
+import { jwtVerify } from "jose";
 
 import { getRegistrationById } from "@/lib/google";
 import { GlassCard } from "@/components/ui/glass-card";
 import { SectionWrapper } from "@/components/ui/section-wrapper";
 import { Button } from "@/components/ui/button";
 import { AdminTicketManager } from "@/components/admin-ticket-manager";
-import { TicketDetailsCard } from "@/components/ticket-details-card";
 import { TicketExpiredView } from "@/components/ticket-expired-view";
+
+const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
+
+async function getCoordinatorEventId() {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("coordinator_token")?.value;
+
+    if (!token) return null;
+
+    try {
+        const { payload } = await jwtVerify(token, getJwtSecret());
+        if (payload?.type !== 'coordinator' || !payload?.eventId) {
+            return null;
+        }
+        return payload.eventId;
+    } catch {
+        return null;
+    }
+}
 
 export default async function CoordinatorTicketPage({ params }) {
     const { id } = await params;
     const registrationId = decodeURIComponent(String(id || "")).trim();
 
-    const cookieStore = await cookies();
-    const coordinatorEventId = cookieStore.get("coordinator_session")?.value;
+    const coordinatorEventId = await getCoordinatorEventId();
 
     if (!coordinatorEventId) {
         return (
@@ -56,15 +74,8 @@ export default async function CoordinatorTicketPage({ params }) {
         );
     }
 
-    // CRITICAL: Verify this ticket belongs to the coordinator's event
-    // The ticketRow from Google Sheet usually has 'eventId' column. 
-    // If not, we rely on eventName match, but eventId is safer.
-    // Assuming getRegistrationById returns row with 'eventId' or 'Event ID'
-    // Let's normalize
+    // Verify this ticket belongs to the coordinator's event
     const ticketEventId = String(ticketRow.eventId || ticketRow['Event ID'] || "").trim();
-
-    // Fallback: If your sheet doesn't store IDs perfectly, this might be tricky.
-    // But since admin stats use eventId, it should be there.
 
     if (ticketEventId && ticketEventId !== coordinatorEventId) {
         return (

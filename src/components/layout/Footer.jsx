@@ -133,6 +133,18 @@ export default function Footer() {
                         <p className="text-xs text-muted font-mono">
                             © {new Date().getFullYear()} RMC CBIT. EST 2018.
                         </p>
+                        <Link
+                            href="/admin/login"
+                            className="text-xs text-muted/50 hover:text-teal transition-colors font-mono flex items-center gap-1"
+                        >
+                            <span>🔐</span> Admin Portal
+                        </Link>
+                        <Link
+                            href="/coordinator/login"
+                            className="text-xs text-muted/50 hover:text-orange transition-colors font-mono flex items-center gap-1"
+                        >
+                            <span>🎫</span> Coordinator
+                        </Link>
                     </div>
                     <p className="text-xs text-muted font-mono flex items-center gap-2">
                         Designed with <span className="text-coral">♥</span> & <span className="text-teal">Infinite</span> Passion

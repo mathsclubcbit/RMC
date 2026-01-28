@@ -1,113 +1,12 @@
 import Link from "next/link";
+import { Image as ImageIcon, ArrowUpRight, Users } from "lucide-react";
 import { adminLogoutAction } from "./actions";
 import AdminDashboardClient from "./AdminDashboardClient";
+import CoordinatorCredentialsManager from "./CoordinatorCredentialsManager";
 import { getAllRegistrations } from "@/lib/google";
 
-async function getEventCount() {
-    try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-        const res = await fetch(`${baseUrl}/api/events`, { cache: "no-store" });
-        const data = await res.json();
-        return Array.isArray(data) ? data.length : 0;
-    } catch {
-        return 0;
-    }
-}
-
-export default async function AdminDashboardPage() {
-    const eventCount = await getEventCount();
-    const stats = await getDashboardStats();
-
-    return (
-        <div className="min-h-[100dvh] bg-black text-white relative overflow-hidden">
-            {/* Tech background */}
-            <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_20%_10%,rgba(45,212,191,0.20),transparent_45%),radial-gradient(circle_at_80%_20%,rgba(168,85,247,0.18),transparent_55%),radial-gradient(circle_at_60%_90%,rgba(59,130,246,0.16),transparent_55%)]" />
-                <div className="absolute inset-0 opacity-[0.25] [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:28px_28px]" />
-                <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[1200px] h-[1200px] rounded-full bg-teal-400/10 blur-3xl" />
-            </div>
-
-            <div className="relative z-10 px-4 py-8 md:py-10">
-                <div className="max-w-6xl mx-auto">
-                    <header className="flex items-start justify-between gap-4 mb-8">
-                        <div>
-                            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-mono text-white/70">
-                                <span className="w-1.5 h-1.5 rounded-full bg-teal-400 shadow-[0_0_12px_rgba(45,212,191,0.9)]" />
-                                Admin Console
-                            </div>
-                            <h1 className="mt-4 text-3xl md:text-5xl font-black tracking-tight">
-                                Dashboard
-                                <span className="text-teal-300">.</span>
-                            </h1>
-                            <p className="mt-2 text-sm md:text-base text-white/60 max-w-xl">
-                                Fast ops: scan tickets, verify attendance, manage events.
-                                Built for phone-first chaos.
-                            </p>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            <Link
-                                href="/"
-                                className="hidden sm:inline-flex px-4 py-2 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15 transition text-sm"
-                            >
-                                Site
-                            </Link>
-                            <form action={adminLogoutAction}>
-                                <button className="px-4 py-2 rounded-2xl bg-red-500/15 border border-red-500/20 hover:bg-red-500/25 transition text-sm text-red-100">
-                                    Logout
-                                </button>
-                            </form>
-                        </div>
-                    </header>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                        <div className="lg:col-span-2 space-y-5">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                <ActionCard
-                                    title="Scan QR"
-                                    description="Camera scanner → ticket page"
-                                    href="/admin/scan"
-                                    accent="teal"
-                                    meta="Live"
-                                />
-                                <ActionCard
-                                    title="Manage Events"
-                                    description={`Create/edit/delete (now: ${eventCount})`}
-                                    href="/admin/events"
-                                    accent="violet"
-                                    meta="CRUD"
-                                />
-                            </div>
-
-                            <StatsPanel stats={stats} />
-
-                            <AdminDashboardClient />
-
-                            <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-5 md:p-6">
-                                <h3 className="text-base md:text-lg font-semibold tracking-wide">Operator Notes</h3>
-                                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-white/70">
-                                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                                        <div className="text-xs font-mono text-white/50">Tip</div>
-                                        <div className="mt-1">Use 6-digit codes only (no UUID).</div>
-                                    </div>
-                                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                                        <div className="text-xs font-mono text-white/50">Flow</div>
-                                        <div className="mt-1">Verify → Proceed to check-in → Attendance saved.</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-5">
-                            <StatusCard />
-                            <MiniLinks />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
+// Revalidate dashboard every 60 seconds for better performance
+export const revalidate = 60;
 
 async function getDashboardStats() {
     const spreadsheetId = process.env.GOOGLE_SHEET_ID;
@@ -187,153 +86,113 @@ async function getDashboardStats() {
     }
 }
 
-function ActionCard({ title, description, href, accent, meta }) {
-    const accentStyles =
-        accent === "teal"
-            ? "from-teal-400/25 to-transparent"
-            : accent === "violet"
-                ? "from-violet-400/25 to-transparent"
-                : "from-blue-400/25 to-transparent";
+export default async function AdminDashboardPage() {
+    const stats = await getDashboardStats();
 
     return (
-        <Link
-            href={href}
-            className="group rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl overflow-hidden relative"
-        >
-            <div className={`absolute inset-0 bg-gradient-to-br ${accentStyles} opacity-70`} />
-            <div className="relative p-5 md:p-6">
-                <div className="flex items-center justify-between">
-                    <div className="text-[11px] font-mono text-white/60 uppercase tracking-widest">{meta}</div>
-                    <div className="w-8 h-8 rounded-2xl border border-white/10 bg-black/30 flex items-center justify-center text-white/70 group-hover:text-white transition">
-                        →
-                    </div>
-                </div>
-                <div className="mt-4">
-                    <h3 className="text-lg md:text-xl font-bold tracking-tight">{title}</h3>
-                    <p className="mt-1 text-sm text-white/60">{description}</p>
-                </div>
-            </div>
-        </Link>
-    );
-}
-
-function StatusCard() {
-    const now = new Date();
-
-    return (
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-5 md:p-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <div className="text-[11px] font-mono text-white/50 uppercase tracking-widest">System</div>
-                    <div className="mt-2 text-lg font-semibold">Online</div>
-                </div>
-                <div className="w-12 h-12 rounded-3xl bg-teal-400/15 border border-teal-400/20 flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 rounded-full bg-teal-400 shadow-[0_0_18px_rgba(45,212,191,0.9)]" />
-                </div>
+        <div className="min-h-[100dvh] bg-black text-white relative overflow-hidden">
+            {/* Tech background - Consistent with other Admin pages */}
+            <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_20%_10%,rgba(99,102,241,0.15),transparent_45%),radial-gradient(circle_at_80%_20%,rgba(168,85,247,0.15),transparent_55%),radial-gradient(circle_at_60%_90%,rgba(59,130,246,0.15),transparent_55%)]" />
+                <div className="absolute inset-0 opacity-[0.2] [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:28px_28px]" />
+                <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[1200px] h-[1200px] rounded-full bg-indigo-500/5 blur-3xl" />
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
-                    <div className="text-[11px] font-mono text-white/50">Mode</div>
-                    <div className="mt-1 text-sm text-white/80">Admin</div>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
-                    <div className="text-[11px] font-mono text-white/50">Clock</div>
-                    <div className="mt-1 text-sm text-white/80">{now.toLocaleString()}</div>
-                </div>
-            </div>
-        </div>
-    );
-}
+            <div className="relative z-10 px-4 py-8 md:py-12">
+                <div className="max-w-7xl mx-auto">
+                    {/* Header */}
+                    <header className="mb-10">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-mono text-white/70 backdrop-blur-md">
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.9)]" />
+                            Admin Console
+                        </div>
+                        <h1 className="mt-4 text-4xl md:text-5xl font-black tracking-tight">
+                            Dashboard
+                            <span className="text-indigo-500">.</span>
+                        </h1>
+                        <p className="mt-2 text-white/50 max-w-xl">
+                            Real-time overview of club operations and event performance.
+                        </p>
+                    </header>
 
-function MiniLinks() {
-    return (
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-5 md:p-6">
-            <div className="text-[11px] font-mono text-white/50 uppercase tracking-widest">Shortcuts</div>
-            <div className="mt-4 grid grid-cols-1 gap-3">
-                <Link
-                    href="/admin/scan"
-                    className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm hover:bg-black/40 transition"
-                >
-                    Ticket Scanner
-                </Link>
-                <Link
-                    href="/admin/events"
-                    className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm hover:bg-black/40 transition"
-                >
-                    Events
-                </Link>
-            </div>
-        </div>
-    );
-}
-
-function StatsPanel({ stats }) {
-    if (!stats?.enabled) {
-        return (
-            <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-5 md:p-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <div className="text-[11px] font-mono text-white/50 uppercase tracking-widest">Stats</div>
-                        <div className="mt-2 text-base font-semibold">Sheet stats offline</div>
-                        <div className="mt-1 text-sm text-white/60">Set `GOOGLE_SHEET_ID` + Google credentials to enable.</div>
-                    </div>
-                    <div className="w-12 h-12 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center text-white/50">∅</div>
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-5 md:p-6">
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <div className="text-[11px] font-mono text-white/50 uppercase tracking-widest">Stats</div>
-                    <div className="mt-2 text-base md:text-lg font-semibold">Registrations & Check-ins</div>
-                    <div className="mt-1 text-sm text-white/60">Last 24h and totals (from Google Sheet).</div>
-                </div>
-                <div className="text-[11px] font-mono text-white/50">AUTO</div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <StatBox label="Reg (24h)" value={stats.registrationsLast24h} accent="teal" />
-                <StatBox label="Check-in (24h)" value={stats.checkedInLast24h} accent="teal" />
-                <StatBox label="Reg (total)" value={stats.totalRegistrations} accent="violet" />
-                <StatBox label="Check-in (total)" value={stats.totalCheckedIn} accent="violet" />
-                <StatBox label="Revenue (total)" value={stats.totalRevenue} accent="amber" format="currency" />
-                <StatBox label="Events" value={(stats.eventBreakdown || []).length} accent="amber" />
-            </div>
-
-            <div className="mt-5">
-                <div className="flex items-center justify-between">
-                    <div className="text-[11px] font-mono text-white/50 uppercase tracking-widest">Event Breakdown</div>
-                    <div className="text-[11px] font-mono text-white/40">registrations • checked-in • revenue</div>
-                </div>
-
-                <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 overflow-hidden">
-                    <div className="grid grid-cols-12 gap-2 px-4 py-3 text-[11px] font-mono text-white/50 uppercase tracking-widest border-b border-white/10">
-                        <div className="col-span-6">Event</div>
-                        <div className="col-span-2 text-right">Reg</div>
-                        <div className="col-span-2 text-right">In</div>
-                        <div className="col-span-2 text-right">Rev</div>
-                    </div>
-
-                    <div className="max-h-[280px] overflow-auto custom-scrollbar">
-                        {(stats.eventBreakdown || []).map((e) => (
-                            <div key={(e.eventId || "_") + "::" + e.eventName} className="grid grid-cols-12 gap-2 px-4 py-3 border-b border-white/5 items-center">
-                                <div className="col-span-6">
-                                    <div className="text-sm font-semibold text-white/90 truncate">{e.eventName}</div>
-                                    <div className="text-[11px] font-mono text-white/40 truncate">{e.eventId || "(no id)"}</div>
-                                </div>
-                                <div className="col-span-2 text-right text-sm text-white/80">{Number(e.registrations || 0).toLocaleString()}</div>
-                                <div className="col-span-2 text-right text-sm text-white/80">{Number(e.checkedIn || 0).toLocaleString()}</div>
-                                <div className="col-span-2 text-right text-sm text-white/80">₹{Number(e.revenue || 0).toLocaleString()}</div>
+                    {/* Offline Warning */}
+                    {!stats.enabled && (
+                        <div className="mb-8 min-h-[80px] rounded-2xl border border-amber-500/20 bg-amber-500/5 backdrop-blur-xl p-4 flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 font-bold border border-amber-500/20">!</div>
+                            <div>
+                                <h3 className="text-sm font-semibold text-amber-200">Live Statistics Offline</h3>
+                                <p className="text-xs text-amber-200/60 mt-0.5">
+                                    System could not connect to the database. Check <code>GOOGLE_SHEET_ID</code> or credentials.
+                                </p>
                             </div>
-                        ))}
+                        </div>
+                    )}
 
-                        {(stats.eventBreakdown || []).length === 0 ? (
-                            <div className="px-4 py-8 text-sm text-white/60">No registrations found yet.</div>
-                        ) : null}
+                    {/* KPI Stats Row */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                        <StatCard label="Total Registrations" value={stats.totalRegistrations} subValue={`+${stats.registrationsLast24h || 0} today`} accent="indigo" />
+                        <StatCard label="Total Checked In" value={stats.totalCheckedIn} subValue={`+${stats.checkedInLast24h || 0} today`} accent="emerald" />
+                        <StatCard label="Total Revenue" value={stats.totalRevenue} isCurrency accent="amber" />
+                        <StatCard label="Active Events" value={stats.eventBreakdown?.length || 0} accent="violet" />
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Main Content Area */}
+                        <div className="lg:col-span-2 space-y-8">
+                            {/* Event Manager */}
+                            <div className="rounded-3xl border border-white/10 bg-white/[0.02] backdrop-blur-xl overflow-hidden">
+                                <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                                    <h3 className="font-semibold">Events Manager</h3>
+                                    <Link href="/admin/events/new" className="text-xs font-mono text-indigo-400 hover:text-indigo-300 transition">
+                                        + CREATE NEW
+                                    </Link>
+                                </div>
+                                <div className="p-2">
+                                    <AdminDashboardClient />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Sidebar */}
+                        <div className="space-y-8">
+                            {/* Breakdown */}
+                            <EventBreakdown stats={stats} />
+
+                            {/* Gallery Shortcut */}
+                            <Link href="/admin/gallery" className="block p-5 rounded-3xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] transition-all group backdrop-blur-xl">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-500/20 transition-colors">
+                                            <ImageIcon className="w-5 h-5" />
+                                        </div>
+                                        <div className="text-sm font-semibold text-white/90">Gallery Manager</div>
+                                    </div>
+                                    <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-white transition-colors" />
+                                </div>
+                                <p className="text-xs text-white/50 pl-1">
+                                    Manage event photos, create albums, and organize the public gallery.
+                                </p>
+                            </Link>
+
+                            {/* Team Shortcut */}
+                            <Link href="/admin/team" className="block p-5 rounded-3xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] transition-all group backdrop-blur-xl mt-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-500/20 transition-colors">
+                                            <Users className="w-5 h-5" />
+                                        </div>
+                                        <div className="text-sm font-semibold text-white/90">Team Manager</div>
+                                    </div>
+                                    <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-white transition-colors" />
+                                </div>
+                                <p className="text-xs text-white/50 pl-1">
+                                    Manage core committee, faculty advisors, and team structure.
+                                </p>
+                            </Link>
+
+                            {/* Tools */}
+                            <CoordinatorCredentialsManager />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -341,28 +200,69 @@ function StatsPanel({ stats }) {
     );
 }
 
-function StatBox({ label, value, accent, format }) {
-    const ring =
-        accent === "teal"
-            ? "border-teal-400/20"
-            : accent === "amber"
-                ? "border-amber-300/20"
-                : "border-violet-400/20";
+// --- Components ---
 
-    const glow =
-        accent === "teal"
-            ? "shadow-[0_0_20px_rgba(45,212,191,0.12)]"
-            : accent === "amber"
-                ? "shadow-[0_0_20px_rgba(252,211,77,0.10)]"
-                : "shadow-[0_0_20px_rgba(168,85,247,0.12)]";
+function StatCard({ label, value, subValue, accent, isCurrency }) {
+    const colors = {
+        indigo: "text-indigo-400 border-indigo-500/20 bg-indigo-500/5",
+        emerald: "text-emerald-400 border-emerald-500/20 bg-emerald-500/5",
+        amber: "text-amber-400 border-amber-500/20 bg-amber-500/5",
+        violet: "text-violet-400 border-violet-500/20 bg-violet-500/5",
+        teal: "text-teal-400 border-teal-500/20 bg-teal-500/5",
+    };
 
-    const formatted =
-        format === "currency" ? `₹${Number(value || 0).toLocaleString()}` : Number(value || 0).toLocaleString();
+    const glows = {
+        indigo: "bg-indigo-500/20",
+        emerald: "bg-emerald-500/20",
+        amber: "bg-amber-500/20",
+        violet: "bg-violet-500/20",
+        teal: "bg-teal-500/20",
+    };
+
+    const theme = colors[accent] || colors.indigo;
+    const glowColor = glows[accent] || glows.indigo;
+
+    const formatted = isCurrency
+        ? `₹${Number(value || 0).toLocaleString()}`
+        : Number(value || 0).toLocaleString();
 
     return (
-        <div className={`rounded-2xl border border-white/10 bg-black/30 p-3 ${ring} ${glow}`}>
-            <div className="text-[11px] font-mono text-white/50 uppercase tracking-widest">{label}</div>
-            <div className="mt-1 text-xl md:text-2xl font-black tracking-tight">{formatted}</div>
+        <div className={`rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-4 md:p-5 relative overflow-hidden group hover:border-white/20 transition-all duration-300`}>
+            <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest mb-1">{label}</div>
+            <div className="text-2xl md:text-3xl font-black tracking-tight text-white/90 group-hover:text-white transition-colors">{formatted}</div>
+            {subValue && <div className={`text-xs mt-1 font-medium ${accent === 'indigo' ? 'text-indigo-300/70' : 'text-emerald-300/70'}`}>{subValue}</div>}
+
+            {/* Glow effect */}
+            <div className={`absolute -top-4 -right-4 w-16 h-16 ${glowColor} blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
         </div>
     );
 }
+
+function EventBreakdown({ stats }) {
+    if (!stats?.eventBreakdown) return null;
+
+    return (
+        <div className="rounded-3xl border border-white/10 bg-white/[0.02] backdrop-blur-xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/5 bg-white/[0.02]">
+                <h3 className="text-sm font-semibold text-white/90">Performance Breakdown</h3>
+            </div>
+            <div className="max-h-[400px] overflow-y-auto custom-scrollbar p-2">
+                <div className="grid grid-cols-12 gap-2 px-3 py-2 text-[10px] font-mono text-white/40 uppercase tracking-widest">
+                    <div className="col-span-6">Event</div>
+                    <div className="col-span-3 text-right">Reg</div>
+                    <div className="col-span-3 text-right">Rev</div>
+                </div>
+                {stats.eventBreakdown.map((e) => (
+                    <div key={(e.eventId || "_") + e.eventName} className="grid grid-cols-12 gap-2 px-3 py-3 rounded-xl hover:bg-white/5 transition border border-transparent hover:border-white/5 items-center group">
+                        <div className="col-span-6">
+                            <div className="text-xs font-semibold text-white/80 group-hover:text-white truncate">{e.eventName}</div>
+                        </div>
+                        <div className="col-span-3 text-right text-xs text-white/60 font-mono">{e.registrations}</div>
+                        <div className="col-span-3 text-right text-xs text-emerald-400/80 font-mono">₹{Number(e.revenue).toLocaleString()}</div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+

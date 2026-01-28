@@ -1,58 +1,106 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
+import { signToken } from '@/lib/jwt';
 
 export const runtime = 'nodejs';
 
 export async function POST(request) {
     try {
+        // Parse request body
         const body = await request.json();
         const { eventId, password } = body;
 
-        if (!eventId || !password) {
-            return NextResponse.json({ error: 'Event ID and Password are required' }, { status: 400 });
+        // Validate inputs
+        if (!eventId || typeof eventId !== 'string') {
+            return NextResponse.json(
+                { error: 'Event ID is required' },
+                { status: 400 }
+            );
         }
 
-        const supabase = createAdminClient();
+        if (!password || typeof password !== 'string') {
+            return NextResponse.json(
+                { error: 'Password is required' },
+                { status: 400 }
+            );
+        }
 
-        // Fetch event payload to check password
-        const { data: event, error } = await supabase
+        // Clean inputs
+        const cleanEventId = eventId.trim();
+        const cleanPassword = password.trim();
+
+        // Get event from database
+        const supabase = createAdminClient();
+        const { data: event, error: dbError } = await supabase
             .from('events')
-            .select('payload')
-            .eq('id', eventId)
+            .select('id, title, payload')
+            .eq('id', cleanEventId)
             .single();
 
-        if (error || !event) {
-            return NextResponse.json({ error: 'Invalid Event ID' }, { status: 401 });
+        // Check if event exists
+        if (dbError || !event) {
+            console.log('[Coordinator Login] Event not found:', cleanEventId);
+            return NextResponse.json(
+                { error: 'Invalid Event ID' },
+                { status: 401 }
+            );
         }
 
+        // Get stored password from event payload
         const storedPassword = event.payload?.password;
 
+        // Check if event has a password set
         if (!storedPassword) {
-            return NextResponse.json({ error: 'This event has no password set. Contact Admin.' }, { status: 403 });
+            console.log('[Coordinator Login] No password set for event:', cleanEventId);
+            return NextResponse.json(
+                { error: 'This event has no password set. Please contact the admin.' },
+                { status: 403 }
+            );
         }
 
-        if (storedPassword !== password) {
-            return NextResponse.json({ error: 'Incorrect Password' }, { status: 401 });
+        // Compare passwords (trim both for safety)
+        const passwordMatch = storedPassword.trim() === cleanPassword;
+
+        if (!passwordMatch) {
+            console.log('[Coordinator Login] Password mismatch for event:', cleanEventId);
+            return NextResponse.json(
+                { error: 'Incorrect password' },
+                { status: 401 }
+            );
         }
 
-        // Set session cookie
-        // In a real app, use a secure signed token (JWT). 
-        // For this MVP, we store the eventId directly signed/encrypted or just simple value if acceptable for this scope.
-        // Assuming simple cookie usage for now as per existing admin pattern.
+        // Create JWT token
+        const token = await signToken(
+            { type: 'coordinator', eventId: cleanEventId },
+            '24h'
+        );
 
+        // Set cookie
         const cookieStore = await cookies();
-        cookieStore.set('coordinator_session', eventId, {
+        cookieStore.set('coordinator_token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
             path: '/',
-            maxAge: 60 * 60 * 24 // 1 day
+            maxAge: 60 * 60 * 24 // 24 hours
         });
 
-        return NextResponse.json({ success: true });
+        console.log('[Coordinator Login] Success for event:', event.title);
+
+        return NextResponse.json({
+            success: true,
+            event: {
+                id: event.id,
+                title: event.title
+            }
+        });
 
     } catch (error) {
-        console.error('Coordinator login error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        console.error('[Coordinator Login] Error:', error);
+        return NextResponse.json(
+            { error: 'Internal server error' },
+            { status: 500 }
+        );
     }
 }
