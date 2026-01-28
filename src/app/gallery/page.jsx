@@ -187,7 +187,7 @@ export default function GalleryPage() {
                     </div>
                 </section>
 
-                {/* Videos Section */}
+                {/* Videos Section
                 <section className="py-20 border-t border-white/5 relative bg-black/20 rounded-3xl mb-20">
                     <div className="max-w-7xl mx-auto px-4 md:px-12">
                         <SectionTitle
@@ -219,7 +219,7 @@ export default function GalleryPage() {
                             ))}
                         </div>
                     </div>
-                </section>
+                </section> */}
             </div>
         </div>
     );

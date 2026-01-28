@@ -35,7 +35,7 @@ export default function EventGalleryPage({ params }) {
     const [event, setEvent] = useState(null);
     const [images, setImages] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedImage, setSelectedImage] = useState(null);
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -71,7 +71,10 @@ export default function EventGalleryPage({ params }) {
                 // Map images for the grid
                 const mappedImages = (imgData || []).map((img, index) => ({
                     id: img.id,
-                    url: img.url,
+                    url: img.url, // Original for lightbox
+                    thumbnail: img.url.includes('cloudinary')
+                        ? img.url.replace('/upload/', '/upload/w_600,q_auto,f_auto/')
+                        : img.url,
                     width: img.width,
                     height: img.height,
                     // Visual props
@@ -166,14 +169,13 @@ export default function EventGalleryPage({ params }) {
                                     className="break-inside-avoid"
                                 >
                                     <div
-                                        onClick={() => setSelectedImage(item)}
                                         className={cn(
-                                            "relative group overflow-hidden cursor-pointer rounded-2xl bg-white/5 border border-white/5 hover:border-teal/30 transition-all duration-700",
+                                            "relative group overflow-hidden rounded-2xl bg-white/5 border border-white/5 hover:border-teal/30 transition-all duration-700",
                                             item.heightClass
                                         )}
                                     >
                                         <Image
-                                            src={item.url}
+                                            src={item.thumbnail || item.url}
                                             alt="gallery image"
                                             fill
                                             className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
@@ -186,14 +188,6 @@ export default function EventGalleryPage({ params }) {
                                                 {item.symbol}
                                             </span>
                                         </div>
-
-                                        {/* Overlay */}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-6">
-                                            <button className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-teal-400">
-                                                <Maximize2 className="w-3 h-3" />
-                                                <span>Expand</span>
-                                            </button>
-                                        </div>
                                     </div>
                                 </Tilt>
                             ))}
@@ -202,35 +196,7 @@ export default function EventGalleryPage({ params }) {
                 </div>
             </section>
 
-            {/* Lightbox */}
-            {selectedImage && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 animate-in fade-in duration-300"
-                    onClick={() => setSelectedImage(null)}
-                >
-                    <button
-                        className="absolute top-6 right-6 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 hover:scale-110 transition-all z-50"
-                        onClick={(e) => { e.stopPropagation(); setSelectedImage(null); }}
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
 
-                    <div
-                        className="relative max-w-6xl max-h-[90vh] w-full h-full flex flex-col items-center justify-center rounded-2xl"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="relative w-full h-full">
-                            <Image
-                                src={selectedImage.url}
-                                alt="Full size"
-                                fill
-                                className="object-contain"
-                                quality={100}
-                            />
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

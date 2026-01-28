@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Trash2, Upload, Loader2, Plus, Image as ImageIcon, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 
 const CATEGORIES = ["Olympiads", "Workshops", "Fests", "Fun Events", "General"];
 
@@ -95,18 +96,8 @@ export default function GalleryManager() {
         setCreatingAlbum(true);
 
         try {
-            // 1. Upload Cover Image
-            const fileExt = coverImage.name.split('.').pop();
-            const fileName = `covers/${Date.now()}.${fileExt}`;
-            const { error: uploadError } = await supabase.storage
-                .from('gallery')
-                .upload(fileName, coverImage);
-
-            if (uploadError) throw uploadError;
-
-            const { data: { publicUrl } } = supabase.storage
-                .from('gallery')
-                .getPublicUrl(fileName);
+            // 1. Upload Cover Image to Cloudinary
+            const publicUrl = await uploadToCloudinary(coverImage);
 
             // 2. Insert Event Record
             const { data, error: dbError } = await supabase
@@ -168,20 +159,8 @@ export default function GalleryManager() {
 
         try {
             const uploadPromises = files.map(async (file) => {
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${selectedAlbumId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-
-                // Upload to Storage
-                const { error: uploadError } = await supabase.storage
-                    .from('gallery')
-                    .upload(fileName, file);
-
-                if (uploadError) throw uploadError;
-
-                // Get Public URL
-                const { data: { publicUrl } } = supabase.storage
-                    .from('gallery')
-                    .getPublicUrl(fileName);
+                // Upload to Cloudinary
+                const publicUrl = await uploadToCloudinary(file);
 
                 // Get Dimensions
                 const { width, height } = await getImageDimensions(file);

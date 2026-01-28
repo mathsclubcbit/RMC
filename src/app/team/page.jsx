@@ -1,11 +1,14 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import SectionTitle from "@/components/ui/SectionTitle";
 import SpotlightCard from "@/components/ui/SpotlightCard";
 import PageHeader from "@/components/ui/PageHeader";
 import Link from "next/link";
-import { Linkedin, Mail, Users, PenTool, Code, Award, ChevronRight } from "lucide-react";
+import { Linkedin, Mail, ChevronRight, Loader2, User } from "lucide-react";
 import { motion } from "framer-motion";
+import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -28,98 +31,136 @@ const cardVariants = {
     }
 };
 
+// Colors for visual flair
+const COLORS = ["teal", "lime", "coral", "orange", "blue", "purple"];
+
 export default function TeamPage() {
+    const [teamData, setTeamData] = useState({});
+    const [loading, setLoading] = useState(true);
 
-    const facultyAdvisors = [
-        {
-            name: "Dr. K. Ramesh",
-            designation: "Faculty Coordinator",
-            department: "Mathematics Dept.",
-            initials: "KR",
-            color: "teal"
-        },
-        {
-            name: "Prof. S. Lakshmi",
-            designation: "Faculty Advisor",
-            department: "Mathematics Dept.",
-            initials: "SL",
-            color: "lime"
-        },
-    ];
+    useEffect(() => {
+        const fetchTeam = async () => {
+            const supabase = createClient();
+            // Fetch from 'rmc_council' instead of 'team_members'
+            // Sort by priority_order (ascending) first, then created_at
+            const { data, error } = await supabase
+                .from('rmc_council')
+                .select('*')
+                .order('priority_order', { ascending: true })
+                .order('created_at', { ascending: true });
 
-    const coreTeam = [
-        {
-            name: "Aditya Sharma",
-            role: "President",
-            branch: "CSE, 4th Year",
-            quote: "Math is the poetry of logical ideas.",
-            initials: "AS",
-            color: "teal"
-        },
-        {
-            name: "Priya Reddy",
-            role: "Vice President",
-            branch: "ECE, 3rd Year",
-            quote: "In mathematics, you don't understand things. You just get used to them.",
-            initials: "PR",
-            color: "lime"
-        },
-        {
-            name: "Rahul Verma",
-            role: "Technical Lead",
-            branch: "IT, 3rd Year",
-            quote: "The essence of mathematics is not to make simple things complicated.",
-            initials: "RV",
-            color: "orange"
-        },
-        {
-            name: "Sneha Patil",
-            role: "Event Coordinator",
-            branch: "CSE, 3rd Year",
-            quote: "Mathematics is the music of reason.",
-            initials: "SP",
-            color: "coral"
-        },
-        {
-            name: "Karthik Menon",
-            role: "Content Head",
-            branch: "MECH, 3rd Year",
-            quote: "Pure mathematics is the world's best game.",
-            initials: "KM",
-            color: "teal"
-        },
-        {
-            name: "Ananya Iyer",
-            role: "Design Lead",
-            branch: "CSE, 2nd Year",
-            quote: "Math reveals the hidden patterns of the world.",
-            initials: "AI",
-            color: "lime"
-        },
-        {
-            name: "Vikram Singh",
-            role: "Social Media Manager",
-            branch: "EEE, 2nd Year",
-            quote: "Numbers have an important story to tell.",
-            initials: "VS",
-            color: "orange"
-        },
-        {
-            name: "Meera Das",
-            role: "Outreach Coordinator",
-            branch: "CIVIL, 3rd Year",
-            quote: "Math is the language in which God has written the universe.",
-            initials: "MD",
-            color: "coral"
-        },
-    ];
+            if (error) {
+                console.error("Error fetching team:", error);
+                setLoading(false);
+                return;
+            }
 
-    const departments = [
-        { name: "Events Division", members: 12, color: "teal", icon: Users },
-        { name: "Technical Division", members: 8, color: "lime", icon: Code },
-        { name: "Design Division", members: 6, color: "coral", icon: PenTool },
-        { name: "Content Division", members: 5, color: "orange", icon: Award },
-    ];
+            // Group by category
+            const grouped = (data || []).reduce((acc, member) => {
+                if (!acc[member.category]) acc[member.category] = [];
+                acc[member.category].push(member);
+                return acc;
+            }, {});
+
+            setTeamData(grouped);
+            setLoading(false);
+        };
+
+        fetchTeam();
+    }, []);
+
+    const renderSection = (title, subtitle, categoryKey, variant = "standard", gridCols = "standard") => {
+        const members = teamData[categoryKey];
+        if (!members || members.length === 0) return null;
+
+        return (
+            <section className="py-24 px-4 sm:px-6 lg:px-8 z-10 relative">
+                <div className="max-w-7xl mx-auto">
+                    <SectionTitle title={title} subtitle={subtitle} center={true} variant={variant === "gold" ? "gold" : "silver"} />
+
+                    <motion.div
+                        variants={containerVariants}
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true, margin: "-50px" }}
+                        className={`grid gap-8 mt-16 ${gridCols === "wide" ? "md:grid-cols-2 max-w-5xl mx-auto" :
+                            gridCols === "compact" ? "sm:grid-cols-2 lg:grid-cols-4" :
+                                "sm:grid-cols-2 lg:grid-cols-3"
+                            }`}
+                    >
+                        {members.map((member, index) => {
+                            const color = COLORS[index % COLORS.length];
+                            return (
+                                <motion.div key={member.id} variants={cardVariants}>
+                                    <SpotlightCard
+                                        className={`bg-white/[0.03] backdrop-blur-sm border border-white/5 p-6 rounded-2xl flex flex-col h-full group hover:bg-white/[0.06] transition-all duration-500 hover:-translate-y-2`}
+                                    >
+                                        <div className="flex items-start justify-between mb-6">
+                                            {/* Image or Initials */}
+                                            <div className={`relative w-20 h-20 rounded-2xl overflow-hidden bg-${color}/5 border border-${color}/10 group-hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.2)] transition-shadow`}>
+                                                {member.image_url ? (
+                                                    <Image
+                                                        src={member.image_url.includes('cloudinary')
+                                                            ? member.image_url.replace('/upload/', '/upload/w_400,h_400,c_fill,q_auto,f_auto/')
+                                                            : member.image_url}
+                                                        alt={member.name}
+                                                        fill
+                                                        className="object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className={`w-full h-full flex items-center justify-center text-xl font-bold font-serif text-${color}`}>
+                                                        {member.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Social Links */}
+                                            <div className="flex gap-2">
+                                                {member.linkedin_url && (
+                                                    <a href={member.linkedin_url} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white/5 text-white/40 hover:text-white hover:bg-blue-600/20 transition-all">
+                                                        <Linkedin className="w-4 h-4" />
+                                                    </a>
+                                                )}
+                                                {member.email && (
+                                                    <a href={`mailto:${member.email}`} className="p-2 rounded-full bg-white/5 text-white/40 hover:text-white hover:bg-teal/20 transition-all">
+                                                        <Mail className="w-4 h-4" />
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <h3 className="font-serif font-bold text-xl text-white mb-1 tracking-wide group-hover:text-teal transition-colors">{member.name}</h3>
+
+                                        {/* Position (Skip for Faculty Advisor if null) */}
+                                        {member.position && (
+                                            <p className={`text-${color} text-xs font-mono uppercase tracking-widest mb-4 opacity-70`}>{member.position}</p>
+                                        )}
+
+                                        {/* Caption */}
+                                        {member.caption && (
+                                            <div className="mt-auto pt-4 border-t border-white/5 relative overflow-hidden">
+                                                <p className="text-xs text-white/40 italic leading-relaxed font-serif relative z-10 group-hover:text-white/70 transition-colors line-clamp-3">
+                                                    &quot;{member.caption}&quot;
+                                                </p>
+                                            </div>
+                                        )}
+                                    </SpotlightCard>
+                                </motion.div>
+                            );
+                        })}
+                    </motion.div>
+                </div>
+            </section>
+        );
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#020617]">
+                <Loader2 className="w-10 h-10 animate-spin text-teal" />
+            </div>
+        );
+    }
 
     return (
         <div className="relative min-h-screen bg-[#020617] selection:bg-teal/30 selection:text-teal overflow-x-hidden">
@@ -129,127 +170,21 @@ export default function TeamPage() {
                 subtitle="The architects of order from chaos. The minds governing the Ramanujan Math Club."
             />
 
-            {/* Faculty Advisors */}
-            <section className="py-24 px-4 sm:px-6 lg:px-8 z-10 relative">
-                <div className="max-w-6xl mx-auto">
-                    <SectionTitle title="Guiding Constants" subtitle="Faculty Advisors" center={true} variant="silver" />
+            {/* Sections based on requested categories */}
+            {renderSection("Guiding Constants", "Faculty Advisors", "Faculty Advisor", "silver", "wide")}
 
-                    <motion.div
-                        variants={containerVariants}
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true, margin: "-100px" }}
-                        className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mt-12"
-                    >
-                        {facultyAdvisors.map((faculty, index) => (
-                            <motion.div key={index} variants={cardVariants}>
-                                <SpotlightCard className="h-full bg-white/[0.02] backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] flex items-center gap-8 group hover:border-teal/30 transition-colors shadow-2xl shadow-black/50">
-                                    <div className={`w-28 h-28 rounded-2xl bg-gradient-to-br from-${faculty.color}/10 to-transparent border border-${faculty.color}/20 flex items-center justify-center text-4xl font-serif text-${faculty.color} shadow-[0_0_40px_-10px_rgba(45,212,191,0.2)] shrink-0 group-hover:scale-105 transition-transform duration-500`}>
-                                        {faculty.initials}
-                                    </div>
-                                    <div>
-                                        <h3 className="text-3xl font-serif font-bold text-white mb-2 group-hover:text-teal transition-colors tracking-wide">
-                                            {faculty.name}
-                                        </h3>
-                                        <div className="flex flex-col gap-1">
-                                            <p className={`text-${faculty.color} font-mono text-xs uppercase tracking-[0.2em] opacity-90`}>{faculty.designation}</p>
-                                            <p className="text-white/40 font-serif italic text-sm border-t border-white/5 pt-2 mt-1">{faculty.department}</p>
-                                        </div>
-                                    </div>
-                                </SpotlightCard>
-                            </motion.div>
-                        ))}
-                    </motion.div>
-                </div>
-            </section>
+            {renderSection("The Core Matrix", "IV. Governance Logic", "Core Matrix", "standard", "compact")}
 
-            {/* Core Team */}
-            <section className="py-24 px-4 sm:px-6 lg:px-8 z-10 relative bg-black/20">
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            {/* Technical & Design usually go well together visually if separate or stacked */}
+            {renderSection("Technical Division", "System Architects", "Technical", "standard", "standard")}
 
-                <div className="max-w-7xl mx-auto">
-                    <SectionTitle title="The Core Matrix" subtitle="IV. Governance Logic" center={true} />
+            {renderSection("Design Team", "Visual Artists", "Design Team", "gold", "standard")}
 
-                    <motion.div
-                        variants={containerVariants}
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true, margin: "-50px" }}
-                        className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-16"
-                    >
-                        {coreTeam.map((member, index) => (
-                            <motion.div key={index} variants={cardVariants}>
-                                <SpotlightCard
-                                    className={`bg-white/[0.03] backdrop-blur-sm border border-white/5 p-6 rounded-2xl flex flex-col h-full group hover:bg-white/[0.06] transition-all duration-500 hover:-translate-y-2`}
-                                >
-                                    <div className="flex items-start justify-between mb-8">
-                                        <div className={`w-16 h-16 rounded-xl bg-${member.color}/5 flex items-center justify-center text-xl font-bold font-serif text-${member.color} border border-${member.color}/10 min-w-[4rem] group-hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.2)] transition-shadow`}>
-                                            {member.initials}
-                                        </div>
-                                        <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-x-4 group-hover:translate-x-0">
-                                            <button className="text-white/40 hover:text-white transition-colors">
-                                                <Linkedin className="w-5 h-5" />
-                                            </button>
-                                            <button className="text-white/40 hover:text-white transition-colors">
-                                                <Mail className="w-5 h-5" />
-                                            </button>
-                                        </div>
-                                    </div>
+            {renderSection("Visual Media", "Media Production", "Visual Media", "standard", "standard")}
 
-                                    <h3 className="font-serif font-bold text-xl text-white mb-2 tracking-wide group-hover:text-teal transition-colors">{member.name}</h3>
-                                    <p className={`text-${member.color} text-xs font-mono uppercase tracking-widest mb-6 opacity-70`}>{member.role}</p>
+            {renderSection("Public Relations", "Communication", "PR Team", "standard", "standard")}
 
-                                    <div className="mt-auto pt-6 border-t border-white/5 relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-700" />
-                                        <p className="text-xs text-white/40 italic leading-relaxed font-serif relative z-10 group-hover:text-white/70 transition-colors">
-                                            &quot;{member.quote}&quot;
-                                        </p>
-                                    </div>
-                                </SpotlightCard>
-                            </motion.div>
-                        ))}
-                    </motion.div>
-                </div>
-                <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-            </section>
-
-            {/* Departments */}
-            <section className="py-32 px-4 sm:px-6 lg:px-8 z-10 relative overflow-hidden">
-                <div className="max-w-7xl mx-auto">
-                    <SectionTitle
-                        title="Subsystems"
-                        subtitle="Operational Divisions"
-                        center={true}
-                        variant="gold"
-                    />
-                    <motion.div
-                        variants={containerVariants}
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true }}
-                        className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-16"
-                    >
-                        {departments.map((dept, index) => (
-                            <motion.div
-                                key={index}
-                                variants={cardVariants}
-                                className={`p-8 rounded-[2rem] text-center border border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent hover:border-${dept.color}/50 transition-all duration-500 group relative overflow-hidden`}
-                            >
-                                <div className={`absolute inset-0 bg-${dept.color}/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                                <div className={`absolute -inset-1 bg-gradient-to-r from-${dept.color}/20 to-transparent opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500`} />
-
-                                <div className={`relative w-20 h-20 mx-auto rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6 text-${dept.color} group-hover:scale-110 group-hover:border-${dept.color}/50 group-hover:bg-${dept.color}/10 transition-all duration-500`}>
-                                    <dept.icon className="w-8 h-8" />
-                                </div>
-                                <div className={`relative text-5xl font-serif font-bold text-white mb-3 tracking-tighter`}>
-                                    {dept.members}
-                                </div>
-                                <h3 className="relative font-sans text-sm uppercase tracking-widest text-white/50 group-hover:text-white transition-colors">{dept.name}</h3>
-                            </motion.div>
-                        ))}
-                    </motion.div>
-                </div>
-            </section>
+            {renderSection("The Team", "Club Members", "Team", "standard", "compact")}
 
             {/* Join Team CTA */}
             <section className="py-20 px-4 sm:px-6 lg:px-8 z-10 relative">

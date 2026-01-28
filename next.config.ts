@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'vqa-frontend.vercel.app' }, // RMC Assets
       // Supabase Storage
       { protocol: 'https', hostname: 'zuczhjbmspuijwaypdjd.supabase.co' },
+      // Cloudinary
+      { protocol: 'https', hostname: 'res.cloudinary.com' },
     ],
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
