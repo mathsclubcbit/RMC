@@ -56,8 +56,19 @@ export async function GET(_request, { params }) {
 }
 
 export async function PUT(request, { params }) {
-    const auth = requireAdmin(request);
-    if (auth) return auth;
+    // Authorization Check
+    const { id } = await params;
+    const cookieStore = await request.cookies;
+    const isAdmin = cookieStore.get('admin_session')?.value === 'true';
+    const coordinatorEventId = cookieStore.get('coordinator_session')?.value;
+
+    const isCoordinatorForEvent = coordinatorEventId && String(coordinatorEventId) === String(id);
+
+    // If NEITHER admin NOR owner, return 401
+    if (!isAdmin && !isCoordinatorForEvent) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    // Otherwise proceed...
 
     if (!hasSupabaseConfig()) {
         return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 });

@@ -77,7 +77,7 @@ export default function RegistrationClient({ eventId }) {
         return parseAmount(match?.price);
     };
 
-    const qrImageSrc = event?.qrCode || event?.qr || event?.qrImage || event?.qr_code || event?.qrcode || null;
+    const qrImageSrc = event?.qrCode || event?.qr || event?.qrImage || event?.qr_code || event?.qrcode || "/qr-placeholder.png";
 
     const hasPricingTierForCurrentTeamSize = (() => {
         if (!event?.variablePricingEnabled) return true;
@@ -349,7 +349,7 @@ export default function RegistrationClient({ eventId }) {
                 </div>
 
                 {/* RIGHT: Stepper Form */}
-                <div className="flex-1 p-6 md:p-12 lg:p-16 overflow-y-auto relative">
+                <div className="flex-1 min-h-0 h-full p-6 md:p-12 lg:p-16 pb-32 md:pb-32 overflow-y-auto relative custom-scrollbar overscroll-contain">
                     {isSuccess ? (
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
@@ -550,13 +550,45 @@ export default function RegistrationClient({ eventId }) {
                                         </div>
 
                                         {/* QR Display */}
-                                        {(qrImageSrc || event?.qrCode) && (
-                                            <div className="flex bg-white rounded-2xl p-5 gap-5 items-center shadow-xl">
-                                                <Image src={qrImageSrc || event.qrCode} alt="Pay" width={120} height={120} className="w-28 h-28 object-contain" unoptimized />
-                                                <div>
-                                                    <div className="text-gray-800 font-bold text-lg mb-1">Scan to Pay</div>
-                                                    <div className="text-teal-600 font-bold text-3xl">₹{amountToPay}</div>
-                                                    <div className="text-xs text-gray-400 mt-2">UPI / GPay / PhonePe</div>
+                                        {qrImageSrc && (
+                                            <div className="relative overflow-hidden bg-white/[0.03] border border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row gap-6 items-center shadow-2xl shadow-black/50 group">
+                                                {/* Animated Gradient Background */}
+                                                <div className="absolute inset-0 bg-gradient-to-br from-teal/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                                                {/* QR Code Container with Scan Effect */}
+                                                <div className="relative z-10 p-3 bg-white rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.15)] group-hover:shadow-[0_0_50px_rgba(45,212,191,0.3)] transition-all duration-500">
+                                                    <div className="relative overflow-hidden rounded-lg w-32 h-32">
+                                                        <Image src={qrImageSrc} alt="Pay" width={128} height={128} className="w-full h-full object-contain" unoptimized />
+
+                                                        {/* Scanning Laser Animation */}
+                                                        <motion.div
+                                                            className="absolute top-0 left-0 w-full h-1 bg-teal shadow-[0_0_20px_rgba(45,212,191,0.8)] z-20 pointer-events-none"
+                                                            animate={{ top: ['0%', '100%', '0%'] }}
+                                                            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                                        />
+                                                        <motion.div
+                                                            className="absolute inset-0 bg-gradient-to-b from-teal/10 to-transparent z-10 pointer-events-none"
+                                                            animate={{ top: ['-100%', '100%', '-100%'] }}
+                                                            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Payment Details */}
+                                                <div className="relative z-10 text-center sm:text-left flex-1">
+                                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal/10 border border-teal/20 text-teal text-[10px] font-mono uppercase tracking-widest mb-3">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse" />
+                                                        Scan to Pay
+                                                    </div>
+                                                    <div className="text-4xl font-serif font-bold text-white mb-2 tracking-wide">
+                                                        <span className="text-teal">₹</span>{amountToPay}
+                                                    </div>
+                                                    <div className="text-xs text-white/40 font-mono tracking-wider space-y-1">
+                                                        <p>Scan with any UPI App</p>
+                                                        <div className="flex items-center justify-center sm:justify-start gap-3 opacity-50 mt-2">
+                                                            <span>GPay</span> • <span>PhonePe</span> • <span>Paytm</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}

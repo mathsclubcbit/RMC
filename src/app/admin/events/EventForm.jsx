@@ -40,7 +40,7 @@ function toNumberOrKeep(value) {
     return Number.isFinite(n) ? n : value;
 }
 
-export default function EventForm({ mode, initialEvent }) {
+export default function EventForm({ mode, initialEvent, backLink = "/admin/events" }) {
     const [event, setEvent] = useState({ ...defaultEvent, ...(initialEvent || {}) });
     const [imgFile, setImgFile] = useState(null);
     const [posterDesktopFile, setPosterDesktopFile] = useState(null);
@@ -172,6 +172,7 @@ export default function EventForm({ mode, initialEvent }) {
 
             // If created, go to edit screen for further changes.
             if (!isEdit && data?.id) {
+                // If it's a new event created by admin, they stay in edit flow (using admin logic)
                 window.location.href = `/admin/events/${encodeURIComponent(data.id)}/edit`;
             }
         } catch (err) {
@@ -222,7 +223,7 @@ export default function EventForm({ mode, initialEvent }) {
                     </div>
                     <div className="flex items-center gap-3">
                         <Link
-                            href="/admin/events"
+                            href={backLink}
                             className="px-4 py-2 rounded-xl bg-white/10 border border-white/15 hover:bg-white/15 transition"
                         >
                             Back
@@ -433,7 +434,6 @@ export default function EventForm({ mode, initialEvent }) {
                                 value={event.password || ""}
                                 onChange={(e) => setField("password", e.target.value)}
                                 className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
-                                placeholder="eventpassword2026"
                             />
                         </Field>
                     </div>
@@ -575,7 +575,7 @@ export default function EventForm({ mode, initialEvent }) {
 
                     <div className="flex items-center justify-end gap-3 pt-2">
                         <Link
-                            href="/admin/events"
+                            href={backLink}
                             className="px-4 py-2 rounded-xl bg-white/10 border border-white/15 hover:bg-white/15 transition"
                         >
                             Cancel
