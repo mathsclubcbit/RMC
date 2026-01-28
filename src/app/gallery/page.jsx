@@ -5,11 +5,12 @@ import SectionTitle from "@/components/ui/SectionTitle";
 import SpotlightCard from "@/components/ui/SpotlightCard";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionDivider from "@/components/ui/SectionDivider";
-import { Play, Maximize2, Loader2, ImageOff, X, Palette } from "lucide-react";
+import { Play, Loader2, ImageOff, Calendar, ArrowRight, ImageIcon } from "lucide-react";
 import Tilt from "react-parallax-tilt";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
+import Link from "next/link";
 
 const galleryCategories = [
     { name: "All", count: 0 },
@@ -19,69 +20,62 @@ const galleryCategories = [
     { name: "Fun Events", count: 0 },
 ];
 
-const SYMBOLS = ["∑", "π", "∫", "ζ", "∞", "√", "Δ", "θ", "λ", "φ", "Ω", "α"];
-const COLORS = ["teal", "lime", "coral", "orange"];
-
 export default function GalleryPage() {
     const [activeCategory, setActiveCategory] = useState("All");
-    const [images, setImages] = useState([]);
+    const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [categories, setCategories] = useState(galleryCategories);
-    const [selectedImage, setSelectedImage] = useState(null);
 
     useEffect(() => {
-        const fetchImages = async () => {
+        const fetchEvents = async () => {
             const supabase = createClient();
+            // Fetch EVENTS (Albums) instead of images
             const { data, error } = await supabase
-                .from("gallery_images")
+                .from("gallery_events")
                 .select("*")
-                .order("created_at", { ascending: false });
+                .order("event_date", { ascending: false });
 
             if (error) {
-                console.error("Error fetching gallery:", error);
+                console.error("Error fetching gallery events:", error);
                 setLoading(false);
                 return;
             }
 
-            // Transform data to match UI needs
-            const mappedData = (data || []).map((img, index) => ({
-                id: img.id,
-                url: img.url,
-                category: img.category || "General",
-                title: img.caption || "Untitled",
-                symbol: SYMBOLS[index % SYMBOLS.length],
-                color: COLORS[index % COLORS.length],
-                // Randomize height for masonry effect if not stored, otherwise use aspect ratio concept
-                // For simplicity in this grid, we'll try to determine height class based on index or random
-                height: index % 3 === 0 ? "h-80" : index % 2 === 0 ? "h-64" : "h-72"
+            const mappedEvents = (data || []).map((evt) => ({
+                id: evt.id,
+                title: evt.title,
+                description: evt.description,
+                category: evt.category || "General",
+                date: evt.event_date,
+                coverImage: evt.cover_image,
             }));
 
-            setImages(mappedData);
+            setEvents(mappedEvents);
 
             // Update category counts
             const counts = galleryCategories.map(cat => {
-                if (cat.name === "All") return { ...cat, count: mappedData.length };
+                if (cat.name === "All") return { ...cat, count: mappedEvents.length };
                 return {
                     ...cat,
-                    count: mappedData.filter(img => img.category === cat.name).length
+                    count: mappedEvents.filter(evt => evt.category === cat.name).length
                 };
             });
             setCategories(counts);
             setLoading(false);
         };
 
-        fetchImages();
+        fetchEvents();
     }, []);
 
-    const filteredItems = activeCategory === "All"
-        ? images
-        : images.filter(item => item.category === activeCategory);
+    const filteredEvents = activeCategory === "All"
+        ? events
+        : events.filter(evt => evt.category === activeCategory);
 
     return (
         <div className="relative min-h-screen">
 
             <PageHeader
-                title="VISUAL PROOFS"
+                title="VISUAL CHRONICLES"
                 subtitle="A register of observed phenomena. The visual memories of our timeline."
             />
 
@@ -111,115 +105,87 @@ export default function GalleryPage() {
 
                 <SectionDivider type="theorem" number="V" text="Observed Data" />
 
-                {/* Gallery Masonry Grid */}
+                {/* Event Albums Grid */}
                 <section className="pb-32 min-h-[50vh]">
                     <div className="max-w-7xl mx-auto">
                         {loading ? (
                             <div className="flex flex-col items-center justify-center py-20">
                                 <Loader2 className="w-10 h-10 animate-spin text-teal-400 mb-4" />
-                                <p className="text-white/40 font-mono text-xs uppercase tracking-widest">Retrieving Data...</p>
+                                <p className="text-white/40 font-mono text-xs uppercase tracking-widest">Retrieving Archives...</p>
                             </div>
-                        ) : filteredItems.length === 0 ? (
+                        ) : filteredEvents.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 border border-dashed border-white/10 rounded-3xl bg-white/5">
                                 <ImageOff className="w-10 h-10 text-white/20 mb-4" />
-                                <p className="text-white/40 font-mono text-xs uppercase tracking-widest">No visual data found for this category.</p>
+                                <p className="text-white/40 font-mono text-xs uppercase tracking-widest">No archives found for this category.</p>
                             </div>
                         ) : (
-                            <div className="columns-1 sm:columns-2 lg:columns-3 gap-8 space-y-8">
-                                {filteredItems.map((item) => (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {filteredEvents.map((evt) => (
                                     <Tilt
-                                        key={item.id}
-                                        tiltMaxAngleX={5}
-                                        tiltMaxAngleY={5}
+                                        key={evt.id}
+                                        tiltMaxAngleX={3}
+                                        tiltMaxAngleY={3}
                                         perspective={1000}
                                         scale={1.02}
                                         transitionSpeed={1500}
-                                        className="break-inside-avoid"
+                                        className="h-full"
                                     >
-                                        <div
-                                            onClick={() => setSelectedImage(item)}
-                                            className={cn(
-                                                "relative group overflow-hidden cursor-pointer rounded-2xl bg-white/5 border border-white/5 hover:border-teal/30 transition-all duration-700",
-                                                item.height
-                                            )}
-                                        >
-                                            {/* Background Image - The actual photo */}
-                                            <Image
-                                                src={item.url}
-                                                alt={item.title}
-                                                fill
-                                                className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-100"
-                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                            />
+                                        <Link href={`/gallery/${evt.id}`} className="block h-full">
+                                            <div className="relative h-full group overflow-hidden cursor-pointer rounded-2xl bg-white/5 border border-white/5 hover:border-teal/30 transition-all duration-500 flex flex-col">
 
-                                            {/* Symbol Overlay - Reduced opacity so photo is visible */}
-                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none mix-blend-overlay">
-                                                <span className={`text-[8rem] font-serif italic font-black text-white/10 group-hover:text-white/20 transition-all duration-1000 select-none`}>
-                                                    {item.symbol}
-                                                </span>
-                                            </div>
+                                                {/* Cover Image */}
+                                                <div className="relative aspect-[4/3] overflow-hidden">
+                                                    {evt.coverImage ? (
+                                                        <Image
+                                                            src={evt.coverImage}
+                                                            alt={evt.title}
+                                                            fill
+                                                            className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
+                                                        />
+                                                    ) : (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-white/5 text-white/20">
+                                                            <ImageIcon className="w-12 h-12" />
+                                                        </div>
+                                                    )}
 
-                                            {/* Gradient Overlay for Text Readability */}
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent p-8 flex flex-col justify-end transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                                                <div className="flex items-center gap-3 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
-                                                    <span className={cn(
-                                                        "w-2 h-2 rounded-full",
-                                                        item.color === 'teal' ? 'bg-teal-400' :
-                                                            item.color === 'lime' ? 'bg-lime-400' :
-                                                                item.color === 'coral' ? 'bg-rose-400' : 'bg-amber-400'
-                                                    )} />
-                                                    <span className="text-xs font-mono uppercase tracking-widest text-muted">{item.category}</span>
+                                                    {/* Date Overlay */}
+                                                    <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2">
+                                                        <Calendar className="w-3 h-3 text-teal-400" />
+                                                        <span className="text-[10px] font-mono font-bold text-white/90">
+                                                            {new Date(evt.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Category Tag */}
+                                                    <div className="absolute top-4 right-4 bg-teal-500/20 backdrop-blur-md px-3 py-1 rounded-full border border-teal-500/30">
+                                                        <span className="text-[10px] font-mono font-bold text-teal-200 uppercase tracking-wider">
+                                                            {evt.category}
+                                                        </span>
+                                                    </div>
                                                 </div>
 
-                                                <h3 className="text-white font-[family-name:var(--font-cinzel)] font-bold text-xl tracking-tight leading-none mb-4 group-hover:text-teal-50 transition-colors drop-shadow-md">{item.title}</h3>
+                                                {/* Content */}
+                                                <div className="p-6 flex flex-col flex-grow bg-gradient-to-b from-transparent to-black/40">
+                                                    <h3 className="text-2xl font-serif font-bold text-white mb-2 group-hover:text-teal-200 transition-colors">
+                                                        {evt.title}
+                                                    </h3>
+                                                    <p className="text-white/60 text-sm line-clamp-2 mb-6 flex-grow">
+                                                        {evt.description}
+                                                    </p>
 
-                                                <button className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-white/60 group-hover:text-teal-400 transition-colors opacity-0 group-hover:opacity-100 duration-500 delay-200">
-                                                    <Maximize2 className="w-3 h-3" />
-                                                    <span>Expand View</span>
-                                                </button>
+                                                    <div className="flex items-center text-teal-400 text-xs font-bold uppercase tracking-widest gap-2 group-hover:gap-3 transition-all">
+                                                        <span>View Gallery</span>
+                                                        <ArrowRight className="w-4 h-4" />
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
+                                        </Link>
                                     </Tilt>
                                 ))}
                             </div>
                         )}
                     </div>
                 </section>
-
-                {/* Lightbox Modal */}
-                {selectedImage && (
-                    <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 animate-in fade-in duration-300"
-                        onClick={() => setSelectedImage(null)}
-                    >
-                        <button
-                            className="absolute top-6 right-6 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 hover:scale-110 transition-all"
-                            onClick={() => setSelectedImage(null)}
-                        >
-                            <X className="w-6 h-6" />
-                        </button>
-
-                        <div
-                            className="relative max-w-5xl max-h-[90vh] w-full h-full flex flex-col items-center justify-center rounded-2xl overflow-hidden"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className="relative w-full h-full">
-                                <Image
-                                    src={selectedImage.url}
-                                    alt={selectedImage.title}
-                                    fill
-                                    className="object-contain"
-                                    quality={100}
-                                />
-                            </div>
-
-                            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/80 to-transparent">
-                                <h3 className="text-white font-serif font-bold text-2xl text-center mb-1">{selectedImage.title}</h3>
-                                <p className="text-white/50 text-center text-xs font-mono uppercase tracking-widest">{selectedImage.category}</p>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 {/* Videos Section */}
                 <section className="py-20 border-t border-white/5 relative bg-black/20 rounded-3xl mb-20">
