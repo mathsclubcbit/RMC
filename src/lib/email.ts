@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { generateQRCode } from './qrcode';
+import { generateQRCode, generateStyledQRCode } from './qrcode';
 
 /**
  * Configure the SMTP Transporter
@@ -298,4 +298,3 @@ export const sendVerificationEmail = async (
         // Don't throw error to prevent failing the entire registration if email fails
     }
 };
-```
