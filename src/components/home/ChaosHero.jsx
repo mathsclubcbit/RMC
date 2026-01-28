@@ -223,7 +223,7 @@ export default function ChaosHero() {
                         transition={{ delay: 1, duration: 1 }}
                         className="font-serif text-xl md:text-2xl text-white/60 leading-relaxed italic max-w-2xl mx-auto"
                     >
-                        &quot;The Art of the Infinite.&quot;
+                        Journey to Infinity
                     </motion.div>
 
                     {/* Math Notation Decoration */}
