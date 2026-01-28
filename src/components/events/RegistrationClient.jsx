@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, CheckCircle, Upload, FileText, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle, Upload, FileText, Users, X } from "lucide-react";
 import TicketDownloadButton from "./TicketDownloadButton";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
@@ -220,6 +220,8 @@ export default function RegistrationClient({ eventId }) {
             } else {
                 setCurrentStep(prev => prev + 1);
             }
+            // Scroll to top of form on step change
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
 
@@ -230,6 +232,7 @@ export default function RegistrationClient({ eventId }) {
             setCurrentStep(prev => prev - 1);
         }
         setErrorMessage("");
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleSubmit = async (e) => {
@@ -281,6 +284,7 @@ export default function RegistrationClient({ eventId }) {
             setRegistrationId(result.registrationId);
             setQrCodeUrl(result.qrCode);
             setIsSuccess(true);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
 
         } catch (error) {
             console.error("Submission Error:", error);
@@ -290,390 +294,450 @@ export default function RegistrationClient({ eventId }) {
         }
     };
 
-    if (isLoading) return <div className="min-h-screen bg-black flex items-center justify-center text-white font-mono">Loading Event...</div>;
-    if (!event) return <div className="min-h-screen bg-black flex items-center justify-center text-white font-mono">Event Not Found</div>;
+    // --- RENDER HELPERS ---
 
-    return (
-        <div className="min-h-[100dvh] bg-[#020617] relative flex items-center justify-center p-2 md:p-0 overflow-hidden font-sans selection:bg-teal/30 selection:text-teal">
-            {/* Background & Overlays - Math Noir */}
-            {showPoster && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl" onClick={() => setShowPoster(false)}>
-                    <button onClick={() => setShowPoster(false)} className="absolute top-8 right-8 text-white/50 hover:text-white transition-colors">
-                        <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md">
-                            <span className="text-xs font-mono uppercase tracking-widest">Close</span>
+    const renderStepper = () => (
+        <div className="flex items-center justify-center md:justify-between mb-8 md:mb-10 px-4">
+            {[1, 2, 3].map((step) => {
+                if (step === 2 && !requiresTeamStep) return null;
+
+                const isActive = step === currentStep;
+                const isDone = step < currentStep;
+                const stepLabel = step === 1 ? 'Identity' : step === 2 ? 'Squad' : 'Payment';
+
+                return (
+                    <div key={step} className="flex items-center gap-2 md:gap-3">
+                        <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-sm font-bold font-mono transition-all duration-300 ${isActive ? 'bg-gradient-to-br from-teal to-emerald-500 text-black scale-110 shadow-[0_0_25px_rgba(45,212,191,0.4)]' : isDone ? 'bg-teal/20 text-teal ring-1 ring-teal/30' : 'bg-white/5 text-white/30 ring-1 ring-white/10'}`}>
+                            {isDone ? <CheckCircle className="w-4 h-4 md:w-5 md:h-5" /> : step}
                         </div>
-                    </button>
-                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative max-w-4xl max-h-[90vh]" onClick={e => e.stopPropagation()}>
-                        <Image src={event.posterDesktop || event.img} alt={event.title} width={800} height={1200} className="object-contain max-h-[85vh] mx-auto bg-black rounded-2xl shadow-2xl" unoptimized />
-                    </motion.div>
-                </div>
-            )}
+                        <span className={`text-[10px] md:text-xs uppercase tracking-[0.15em] font-mono transition-colors ${isActive ? 'text-white' : 'text-white/30'}`}>
+                            {stepLabel}
+                        </span>
+                        {step !== 3 && <div className={`hidden md:block w-8 lg:w-16 h-px transition-colors ${isDone ? 'bg-teal/40' : 'bg-white/10'}`} />}
+                    </div>
+                );
+            })}
+        </div>
+    );
 
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(45,212,191,0.08),transparent_50%)]" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(139,92,246,0.05),transparent_50%)]" />
-                <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20viewBox=%220%200%20200%20200%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter%20id=%22noiseFilter%22%3E%3CfeTurbulence%20type=%22fractalNoise%22%20baseFrequency=%220.65%22%20numOctaves=%223%22%20stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect%20width=%22100%25%22%20height=%22100%25%22%20filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')] opacity-[0.02]" />
+    const renderStep1 = () => (
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="space-y-6">
+            <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Full Name</label>
+                <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300" placeholder="Enter your full name" />
+            </div>
+            <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Email Address</label>
+                <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300" placeholder="you@example.com" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="space-y-2">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Roll Number</label>
+                    <input type="text" value={formData.rollNo} onChange={e => setFormData({ ...formData, rollNo: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300 font-mono" placeholder="1601..." />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Department</label>
+                    <input type="text" value={formData.department} onChange={e => setFormData({ ...formData, department: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300" placeholder="CSE" />
+                </div>
+            </div>
+        </motion.div>
+    );
+
+    const renderStep2 = () => (
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="space-y-4">
+            {/* Team Info Banner */}
+            <div className="bg-gradient-to-r from-teal/10 to-emerald-500/5 rounded-xl p-4 border border-teal/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-teal" />
+                    <span className="text-sm text-white/70">
+                        {teamConstraints.minTeamSize === teamConstraints.maxTeamSize
+                            ? `Team of ${teamConstraints.minTeamSize}`
+                            : `Team: ${teamConstraints.minTeamSize}-${teamConstraints.maxTeamSize}`
+                        }
+                    </span>
+                </div>
+                <div className="flex items-center gap-3 self-end sm:self-auto">
+                    {event?.variablePricingEnabled && hasPricingTierForCurrentTeamSize && (
+                        <span className="text-teal font-bold bg-teal/10 px-2 py-1 rounded text-sm">₹{amountToPay}</span>
+                    )}
+                    <span className="text-white/60 font-mono text-sm border border-white/10 px-2 py-1 rounded">{currentTeamSize}/{teamConstraints.maxTeamSize}</span>
+                </div>
             </div>
 
-            <Link href="/events" className="absolute top-4 left-4 md:top-8 md:left-8 z-50 text-white/40 hover:text-white flex items-center gap-2 bg-white/5 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 hover:border-teal/30 transition-all group">
-                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> <span className="text-xs font-mono uppercase tracking-widest">Events</span>
-            </Link>
-
-            <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                className="w-full md:max-w-6xl h-[calc(100dvh-1rem)] md:h-[90vh] bg-white/[0.02] backdrop-blur-2xl border border-white/10 rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col md:flex-row relative z-10 shadow-2xl shadow-black/50"
-            >
-                {/* LEFT: Event Info - Math Noir */}
-                <div className="hidden md:flex w-[45%] bg-gradient-to-br from-black/40 to-black/20 p-12 lg:p-16 flex-col justify-center relative overflow-hidden border-r border-white/5">
-                    <div className="absolute inset-0 z-0">
-                        <Image src={event.posterDesktop || event.img} alt="BG" fill sizes="45vw" className="object-cover opacity-20 blur-md scale-105" unoptimized />
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#020617]/95 via-[#020617]/80 to-[#020617]/95" />
-                    </div>
-
-                    {/* Decorative Math Symbol */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[20rem] font-serif text-white/[0.02] select-none pointer-events-none">∫</div>
-
-                    <div className="relative z-10">
-                        <span className="inline-block px-4 py-1.5 mb-6 rounded-full bg-teal/10 border border-teal/20 text-teal text-[10px] font-mono uppercase tracking-[0.25em]">{event.category}</span>
-                        <h1 className="text-4xl lg:text-5xl font-serif font-bold text-white mb-6 leading-[1.1] tracking-wide">{event.title}</h1>
-                        <p className="text-white/50 text-base lg:text-lg leading-relaxed mb-10 line-clamp-4">{event.description}</p>
-
-                        <div className="flex gap-10 border-t border-white/10 pt-8">
-                            <div>
-                                <div className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-mono mb-2">Registration</div>
-                                <div className="text-teal text-xl font-bold">
-                                    {event.variablePricingEnabled ? `₹${computeAmountForTeamSize(teamConstraints.minTeamSize) || 0}+` : (event.registrationFee || "Free")}
-                                </div>
-                            </div>
-                            <div>
-                                <div className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-mono mb-2">Event Date</div>
-                                <div className="text-white text-xl">{event.date}</div>
-                            </div>
+            {/* Team Members List */}
+            <div className="space-y-3">
+                {/* Leader Card */}
+                <div className="bg-teal/5 border border-teal/20 rounded-xl p-4 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-teal/50" />
+                    <div className="flex items-start gap-4">
+                        <div className="w-8 h-8 bg-teal/20 rounded-full flex items-center justify-center text-teal font-bold text-sm shrink-0 mt-1">1</div>
+                        <div className="min-w-0">
+                            <p className="text-white font-medium truncate">{formData.name || 'You'}</p>
+                            <p className="text-white/40 text-xs font-mono truncate">{formData.rollNo || 'Roll No'}</p>
+                            <span className="text-[10px] uppercase tracking-widest text-teal mt-1 inline-block">Team Leader</span>
                         </div>
-
-                        <button onClick={() => setShowPoster(true)} className="mt-10 flex items-center gap-3 text-xs text-white/40 hover:text-teal transition-colors group">
-                            <FileText className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                            <span className="font-mono uppercase tracking-widest">View Official Poster</span>
-                        </button>
                     </div>
                 </div>
 
-                {/* RIGHT: Stepper Form */}
-                <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
-                    {/* Inner scroll wrapper */}
-                    <div className="flex-1 overflow-y-auto p-6 md:p-12 lg:p-16 pb-6 md:pb-8 custom-scrollbar overscroll-contain">
-                        {isSuccess ? (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ duration: 0.5 }}
-                                className="h-full flex flex-col items-center justify-center text-center"
-                            >
-                                <motion.div
-                                    initial={{ scale: 0, rotate: -180 }}
-                                    animate={{ scale: 1, rotate: 0 }}
-                                    transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
-                                    className="w-24 h-24 bg-gradient-to-br from-teal/20 to-emerald-500/10 rounded-full flex items-center justify-center mb-8 ring-2 ring-teal/30 shadow-[0_0_40px_rgba(45,212,191,0.2)]"
-                                >
-                                    <CheckCircle className="w-12 h-12 text-teal" />
-                                </motion.div>
-
-                                <h2 className="text-4xl font-serif font-bold text-white mb-3 tracking-wide">You&apos;re In!</h2>
-                                <p className="text-white/50 mb-10 text-lg">Registered for <span className="text-teal font-medium">{event.title}</span></p>
-
-                                <div className="bg-white p-5 rounded-2xl mb-4 shadow-2xl shadow-black/50">
-                                    {qrCodeUrl && <Image src={qrCodeUrl} alt="QR" width={200} height={200} unoptimized />}
-                                </div>
-                                <p className="text-xs text-white/30 font-mono mb-10 tracking-widest">TICKET: {registrationId}</p>
-
-                                <div className="flex flex-col sm:flex-row gap-4 items-center">
-                                    <Link href="/events" className="px-8 py-4 bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-white/10 hover:border-teal/30 transition-all">Back to Events</Link>
-                                    <TicketDownloadButton event={event} ticketCode={registrationId} qrCodeUrl={qrCodeUrl} />
-                                </div>
-                            </motion.div>
-                        ) : (
-                            <div className="max-w-lg mx-auto pt-4 md:pt-8 flex flex-col min-h-full">
-                                {/* Stepper Header - Math Noir */}
-                                <div className="flex items-center justify-center md:justify-between mb-10 md:mb-14">
-                                    {[1, 2, 3].map((step) => {
-                                        if (step === 2 && !requiresTeamStep) return null;
-
-                                        const isActive = step === currentStep;
-                                        const isDone = step < currentStep;
-                                        const stepLabel = step === 1 ? 'Identity' : step === 2 ? 'Squad' : 'Payment';
-
-                                        return (
-                                            <div key={step} className="flex items-center gap-2 md:gap-3">
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold font-mono transition-all duration-300 ${isActive ? 'bg-gradient-to-br from-teal to-emerald-500 text-black scale-110 shadow-[0_0_25px_rgba(45,212,191,0.4)]' : isDone ? 'bg-teal/20 text-teal ring-1 ring-teal/30' : 'bg-white/5 text-white/30 ring-1 ring-white/10'}`}>
-                                                    {isDone ? <CheckCircle className="w-5 h-5" /> : step}
-                                                </div>
-                                                <span className={`hidden md:block text-[10px] uppercase tracking-[0.15em] font-mono transition-colors ${isActive ? 'text-white' : 'text-white/30'}`}>
-                                                    {stepLabel}
-                                                </span>
-                                                {step !== 3 && <div className={`hidden md:block w-8 lg:w-16 h-px transition-colors ${isDone ? 'bg-teal/40' : 'bg-white/10'}`} />}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-
-                                {/* Error Toast */}
-                                <AnimatePresence>
-                                    {errorMessage && (
-                                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400 text-sm">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                                            {errorMessage}
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-
-                                {/* Form Steps */}
-                                <form onSubmit={e => e.preventDefault()}>
-                                    {/* STEP 1: IDENTITY */}
-                                    {currentStep === 1 && (
-                                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="space-y-6">
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Full Name</label>
-                                                <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300" placeholder="Enter your full name" />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">College Email</label>
-                                                <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300" placeholder="you@cbit.org.in" />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-5">
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Roll Number</label>
-                                                    <input type="text" value={formData.rollNo} onChange={e => setFormData({ ...formData, rollNo: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300 font-mono" placeholder="1601..." />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Department</label>
-                                                    <input type="text" value={formData.department} onChange={e => setFormData({ ...formData, department: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300" placeholder="CSE" />
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    )}
-
-                                    {/* STEP 2: SQUAD */}
-                                    {currentStep === 2 && (
-                                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col min-h-0 space-y-3">
-                                            {/* Compact Team Info Banner - Fixed */}
-                                            <div className="bg-gradient-to-r from-teal/10 to-emerald-500/5 rounded-lg px-4 py-3 border border-teal/20 flex items-center justify-between flex-shrink-0">
-                                                <div className="flex items-center gap-2">
-                                                    <Users className="w-4 h-4 text-teal" />
-                                                    <span className="text-sm text-white/70">
-                                                        {teamConstraints.minTeamSize === teamConstraints.maxTeamSize
-                                                            ? `Team of ${teamConstraints.minTeamSize}`
-                                                            : `Team: ${teamConstraints.minTeamSize}-${teamConstraints.maxTeamSize}`
-                                                        }
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    {event?.variablePricingEnabled && hasPricingTierForCurrentTeamSize && (
-                                                        <span className="text-teal font-bold">₹{amountToPay}</span>
-                                                    )}
-                                                    <span className="text-teal font-mono text-sm">{currentTeamSize}/{teamConstraints.maxTeamSize}</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Scrollable Team Members List */}
-                                            <div className="flex-1 overflow-y-auto space-y-2 min-h-0 max-h-[40vh] md:max-h-[45vh] custom-scrollbar pr-1">
-                                                {/* Leader Row */}
-                                                <div className="grid grid-cols-[auto_1fr_1fr] gap-2 items-center bg-teal/5 border border-teal/20 rounded-lg px-3 py-2">
-                                                    <div className="w-6 h-6 bg-teal/20 rounded-full flex items-center justify-center text-teal font-bold text-xs">1</div>
-                                                    <div className="text-white text-sm truncate">{formData.name || 'You'}</div>
-                                                    <div className="text-white/40 text-xs font-mono truncate">{formData.rollNo || 'Roll No'}</div>
-                                                </div>
-
-                                                {/* Teammate Rows */}
-                                                {teamMembers.map((member, idx) => (
-                                                    <div
-                                                        key={idx}
-                                                        className="grid grid-cols-[auto_1fr_1fr_auto] gap-2 items-center bg-white/[0.02] border border-white/10 rounded-lg px-3 py-2 group"
-                                                    >
-                                                        <div className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center text-white/50 font-mono text-xs">{idx + 2}</div>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Name"
-                                                            value={member.name}
-                                                            onChange={e => {
-                                                                const newMembers = [...teamMembers];
-                                                                newMembers[idx].name = e.target.value;
-                                                                setTeamMembers(newMembers);
-                                                            }}
-                                                            className="bg-transparent border-b border-white/10 px-1 py-1 text-white text-sm placeholder-white/20 focus:border-teal/50 outline-none transition-all"
-                                                        />
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Roll No"
-                                                            value={member.rollNo}
-                                                            onChange={e => {
-                                                                const newMembers = [...teamMembers];
-                                                                newMembers[idx].rollNo = e.target.value;
-                                                                setTeamMembers(newMembers);
-                                                            }}
-                                                            className="bg-transparent border-b border-white/10 px-1 py-1 text-white text-sm font-mono placeholder-white/20 focus:border-teal/50 outline-none transition-all"
-                                                        />
-                                                        {teamMembers.length > teamConstraints.minTeamSize - 1 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => removeTeammate(idx)}
-                                                                className="text-red-400/40 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                                                            >
-                                                                ✕
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                ))}
-
-                                                {/* Compact Add Button */}
-                                                {currentTeamSize < teamConstraints.maxTeamSize && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={addTeammate}
-                                                        className="w-full py-2 border border-dashed border-white/10 rounded-lg text-white/40 hover:text-teal hover:border-teal/30 transition-all text-xs font-mono"
-                                                    >
-                                                        + Add Teammate
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </motion.div>
-                                    )}
-
-                                    {/* STEP 3: PAYMENT */}
-                                    {currentStep === 3 && (
-                                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex flex-col min-h-0 space-y-4">
-                                            {/* Payment Summary - Fixed at top */}
-                                            <div className="bg-gradient-to-r from-teal/10 to-emerald-500/5 rounded-xl p-5 border border-teal/20 flex-shrink-0">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <span className="text-white/50 text-sm">Team Size</span>
-                                                    <span className="text-white font-medium">{currentTeamSize} member{currentTeamSize > 1 ? 's' : ''}</span>
-                                                </div>
-                                                <div className="flex items-center justify-between pt-3 border-t border-white/10">
-                                                    <span className="text-white font-medium">Amount to Pay</span>
-                                                    <span className="text-teal font-bold text-2xl">₹{amountToPay}</span>
-                                                </div>
-                                                {event?.variablePricingEnabled && (
-                                                    <div className="text-xs text-white/30 mt-2 font-mono">
-                                                        {hasPricingTierForCurrentTeamSize
-                                                            ? `Price configured for team of ${currentTeamSize}`
-                                                            : `⚠ No pricing for team size ${currentTeamSize}`
-                                                        }
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Scrollable content area */}
-                                            <div className="flex-1 overflow-y-auto space-y-5 min-h-0 max-h-[45vh] md:max-h-[50vh] custom-scrollbar pr-1">
-                                                {/* QR Display */}
-                                                {qrImageSrc && (
-                                                    <div className="relative overflow-hidden bg-white/[0.03] border border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row gap-6 items-center shadow-2xl shadow-black/50 group">
-                                                        {/* Animated Gradient Background */}
-                                                        <div className="absolute inset-0 bg-gradient-to-br from-teal/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
-                                                        {/* QR Code Container with Scan Effect */}
-                                                        <div className="relative z-10 p-3 bg-white rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.15)] group-hover:shadow-[0_0_50px_rgba(45,212,191,0.3)] transition-all duration-500">
-                                                            <div className="relative overflow-hidden rounded-lg w-32 h-32">
-                                                                <Image src={qrImageSrc} alt="Pay" width={128} height={128} className="w-full h-full object-contain" unoptimized />
-
-                                                                {/* Scanning Laser Animation */}
-                                                                <motion.div
-                                                                    className="absolute top-0 left-0 w-full h-1 bg-teal shadow-[0_0_20px_rgba(45,212,191,0.8)] z-20 pointer-events-none"
-                                                                    animate={{ top: ['0%', '100%', '0%'] }}
-                                                                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                                                                />
-                                                                <motion.div
-                                                                    className="absolute inset-0 bg-gradient-to-b from-teal/10 to-transparent z-10 pointer-events-none"
-                                                                    animate={{ top: ['-100%', '100%', '-100%'] }}
-                                                                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                                                                />
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Payment Details */}
-                                                        <div className="relative z-10 text-center sm:text-left flex-1">
-                                                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal/10 border border-teal/20 text-teal text-[10px] font-mono uppercase tracking-widest mb-3">
-                                                                <span className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse" />
-                                                                Scan to Pay
-                                                            </div>
-                                                            <div className="text-4xl font-serif font-bold text-white mb-2 tracking-wide">
-                                                                <span className="text-teal">₹</span>{amountToPay}
-                                                            </div>
-                                                            <div className="text-xs text-white/40 font-mono tracking-wider space-y-1">
-                                                                <p>Scan with any UPI App</p>
-                                                                <div className="flex items-center justify-center sm:justify-start gap-3 opacity-50 mt-2">
-                                                                    <span>GPay</span> • <span>PhonePe</span> • <span>Paytm</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                <div className="space-y-5 pt-2">
-                                                    <div className="space-y-2">
-                                                        <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">UTR / Transaction ID</label>
-                                                        <input
-                                                            type="text"
-                                                            value={formData.utrId}
-                                                            onChange={e => setFormData({ ...formData, utrId: e.target.value.toUpperCase() })}
-                                                            className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300 font-mono text-lg tracking-widest"
-                                                            placeholder="XXXX..."
-                                                        />
-                                                    </div>
-
-                                                    <div className="relative group">
-                                                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => fileInputRef.current?.click()}
-                                                            className={`w-full h-36 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all duration-300 ${screenshot ? 'border-teal bg-teal/5' : 'border-white/10 hover:border-teal/30 hover:bg-white/[0.03]'}`}
-                                                        >
-                                                            {screenshot ? (
-                                                                <>
-                                                                    <CheckCircle className="w-10 h-10 text-teal mb-3" />
-                                                                    <span className="text-teal text-sm font-medium">{screenshot.name}</span>
-                                                                    <span className="text-xs text-white/30 mt-1">Click to change</span>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <Upload className="w-8 h-8 text-white/30 mb-3 group-hover:text-teal transition-colors" />
-                                                                    <span className="text-white/50 text-sm group-hover:text-white transition-colors">Upload Payment Screenshot</span>
-                                                                    <span className="text-xs text-white/30 mt-1">PNG, JPG up to 3MB</span>
-                                                                </>
-                                                            )}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    )}
-
-                                    {/* Navigation Actions - Sticky Footer */}
-                                    <div className="sticky bottom-0 mt-8 pt-4 pb-2 bg-gradient-to-t from-[#020617] via-[#020617]/95 to-transparent -mx-6 px-6 md:-mx-12 md:px-12 lg:-mx-16 lg:px-16">
-                                        <div className="flex items-center gap-4">
-                                            {currentStep > 1 && (
-                                                <button onClick={prevStep} className="px-6 py-4 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300 uppercase font-bold text-xs tracking-widest flex items-center gap-2 group">
-                                                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back
-                                                </button>
-                                            )}
-
-                                            {currentStep < 3 ? (
-                                                <button onClick={nextStep} className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-teal to-emerald-500 text-black hover:shadow-[0_0_30px_rgba(45,212,191,0.3)] transition-all duration-300 uppercase font-bold text-xs tracking-widest flex items-center justify-center gap-2 group">
-                                                    Continue <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                                </button>
-                                            ) : (
-                                                <button onClick={handleSubmit} disabled={isSubmitting} className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-teal to-emerald-500 text-black shadow-lg hover:shadow-[0_0_40px_rgba(45,212,191,0.4)] transition-all duration-300 uppercase font-bold text-xs tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none">
-                                                    {isSubmitting ? 'Processing...' : 'Complete Registration'} <CheckCircle className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </form>
+                {/* Teammates */}
+                {teamMembers.map((member, idx) => (
+                    <div key={idx} className="bg-white/[0.02] border border-white/10 rounded-xl p-4 relative group">
+                        <div className="flex items-start gap-3 mb-3">
+                            <div className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center text-white/50 font-mono text-xs shrink-0 mt-2">{idx + 2}</div>
+                            <div className="flex-1 space-y-3">
+                                <input
+                                    type="text"
+                                    placeholder="Teammate Name"
+                                    value={member.name}
+                                    onChange={e => {
+                                        const newMembers = [...teamMembers];
+                                        newMembers[idx].name = e.target.value;
+                                        setTeamMembers(newMembers);
+                                    }}
+                                    className="w-full bg-transparent border-b border-white/10 py-1 text-white placeholder-white/20 focus:border-teal/50 outline-none transition-all"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Roll Number"
+                                    value={member.rollNo}
+                                    onChange={e => {
+                                        const newMembers = [...teamMembers];
+                                        newMembers[idx].rollNo = e.target.value;
+                                        setTeamMembers(newMembers);
+                                    }}
+                                    className="w-full bg-transparent border-b border-white/10 py-1 text-white font-mono placeholder-white/20 focus:border-teal/50 outline-none transition-all"
+                                />
                             </div>
+                        </div>
+                        {teamMembers.length > teamConstraints.minTeamSize - 1 && (
+                            <button
+                                type="button"
+                                onClick={() => removeTeammate(idx)}
+                                className="absolute top-2 right-2 p-2 text-white/20 hover:text-red-400 transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+                ))}
+
+                {/* Add Button */}
+                {currentTeamSize < teamConstraints.maxTeamSize && (
+                    <button
+                        type="button"
+                        onClick={addTeammate}
+                        className="w-full py-4 border border-dashed border-white/10 rounded-xl text-white/40 hover:text-teal hover:border-teal/30 hover:bg-teal/5 transition-all text-sm font-medium flex items-center justify-center gap-2 group"
+                    >
+                        <span className="w-6 h-6 rounded-full border border-current flex items-center justify-center text-xs group-hover:scale-110 transition-transform">+</span>
+                        Add Teammate
+                    </button>
+                )}
+            </div>
+        </motion.div>
+    );
+
+    const renderStep3 = () => (
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="space-y-6">
+            {/* Payment Summary */}
+            <div className="bg-gradient-to-br from-teal/10 to-black rounded-xl p-6 border border-teal/20 text-center relative overflow-hidden">
+                <div className="relative z-10">
+                    <p className="text-white/50 text-xs uppercase tracking-widest mb-1">Total Amount To Pay</p>
+                    <div className="text-4xl font-serif font-bold text-white mb-2">
+                        <span className="text-teal">₹</span>{amountToPay}
+                    </div>
+                    <div className="flex items-center justify-center gap-2 text-xs text-white/40 font-mono">
+                        <span>For {currentTeamSize} Member{currentTeamSize > 1 ? 's' : ''}</span>
+                        {event?.variablePricingEnabled && (
+                            <span className={`px-2 py-0.5 rounded-full ${hasPricingTierForCurrentTeamSize ? 'bg-teal/10 text-teal' : 'bg-red-500/10 text-red-400'}`}>
+                                {hasPricingTierForCurrentTeamSize ? 'Tier Applied' : 'No Tier Found'}
+                            </span>
                         )}
                     </div>
                 </div>
+            </div>
+
+            {/* QR Scan Area */}
+            {qrImageSrc && (
+                <div className="bg-white p-4 rounded-xl shadow-xl mx-auto max-w-[280px]">
+                    <div className="aspect-square relative rounded-lg overflow-hidden bg-white">
+                        <Image src={qrImageSrc} alt="Pay" fill className="object-contain p-2" unoptimized />
+                        {/* Scan Line Animation */}
+                        <motion.div
+                            className="absolute top-0 left-0 w-full h-1 bg-teal/50 shadow-[0_0_20px_rgba(45,212,191,0.8)]"
+                            animate={{ top: ['0%', '100%', '0%'] }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                        />
+                    </div>
+                    <p className="text-center text-black/60 text-xs font-mono mt-3 uppercase tracking-widest">Scan to Pay</p>
+                </div>
+            )}
+
+            {/* Form Fields */}
+            <div className="space-y-4 pt-4">
+                <div className="space-y-2">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">UTR / Transaction ID</label>
+                    <input
+                        type="text"
+                        value={formData.utrId}
+                        onChange={e => setFormData({ ...formData, utrId: e.target.value.toUpperCase() })}
+                        className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300 font-mono text-lg tracking-widest text-center uppercase"
+                        placeholder="XXXX..."
+                    />
+                </div>
+
+                <div className="relative group">
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+                    <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className={`w-full py-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all duration-300 ${screenshot ? 'border-teal bg-teal/5' : 'border-white/10 hover:border-teal/30 hover:bg-white/[0.03]'}`}
+                    >
+                        {screenshot ? (
+                            <>
+                                <CheckCircle className="w-8 h-8 text-teal mb-2" />
+                                <span className="text-teal text-sm font-medium px-4 text-center truncate w-full">{screenshot.name}</span>
+                                <span className="text-xs text-white/30 mt-1">Click to change</span>
+                            </>
+                        ) : (
+                            <>
+                                <Upload className="w-8 h-8 text-white/30 mb-2 group-hover:text-teal transition-colors" />
+                                <span className="text-white/50 text-sm">Upload Payment Screenshot</span>
+                                <span className="text-[10px] text-white/20 mt-1">JPEG/PNG • Max 3MB</span>
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
+        </motion.div>
+    );
+
+    const renderSuccess = () => (
+        <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="h-full flex flex-col items-center justify-center text-center py-10"
+        >
+            <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+                className="w-24 h-24 bg-gradient-to-br from-teal/20 to-emerald-500/10 rounded-full flex items-center justify-center mb-6 ring-2 ring-teal/30 shadow-[0_0_40px_rgba(45,212,191,0.2)]"
+            >
+                <CheckCircle className="w-12 h-12 text-teal" />
             </motion.div>
+
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-2 tracking-wide">You&apos;re In!</h2>
+            <p className="text-white/50 mb-8 max-w-xs mx-auto">Registered for <span className="text-teal block mt-1">{event.title}</span></p>
+
+            <div className="bg-white p-4 rounded-xl mb-4 shadow-2xl">
+                {qrCodeUrl && <Image src={qrCodeUrl} alt="QR" width={180} height={180} className="rounded-lg" unoptimized />}
+            </div>
+            <p className="text-xs text-white/30 font-mono mb-8 tracking-widest bg-white/5 px-4 py-2 rounded-full">TICKET: {registrationId}</p>
+
+            <div className="flex flex-col gap-3 w-full max-w-xs">
+                <TicketDownloadButton event={event} ticketCode={registrationId} qrCodeUrl={qrCodeUrl} />
+                <Link href="/events" className="px-6 py-3 bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-white/10 hover:border-teal/30 transition-all">
+                    Back to Events
+                </Link>
+            </div>
+        </motion.div>
+    );
+
+    // --- MAIN RENDER ---
+
+    if (isLoading) return <div className="min-h-screen bg-[#020617] flex items-center justify-center text-teal font-mono animate-pulse">Initializing Interface...</div>;
+    if (!event) return <div className="min-h-screen bg-[#020617] flex items-center justify-center text-red-400 font-mono">Event Data Not Found</div>;
+
+    return (
+        <div className="min-h-screen bg-[#020617] font-sans selection:bg-teal/30 selection:text-teal relative overflow-x-hidden" data-lenis-prevent>
+            {/* Background Effects */}
+            <div className="fixed inset-0 pointer-events-none z-0">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(45,212,191,0.05),transparent_50%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(139,92,246,0.03),transparent_50%)]" />
+                <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")` }} />
+            </div>
+
+            {/* Poster Modal - Premium Lightbox */}
+            <AnimatePresence>
+                {showPoster && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8"
+                        onClick={() => setShowPoster(false)}
+                    >
+                        {/* Backdrop with blur */}
+                        <div className="absolute inset-0 bg-black/90 backdrop-blur-2xl" />
+
+                        {/* Decorative glow */}
+                        <div className="absolute inset-0 pointer-events-none">
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal/10 rounded-full blur-[150px]" />
+                        </div>
+
+                        {/* Content Container */}
+                        <motion.div
+                            initial={{ scale: 0.85, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 10 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            className="relative z-10 flex flex-col items-center max-w-4xl w-full"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            {/* Image Container with frame */}
+                            <div className="relative group">
+                                {/* Outer glow ring */}
+                                <div className="absolute -inset-1 bg-gradient-to-br from-teal/30 via-transparent to-emerald-500/20 rounded-2xl blur-sm opacity-60 group-hover:opacity-100 transition-opacity" />
+
+                                {/* Image */}
+                                <div className="relative bg-black/50 p-2 rounded-2xl border border-white/10 shadow-2xl shadow-black/50">
+                                    <Image
+                                        src={event.posterDesktop || event.img}
+                                        alt={event.title}
+                                        width={800}
+                                        height={1200}
+                                        className="max-h-[70vh] w-auto object-contain rounded-xl"
+                                        unoptimized
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Event Title */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className="mt-6 text-center"
+                            >
+                                <h3 className="text-2xl md:text-3xl font-serif font-bold text-white mb-2">{event.title}</h3>
+                                <p className="text-white/40 text-sm font-mono">{event.date} • {event.registrationFee || "Free"}</p>
+                            </motion.div>
+
+                            {/* Close button */}
+                            <motion.button
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.3 }}
+                                onClick={() => setShowPoster(false)}
+                                className="mt-8 flex items-center gap-2 px-6 py-3 rounded-full bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 hover:border-teal/30 transition-all group"
+                            >
+                                <X className="w-4 h-4" />
+                                <span className="text-xs font-mono uppercase tracking-widest">Close Preview</span>
+                            </motion.button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Navbar (Mobile Fixed / Desktop Absolute) */}
+            <Link href="/events" className="fixed top-4 left-4 z-50 flex items-center gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 text-white/60 hover:text-white hover:border-teal/50 transition-all md:absolute md:top-8 md:left-8">
+                <ArrowLeft className="w-4 h-4" />
+                <span className="text-[10px] font-mono uppercase tracking-widest">Events</span>
+            </Link>
+
+            {/* Main Layout Container */}
+            <div className="md:flex md:items-center md:justify-center md:min-h-screen md:p-6 z-10 relative">
+
+                {/* Responsive Card Wrapper */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="w-full md:max-w-6xl md:h-[90vh] md:bg-white/[0.02] md:backdrop-blur-2xl md:border md:border-white/10 md:rounded-[2rem] md:overflow-hidden md:flex md:shadow-2xl md:shadow-black/50"
+                >
+                    {/* LEFT PANEL (Desktop Only) */}
+                    <div className="hidden md:flex w-[45%] bg-gradient-to-br from-black/40 to-black/20 p-12 lg:p-16 flex-col justify-center relative border-r border-white/5 overflow-hidden">
+                        {/* Background Poster Blur */}
+                        <div className="absolute inset-0 z-0 opacity-20 hover:opacity-30 transition-opacity duration-1000">
+                            <Image src={event.posterDesktop || event.img} alt="BG" fill className="object-cover blur-xl scale-110" unoptimized />
+                        </div>
+                        <div className="relative z-10">
+                            <span className="inline-block px-3 py-1 mb-6 rounded-full bg-teal/10 border border-teal/20 text-teal text-[10px] font-mono uppercase tracking-widest">{event.category}</span>
+                            <h1 className="text-5xl font-serif font-bold text-white mb-6 leading-tight">{event.title}</h1>
+                            <p className="text-white/50 text-lg leading-relaxed mb-10 line-clamp-4">{event.description}</p>
+
+                            <div className="grid grid-cols-2 gap-8 border-t border-white/10 pt-8">
+                                <div>
+                                    <div className="text-[10px] uppercase tracking-widest text-white/30 font-mono mb-2">Registration Fee</div>
+                                    <div className="text-teal text-xl font-bold">
+                                        {event.variablePricingEnabled ? `₹${computeAmountForTeamSize(teamConstraints.minTeamSize) || 0}+` : (event.registrationFee || "Free")}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] uppercase tracking-widest text-white/30 font-mono mb-2">Event Date</div>
+                                    <div className="text-white text-xl">{event.date}</div>
+                                </div>
+                            </div>
+
+                            <button onClick={() => setShowPoster(true)} className="mt-10 flex items-center gap-2 text-xs text-white/40 hover:text-teal transition-colors group">
+                                <FileText className="w-4 h-4" />
+                                <span className="font-mono uppercase tracking-widest group-hover:underline decoration-teal/50 underline-offset-4">View Official Poster</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* RIGHT PANEL (Hybrid Layout) */}
+                    <div className="flex-1 flex flex-col relative min-h-screen md:min-h-0 md:h-full md:overflow-hidden">
+
+                        {/* Mobile Header */}
+                        <div className="md:hidden pt-20 pb-6 px-6 bg-gradient-to-b from-[#020617] to-transparent">
+                            <h1 className="text-3xl font-serif font-bold text-white mb-2 leading-tight">{event.title}</h1>
+                            <div className="flex items-center gap-4 text-xs font-mono text-white/60">
+                                <span className="bg-white/5 px-2 py-1 rounded border border-white/10">{event.date}</span>
+                                <span className="text-teal">{event.registrationFee || "Free"}</span>
+                            </div>
+                        </div>
+
+                        {/* Content Area - Native Scroll on Mobile, Internal Scroll on Desktop */}
+                        <div className="flex-1 min-h-0 px-6 pb-32 md:px-12 md:py-8 md:pb-4 md:overflow-y-auto custom-scrollbar" data-lenis-prevent>
+                            {isSuccess ? renderSuccess() : (
+                                <div className="max-w-md mx-auto h-full flex flex-col">
+                                    {renderStepper()}
+
+                                    <AnimatePresence mode="wait">
+                                        {errorMessage && (
+                                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-6 bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex gap-3 text-red-300 text-sm items-start">
+                                                <div className="w-1.5 h-1.5 bg-red-500 rounded-full mt-1.5 shrink-0 animate-pulse" />
+                                                {errorMessage}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+
+                                    <form onSubmit={e => e.preventDefault()} className="flex-1">
+                                        {currentStep === 1 && renderStep1()}
+                                        {currentStep === 2 && renderStep2()}
+                                        {currentStep === 3 && renderStep3()}
+                                    </form>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer Actions - Fixed on Mobile, Flex child on Desktop */}
+                        {!isSuccess && (
+                            <div className="fixed bottom-0 left-0 right-0 z-50 p-6 bg-[#020617]/90 backdrop-blur-lg border-t border-white/10 md:relative md:flex-shrink-0 md:p-6 md:pt-4 md:bg-transparent md:backdrop-blur-none md:border-t-0 md:border-t md:border-white/5">
+                                <div className="max-w-md mx-auto flex items-center gap-4">
+                                    {currentStep > 1 && (
+                                        <button onClick={prevStep} className="px-5 py-4 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors">
+                                            <ArrowLeft className="w-5 h-5" />
+                                        </button>
+                                    )}
+
+                                    {currentStep < 3 ? (
+                                        <button onClick={nextStep} className="flex-1 py-4 rounded-xl bg-gradient-to-r from-teal to-emerald-500 text-black font-bold uppercase tracking-widest text-xs hover:shadow-[0_0_30px_rgba(45,212,191,0.3)] transition-all flex items-center justify-center gap-2 group">
+                                            Continue <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                        </button>
+                                    ) : (
+                                        <button onClick={handleSubmit} disabled={isSubmitting} className="flex-1 py-4 rounded-xl bg-gradient-to-r from-teal to-emerald-500 text-black font-bold uppercase tracking-widest text-xs hover:shadow-[0_0_30px_rgba(45,212,191,0.3)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            {isSubmitting ? 'Processing...' : 'Complete Registration'} <CheckCircle className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </motion.div>
+            </div>
 
             <ConfirmationModal
                 isOpen={modal.isOpen}
