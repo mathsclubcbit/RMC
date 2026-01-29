@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import TeamCard from "@/components/TeamCard";
+import TeamHero from "@/components/team/TeamHero";
 
 // Force dynamic to ensure we get latest data
 export const dynamic = 'force-dynamic';
@@ -9,71 +10,129 @@ async function getTeamMembers() {
     const { data, error } = await supabase
         .from("rmc_council")
         .select("*")
-        .order("priority_order", { ascending: true }); // Manual override
+        .order("priority_order", { ascending: true });
 
     if (error) return [];
-
-    // Sort logic: Faculty -> Core -> Others
-    // We can also sort properly in JS if needed
     return data || [];
 }
 
 export default async function TeamPage() {
     const members = await getTeamMembers();
 
-    // Grouping strategies
-    const faculty = members.filter(m => m.category === 'Faculty' || m.category === 'Patron');
-    const core = members.filter(m => m.category === 'Core Committee' || m.category === 'Lead');
-    const technical = members.filter(m => m.category === 'Technical' || m.category === 'Tech');
-    const design = members.filter(m => m.category === 'Design' || m.category === 'Creative');
-    const others = members.filter(m => !['Faculty', 'Patron', 'Core Committee', 'Lead', 'Technical', 'Tech', 'Design', 'Creative'].includes(m.category));
+    // Role Priority Helper
+    const rolePriority = {
+        "President": 1,
+        "Vice President": 2,
+        "General Secretary": 3,
+        "Joint Secretary": 4,
+        "Head": 1,
+        "Member": 2
+    };
+
+    const sortByRole = (a, b) => {
+        const pA = rolePriority[a.position] || 99;
+        const pB = rolePriority[b.position] || 99;
+        return pA - pB;
+    };
+
+    // Strict Hierarchy Filtering (with Backward Compatibility)
+    const faculty = members.filter(m => ['Faculty Advisor', 'Faculty', 'Patron'].includes(m.category));
+    const core = members.filter(m => ['Core Committee', 'Core Matrix', 'Lead', 'President', 'Vice President'].includes(m.category)).sort(sortByRole);
+    const pr = members.filter(m => ['PR', 'PR Team', 'Public Relations'].includes(m.category)).sort(sortByRole);
+    const event = members.filter(m => ['Event', 'Events', 'Event Management'].includes(m.category)).sort(sortByRole);
+    const content = members.filter(m => ['Content', 'Content Writing'].includes(m.category)).sort(sortByRole);
+    const design = members.filter(m => ['Design', 'Design Team', 'Visual Media', 'Creative'].includes(m.category)).sort(sortByRole);
+
+    // Technical is intentionally hidden for now
 
     const sections = [
-        { title: "Faculty Mentors", items: faculty },
-        { title: "The Core Council", items: core },
-        { title: "Technical Wizards", items: technical },
-        { title: "Creative Minds", items: design },
-        { title: "Community Leaders", items: others }
+        {
+            id: "mentors",
+            title: "The Visionaries",
+            subtitle: "Guiding Light & Wisdom",
+            items: faculty,
+            cols: "grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto" // Centered layout for faculty
+        },
+        {
+            id: "core",
+            title: "The Core Council",
+            subtitle: "Orchestrating the Infinite",
+            items: core,
+            cols: "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+        },
+        {
+            id: "pr",
+            title: "Public Relations",
+            subtitle: "The Voice of RMC",
+            items: pr,
+            cols: "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+        },
+        {
+            id: "events",
+            title: "Events Directorate",
+            subtitle: "Architects of Experience",
+            items: event,
+            cols: "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+        },
+        {
+            id: "content",
+            title: "Content Strategy",
+            subtitle: "Weaving Mathematical Narratives",
+            items: content,
+            cols: "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+        },
+        {
+            id: "design",
+            title: "Design & Visuals",
+            subtitle: "Crafting the Aesthetic",
+            items: design,
+            cols: "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+        }
     ].filter(s => s.items.length > 0);
 
     return (
-        <div className="min-h-screen bg-black text-white pt-24 pb-20">
-            {/* Background Effects */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[100px] mix-blend-screen" />
-                <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[100px] mix-blend-screen" />
-            </div>
+        <div className="min-h-screen bg-[#020617] text-white pt-0 pb-20 overflow-x-hidden selection:bg-teal selection:text-black">
 
-            <div className="relative z-10 max-w-7xl mx-auto px-6">
-                <header className="text-center mb-24">
-                    <h1 className="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40 mb-6 tracking-tight">
-                        The Council
-                    </h1>
-                    <p className="text-xl text-white/40 max-w-2xl mx-auto">
-                        The architects, designers, and visionaries behind the machine.
-                    </p>
-                </header>
+            {/* Cinematic Hero */}
+            <TeamHero />
 
-                <div className="space-y-32">
+            <div className="relative z-10 max-w-7xl mx-auto px-6 mt-16 md:mt-0">
+
+                <div className="space-y-40">
                     {sections.map((section) => (
-                        <div key={section.title}>
-                            <div className="flex items-center gap-4 mb-16">
-                                <h2 className="text-3xl font-bold text-teal-400/80 font-mono uppercase tracking-widest">
-                                    {section.title}
-                                </h2>
-                                <div className="h-px flex-1 bg-gradient-to-r from-teal-500/50 to-transparent" />
+                        <section key={section.id} className="relative">
+                            {/* Section Header */}
+                            <div className="flex flex-col items-center mb-16 relative">
+                                <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-teal/20 to-transparent" />
+                                <div className="relative bg-[#020617] px-8 py-2 border border-teal/10 rounded-full backdrop-blur-xl z-10">
+                                    <h2 className="text-2xl md:text-3xl font-bold text-white font-[family-name:var(--font-cormorant)] tracking-wider text-center">
+                                        {section.title}
+                                    </h2>
+                                </div>
+                                <p className="mt-4 text-sm font-mono text-teal/60 uppercase tracking-widest bg-[#020617] px-4 relative z-10">
+                                    {section.subtitle}
+                                </p>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-16">
-                                {section.items.map((member) => (
+                            {/* Grid */}
+                            <div className={`grid ${section.cols} gap-3 md:gap-8 gap-y-8 md:gap-y-16`}>
+                                {section.items.map((member, idx) => (
                                     <TeamCard
                                         key={member.id}
                                         {...member}
+                                        index={idx} // Pass index if needed for staggering
                                     />
                                 ))}
                             </div>
-                        </div>
+                        </section>
                     ))}
+                </div>
+
+                {/* Footer Message */}
+                <div className="text-center mt-32 pb-10">
+                    <p className="text-white/20 font-mono text-xs">
+                        © 2026 Ramanujan Maths Club
+                    </p>
                 </div>
             </div>
         </div>

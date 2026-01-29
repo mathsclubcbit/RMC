@@ -17,10 +17,7 @@ export default function AdminTeamPage() {
             <div className="relative z-10 px-4 py-8 md:py-12">
                 <div className="max-w-5xl mx-auto">
                     <header className="mb-10">
-                        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-mono text-white/70 backdrop-blur-md">
-                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.9)]" />
-                            Admin Console
-                        </div>
+
                         <h1 className="mt-4 text-3xl md:text-5xl font-black tracking-tight">
                             Team Manager
                             <span className="text-indigo-500">.</span>

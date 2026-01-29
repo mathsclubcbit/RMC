@@ -53,15 +53,15 @@ export const metadata = {
     keywords: ["math club", "CBIT", "Ramanujan", "mathematics", "competitions", "events"],
     authors: [{ name: "RMC CBIT" }],
     icons: {
-        icon: "/RMC logo-circular.png",
-        shortcut: "/RMC logo-circular.png",
-        apple: "/RMC logo-circular.png",
+        icon: "/rmc-logo.png",
+        shortcut: "/rmc-logo.png",
+        apple: "/rmc-logo.png",
     },
     openGraph: {
         title: "RMC - Ramanujan Math Club | CBIT",
         description: "Where Numbers Tell Stories - Celebrating Mathematical Excellence",
         type: "website",
-        images: ["/RMC logo-circular.png"],
+        images: ["/rmc-logo.png"],
     },
 };
 

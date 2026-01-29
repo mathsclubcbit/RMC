@@ -120,7 +120,7 @@ export default function AboutPage() {
                         transition={{ duration: 1, ease: "easeOut" }}
                         className="inline-block"
                     >
-                        <h1 className="text-6xl md:text-9xl font-[family-name:var(--font-cinzel)] font-bold text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-transparent tracking-tighter mb-4">
+                        <h1 className="text-6xl md:text-9xl font-[family-name:var(--font-montserrat)] font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-transparent tracking-tight mb-4">
                             OUR STORY
                         </h1>
                     </motion.div>

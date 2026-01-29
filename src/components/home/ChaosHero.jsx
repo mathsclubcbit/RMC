@@ -210,7 +210,7 @@ export default function ChaosHero() {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 1.5, ease: "easeOut" }}
-                        className="font-[family-name:var(--font-playfair)] font-black text-5xl md:text-7xl lg:text-9xl text-transparent bg-clip-text bg-gradient-to-b from-white to-white/80 tracking-widest leading-none mb-6 uppercase drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]"
+                        className="font-[family-name:var(--font-montserrat)] font-black text-5xl md:text-7xl lg:text-9xl text-transparent bg-clip-text bg-gradient-to-b from-white to-white/80 tracking-tight leading-none mb-6 uppercase drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]"
                     >
                         RAMANUJAN <br />
                         <span className="block mt-4 font-[family-name:var(--font-cormorant)] text-3xl md:text-5xl italic text-teal font-light tracking-wide normal-case drop-shadow-none">Maths Club</span>

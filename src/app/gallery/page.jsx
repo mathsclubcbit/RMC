@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import SectionTitle from "@/components/ui/SectionTitle";
 import SpotlightCard from "@/components/ui/SpotlightCard";
-import PageHeader from "@/components/ui/PageHeader";
+import GalleryHero from "@/components/gallery/GalleryHero";
 import SectionDivider from "@/components/ui/SectionDivider";
 import { Play, Loader2, ImageOff, Calendar, ArrowRight, ImageIcon } from "lucide-react";
 import Tilt from "react-parallax-tilt";
@@ -74,8 +74,8 @@ export default function GalleryPage() {
     return (
         <div className="relative min-h-screen">
 
-            <PageHeader
-                title="VISUAL CHRONICLES"
+            <GalleryHero
+                title="OUR GALLERY"
                 subtitle="A register of observed phenomena. The visual memories of our timeline."
             />
 

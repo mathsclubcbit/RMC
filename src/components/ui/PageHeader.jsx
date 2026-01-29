@@ -43,7 +43,7 @@ export default function PageHeader({ title, subtitle, className = "" }) {
                         className="h-[1px] w-24 bg-gradient-to-r from-transparent via-teal/50 to-transparent mx-auto mb-8"
                     />
 
-                    <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/50 uppercase tracking-[0.2em] leading-tight mb-8 drop-shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+                    <h1 className="font-[family-name:var(--font-montserrat)] font-black text-5xl md:text-7xl lg:text-8xl text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/50 uppercase tracking-tight leading-tight mb-8 drop-shadow-[0_0_30px_rgba(255,255,255,0.1)]">
                         {title}
                     </h1>
 

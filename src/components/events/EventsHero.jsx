@@ -74,7 +74,7 @@ export default function EventsHero() {
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 1 }}
                 >
-                    <h1 className="text-6xl md:text-9xl font-[family-name:var(--font-cinzel)] font-bold text-white tracking-tighter mb-4 drop-shadow-[0_0_15px_rgba(45,212,191,0.3)]">
+                    <h1 className="text-6xl md:text-9xl font-[family-name:var(--font-montserrat)] font-black text-white tracking-tight mb-4 drop-shadow-[0_0_15px_rgba(45,212,191,0.3)]">
                         EVENTS
                     </h1>
                 </motion.div>

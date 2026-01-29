@@ -13,11 +13,11 @@ import { saveTeamMemberAction, deleteTeamMemberAction } from "./actions";
 const TEAM_CATEGORIES = [
     "Faculty Advisor",
     "Core Committee",
-    "Technical",
-    "Design Team",
-    "Visual Media",
-    "PR Team",
-    "Team"
+    "PR",
+    "Event",
+    "Content",
+    "Design",
+    "Technical"
 ];
 
 export default function TeamManager() {
@@ -53,12 +53,41 @@ export default function TeamManager() {
     const fetchMembers = async () => {
         const { data, error } = await supabase
             .from('rmc_council')
-            .select('*')
-            .order('priority_order', { ascending: true })
-            .order('created_at', { ascending: false });
+            .select('*');
 
-        if (error) console.error("Error fetching members:", error);
-        else setMembers(data || []);
+        if (error) {
+            console.error("Error fetching members:", error);
+        } else {
+            // Custom Sorting Logic
+            const sortedData = (data || []).sort((a, b) => {
+                // 1. Primary Sort: Based on the explicit TEAM_CATEGORIES order
+                // This ensures "Event" members are together, "PR" members are together, etc.
+                const catIndexA = TEAM_CATEGORIES.indexOf(a.category);
+                const catIndexB = TEAM_CATEGORIES.indexOf(b.category);
+
+                // Handle legacy/unknown categories by pushing them to the end
+                const idxA = catIndexA === -1 ? 99 : catIndexA;
+                const idxB = catIndexB === -1 ? 99 : catIndexB;
+
+                if (idxA !== idxB) return idxA - idxB;
+
+                // 2. Secondary Sort: Role Hierarchy within the Category
+                const getRolePriority = (role) => {
+                    const map = {
+                        "President": 1,
+                        "Vice President": 2,
+                        "General Secretary": 3,
+                        "Joint Secretary": 4,
+                        "Head": 5,
+                        "Member": 6
+                    };
+                    return map[role] || 99;
+                };
+
+                return getRolePriority(a.position) - getRolePriority(b.position);
+            });
+            setMembers(sortedData);
+        }
         setLoading(false);
     };
 
@@ -285,7 +314,15 @@ export default function TeamManager() {
                                 <div className="relative">
                                     <select
                                         value={formData.category}
-                                        onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                        onChange={e => {
+                                            const newCategory = e.target.value;
+                                            setFormData({
+                                                ...formData,
+                                                category: newCategory,
+                                                // Reset position when category changes to avoid invalid states
+                                                position: ""
+                                            });
+                                        }}
                                         className="w-full appearance-none bg-black/40 border border-white/10 rounded-xl p-3 px-4 text-white outline-none focus:border-indigo-500/50 transition-all focus:bg-indigo-500/5"
                                     >
                                         {TEAM_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
@@ -297,16 +334,34 @@ export default function TeamManager() {
                             </div>
                         </div>
 
-                        {/* Position (Hidden for Faculty Advisor) */}
-                        <div className={cn("transition-all duration-300", formData.category === "Faculty Advisor" ? "opacity-30 pointer-events-none" : "opacity-100")}>
+                        {/* Position / Role Selection */}
+                        <div className={cn("transition-all duration-300", formData.category === "Faculty Advisor" ? "hidden" : "block")}>
                             <label className="block text-[11px] uppercase tracking-widest text-white/50 mb-2 font-mono">Position / Role</label>
-                            <input
-                                value={formData.position}
-                                onChange={e => setFormData({ ...formData, position: e.target.value })}
-                                disabled={formData.category === "Faculty Advisor"}
-                                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-indigo-500/50 outline-none transition-all focus:bg-indigo-500/5 disabled:opacity-50"
-                                placeholder={formData.category === "Faculty Advisor" ? "Faculty Advisor (Automatic)" : "e.g. Technical Lead"}
-                            />
+                            <div className="relative">
+                                <select
+                                    value={formData.position}
+                                    onChange={e => setFormData({ ...formData, position: e.target.value })}
+                                    className="w-full appearance-none bg-black/40 border border-white/10 rounded-xl p-3 px-4 text-white outline-none focus:border-indigo-500/50 transition-all focus:bg-indigo-500/5"
+                                >
+                                    <option value="" disabled>-- Select Role --</option>
+                                    {formData.category === "Core Committee" ? (
+                                        <>
+                                            <option value="President">President</option>
+                                            <option value="Vice President">Vice President</option>
+                                            <option value="General Secretary">General Secretary</option>
+                                            <option value="Joint Secretary">Joint Secretary</option>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <option value="Head">Head</option>
+                                            <option value="Member">Member</option>
+                                        </>
+                                    )}
+                                </select>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
+                                    ▼
+                                </div>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

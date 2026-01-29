@@ -56,18 +56,17 @@ export default function MathTitle({ text = "Ramanujan", className = "" }) {
                             textShadow: "0 0 30px rgba(45,212,191,0.5)",
                             transition: { duration: 0.2 }
                         }}
-                        className="inline-block font-serif font-bold text-slate-100 cursor-pointer select-none relative pb-1 drop-shadow-[0_2px_10px_rgba(255,255,255,0.1)]"
+                        className="inline-block font-[family-name:var(--font-montserrat)] font-black text-slate-100 cursor-pointer select-none relative pb-1 drop-shadow-[0_2px_10px_rgba(255,255,255,0.1)] uppercase"
                         style={{
-                            fontFamily: "var(--font-cormorant)",
-                            letterSpacing: "-0.02em"
+                            letterSpacing: "-0.03em"
                         }}
                     >
                         {char === " " ? "\u00A0" : char}
 
-                        {/* Subtle Reflection/Glass Effect per letter */}
-                        {char !== " " && (
+                        {/* Subtle Reflection/Glass Effect per letter - REMOVED per user request to avoid tile look */}
+                        {/* {char !== " " && (
                             <span className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent mix-blend-overlay opacity-0 hover:opacity-100 transition-opacity duration-300" />
-                        )}
+                        )} */}
                     </motion.span>
                 ))}
 
