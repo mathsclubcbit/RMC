@@ -1,10 +1,40 @@
 import EventForm from "../../EventForm";
+import { createAdminClient } from "@/lib/supabase/server";
+
+function hasSupabaseConfig() {
+    return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
 
 async function getEvent(id) {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/events/${encodeURIComponent(id)}`, { cache: "no-store" });
-    if (!res.ok) return null;
-    return res.json();
+    if (!hasSupabaseConfig()) {
+        return null;
+    }
+
+    try {
+        const supabase = createAdminClient();
+        const { data, error } = await supabase
+            .from('events')
+            .select('id,title,date,payload,created_at,updated_at')
+            .eq('id', id)
+            .single();
+
+        if (error || !data) {
+            console.error('Error loading event from Supabase:', error);
+            return null;
+        }
+
+        return {
+            ...(data.payload || {}),
+            id: String(data.id),
+            title: data.title,
+            date: data.date,
+            createdAt: data.created_at,
+            updatedAt: data.updated_at,
+        };
+    } catch (error) {
+        console.error('Error reading event:', error);
+        return null;
+    }
 }
 
 export default async function EditEventPage({ params }) {

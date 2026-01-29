@@ -1,13 +1,38 @@
 import Link from "next/link";
 import AdminEventsClient from "./AdminEventsClient";
+import { createAdminClient } from "@/lib/supabase/server";
+
+function hasSupabaseConfig() {
+    return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
 
 async function getEvents() {
+    if (!hasSupabaseConfig()) {
+        return [];
+    }
+
     try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-        const res = await fetch(`${baseUrl}/api/events`, { cache: "no-store" });
-        const data = await res.json();
-        return Array.isArray(data) ? data : [];
-    } catch {
+        const supabase = createAdminClient();
+        const { data, error } = await supabase
+            .from('events')
+            .select('id,title,date,payload,created_at,updated_at')
+            .order('date', { ascending: false });
+
+        if (error) {
+            console.error('Error loading events from Supabase:', error);
+            return [];
+        }
+
+        return (data || []).map((row) => ({
+            ...(row.payload || {}),
+            id: String(row.id),
+            title: row.title,
+            date: row.date,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
+        }));
+    } catch (error) {
+        console.error('Error reading events:', error);
         return [];
     }
 }

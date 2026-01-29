@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
-import { Trash2, Upload, Loader2, Plus, Image as ImageIcon, Calendar, CheckCircle, AlertTriangle } from "lucide-react";
+import { Trash2, Upload, Loader2, Plus, Image as ImageIcon, Calendar, CheckCircle, AlertTriangle, FolderX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { uploadToCloudinary } from "@/lib/cloudinary";
@@ -217,6 +217,60 @@ export default function GalleryManager() {
         );
     };
 
+    const handleDeleteAlbum = async () => {
+        if (!selectedAlbumId) return;
+
+        const selectedAlbum = albums.find(a => a.id === selectedAlbumId);
+        const albumTitle = selectedAlbum?.title || "this album";
+        const imageCount = uploadedImages.length;
+
+        showModal(
+            "Delete Album?",
+            `Are you sure you want to delete "${albumTitle}"?\n\n${imageCount > 0 ? `This will also permanently delete ${imageCount} image${imageCount !== 1 ? 's' : ''}.` : 'This album has no images.'}\n\nThis action cannot be undone.`,
+            "confirm",
+            async () => {
+                try {
+                    // 1. Delete all images from this album first
+                    if (imageCount > 0) {
+                        const { error: imagesError } = await supabase
+                            .from('gallery_images')
+                            .delete()
+                            .eq('event_id', selectedAlbumId);
+
+                        if (imagesError) {
+                            throw new Error("Failed to delete album images: " + imagesError.message);
+                        }
+                    }
+
+                    // 2. Delete the album itself
+                    const { error: albumError } = await supabase
+                        .from('gallery_events')
+                        .delete()
+                        .eq('id', selectedAlbumId);
+
+                    if (albumError) {
+                        throw new Error("Failed to delete album: " + albumError.message);
+                    }
+
+                    // 3. Clear state and refresh
+                    setSelectedAlbumId("");
+                    setUploadedImages([]);
+                    await fetchAlbums();
+
+                    // 4. Close confirmation modal first, then show success after a tick
+                    closeModal();
+                    setTimeout(() => {
+                        showModal("Success!", `Album "${albumTitle}" has been deleted.`, "success");
+                    }, 100);
+
+                } catch (error) {
+                    console.error("Error deleting album:", error);
+                    showModal("Error", error.message || "Failed to delete album.", "error");
+                }
+            }
+        );
+    };
+
     return (
         <div className="space-y-8">
             <ConfirmationModal
@@ -362,7 +416,22 @@ export default function GalleryManager() {
                                         ▼
                                     </div>
                                 </div>
-                                <button onClick={fetchAlbums} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 text-white transition-all"><ImageIcon className="w-5 h-5" /></button>
+                                <button
+                                    onClick={fetchAlbums}
+                                    title="Refresh albums"
+                                    className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 text-white transition-all"
+                                >
+                                    <ImageIcon className="w-5 h-5" />
+                                </button>
+                                {selectedAlbumId && (
+                                    <button
+                                        onClick={handleDeleteAlbum}
+                                        title="Delete album"
+                                        className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all"
+                                    >
+                                        <FolderX className="w-5 h-5" />
+                                    </button>
+                                )}
                             </div>
                         )}
                         {albums.length === 0 && !loading && (

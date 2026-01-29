@@ -1,11 +1,43 @@
 import RegistrationClient from "@/components/events/RegistrationClient";
+import { createAdminClient } from "@/lib/supabase/server";
+
+function hasSupabaseConfig() {
+    return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
+async function getEventById(eventId) {
+    if (!hasSupabaseConfig()) {
+        return null;
+    }
+
+    try {
+        const supabase = createAdminClient();
+        const { data, error } = await supabase
+            .from('events')
+            .select('id,title,date,payload,created_at,updated_at')
+            .eq('id', eventId)
+            .single();
+
+        if (error || !data) {
+            return null;
+        }
+
+        return {
+            ...(data.payload || {}),
+            id: String(data.id),
+            title: data.title,
+            date: data.date,
+            createdAt: data.created_at,
+            updatedAt: data.updated_at,
+        };
+    } catch {
+        return null;
+    }
+}
 
 export async function generateMetadata({ params }) {
     const { eventId } = await params;
-
-    // Fetch event data
-    const product = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/events`).then((res) => res.json()).catch(() => []);
-    const event = product.find(e => e.id == eventId);
+    const event = await getEventById(eventId);
 
     if (!event) {
         return {
