@@ -10,18 +10,15 @@ import {
     Search,
     Trash2,
     Key,
-    Shield,
     Users,
     Loader2,
     X,
     Mail,
     User,
     ChevronDown,
-    AlertCircle,
-    UserPlus
+    AlertCircle
 } from "lucide-react";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
-import { promoteMemberToTeamAction } from "@/app/admin/team/actions";
 
 const CORE_COUNCIL_ROLES = [
     { value: "president", label: "President" },
@@ -40,7 +37,6 @@ export default function PersonnelPage() {
     const { profile, canManageMembers, isPresident } = useAuth();
     const [members, setMembers] = useState([]);
     const [teams, setTeams] = useState([]);
-    const [councilEmails, setCouncilEmails] = useState(new Set());
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [filterRole, setFilterRole] = useState("all");
@@ -99,13 +95,6 @@ export default function PersonnelPage() {
 
             if (teamsError) throw teamsError;
             setTeams(teamsData || []);
-
-            // Fetch existing council members to prevent duplicates
-            const { data: councilData } = await supabase
-                .from("rmc_council")
-                .select("email");
-
-            setCouncilEmails(new Set(councilData?.map(m => m.email?.toLowerCase()) || []));
         } catch (error) {
             console.error("Error fetching data:", error);
         } finally {
@@ -158,27 +147,6 @@ export default function PersonnelPage() {
                 }
             },
             true
-        );
-    };
-
-    const handlePromote = async (member) => {
-        showConfirm(
-            "Promote to Team",
-            `Do you want to promote "${member.full_name || member.email}" to the public Team Showcase? This will copy them to the Council list where you can manage their professional photo and bio.`,
-            async () => {
-                try {
-                    const res = await promoteMemberToTeamAction(member.id);
-                    if (res.error) throw new Error(res.error);
-
-                    // Update local state immediately
-                    setCouncilEmails(prev => new Set([...prev, member.email?.toLowerCase()]));
-
-                    showAlert("Promoted!", "Member successfully added to the Team list. Go to Admin > Team to finalize their bio and photo.", "success");
-                } catch (error) {
-                    console.error("Error promoting member:", error);
-                    showAlert("Error", error.message, "error");
-                }
-            }
         );
     };
 
@@ -325,27 +293,9 @@ export default function PersonnelPage() {
                                 transition={{ delay: index * 0.05 }}
                                 className="group relative"
                             >
-                                {/* Active Promotion Glow */}
-                                {councilEmails.has(member.email?.toLowerCase()) && (
-                                    <div className="absolute -inset-0.5 bg-teal/20 blur-xl opacity-30 rounded-3xl" />
-                                )}
-
                                 <div className="relative bg-white/[0.02] backdrop-blur-[40px] border border-white/5 rounded-3xl p-6 hover:bg-white/[0.05] transition-all duration-500 overflow-hidden">
                                     {/* Action Hover Overlay */}
                                     <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
-                                        {councilEmails.has(member.email?.toLowerCase()) ? (
-                                            <div className="p-2 bg-teal/10 text-teal rounded-xl border border-teal/20" title="Already on Team Page">
-                                                <Shield className="w-4 h-4" />
-                                            </div>
-                                        ) : (
-                                            <button
-                                                onClick={() => handlePromote(member)}
-                                                className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors"
-                                                title="Promote to Showcase"
-                                            >
-                                                <UserPlus className="w-4 h-4" />
-                                            </button>
-                                        )}
                                         <button
                                             onClick={() => setShowCredentialsModal(member)}
                                             className="p-2 bg-teal/10 text-teal rounded-xl border border-teal/20 hover:bg-teal/20 transition-colors"
