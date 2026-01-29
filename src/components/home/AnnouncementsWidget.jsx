@@ -11,9 +11,34 @@ export default function AnnouncementsWidget() {
     const [mounted, setMounted] = useState(false);
     const [announcements, setAnnouncements] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [entranceDelay, setEntranceDelay] = useState(1); // Default short delay
 
     useEffect(() => {
         setMounted(true);
+
+        // Calculate Delay based on Preloader logic
+        const checkPreloader = () => {
+            const lastShown = localStorage.getItem("rmc-legacy-preloader-timestamp");
+            const now = Date.now();
+            const timeSince = lastShown ? now - (parseInt(lastShown) || 0) : Infinity;
+            const ONE_HOUR = 60 * 60 * 1000;
+
+            // Logic matches Preloader.jsx condition
+            // If it ran recently (< 5s), or will run (expired/never shown)
+            // We verify if it's "active" for this session
+            const isPreloaderActive = !lastShown || timeSince > ONE_HOUR || timeSince < 5000;
+
+            if (isPreloaderActive) {
+                // Preloader (3s) + 1s requested delay = 4s total
+                // Adding slight buffer for smoothness
+                setEntranceDelay(4.2);
+            } else {
+                setEntranceDelay(1);
+            }
+        };
+
+        checkPreloader();
+
         const fetchAnnouncements = async () => {
             try {
                 const res = await fetch('/api/announcements');
@@ -104,12 +129,29 @@ export default function AnnouncementsWidget() {
                 )}
             </AnimatePresence>
 
-            {/* Toggle Button */}
-            <button
+            {/* Cinematic Toggle Button */}
+            <motion.button
+                initial={{ opacity: 0, scale: 0, y: 20, filter: "blur(10px)" }}
+                animate={{
+                    opacity: 1,
+                    scale: 1,
+                    y: 0,
+                    filter: "blur(0px)",
+                    boxShadow: ["0 0 0 0 rgba(45,212,191,0)", "0 0 0 10px rgba(45,212,191,0.2)", "0 0 0 0 rgba(45,212,191,0)"]
+                }}
+                transition={{
+                    opacity: { delay: entranceDelay, duration: 0.6 },
+                    scale: { delay: entranceDelay, duration: 0.6, type: "spring", stiffness: 200, damping: 15 },
+                    y: { delay: entranceDelay, duration: 0.6, type: "spring", stiffness: 200, damping: 15 },
+                    filter: { delay: entranceDelay, duration: 0.6 },
+                    boxShadow: { delay: entranceDelay + 0.4, duration: 1.5, times: [0, 0.5, 1] }
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(!isOpen)}
-                className={`pointer-events-auto p-4 rounded-full shadow-2xl transition-all duration-300 group relative ${isOpen ? 'bg-white text-black rotate-90' : 'bg-teal/10 border border-teal/30 hover:bg-teal hover:border-teal text-teal hover:text-black'}`}
+                className={`pointer-events-auto p-4 rounded-full shadow-2xl group relative ${isOpen ? 'bg-white text-black rotate-90' : 'bg-teal/10 border border-teal/30 hover:bg-teal hover:border-teal text-teal hover:text-black'}`}
             >
-                {/* Ping Effect */}
+                {/* Ping Effect (Only when idle) */}
                 {!isOpen && (
                     <span className="absolute -top-1 -right-1 flex h-3 w-3">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal opacity-75"></span>
@@ -118,7 +160,7 @@ export default function AnnouncementsWidget() {
                 )}
 
                 {isOpen ? <X className="w-6 h-6" /> : <Bell className="w-6 h-6" />}
-            </button>
+            </motion.button>
 
         </div>,
         document.body

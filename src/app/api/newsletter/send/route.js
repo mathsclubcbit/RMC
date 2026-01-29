@@ -60,7 +60,7 @@ export async function POST(request) {
                     <!-- Footer -->
                     <div style="background:rgba(45,212,191,0.05); border-top:1px solid rgba(45,212,191,0.1); padding:20px; text-align:center;">
                         <p style="margin:0; color:#52525b; font-size:11px; letter-spacing:1px;">
-                            RAMANUJAN MATHEMATICAL CLUB | CBIT
+                            RAMANUJAN MATHS CLUB | CBIT
                         </p>
                          <p style="margin:5px 0 0; color:#3f3f46; font-size:10px;">
                             ${new Date().getFullYear()} &copy; All Rights Reserved

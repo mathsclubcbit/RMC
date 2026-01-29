@@ -13,8 +13,10 @@ import {
     ListTodo,
     PartyPopper,
     X,
-    Loader2
+    Loader2,
+    Trash2
 } from "lucide-react";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
@@ -158,8 +160,9 @@ export default function CalendarPage() {
 
     const navigateMonth = (direction) => {
         setCurrentDate(prev => {
-            const newDate = new Date(prev);
-            newDate.setMonth(newDate.getMonth() + direction);
+            // Create a new date set to the 1st of the current month to avoid overflow issues
+            // e.g., Jan 31 + 1 month would become March 3 instead of Feb 1
+            const newDate = new Date(prev.getFullYear(), prev.getMonth() + direction, 1);
             return newDate;
         });
     };
@@ -358,8 +361,19 @@ export default function CalendarPage() {
                         events={getEventsForDate(viewingDate).events}
                         tasks={getEventsForDate(viewingDate).tasks}
                         isPresident={isPresident()}
+                        currentUserId={profile?.id}
                         onClose={() => setViewingDate(null)}
                         onAddEvent={() => handleAddEvent(viewingDate)}
+                        onDeleteEvent={async (eventId) => {
+                            const { error } = await supabase
+                                .from('calendar_events')
+                                .delete()
+                                .eq('id', eventId);
+                            if (!error) {
+                                fetchCalendarData();
+                            }
+                            return { error };
+                        }}
                     />
                 )}
             </AnimatePresence>
@@ -382,102 +396,150 @@ export default function CalendarPage() {
     );
 }
 
-function DayDetailModal({ date, events, tasks, isPresident, onClose, onAddEvent }) {
+function DayDetailModal({ date, events, tasks, isPresident, currentUserId, onClose, onAddEvent, onDeleteEvent }) {
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, eventId: null, eventTitle: "" });
+    const [deleting, setDeleting] = useState(false);
+
+    const handleDeleteClick = (event) => {
+        setDeleteModal({ isOpen: true, eventId: event.id, eventTitle: event.title });
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteModal.eventId) return;
+
+        setDeleting(true);
+        try {
+            const result = await onDeleteEvent(deleteModal.eventId);
+            if (result?.error) {
+                console.error("Failed to delete event:", result.error);
+            }
+        } finally {
+            setDeleting(false);
+            setDeleteModal({ isOpen: false, eventId: null, eventTitle: "" });
+        }
+    };
+
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        >
+        <>
+            <ConfirmationModal
+                isOpen={deleteModal.isOpen}
+                type="confirm"
+                title="Delete Event?"
+                message={`Are you sure you want to delete "${deleteModal.eventTitle}"? This cannot be undone.`}
+                confirmText={deleting ? "Deleting..." : "Delete"}
+                isDangerous={true}
+                onClose={() => setDeleteModal({ isOpen: false, eventId: null, eventTitle: "" })}
+                onConfirm={handleConfirmDelete}
+            />
+
             <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                onClick={(e) => e.stopPropagation()}
-                className="bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl w-full max-w-md overflow-hidden"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={onClose}
+                className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             >
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-                    <div>
-                        <h2 className="text-xl font-serif font-bold text-white">
-                            {date.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}
-                        </h2>
-                    </div>
-                    <button onClick={onClose} className="text-white/50 hover:text-white">
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-
-                {/* Body */}
-                <div className="p-6 max-h-[60vh] overflow-y-auto">
-                    {events.length === 0 && tasks.length === 0 ? (
-                        <div className="text-center py-8">
-                            <CalendarIcon className="w-12 h-12 text-white/10 mx-auto mb-3" />
-                            <p className="text-white/40">No events or deadlines</p>
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl w-full max-w-md overflow-hidden"
+                >
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+                        <div>
+                            <h2 className="text-xl font-serif font-bold text-white">
+                                {date.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}
+                            </h2>
                         </div>
-                    ) : (
-                        <div className="space-y-4">
-                            {/* Events */}
-                            {events.map(event => (
-                                <div
-                                    key={event.id}
-                                    className="flex items-start gap-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl"
-                                >
-                                    <PartyPopper className="w-5 h-5 text-purple-400 mt-0.5" />
-                                    <div>
-                                        <h4 className="text-white font-medium">{event.title}</h4>
-                                        {event.description && (
-                                            <p className="text-white/50 text-sm mt-1">{event.description}</p>
-                                        )}
-                                        <p className="text-purple-400/70 text-xs mt-2">
-                                            {new Date(event.start_time).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-
-                            {/* Task Deadlines */}
-                            {tasks.map(task => (
-                                <div
-                                    key={task.id}
-                                    className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl"
-                                >
-                                    <ListTodo className="w-5 h-5 text-amber-400 mt-0.5" />
-                                    <div>
-                                        <h4 className="text-white font-medium">
-                                            {task.teams?.name && (
-                                                <span className="inline-block px-1.5 py-0.5 mr-2 bg-amber-500/20 text-[10px] rounded uppercase tracking-wider text-amber-300">
-                                                    {task.teams.name}
-                                                </span>
-                                            )}
-                                            {task.title}
-                                        </h4>
-                                        <p className="text-amber-400/70 text-xs mt-1">
-                                            Due: {new Date(task.deadline).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer */}
-                {(isPresident || onAddEvent) && (
-                    <div className="px-6 py-4 border-t border-white/5">
-                        <button
-                            onClick={onAddEvent}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-teal text-black font-bold rounded-xl hover:bg-teal/80 transition-colors"
-                        >
-                            <Plus className="w-5 h-5" />
-                            Add Event
+                        <button onClick={onClose} className="text-white/50 hover:text-white">
+                            <X className="w-5 h-5" />
                         </button>
                     </div>
-                )}
+
+                    {/* Body */}
+                    <div className="p-6 max-h-[60vh] overflow-y-auto">
+                        {events.length === 0 && tasks.length === 0 ? (
+                            <div className="text-center py-8">
+                                <CalendarIcon className="w-12 h-12 text-white/10 mx-auto mb-3" />
+                                <p className="text-white/40">No events or deadlines</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {/* Events */}
+                                {events.map(event => {
+                                    const isOwner = event.created_by === currentUserId;
+
+                                    return (
+                                        <div
+                                            key={event.id}
+                                            className="flex items-start gap-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl group"
+                                        >
+                                            <PartyPopper className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-white font-medium">{event.title}</h4>
+                                                {event.description && (
+                                                    <p className="text-white/50 text-sm mt-1">{event.description}</p>
+                                                )}
+                                                <p className="text-purple-400/70 text-xs mt-2">
+                                                    {new Date(event.start_time).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                                                </p>
+                                            </div>
+                                            {isOwner && (
+                                                <button
+                                                    onClick={() => handleDeleteClick(event)}
+                                                    className="p-2 text-red-400/60 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                                    title="Delete event"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+
+                                {/* Task Deadlines */}
+                                {tasks.map(task => (
+                                    <div
+                                        key={task.id}
+                                        className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl"
+                                    >
+                                        <ListTodo className="w-5 h-5 text-amber-400 mt-0.5" />
+                                        <div>
+                                            <h4 className="text-white font-medium">
+                                                {task.teams?.name && (
+                                                    <span className="inline-block px-1.5 py-0.5 mr-2 bg-amber-500/20 text-[10px] rounded uppercase tracking-wider text-amber-300">
+                                                        {task.teams.name}
+                                                    </span>
+                                                )}
+                                                {task.title}
+                                            </h4>
+                                            <p className="text-amber-400/70 text-xs mt-1">
+                                                Due: {new Date(task.deadline).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Footer */}
+                    {(isPresident || onAddEvent) && (
+                        <div className="px-6 py-4 border-t border-white/5">
+                            <button
+                                onClick={onAddEvent}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-teal text-black font-bold rounded-xl hover:bg-teal/80 transition-colors"
+                            >
+                                <Plus className="w-5 h-5" />
+                                Add Event
+                            </button>
+                        </div>
+                    )}
+                </motion.div>
             </motion.div>
-        </motion.div>
+        </>
     );
 }
 
