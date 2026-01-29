@@ -1,10 +1,15 @@
 import TeamManager from "./TeamManager";
+import { isAdminAuthenticated } from "../actions";
+import { redirect } from "next/navigation";
 
 export const metadata = {
     title: "Admin - Team Management",
 };
 
-export default function AdminTeamPage() {
+export default async function AdminTeamPage() {
+    if (!(await isAdminAuthenticated())) {
+        redirect("/admin/login");
+    }
     return (
         <div className="min-h-[100dvh] bg-black text-white relative overflow-hidden">
             {/* Tech background - Admin Indigo */}

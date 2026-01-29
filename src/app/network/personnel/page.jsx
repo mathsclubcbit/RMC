@@ -16,7 +16,8 @@ import {
     Mail,
     User,
     ChevronDown,
-    AlertCircle
+    AlertCircle,
+    Shield
 } from "lucide-react";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 

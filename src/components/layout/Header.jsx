@@ -25,7 +25,7 @@ export default function Header() {
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-4 group">
                         <Image
-                            src="/RMC logo-circular.png"
+                            src="/rmc-logo.png"
                             alt="RMC Logo"
                             width={40}
                             height={40}

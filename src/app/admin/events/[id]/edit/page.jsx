@@ -1,5 +1,7 @@
 import EventForm from "../../EventForm";
 import { createAdminClient } from "@/lib/supabase/server";
+import { isAdminAuthenticated } from "../../../actions";
+import { redirect } from "next/navigation";
 
 function hasSupabaseConfig() {
     return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -38,6 +40,9 @@ async function getEvent(id) {
 }
 
 export default async function EditEventPage({ params }) {
+    if (!(await isAdminAuthenticated())) {
+        redirect("/admin/login");
+    }
     const { id } = await params;
     const event = await getEvent(id);
 

@@ -2,10 +2,9 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
+import { getSecret } from '@/lib/jwt';
 
 export const runtime = 'nodejs';
-
-const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
 
 async function getCoordinatorEventId() {
     const cookieStore = await cookies();
@@ -14,7 +13,7 @@ async function getCoordinatorEventId() {
     if (!token) return null;
 
     try {
-        const { payload } = await jwtVerify(token, getJwtSecret());
+        const { payload } = await jwtVerify(token, getSecret());
         if (payload?.type !== 'coordinator' || !payload?.eventId) {
             return null;
         }

@@ -140,7 +140,7 @@ export default function TicketDownloadButton({
             ctx.restore();
 
             // Header
-            const logo = await loadImage("/RMC logo-circular.png");
+            const logo = await loadImage("/rmc-logo.png");
             const logoSize = 86;
             const headerX = cardX + 56;
             const headerY = cardY + 48;

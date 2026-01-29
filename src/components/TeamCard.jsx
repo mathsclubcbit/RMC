@@ -30,11 +30,11 @@ export default function TeamCard({ name, position, category, image_url, linkedin
                 {caption && (
                     <div className="hidden md:flex absolute inset-0 p-6 items-center justify-center bg-black/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 text-center">
                         <div className="relative">
-                            <span className="absolute -top-4 -left-2 text-4xl text-teal/20 font-serif">"</span>
+                            <span className="absolute -top-4 -left-2 text-4xl text-teal/20 font-serif">&quot;</span>
                             <p className="text-sm font-medium text-white/90 italic font-serif leading-relaxed">
                                 {caption}
                             </p>
-                            <span className="absolute -bottom-6 -right-2 text-4xl text-teal/20 font-serif">"</span>
+                            <span className="absolute -bottom-6 -right-2 text-4xl text-teal/20 font-serif">&quot;</span>
                         </div>
                     </div>
                 )}
@@ -76,7 +76,7 @@ export default function TeamCard({ name, position, category, image_url, linkedin
                     {/* Quote - MOBILE ONLY (Static below text) */}
                     {caption && (
                         <p className="md:hidden mt-1.5 text-[9px] text-white/60 italic font-serif leading-relaxed border-l-[1.5px] border-teal/30 pl-2 line-clamp-2">
-                            "{caption}"
+                            &quot;{caption}&quot;
                         </p>
                     )}
                 </div>

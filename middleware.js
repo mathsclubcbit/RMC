@@ -8,7 +8,13 @@ import { jwtVerify } from 'jose';
 const rateLimitMap = new Map();
 
 // JWT Secret for verification
-const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
+const getJwtSecret = () => {
+    const rawSecret = process.env.JWT_SECRET;
+    if (!rawSecret) {
+        throw new Error("JWT_SECRET environment variable is not defined");
+    }
+    return new TextEncoder().encode(rawSecret);
+};
 
 // Helper to verify JWT token
 async function verifyJwt(token) {
@@ -100,7 +106,24 @@ export async function middleware(request) {
         ipData.count += 1;
 
         // CORS Headers for API
-        supabaseResponse.headers.set('Access-Control-Allow-Origin', '*');
+        const origin = request.headers.get('origin');
+        const allowedOrigins = [
+            'https://rmccbit.in',
+            'https://www.rmccbit.in',
+            'http://localhost:3000',
+            'http://localhost:3001',
+            'http://127.0.0.1:3000'
+        ];
+
+        if (origin && allowedOrigins.includes(origin)) {
+            supabaseResponse.headers.set('Access-Control-Allow-Origin', origin);
+        } else if (!origin) {
+            // Allow tools like Postman/curl if needed, or leave it restricted.
+            // For browsers, if no origin is sent, it's usually a same-site request or direct navigation.
+            // We set a safe default.
+            supabaseResponse.headers.set('Access-Control-Allow-Origin', 'https://rmccbit.in');
+        }
+
         supabaseResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         supabaseResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     }

@@ -4,12 +4,11 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/server";
 import { LogOut, QrCode, Edit3, Settings } from "lucide-react";
 import { jwtVerify } from "jose";
+import { getSecret } from "@/lib/jwt";
 
 import { getAllRegistrations } from "@/lib/google";
 
 export const dynamic = 'force-dynamic';
-
-const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
 
 async function getCoordinatorEventAndStats() {
     const cookieStore = await cookies();
@@ -20,7 +19,7 @@ async function getCoordinatorEventAndStats() {
     // Verify JWT and extract eventId
     let eventId;
     try {
-        const { payload } = await jwtVerify(token, getJwtSecret());
+        const { payload } = await jwtVerify(token, getSecret());
         if (payload?.type !== 'coordinator' || !payload?.eventId) {
             return null;
         }

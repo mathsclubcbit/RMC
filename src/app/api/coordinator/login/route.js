@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { signToken } from '@/lib/jwt';
+import bcrypt from 'bcrypt';
 
 export const runtime = 'nodejs';
 
@@ -49,6 +50,7 @@ export async function POST(request) {
 
         // Get stored password from event payload
         const storedPassword = event.payload?.password;
+        const isHashed = event.payload?.passwordHashed === true;
 
         // Check if event has a password set
         if (!storedPassword) {
@@ -59,8 +61,17 @@ export async function POST(request) {
             );
         }
 
-        // Compare passwords (trim both for safety)
-        const passwordMatch = storedPassword.trim() === cleanPassword;
+        // Compare passwords - support both hashed (new) and plaintext (legacy)
+        let passwordMatch = false;
+        if (isHashed) {
+            // New secure method: bcrypt comparison
+            passwordMatch = await bcrypt.compare(cleanPassword, storedPassword);
+        } else {
+            // Legacy fallback: plaintext comparison (for migration period)
+            // TODO: Remove this after all passwords are migrated to bcrypt
+            console.warn('[Coordinator Login] Using legacy plaintext password for event:', cleanEventId);
+            passwordMatch = storedPassword.trim() === cleanPassword;
+        }
 
         if (!passwordMatch) {
             console.log('[Coordinator Login] Password mismatch for event:', cleanEventId);

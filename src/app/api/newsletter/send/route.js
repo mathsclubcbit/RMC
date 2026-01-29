@@ -1,15 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
 import { NextResponse } from 'next/server';
+import DOMPurify from 'isomorphic-dompurify';
+import { isAdminAuthenticated } from '@/app/admin/actions';
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
-
-// SMTP Transporter (Same as in lib/email.ts, duplicated here for API route isolation or import it)
-// Better to simple import logic, but for raw API speed, let's redefine or import if possible.
-// We'll use nodemailer directly here.
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -20,14 +18,16 @@ const transporter = nodemailer.createTransport({
 });
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300; // 5 minutes for batch sending
+export const maxDuration = 300;
 
 export async function POST(request) {
     try {
-        const { subject, body, testEmail } = await request.json();
+        // 1. Authorization check
+        if (!(await isAdminAuthenticated())) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
-        // 1. Authorization check would be handled by middleware or assumed protected if this route is only called by admin
-        // Ideally verify session here. For V1 prototype, we assume the caller (Admin UI) is authenticated.
+        const { subject, body, testEmail } = await request.json();
 
         if (!subject || !body) {
             return NextResponse.json({ error: "Subject and Body required" }, { status: 400 });
@@ -54,7 +54,7 @@ export async function POST(request) {
 
                     <!-- Body -->
                     <div style="padding:0 40px 40px; font-size:18px; line-height:1.8; color:#e4e4e7;">
-                        ${body.replace(/\n/g, '<br/>')}
+                        ${DOMPurify.sanitize(body.replace(/\n/g, '<br/>'), { ALLOWED_TAGS: ['b', 'i', 'u', 'a', 'p', 'br', 'strong', 'em', 'ul', 'ol', 'li'], ALLOWED_ATTR: ['href'] })}
                     </div>
 
                     <!-- Footer -->
@@ -86,7 +86,6 @@ export async function POST(request) {
         }
 
         // BROADCAST MODE
-        // 1. Fetch active subscribers
         const { data: subscribers, error } = await supabase
             .from('newsletter_subscribers')
             .select('email')
@@ -95,22 +94,14 @@ export async function POST(request) {
         if (error) throw error;
         if (!subscribers?.length) return NextResponse.json({ message: "No active subscribers" });
 
-        // 2. Send in batches (simple for loop for <500)
         let successCount = 0;
-        const bccBatches = []; // Gmail limit is ~100 recipients per Bcc usually, or 500 total/day.
-        // Let's send individual emails for better deliverability/personalization potential later,
-        // OR use BCC for speed if list is small. 
-        // For "Inner Circle" feel, individual is better, but slower. 
-        // Let's do individual for now (assuming <50 users initially).
-
-        // Actually, for rate limits, let's use BCC in chunks of 50 to be safe and fast.
         const BATCH_SIZE = 50;
         for (let i = 0; i < subscribers.length; i += BATCH_SIZE) {
             const batch = subscribers.slice(i, i + BATCH_SIZE).map(s => s.email);
 
             await transporter.sendMail({
                 from: `"RMC Inner Circle" <${process.env.EMAIL_USER}>`,
-                bcc: batch, // Blind Carbon Copy
+                bcc: batch,
                 subject: subject,
                 html: htmlContent
             });

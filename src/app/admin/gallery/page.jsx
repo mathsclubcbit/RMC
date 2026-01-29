@@ -1,10 +1,15 @@
 import GalleryManager from "./GalleryManager";
+import { isAdminAuthenticated } from "../actions";
+import { redirect } from "next/navigation";
 
 export const metadata = {
     title: "Admin - Gallery Management",
 };
 
-export default function AdminGalleryPage() {
+export default async function AdminGalleryPage() {
+    if (!(await isAdminAuthenticated())) {
+        redirect("/admin/login");
+    }
     return (
         <div className="min-h-[100dvh] bg-black text-white relative overflow-hidden">
             {/* Tech background - Admin Indigo */}

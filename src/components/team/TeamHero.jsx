@@ -71,7 +71,7 @@ export default function TeamHero() {
                     className="max-w-2xl mx-auto space-y-6"
                 >
                     <p className="text-lg md:text-2xl text-white/40 font-serif italic font-light leading-relaxed tracking-wide">
-                        "The guardians of logic, ensuring the <span className="text-teal/60">equation</span> remains balanced."
+                        &quot;The guardians of logic, ensuring the <span className="text-teal/60">equation</span> remains balanced.&quot;
                     </p>
 
                     {/* Decorative Divider */}

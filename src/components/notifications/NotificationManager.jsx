@@ -14,20 +14,20 @@ export default function NotificationManager({ className = "" }) {
         type: "info"
     });
 
+    const checkSubscription = async () => {
+        if ('serviceWorker' in navigator) {
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.getSubscription();
+            setIsSubscribed(!!subscription);
+        }
+    };
+
     useEffect(() => {
         if (typeof window !== 'undefined' && 'Notification' in window) {
             setPermission(Notification.permission);
             checkSubscription();
         }
     }, []);
-
-    async function checkSubscription() {
-        if ('serviceWorker' in navigator) {
-            const registration = await navigator.serviceWorker.ready;
-            const subscription = await registration.pushManager.getSubscription();
-            setIsSubscribed(!!subscription);
-        }
-    }
 
     async function subscribe() {
         try {

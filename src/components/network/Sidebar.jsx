@@ -102,7 +102,7 @@ export default function NetworkSidebar() {
                     <div className="relative group">
                         <div className="absolute -inset-2 bg-teal/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
                         <Image
-                            src="/RMC logo-circular.png"
+                            src="/rmc-logo.png"
                             alt="RMC"
                             width={collapsed ? 36 : 42}
                             height={collapsed ? 36 : 42}
@@ -196,7 +196,7 @@ export default function NetworkSidebar() {
             <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[#020617]/80 backdrop-blur-xl border-b border-white/5 z-[60] px-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Image
-                        src="/RMC logo-circular.png"
+                        src="/rmc-logo.png"
                         alt="RMC"
                         width={32}
                         height={32}

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import AdminEventsClient from "./AdminEventsClient";
 import { createAdminClient } from "@/lib/supabase/server";
+import { isAdminAuthenticated } from "../actions";
+import { redirect } from "next/navigation";
 
 function hasSupabaseConfig() {
     return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -38,6 +40,10 @@ async function getEvents() {
 }
 
 export default async function AdminEventsPage() {
+    if (!(await isAdminAuthenticated())) {
+        redirect("/admin/login");
+    }
+
     const events = await getEvents();
 
     return (

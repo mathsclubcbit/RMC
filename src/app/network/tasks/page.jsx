@@ -358,7 +358,7 @@ export default function TasksPage() {
                                             {task.submission_note && (task.status === "under_review" || task.status === "completed") && (
                                                 <div className="mb-3 p-3 bg-purple-500/5 border border-purple-500/10 rounded-xl">
                                                     <p className="text-[10px] uppercase tracking-widest text-purple-400 font-bold mb-1">Submission Note</p>
-                                                    <p className="text-white/70 text-sm italic">"{task.submission_note}"</p>
+                                                    <p className="text-white/70 text-sm italic">&quot;{task.submission_note}&quot;</p>
                                                 </div>
                                             )}
 
@@ -372,7 +372,7 @@ export default function TasksPage() {
                                                         }`}>
                                                         {task.status === "completed" ? "Head's Appreciation" : "Corrections Required"}
                                                     </p>
-                                                    <p className="text-white/70 text-sm">"{task.feedback}"</p>
+                                                    <p className="text-white/70 text-sm">&quot;{task.feedback}&quot;</p>
                                                 </div>
                                             )}
 

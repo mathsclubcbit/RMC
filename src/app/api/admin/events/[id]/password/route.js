@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
+import { getSecret } from '@/lib/jwt';
+import bcrypt from 'bcrypt';
 
-const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
+const SALT_ROUNDS = 12;
 
 async function verifyAdmin(request) {
     const cookieStore = await cookies();
@@ -11,7 +13,7 @@ async function verifyAdmin(request) {
     if (!token) return false;
 
     try {
-        const { payload } = await jwtVerify(token, getJwtSecret());
+        const { payload } = await jwtVerify(token, getSecret());
         return payload?.type === 'admin';
     } catch {
         return false;
@@ -32,6 +34,12 @@ export async function PATCH(request, { params }) {
             return NextResponse.json({ error: 'Password is required' }, { status: 400 });
         }
 
+        // Validate password strength
+        const cleanPassword = password.trim();
+        if (cleanPassword.length < 6) {
+            return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
+        }
+
         const supabase = createAdminClient();
 
         // Get current event
@@ -45,10 +53,14 @@ export async function PATCH(request, { params }) {
             return NextResponse.json({ error: 'Event not found' }, { status: 404 });
         }
 
-        // Update password in payload
+        // Hash the password before storing
+        const hashedPassword = await bcrypt.hash(cleanPassword, SALT_ROUNDS);
+
+        // Update password in payload (store hash, not plaintext)
         const updatedPayload = {
             ...event.payload,
-            password: password.trim()
+            password: hashedPassword,
+            passwordHashed: true  // Flag to indicate this is a bcrypt hash
         };
 
         const { error: updateError } = await supabase

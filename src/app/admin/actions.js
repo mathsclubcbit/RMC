@@ -5,36 +5,104 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getRegistrationById, markRegistrationAttendance, markRegistrationCheckedIn } from "@/lib/google";
 import { signToken, verifyToken } from "@/lib/jwt";
+import { authenticator } from '@otplib/preset-default';
+import QRCode from 'qrcode';
 
 const getAdminCredentials = () => {
-    const username = process.env.ADMIN_USERNAME || "admin";
-    const password = process.env.ADMIN_PASSWORD || "admin123";
-    return { username, password };
+    const username = process.env.ADMIN_USERNAME;
+    const password = process.env.ADMIN_PASSWORD;
+    const totpSecret = process.env.ADMIN_TOTP_SECRET || "";
+
+    if (!username || !password) {
+        throw new Error("CRITICAL: ADMIN_USERNAME and ADMIN_PASSWORD must be set in environment variables.");
+    }
+
+    return { username, password, totpSecret };
 };
 
 export async function adminLoginAction(prevState, formData) {
-    const { username: expectedUser, password: expectedPass } = getAdminCredentials();
+    const { username: expectedUser, password: expectedPass, totpSecret } = getAdminCredentials();
 
-    const username = String(formData.get("username") || "");
-    const password = String(formData.get("password") || "");
+    // If we are in step 2 (verifying OTP)
+    const isStep2 = formData.get("step") === "2";
 
-    if (username === expectedUser && password === expectedPass) {
-        // Sign JWT token
-        const token = await signToken({ type: 'admin', role: 'admin' }, '24h');
+    if (isStep2) {
+        const otp = String(formData.get("otp") || "").replace(/\s/g, "");
 
-        const cookieStore = await cookies();
-        cookieStore.set("admin_token", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            maxAge: 60 * 60 * 24,
-            path: "/",
-            sameSite: "lax",
-        });
+        // Verify OTP
+        try {
+            if (!totpSecret) {
+                // Fallback if secret missing but somehow got to step 2
+                return { error: "System configuration error. Contact developer.", step: 1 };
+            }
+
+            const isValid = authenticator.check(otp, totpSecret);
+            if (!isValid) {
+                return { error: "Invalid authenticator code", step: 2 };
+            }
+
+            // Success! Sign Token
+            const token = await signToken({ type: 'admin', role: 'admin' }, '24h');
+            const cookieStore = await cookies();
+            cookieStore.set("admin_token", token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                maxAge: 60 * 60 * 24,
+                path: "/",
+                sameSite: "lax",
+            });
+        } catch (err) {
+            console.error(err);
+            return { error: "Verification failed", step: 2 };
+        }
 
         redirect("/admin");
     }
 
-    return { error: "Invalid credentials" };
+    // Step 1: Verify Password Only
+    const password = String(formData.get("password") || "");
+
+    if (password === expectedPass) {
+        // If TOTP is NOT configured, allow insecure login (fallback)
+        if (!totpSecret) {
+            console.warn("⚠️ ADMIN LOGGED IN WITHOUT 2FA (ADMIN_TOTP_SECRET not set) ⚠️");
+            const token = await signToken({ type: 'admin', role: 'admin' }, '24h');
+            const cookieStore = await cookies();
+            cookieStore.set("admin_token", token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                maxAge: 60 * 60 * 24,
+                path: "/",
+                sameSite: "lax",
+            });
+            redirect("/admin");
+        }
+
+        // If TOTP IS configured, move to step 2
+        return { step: 2, error: "" };
+    }
+
+    return { error: "Invalid password", step: 1 };
+}
+
+export async function generateTotpSecretAction() {
+    // Security check: Only authenticated admins can generate new secrets
+    if (!(await isAdminAuthenticated())) {
+        throw new Error("Unauthorized");
+    }
+
+    // Generate secure secret
+    const secret = authenticator.generateSecret();
+    const user = process.env.ADMIN_USERNAME || "admin";
+    const service = "RMC Admin";
+
+    // Create otpauth URL
+    const otpauth = authenticator.keyuri(user, service, secret);
+
+    // Generate QR Code
+    const qrCode = await QRCode.toDataURL(otpauth);
+
+    return { secret, qrCode };
 }
 
 export async function adminLogoutAction() {

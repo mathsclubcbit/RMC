@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Image as ImageIcon, ArrowUpRight, Users } from "lucide-react";
-import { adminLogoutAction } from "./actions";
+import { adminLogoutAction, isAdminAuthenticated } from "./actions";
+import { redirect } from "next/navigation";
 import AdminDashboardClient from "./AdminDashboardClient";
 import CoordinatorCredentialsManager from "./CoordinatorCredentialsManager";
 import { getAllRegistrations } from "@/lib/google";
@@ -87,6 +88,11 @@ async function getDashboardStats() {
 }
 
 export default async function AdminDashboardPage() {
+    // Strong Authentication Check (Server-Side)
+    if (!(await isAdminAuthenticated())) {
+        redirect("/admin/login");
+    }
+
     const stats = await getDashboardStats();
 
     return (

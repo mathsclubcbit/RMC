@@ -2,13 +2,12 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 import { NextResponse } from 'next/server';
+import { getSecret } from '@/lib/jwt';
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
-
-const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +22,7 @@ export async function GET() {
         }
 
         try {
-            const { payload } = await jwtVerify(token, getJwtSecret());
+            const { payload } = await jwtVerify(token, getSecret());
             if (payload?.type !== 'admin') {
                 return NextResponse.json({ error: "Forbidden" }, { status: 403 });
             }

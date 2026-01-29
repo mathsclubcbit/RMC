@@ -3,8 +3,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/server";
 import EventForm from "@/app/admin/events/EventForm";
 import { jwtVerify } from "jose";
-
-const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
+import { getSecret } from "@/lib/jwt";
 
 async function getCoordinatorEventId() {
     const cookieStore = await cookies();
@@ -13,7 +12,7 @@ async function getCoordinatorEventId() {
     if (!token) return null;
 
     try {
-        const { payload } = await jwtVerify(token, getJwtSecret());
+        const { payload } = await jwtVerify(token, getSecret());
         if (payload?.type !== 'coordinator' || !payload?.eventId) {
             return null;
         }

@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { jwtVerify } from 'jose';
+import { getSecret } from '@/lib/jwt';
 
 export const runtime = 'nodejs';
 
 const STORAGE_BUCKET = 'event-images';
-
-const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
 
 function hasSupabaseConfig() {
     return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -23,7 +22,7 @@ async function requireAdmin(request) {
     }
 
     try {
-        const { payload } = await jwtVerify(token, getJwtSecret());
+        const { payload } = await jwtVerify(token, getSecret());
         if (payload?.type !== 'admin') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }

@@ -1,8 +1,19 @@
-"use server";
+// Server-only JWT utility module
 
 import { SignJWT, jwtVerify } from 'jose';
 
-const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
+const getSecret = () => {
+    const raw = process.env.JWT_SECRET;
+    if (!raw) {
+        throw new Error("CRITICAL: JWT_SECRET environment variable is not defined");
+    }
+    return new TextEncoder().encode(raw);
+};
+
+// Export for use in other server-side files
+export { getSecret };
+
+const secret = getSecret();
 
 /**
  * Sign a JWT token with a payload

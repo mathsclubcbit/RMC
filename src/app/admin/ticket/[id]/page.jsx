@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { XCircle } from "lucide-react";
 import { jwtVerify } from "jose";
+import { getSecret } from "@/lib/jwt";
 
 import { getRegistrationById } from "@/lib/google";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -10,8 +12,6 @@ import { Button } from "@/components/ui/button";
 import { AdminTicketManager } from "@/components/admin-ticket-manager";
 import { TicketExpiredView } from "@/components/ticket-expired-view";
 
-const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret-key-replace-in-production');
-
 async function isAdminAuthenticated() {
     const cookieStore = await cookies();
     const token = cookieStore.get("admin_token")?.value;
@@ -19,7 +19,7 @@ async function isAdminAuthenticated() {
     if (!token) return false;
 
     try {
-        const { payload } = await jwtVerify(token, getJwtSecret());
+        const { payload } = await jwtVerify(token, getSecret());
         return payload?.type === 'admin';
     } catch {
         return false;
@@ -36,20 +36,7 @@ export default async function AdminTicketPage({ params }) {
     const isAdmin = await isAdminAuthenticated();
 
     if (!isAdmin) {
-        return (
-            <div className="container mx-auto px-4 py-20 flex justify-center items-center min-h-screen">
-                <GlassCard className="p-8 text-center max-w-md w-full border-red-500/50">
-                    <div className="flex justify-center mb-6">
-                        <XCircle className="h-20 w-20 text-red-500" />
-                    </div>
-                    <h1 className="text-3xl font-bold mb-2">Unauthorized</h1>
-                    <p className="text-muted-foreground mb-6">Please login as admin to verify tickets.</p>
-                    <Button asChild>
-                        <Link href="/admin/login">Go to Admin Login</Link>
-                    </Button>
-                </GlassCard>
-            </div>
-        );
+        redirect("/admin/login");
     }
 
     if (!spreadsheetId || !ticketRow) {
