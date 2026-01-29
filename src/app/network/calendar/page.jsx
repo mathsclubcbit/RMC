@@ -73,8 +73,6 @@ export default function CalendarPage() {
             const filteredEvents = eventsData?.filter(event => {
                 if (event.created_by === profile?.id) return true;
                 if (event.is_global) return true;
-                if (event.visibility === 'global') return true;
-                if (event.visibility === 'team' && event.team_id && userTeamIds.includes(event.team_id)) return true;
                 return false;
             }) || [];
 
@@ -530,8 +528,6 @@ function AddEventModal({ initialDate, myTeams, onClose, onSuccess }) {
                     description: description.trim() || null,
                     start_time: new Date(startTime).toISOString(),
                     is_global: visibility === 'global',
-                    visibility: visibility,
-                    team_id: visibility === 'team' ? teamId : null,
                     type: "event",
                     created_by: profile.id
                 });
