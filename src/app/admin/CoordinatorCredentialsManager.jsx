@@ -36,8 +36,10 @@ export default function CoordinatorCredentialsManager() {
         }
     };
 
-    const hasPassword = (event) => Boolean(event.payload?.password);
-    const isPasswordHashed = (event) => event.payload?.passwordHashed === true;
+    // The /api/events endpoint flattens payload into the event object
+    // So password is at event.password, not event.payload.password
+    const hasPassword = (event) => Boolean(event.password);
+    const isPasswordHashed = (event) => event.passwordHashed === true;
 
     const copyNewPassword = async () => {
         if (!newPassword) return;
@@ -108,10 +110,11 @@ export default function CoordinatorCredentialsManager() {
                 throw new Error(data.error || "Failed to update password");
             }
 
+            // Update local state - set directly on event (API flattens payload)
             setEvents((prev) =>
                 prev.map((e) =>
                     e.id === eventId
-                        ? { ...e, payload: { ...e.payload, password: "[HASHED]", passwordHashed: true } }
+                        ? { ...e, password: "[HASHED]", passwordHashed: true }
                         : e
                 )
             );
@@ -312,8 +315,8 @@ export default function CoordinatorCredentialsManager() {
             {/* Message */}
             {message && (
                 <div className={`mb-4 px-3 py-2.5 rounded-xl text-xs md:text-sm ${message.type === "success"
-                        ? "bg-teal-500/10 border border-teal-500/20 text-teal-400"
-                        : "bg-red-500/10 border border-red-500/20 text-red-400"
+                    ? "bg-teal-500/10 border border-teal-500/20 text-teal-400"
+                    : "bg-red-500/10 border border-red-500/20 text-red-400"
                     }`}>
                     {message.text}
                 </div>

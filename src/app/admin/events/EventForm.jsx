@@ -16,6 +16,7 @@ import {
     Lock,
     CheckCircle2
 } from "lucide-react";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 // --- Default State ---
 const defaultEvent = {
@@ -80,6 +81,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [warning, setWarning] = useState("");
+    const [toast, setToast] = useState({ isOpen: false, title: "", message: "", type: "success" });
 
     // Stepper State
     const [currentStep, setCurrentStep] = useState(1);
@@ -125,6 +127,18 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
         if (!event.title) return setError("Title is required");
         if (!(event.date || event.startDate)) return setError("Date is required");
 
+        // Password validation: required for new events, optional for edits
+        if (!isEdit) {
+            if (!event.password || !event.password.trim()) {
+                return setError("Coordinator password is required");
+            }
+            if (event.password.trim().length < 6) {
+                return setError("Password must be at least 6 characters");
+            }
+        } else if (event.password && event.password.trim().length > 0 && event.password.trim().length < 6) {
+            return setError("Password must be at least 6 characters");
+        }
+
         const minTeam = event.minTeamSize === "" ? null : Number(event.minTeamSize);
         const maxTeam = event.maxTeamSize === "" ? null : Number(event.maxTeamSize);
         if (minTeam != null || maxTeam != null) {
@@ -159,14 +173,24 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                 setWarning(`Saved, but some uploads failed: ${data.uploadErrors.join(" | ")}`);
             }
 
-            setSuccess(isEdit ? "Event updated successfully!" : "Event created successfully!");
+            // Show success toast
+            setToast({
+                isOpen: true,
+                title: isEdit ? "Event Updated!" : "Event Created!",
+                message: isEdit
+                    ? "Your changes have been saved successfully."
+                    : "The event has been created and is ready to go.",
+                type: "success"
+            });
+
+            // Also update the inline success message
+            setSuccess(isEdit ? "Event saved!" : "Event created!");
 
             if (!isEdit && data?.id) {
-                // Redirect if new
-                window.location.href = `/admin/events/${encodeURIComponent(data.id)}/edit`;
-            } else {
-                // Scroll to top to see success
-                window.scrollTo({ top: 0, behavior: "smooth" });
+                // Redirect if new (slight delay for toast to show)
+                setTimeout(() => {
+                    window.location.href = `/admin/events/${encodeURIComponent(data.id)}/edit`;
+                }, 1500);
             }
 
             // Clear files
@@ -176,6 +200,13 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
 
         } catch (err) {
             setError(err?.message || "Failed to save");
+            // Show error toast
+            setToast({
+                isOpen: true,
+                title: "Save Failed",
+                message: err?.message || "Failed to save the event. Please try again.",
+                type: "error"
+            });
         } finally {
             setSaving(false);
         }
@@ -420,9 +451,10 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                                 Make sure all details are correct. You can always edit this later.
                             </p>
                             <button
+                                type="button"
                                 onClick={onSubmit}
                                 disabled={saving}
-                                className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-teal-400 text-black font-bold uppercase tracking-wider hover:bg-teal-300 transition-all disabled:opacity-50"
+                                className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-teal-400 text-black font-bold uppercase tracking-wider hover:bg-teal-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {saving ? "Saving..." : <><Save className="w-4 h-4" /> Save Event</>}
                             </button>
@@ -503,6 +535,17 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                     )}
                 </div>
             </div>
+
+            {/* Success/Error Toast */}
+            <ConfirmationModal
+                isOpen={toast.isOpen}
+                onClose={() => setToast({ ...toast, isOpen: false })}
+                title={toast.title}
+                message={toast.message}
+                type={toast.type}
+                isToast={true}
+                duration={4000}
+            />
         </div>
     );
 }
