@@ -379,3 +379,21 @@ CREATE POLICY "Only president can manage resources"
     USING (
         EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'president')
     );
+
+-- ============================================
+-- 13. SETTINGS TABLE (Key-Value Store for App Config)
+-- ============================================
+-- Used for storing app settings like hub links, feature flags, etc.
+-- Managed via service role key from admin panel, no RLS needed.
+
+CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL DEFAULT '{}'::jsonb,
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Keep updated_at fresh
+DROP TRIGGER IF EXISTS trg_settings_updated_at ON settings;
+CREATE TRIGGER trg_settings_updated_at
+BEFORE UPDATE ON settings
+FOR EACH ROW EXECUTE PROCEDURE public.set_updated_at();

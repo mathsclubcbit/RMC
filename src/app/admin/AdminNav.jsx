@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Calendar, QrCode, Home, LogOut, Image as ImageIcon, Users, Bell, Mail, ChevronRight } from "lucide-react";
+import { LayoutDashboard, Calendar, QrCode, Home, LogOut, Image as ImageIcon, Users, Bell, Mail, ChevronRight, Link2 } from "lucide-react";
 import { adminLogoutAction } from "./actions";
 import { useLoading } from "@/context/LoadingContext";
 
@@ -13,6 +13,7 @@ const navItems = [
     { href: "/admin/team", label: "Team", icon: Users },
     { href: "/admin/announcements", label: "Notify", icon: Bell },
     { href: "/admin/newsletter", label: "Email", icon: Mail },
+    { href: "/admin/hub", label: "Hub", icon: Link2 },
     { href: "/admin/scan", label: "Scan", icon: QrCode },
 ];
 

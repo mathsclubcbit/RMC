@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { Instagram, Linkedin } from "lucide-react";
 import NewsletterSignup from "../newsletter/NewsletterSignup";
 
 const quickLinks = [
@@ -19,9 +20,8 @@ const resourceLinks = [
 ];
 
 const socialLinks = [
-    { href: "https://instagram.com/rmccbit", label: "Instagram", icon: "📸" },
-    { href: "https://linkedin.com/company/rmccbit", label: "LinkedIn", icon: "💼" },
-    { href: "mailto:rmc@cbit.ac.in", label: "Email", icon: "✉️" },
+    { href: "https://www.instagram.com/rmc.cbit", label: "Instagram", Icon: Instagram },
+    { href: "https://www.linkedin.com/company/ramanujan-maths-club/", label: "LinkedIn", Icon: Linkedin },
 ];
 
 export default function Footer() {
@@ -68,18 +68,21 @@ export default function Footer() {
                             <br /> <span className="text-sm italic opacity-70">— Georg Cantor</span>
                         </p>
                         <div className="flex gap-4">
-                            {socialLinks.map((social) => (
-                                <a
-                                    key={social.href}
-                                    href={social.href}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-teal hover:border-teal hover:text-white transition-all duration-300"
-                                    aria-label={social.label}
-                                >
-                                    <span className="text-lg">{social.icon}</span>
-                                </a>
-                            ))}
+                            {socialLinks.map((social) => {
+                                const IconComponent = social.Icon;
+                                return (
+                                    <a
+                                        key={social.href}
+                                        href={social.href}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-teal hover:border-teal hover:text-white transition-all duration-300"
+                                        aria-label={social.label}
+                                    >
+                                        <IconComponent className="w-5 h-5" />
+                                    </a>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -122,13 +125,9 @@ export default function Footer() {
                         <h4 className="font-serif font-bold text-lg mb-6">Visit Us</h4>
                         <div className="space-y-4 text-sm text-muted font-light">
                             <p>
-                                Dept. of Mathematics<br />
                                 Chaitanya Bharathi Institute of Technology<br />
                                 Gandipet, Hyderabad - 500075
                             </p>
-                            <a href="mailto:rmc@cbit.ac.in" className="block hover:text-teal transition-colors">
-                                rmc@cbit.ac.in
-                            </a>
                         </div>
                     </div>
                 </div>
