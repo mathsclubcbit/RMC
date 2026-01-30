@@ -4,6 +4,11 @@ import { NextResponse } from 'next/server';
 import DOMPurify from 'isomorphic-dompurify';
 import { isAdminAuthenticated } from '@/app/admin/actions';
 
+// Explicit runtime for Vercel
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
+
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -16,9 +21,6 @@ const transporter = nodemailer.createTransport({
         pass: process.env.EMAIL_PASS,
     },
 });
-
-export const dynamic = 'force-dynamic';
-export const maxDuration = 300;
 
 export async function POST(request) {
     try {
