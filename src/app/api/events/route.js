@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { jwtVerify } from 'jose';
 import { getSecret } from '@/lib/jwt';
+import bcrypt from 'bcrypt';
 
+const SALT_ROUNDS = 12;
 export const runtime = 'nodejs';
 
 const STORAGE_BUCKET = 'event-images';
@@ -105,6 +107,13 @@ export async function POST(request) {
             if (posterMobileFile instanceof File && posterMobileFile.size > 0) files.posterMobileFile = posterMobileFile;
         } else {
             payload = await request.json();
+        }
+
+        // Hash the password if provided
+        if (payload.password && payload.password.trim()) {
+            const hashedPassword = await bcrypt.hash(payload.password.trim(), SALT_ROUNDS);
+            payload.password = hashedPassword;
+            payload.passwordHashed = true;
         }
 
         const newEvent = {

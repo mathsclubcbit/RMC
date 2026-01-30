@@ -64,7 +64,15 @@ const STEPS = [
 ];
 
 export default function EventForm({ mode, initialEvent, backLink = "/admin/events" }) {
-    const [event, setEvent] = useState({ ...defaultEvent, ...(initialEvent || {}) });
+    // When editing, exclude the password field (it's hashed and shouldn't be displayed)
+    const [event, setEvent] = useState(() => {
+        const base = { ...defaultEvent, ...(initialEvent || {}) };
+        // Don't populate password field when editing - it might contain a bcrypt hash
+        if (mode === "edit") {
+            delete base.password;
+        }
+        return base;
+    });
     const [imgFile, setImgFile] = useState(null);
     const [posterDesktopFile, setPosterDesktopFile] = useState(null);
     const [posterMobileFile, setPosterMobileFile] = useState(null);
@@ -395,14 +403,14 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
             case 5: // Security
                 return (
                     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                        <Field label="Coordinator Password" required hint="Used for coordinator login">
+                        <Field label="Coordinator Password" required={!isEdit} hint={isEdit ? "Leave empty to keep existing password" : "Used for coordinator login"}>
                             <div className="relative">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                                 <input
                                     value={event.password || ""}
                                     onChange={(e) => setField("password", e.target.value)}
                                     className="w-full px-10 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-teal-400/50 outline-none"
-                                    placeholder="SecretPassword123"
+                                    placeholder={isEdit ? "Enter new password to change" : "SecretPassword123"}
                                 />
                             </div>
                         </Field>
@@ -449,8 +457,8 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                             return (
                                 <div key={step.id} className="flex flex-col items-center relative z-10 group cursor-pointer" onClick={() => setCurrentStep(step.id)}>
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${isCurrent ? "bg-teal-400 border-teal-400 text-black shadow-[0_0_15px_rgba(45,212,191,0.5)]" :
-                                            isCompleted ? "bg-teal-900/50 border-teal-500/50 text-teal-400" :
-                                                "bg-black border-white/10 text-white/30"
+                                        isCompleted ? "bg-teal-900/50 border-teal-500/50 text-teal-400" :
+                                            "bg-black border-white/10 text-white/30"
                                         }`}>
                                         <Icon className="w-5 h-5" />
                                     </div>

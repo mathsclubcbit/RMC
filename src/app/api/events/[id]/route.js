@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { jwtVerify } from 'jose';
 import { getSecret } from '@/lib/jwt';
+import bcrypt from 'bcrypt';
+const SALT_ROUNDS = 12;
 
 export const runtime = 'nodejs';
 
@@ -37,7 +39,7 @@ async function verifyAdminOrCoordinator(request, eventId) {
     const adminToken = request.cookies.get('admin_token')?.value;
     if (adminToken) {
         try {
-            const { payload } = await jwtVerify(adminToken, getJwtSecret());
+            const { payload } = await jwtVerify(adminToken, getSecret());
             if (payload?.type === 'admin') return { authorized: true, isAdmin: true };
         } catch {
             // Invalid admin token, continue to check coordinator
@@ -48,7 +50,7 @@ async function verifyAdminOrCoordinator(request, eventId) {
     const coordinatorToken = request.cookies.get('coordinator_token')?.value;
     if (coordinatorToken) {
         try {
-            const { payload } = await jwtVerify(coordinatorToken, getJwtSecret());
+            const { payload } = await jwtVerify(coordinatorToken, getSecret());
             if (payload?.type === 'coordinator' && payload?.eventId === eventId) {
                 return { authorized: true, isAdmin: false };
             }
@@ -151,8 +153,33 @@ export async function PUT(request, { params }) {
             return NextResponse.json({ error: 'Event not found' }, { status: 404 });
         }
 
-        // Prevent changing the primary key.
-        const next = { ...(existing.payload || {}), ...(patch || {}), id: String(id) };
+        // Handle password: if new password provided, hash it; otherwise preserve existing
+        let passwordData = {};
+        if (patch.password && patch.password.trim()) {
+            // New password provided - hash it
+            const hashedPassword = await bcrypt.hash(patch.password.trim(), SALT_ROUNDS);
+            passwordData = {
+                password: hashedPassword,
+                passwordHashed: true
+            };
+            delete patch.password; // Remove plaintext from patch
+        } else {
+            // No new password - preserve existing password and flag
+            passwordData = {
+                password: existing.payload?.password,
+                passwordHashed: existing.payload?.passwordHashed
+            };
+            delete patch.password; // Remove empty password from patch
+        }
+
+        // Merge existing payload with patch, then apply password data
+        const next = {
+            ...(existing.payload || {}),
+            ...(patch || {}),
+            ...passwordData,
+            id: String(id)
+        };
+
         const effectiveDate = next.startDate || next.date;
         if (!next.title || !effectiveDate) {
             return NextResponse.json({ error: 'title and date are required' }, { status: 400 });
