@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { XCircle } from "lucide-react";
 import { jwtVerify } from "jose";
 import { getSecret } from "@/lib/jwt";
+import { unstable_noStore as noStore } from 'next/cache';
 
 import { getRegistrationById } from "@/lib/google";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -33,6 +34,7 @@ async function getCoordinatorEventId() {
 }
 
 export default async function CoordinatorTicketPage({ params }) {
+    noStore(); // Completely disable caching for auth
     const { id } = await params;
     const registrationId = decodeURIComponent(String(id || "")).trim();
 

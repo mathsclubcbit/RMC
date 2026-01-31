@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { jwtVerify } from "jose";
 import { getSecret } from "@/lib/jwt";
 import CoordinatorScanClient from "./CoordinatorScanClient";
+import { unstable_noStore as noStore } from 'next/cache';
 
 async function isCoordinatorAuthenticated() {
     const cookieStore = await cookies();
@@ -24,6 +25,7 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function CoordinatorScanPage() {
+    noStore(); // Completely disable caching for auth
     if (!(await isCoordinatorAuthenticated())) {
         redirect("/coordinator/login");
     }

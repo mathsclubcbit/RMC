@@ -13,10 +13,12 @@ export async function POST() {
     }
 }
 
-export async function GET() {
+export async function GET(request) {
     // Support GET method for simpler redirect flows
     const cookieStore = await cookies();
     cookieStore.delete("coordinator_token");
 
-    return NextResponse.redirect(new URL('/coordinator/login', process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'));
+    // Use the request URL's origin to build the redirect - works on any domain
+    const url = new URL('/coordinator/login', request.url);
+    return NextResponse.redirect(url);
 }
