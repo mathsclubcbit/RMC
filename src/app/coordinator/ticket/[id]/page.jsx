@@ -12,6 +12,9 @@ import { Button } from "@/components/ui/button";
 import { AdminTicketManager } from "@/components/admin-ticket-manager";
 import { TicketExpiredView } from "@/components/ticket-expired-view";
 
+// Prevent Vercel from caching this page's auth state
+export const dynamic = 'force-dynamic';
+
 async function getCoordinatorEventId() {
     const cookieStore = await cookies();
     const token = cookieStore.get("coordinator_token")?.value;

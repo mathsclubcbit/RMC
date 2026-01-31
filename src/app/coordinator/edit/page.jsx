@@ -5,6 +5,9 @@ import EventForm from "@/app/admin/events/EventForm";
 import { jwtVerify } from "jose";
 import { getSecret } from "@/lib/jwt";
 
+// Prevent Vercel from caching this page's auth state
+export const dynamic = 'force-dynamic';
+
 async function getCoordinatorEventId() {
     const cookieStore = await cookies();
     const token = cookieStore.get("coordinator_token")?.value;

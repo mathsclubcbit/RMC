@@ -20,6 +20,9 @@ export const metadata = {
     title: "Coordinator - Scan QR",
 };
 
+// Prevent Vercel from caching this page's auth state
+export const dynamic = 'force-dynamic';
+
 export default async function CoordinatorScanPage() {
     if (!(await isCoordinatorAuthenticated())) {
         redirect("/coordinator/login");
