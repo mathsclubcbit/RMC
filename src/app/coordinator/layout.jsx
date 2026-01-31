@@ -5,6 +5,9 @@ import { getSecret } from "@/lib/jwt";
 import CoordinatorNav from "./CoordinatorNav";
 import CoordinatorLayoutClient from "./CoordinatorLayoutClient";
 
+// Prevent Next.js from caching this layout's auth state
+export const dynamic = 'force-dynamic';
+
 async function getEventInfo() {
     const cookieStore = await cookies();
     const token = cookieStore.get("coordinator_token")?.value;

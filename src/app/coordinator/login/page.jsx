@@ -69,8 +69,8 @@ export default function CoordinatorLoginPage() {
                 throw new Error(result.error || "Login failed");
             }
 
-            // Success - redirect to dashboard
-            router.push("/coordinator/dashboard");
+            // Success - redirect to dashboard (full page reload to ensure cookie is read by middleware)
+            window.location.href = "/coordinator/dashboard";
 
         } catch (err) {
             console.error("Login error:", err);
