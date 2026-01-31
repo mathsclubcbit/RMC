@@ -1,4 +1,7 @@
 import QRCode from 'qrcode';
+import Jimp from 'jimp';
+import path from 'path';
+import fs from 'fs';
 
 export interface QRTicketData {
     registrationId: string;
@@ -9,22 +12,47 @@ export interface QRTicketData {
 }
 
 /**
- * Generate a QR code as a Data URL (base64 PNG)
- * The QR contains plain registration ID for simplicity
+ * Generate a QR code as a Data URL (base64 PNG) with RMC Logo in center
  */
 export async function generateQRCode(registrationId: string): Promise<string> {
     try {
-        const qrDataUrl = await QRCode.toDataURL(registrationId, {
-            errorCorrectionLevel: 'H',
-            type: 'image/png',
-            width: 300,
-            margin: 2,
+        // Generate QR code as buffer
+        const qrBuffer = await QRCode.toBuffer(registrationId, {
+            errorCorrectionLevel: 'H', // High error correction to support logo overlay
+            type: 'png',
+            width: 500, // Higher resolution
+            margin: 1,
             color: {
                 dark: '#000000',
                 light: '#FFFFFF'
             }
         });
-        return qrDataUrl;
+
+        // Load QR image
+        const qrImage = await Jimp.read(qrBuffer);
+
+        // Try to load logo
+        const logoPath = path.join(process.cwd(), 'public', 'rmc-logo.png');
+
+        if (fs.existsSync(logoPath)) {
+            const logo = await Jimp.read(logoPath);
+
+            // Resize logo to ~20% of QR code width
+            const logoSize = qrImage.bitmap.width * 0.2;
+            logo.resize(logoSize, Jimp.AUTO);
+
+            // Calculate center position
+            const x = (qrImage.bitmap.width - logo.bitmap.width) / 2;
+            const y = (qrImage.bitmap.height - logo.bitmap.height) / 2;
+
+            // Composite logo onto QR code
+            qrImage.composite(logo, x, y);
+        } else {
+            console.warn('RMC Logo not found at:', logoPath);
+        }
+
+        // Return as Data URL
+        return await qrImage.getBase64Async(Jimp.MIME_PNG);
     } catch (error) {
         console.error('QR Code generation failed:', error);
         throw new Error('Failed to generate QR code');
@@ -45,17 +73,32 @@ export async function generateStyledQRCode(
     const { size = 300, darkColor = '#0D9488', lightColor = '#FFFFFF' } = options || {};
 
     try {
-        const qrDataUrl = await QRCode.toDataURL(registrationId, {
+        const qrBuffer = await QRCode.toBuffer(registrationId, {
             errorCorrectionLevel: 'H',
-            type: 'image/png',
+            type: 'png',
             width: size,
-            margin: 2,
+            margin: 1,
             color: {
                 dark: darkColor,
                 light: lightColor
             }
         });
-        return qrDataUrl;
+
+        const qrImage = await Jimp.read(qrBuffer);
+
+        const logoPath = path.join(process.cwd(), 'public', 'rmc-logo.png');
+        if (fs.existsSync(logoPath)) {
+            const logo = await Jimp.read(logoPath);
+            const logoSize = qrImage.bitmap.width * 0.2;
+            logo.resize(logoSize, Jimp.AUTO);
+
+            const x = (qrImage.bitmap.width - logo.bitmap.width) / 2;
+            const y = (qrImage.bitmap.height - logo.bitmap.height) / 2;
+
+            qrImage.composite(logo, x, y);
+        }
+
+        return await qrImage.getBase64Async(Jimp.MIME_PNG);
     } catch (error) {
         console.error('QR Code generation failed:', error);
         throw new Error('Failed to generate QR code');

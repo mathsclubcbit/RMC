@@ -17,6 +17,22 @@ const isHeaderCell = (value: unknown, expected: string) =>
 const normalizeCell = (value: unknown) => String(value ?? '').trim();
 
 /**
+ * Compare two registration IDs, handling the case where Google Sheets
+ * strips leading zeros from numeric cells.
+ * e.g., "040526" should match "40526"
+ */
+const matchesRegistrationId = (storedId: string, wantedId: string): boolean => {
+    const stored = normalizeCell(storedId);
+    const wanted = normalizeCell(wantedId);
+    // Exact match first
+    if (stored === wanted) return true;
+    // Fallback: compare as integers to handle stripped leading zeros
+    const storedNum = parseInt(stored, 10);
+    const wantedNum = parseInt(wanted, 10);
+    return !isNaN(storedNum) && !isNaN(wantedNum) && storedNum === wantedNum;
+};
+
+/**
  * Authenticate using Service Account from Environment Variable
  */
 const getAuthClient = async (): Promise<any> => {
@@ -214,7 +230,7 @@ export const checkDuplicateRegistrationId = async (spreadsheetId: string, regist
     const wanted = normalizeCell(registrationId);
 
     for (let i = startIdx; i < rows.length; i++) {
-        if (normalizeCell(rows[i]?.[0]) === wanted) return true;
+        if (matchesRegistrationId(rows[i]?.[0] ?? '', registrationId)) return true;
     }
     return false;
 };
@@ -360,7 +376,7 @@ export const markRegistrationAttendance = async (
         const startIdx = hasHeader ? 1 : 0;
         const wantedId = normalizeCell(registrationId);
 
-        const rowIndex = rows.findIndex((row, idx) => idx >= startIdx && normalizeCell(row?.[0]) === wantedId);
+        const rowIndex = rows.findIndex((row, idx) => idx >= startIdx && matchesRegistrationId(row?.[0] ?? '', registrationId));
         if (rowIndex === -1) {
             return { success: false, error: 'Registration not found' };
         }
@@ -431,7 +447,7 @@ export const updateRegistrationStatus = async (
         const wantedId = normalizeCell(registrationId);
 
         // Find the row index (1-indexed for sheets, +1 for header)
-        const rowIndex = rows.findIndex((row, idx) => idx >= startIdx && normalizeCell(row?.[0]) === wantedId);
+        const rowIndex = rows.findIndex((row, idx) => idx >= startIdx && matchesRegistrationId(row?.[0] ?? '', registrationId));
 
         if (rowIndex === -1) {
             return { success: false, error: 'Registration not found' };
@@ -485,7 +501,7 @@ export const markRegistrationCheckedIn = async (
         const startIdx = hasHeader ? 1 : 0;
         const wantedId = normalizeCell(registrationId);
 
-        const rowIndex = rows.findIndex((row, idx) => idx >= startIdx && normalizeCell(row?.[0]) === wantedId);
+        const rowIndex = rows.findIndex((row, idx) => idx >= startIdx && matchesRegistrationId(row?.[0] ?? '', registrationId));
         if (rowIndex === -1) {
             return { success: false, error: 'Registration not found' };
         }
@@ -511,6 +527,7 @@ export const markRegistrationCheckedIn = async (
 
 /**
  * Get a single registration by ID
+ * Handles the case where Google Sheets strips leading zeros from numeric cells
  */
 export const getRegistrationById = async (
     spreadsheetId: string,
@@ -520,7 +537,7 @@ export const getRegistrationById = async (
     if (!/^\d{6}$/.test(wantedId)) return null;
 
     const registrations = await getAllRegistrations(spreadsheetId);
-    return registrations.find(r => normalizeCell(r.registrationId) === wantedId) || null;
+    return registrations.find(r => matchesRegistrationId(r.registrationId, wantedId)) || null;
 };
 
 /**
