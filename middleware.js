@@ -57,10 +57,20 @@ export async function middleware(request) {
     if (request.nextUrl.pathname.startsWith('/coordinator')) {
         const isLoginPage = request.nextUrl.pathname === '/coordinator/login';
         const token = request.cookies.get('coordinator_token')?.value;
+
+        // Debug logging for production
+        console.log('[Middleware] Coordinator route:', request.nextUrl.pathname);
+        console.log('[Middleware] Token exists:', !!token);
+        console.log('[Middleware] Token length:', token?.length || 0);
+
         const payload = token ? await verifyJwt(token) : null;
         const isLoggedIn = payload?.type === 'coordinator';
 
+        console.log('[Middleware] Payload type:', payload?.type);
+        console.log('[Middleware] isLoggedIn:', isLoggedIn);
+
         if (!isLoginPage && !isLoggedIn) {
+            console.log('[Middleware] Redirecting to login - not authenticated');
             const url = request.nextUrl.clone();
             url.pathname = '/coordinator/login';
             return NextResponse.redirect(url);
