@@ -197,7 +197,7 @@ export default function ResourcesPage() {
         <div className="flex h-full">
             <NetworkSidebar />
 
-            <main className="flex-1 p-6 lg:p-10 pt-24 lg:pt-14 overflow-y-auto">
+            <main className="flex-1 p-6 lg:p-10 pt-20 lg:pt-14 overflow-y-auto">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                     <div>

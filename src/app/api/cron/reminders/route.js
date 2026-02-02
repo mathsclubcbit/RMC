@@ -72,7 +72,7 @@ export async function GET(request) {
             title: "Task Reminder: " + task.title,
             body: `Due soon: ${new Date(task.deadline).toLocaleString()}. ${task.description || ''}`,
             url: "/network/tasks",
-            icon: '/rmc-logo.png'
+            icon: '/full logo.png'
         });
 
         const promises = subs.map(sub => {

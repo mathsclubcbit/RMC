@@ -34,7 +34,7 @@ export async function POST(request) {
             title,
             body,
             url: url || '/',
-            icon: '/rmc-logo.png'
+            icon: '/full logo.png'
         });
 
         const promises = subscriptions.map(sub => {

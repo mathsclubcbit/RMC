@@ -27,12 +27,12 @@ export default function EventsPage() {
     }, []);
 
     const filteredEvents = events.filter(event => {
-        const matchesFilter = filter === "all" || event.category.toLowerCase() === filter;
+        const matchesFilter = filter === "all" || (event.eventType || event.category).toLowerCase() === filter;
         const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesFilter && matchesSearch;
     });
 
-    const categories = ["all", "competition", "workshop", "seminar", "guest talk"];
+    const categories = ["all", "competition", "workshop", "seminar", "guest talk", "hackathon", "ideathon"];
 
     return (
         <div className="min-h-screen bg-black selection:bg-teal/20 selection:text-teal font-sans">

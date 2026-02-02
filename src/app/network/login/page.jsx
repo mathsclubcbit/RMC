@@ -75,11 +75,11 @@ export default function NetworkLoginPage() {
                             <div className="relative">
                                 <div className="absolute inset-0 bg-teal/20 blur-xl rounded-full" />
                                 <Image
-                                    src="/rmc-logo.png"
+                                    src="/full logo.png"
                                     alt="RMC Logo"
                                     width={80}
                                     height={80}
-                                    className="relative z-10"
+                                    className="relative z-10 rounded-full"
                                 />
                             </div>
                         </div>

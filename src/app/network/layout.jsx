@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { LoadingProvider, useLoading } from "@/context/LoadingContext";
 import NetworkLoading from "@/components/network/NetworkLoading";
+import NetworkSidebar from "@/components/network/Sidebar";
 import { AnimatePresence } from "framer-motion";
 
 function NetworkLayoutInner({ children }) {
@@ -12,6 +13,8 @@ function NetworkLayoutInner({ children }) {
     const router = useRouter();
     const pathname = usePathname();
     const [timedOut, setTimedOut] = useState(false);
+
+    const isLoginPage = pathname === "/network/login";
 
     // Timeout fallback - if auth doesn't resolve in 8 seconds, redirect to login
     useEffect(() => {

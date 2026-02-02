@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -10,50 +10,75 @@ export default function CoordinatorScanPage() {
     const router = useRouter();
     const [ticketCode, setTicketCode] = useState("");
     const [envInfo, setEnvInfo] = useState({ secure: true, hasMedia: true, origin: "" });
+    const [scannerError, setScannerError] = useState("");
+    const scannerRef = useRef(null);
     const normalized = useMemo(() => String(ticketCode || "").replace(/\s+/g, "").trim(), [ticketCode]);
     const isValid = /^\d{6}$/.test(normalized);
 
     useEffect(() => {
+        let isMounted = true;
+
         try {
-            setEnvInfo({
+            const nextEnv = {
                 secure: Boolean(window.isSecureContext),
                 hasMedia: Boolean(navigator?.mediaDevices?.getUserMedia),
                 origin: window.location.origin,
-            });
-        } catch {
-            // ignore
+            };
+            if (isMounted) setEnvInfo(nextEnv);
+
+            if (!nextEnv.secure || !nextEnv.hasMedia) {
+                return () => {
+                    isMounted = false;
+                };
+            }
+
+            if (scannerRef.current) {
+                return () => {
+                    isMounted = false;
+                };
+            }
+
+            const scanner = new Html5QrcodeScanner(
+                "coordinator-qr-reader",
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    rememberLastUsedCamera: true,
+                    showTorchButtonIfSupported: true,
+                },
+                false
+            );
+
+            scannerRef.current = scanner;
+
+            scanner.render(
+                (decodedText) => {
+                    const id = String(decodedText || "").trim();
+                    if (!id) return;
+
+                    scanner
+                        .clear()
+                        .catch(() => { })
+                        .finally(() => {
+                            router.push(`/coordinator/ticket/${encodeURIComponent(id)}`);
+                        });
+                },
+                () => {
+                    // ignore per-frame errors
+                }
+            );
+        } catch (err) {
+            if (isMounted) {
+                setScannerError("Unable to start the camera. Please use manual entry or check permissions.");
+            }
         }
 
-        const scanner = new Html5QrcodeScanner(
-            "coordinator-qr-reader",
-            {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
-                rememberLastUsedCamera: true,
-                showTorchButtonIfSupported: true,
-            },
-            false
-        );
-
-        scanner.render(
-            (decodedText) => {
-                const id = String(decodedText || "").trim();
-                if (!id) return;
-
-                scanner
-                    .clear()
-                    .catch(() => { })
-                    .finally(() => {
-                        router.push(`/coordinator/ticket/${encodeURIComponent(id)}`);
-                    });
-            },
-            () => {
-                // ignore per-frame errors
-            }
-        );
-
         return () => {
-            scanner.clear().catch(() => { });
+            isMounted = false;
+            if (scannerRef.current) {
+                scannerRef.current.clear().catch(() => { });
+                scannerRef.current = null;
+            }
         };
     }, [router]);
 
@@ -102,6 +127,17 @@ export default function CoordinatorScanPage() {
                                         <div className="text-sm font-semibold text-amber-200">Camera blocked by browser security</div>
                                         <div className="mt-1 text-xs text-amber-200/70">
                                             Camera access needs a secure context, localhost, or HTTPS.
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : null}
+
+                            {scannerError ? (
+                                <div className="px-5 pb-5">
+                                    <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
+                                        <div className="text-sm font-semibold text-red-200">Camera Error</div>
+                                        <div className="mt-1 text-xs text-red-200/70">
+                                            {scannerError}
                                         </div>
                                     </div>
                                 </div>

@@ -32,7 +32,7 @@ export async function generateQRCode(registrationId: string): Promise<string> {
         const qrImage = await Jimp.read(qrBuffer);
 
         // Try to load logo
-        const logoPath = path.join(process.cwd(), 'public', 'rmc-logo.png');
+        const logoPath = path.join(process.cwd(), 'public', 'full logo.png');
 
         if (fs.existsSync(logoPath)) {
             const logo = await Jimp.read(logoPath);
@@ -86,7 +86,7 @@ export async function generateStyledQRCode(
 
         const qrImage = await Jimp.read(qrBuffer);
 
-        const logoPath = path.join(process.cwd(), 'public', 'rmc-logo.png');
+        const logoPath = path.join(process.cwd(), 'public', 'full logo.png');
         if (fs.existsSync(logoPath)) {
             const logo = await Jimp.read(logoPath);
             const logoSize = qrImage.bitmap.width * 0.2;

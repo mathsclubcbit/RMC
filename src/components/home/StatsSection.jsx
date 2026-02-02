@@ -26,12 +26,12 @@ const StatItem = ({ end, label, suffix = "" }) => {
 
 export default function StatsSection() {
     return (
-        <section className="py-16 px-4 sm:px-6 lg:px-8 border-y border-white/5 bg-black/40 backdrop-blur-md relative z-20">
+        <section className="py-12 md:py-16 px-4 sm:px-6 lg:px-8 border-y border-white/5 bg-black/40 backdrop-blur-md relative z-20">
             {/* Background Noise */}
             <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay pointer-events-none" />
 
             <div className="max-w-7xl mx-auto">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-12 md:gap-0 relative">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-8 md:gap-0 relative">
                     {/* Vertical Dividers for Desktop */}
                     <div className="absolute top-0 bottom-0 left-1/3 w-[1px] bg-gradient-to-b from-transparent via-white/10 to-transparent hidden md:block" />
                     <div className="absolute top-0 bottom-0 left-2/3 w-[1px] bg-gradient-to-b from-transparent via-white/10 to-transparent hidden md:block" />

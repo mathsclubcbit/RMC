@@ -33,7 +33,7 @@ export default function NetworkSidebar() {
     // Close mobile menu on route change
     useEffect(() => {
         if (mobileOpen) setMobileOpen(false);
-    }, [pathname, mobileOpen]);
+    }, [pathname]);
 
     const getNavLinks = () => {
         const links = [
@@ -102,11 +102,11 @@ export default function NetworkSidebar() {
                     <div className="relative group">
                         <div className="absolute -inset-2 bg-teal/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
                         <Image
-                            src="/rmc-logo.png"
+                            src="/full logo.png"
                             alt="RMC"
                             width={collapsed ? 36 : 42}
                             height={collapsed ? 36 : 42}
-                            className="relative z-10 filter drop-shadow-[0_0_8px_rgba(45,212,191,0.3)]"
+                            className="relative z-10 rounded-full filter drop-shadow-[0_0_8px_rgba(45,212,191,0.3)]"
                         />
                     </div>
                     {!collapsed && (
@@ -193,13 +193,14 @@ export default function NetworkSidebar() {
     return (
         <>
             {/* Mobile Header Bar */}
-            <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[#020617]/80 backdrop-blur-xl border-b border-white/5 z-[90] px-4 flex items-center justify-between">
+            <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[#020617]/80 backdrop-blur-xl border-b border-white/5 z-40 px-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Image
-                        src="/rmc-logo.png"
+                        src="/full logo.png"
                         alt="RMC"
                         width={32}
                         height={32}
+                        className="rounded-full"
                     />
                     <div>
                         <h1 className="text-white font-serif font-bold text-sm leading-none">RMC Network</h1>
@@ -207,8 +208,11 @@ export default function NetworkSidebar() {
                     </div>
                 </div>
                 <button
-                    onClick={() => setMobileOpen(true)}
-                    className="p-2 bg-white/5 border border-white/10 rounded-lg text-white/70 hover:text-white"
+                    onClick={() => {
+                        console.log("Mobile menu clicked");
+                        setMobileOpen(true);
+                    }}
+                    className="p-2 bg-white/5 border border-white/10 rounded-lg text-white/70 hover:text-white relative z-50"
                 >
                     <Menu className="w-5 h-5" />
                 </button>
@@ -222,7 +226,7 @@ export default function NetworkSidebar() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => setMobileOpen(false)}
-                        className="lg:hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[70]"
+                        className="lg:hidden fixed inset-0 bg-black/80 backdrop-blur-md z-30"
                     />
                 )}
             </AnimatePresence>
@@ -235,7 +239,7 @@ export default function NetworkSidebar() {
                         animate={{ x: 0 }}
                         exit={{ x: "-100%" }}
                         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                        className="lg:hidden fixed left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-[#020617] border-r border-white/5 z-[100] flex flex-col shadow-2xl"
+                        className="lg:hidden fixed left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-[#020617] border-r border-white/5 z-40 flex flex-col shadow-2xl"
                     >
                         <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/5">
                             <h2 className="text-white font-serif font-bold text-lg">Navigation</h2>

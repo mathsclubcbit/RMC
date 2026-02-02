@@ -107,7 +107,7 @@ export default function AboutPage() {
         <div ref={containerRef} className="relative min-h-screen bg-black overflow-hidden selection:bg-teal/20 selection:text-teal">
 
             {/* Immersive Hero Section */}
-            <section className="relative h-screen flex items-center justify-center overflow-hidden">
+            <section className="relative min-h-[75vh] md:min-h-screen flex items-center justify-center overflow-hidden">
                 <HeroParticles />
 
                 <motion.div
@@ -142,12 +142,12 @@ export default function AboutPage() {
             </section>
 
             {/* Theorem I: The Legacy */}
-            <section className="relative py-32 px-4 sm:px-6 lg:px-8 z-10">
+            <section className="relative py-20 md:py-32 px-4 sm:px-6 lg:px-8 z-10">
                 <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
                 <SectionDivider type="theorem" number="I" text="Inspired by a Legend" />
 
-                <div className="max-w-7xl mx-auto mt-24">
-                    <div className="grid md:grid-cols-2 gap-20 items-center">
+                <div className="max-w-7xl mx-auto mt-12 md:mt-24">
+                    <div className="grid md:grid-cols-2 gap-10 md:gap-20 items-center">
                         <motion.div
                             initial={{ opacity: 0, x: -50 }}
                             whileInView={{ opacity: 1, x: 0 }}
@@ -200,13 +200,13 @@ export default function AboutPage() {
             </section>
 
             {/* Axioms: Mission & Vision */}
-            <section className="py-32 px-4 sm:px-6 lg:px-8 z-10 relative bg-black/50 overflow-hidden">
+            <section className="py-20 md:py-32 px-4 sm:px-6 lg:px-8 z-10 relative bg-black/50 overflow-hidden">
                 {/* Background Grid */}
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_80%)]" />
 
                 <SectionDivider type="axiom" text="Mission & Vision" />
 
-                <div className="max-w-7xl mx-auto mt-24 relative z-10">
+                <div className="max-w-7xl mx-auto mt-12 md:mt-24 relative z-10">
                     <div className="grid md:grid-cols-2 gap-8">
                         {/* Vision */}
                         <motion.div
@@ -258,7 +258,7 @@ export default function AboutPage() {
             </section>
 
             {/* Core Variables */}
-            <section className="py-32 px-4 sm:px-6 lg:px-8 z-10 relative">
+            <section className="py-20 md:py-32 px-4 sm:px-6 lg:px-8 z-10 relative">
                 <div className="max-w-7xl mx-auto">
                     <SectionTitle
                         title="Core Values"
@@ -283,7 +283,7 @@ export default function AboutPage() {
             </section>
 
             {/* The Council */}
-            <section className="py-32 px-4 sm:px-6 lg:px-8 z-10 relative bg-black/40">
+            <section className="py-20 md:py-32 px-4 sm:px-6 lg:px-8 z-10 relative bg-black/40">
                 <div className="max-w-7xl mx-auto">
                     <SectionTitle
                         title="Leadership"
@@ -291,9 +291,9 @@ export default function AboutPage() {
                         center={true}
                         variant="gold"
                     />
-                    <div className="mt-20">
+                    <div className="mt-12 md:mt-20">
                         {loading ? (
-                            <div className="flex justify-center py-20">
+                            <div className="flex justify-center py-12 md:py-20">
                                 <div className="w-8 h-8 border-2 border-teal border-t-transparent rounded-full animate-spin" />
                             </div>
                         ) : council.length > 0 ? (
@@ -306,11 +306,11 @@ export default function AboutPage() {
             </section>
 
             {/* Timeline */}
-            <section className="py-32 px-4 sm:px-6 lg:px-8 z-10 relative">
+            <section className="py-20 md:py-32 px-4 sm:px-6 lg:px-8 z-10 relative">
                 <div className="max-w-4xl mx-auto">
                     <SectionDivider type="lemma" text="Our Journey" />
 
-                    <div className="relative mt-24">
+                    <div className="relative mt-12 md:mt-24">
                         {/* Center Line with Gradient - Hidden on Mobile, replaced by left line */}
                         <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2 h-full w-[2px] bg-gradient-to-b from-transparent via-teal/20 to-transparent"></div>
                         <div className="md:hidden absolute left-4 h-full w-[2px] bg-gradient-to-b from-transparent via-teal/20 to-transparent"></div>
@@ -321,7 +321,7 @@ export default function AboutPage() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, margin: "-100px" }}
                                 key={index}
-                                className={`relative flex items-center mb-24 md:mb-24 ${index % 2 === 0 ? "md:justify-start" : "md:justify-end"} justify-start pl-12 md:pl-0`}
+                                className={`relative flex items-center mb-12 md:mb-24 ${index % 2 === 0 ? "md:justify-start" : "md:justify-end"} justify-start pl-12 md:pl-0`}
                             >
                                 <div className={`w-full md:w-5/12 ${index % 2 === 0 ? "md:text-right md:pr-16" : "md:text-left md:pl-16"} text-left group`}>
                                     <span className="font-mono text-teal text-xl font-bold block mb-3 opacity-50 group-hover:opacity-100 transition-opacity">{item.year}</span>

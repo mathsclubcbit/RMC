@@ -51,7 +51,7 @@ export async function generateMetadata({ params }) {
         openGraph: {
             title: event.title,
             description: event.description,
-            images: [event.posterDesktop || event.img || '/rmc-logo.png'],
+            images: [event.posterDesktop || event.img || '/full logo.png'],
         },
     };
 }

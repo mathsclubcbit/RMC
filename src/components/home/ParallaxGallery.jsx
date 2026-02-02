@@ -62,12 +62,12 @@ export default function ParallaxGallery() {
     const y3 = useTransform(scrollYProgress, [0, 1], [0, -50]);
 
     return (
-        <section ref={containerRef} className="py-32 px-4 sm:px-6 lg:px-8 bg-black overflow-hidden relative">
+        <section ref={containerRef} className="py-20 md:py-32 px-4 sm:px-6 lg:px-8 bg-black overflow-hidden relative">
             {/* Background Grid */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] opacity-20 pointer-events-none" />
 
             <div className="max-w-7xl mx-auto relative z-10">
-                <div className="mb-20">
+                <div className="mb-12 md:mb-20">
                     <SectionTitle
                         title="Visual Proof"
                         subtitle="A photographic record of our logical explorations."
@@ -76,7 +76,7 @@ export default function ParallaxGallery() {
                     />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 h-[800px] overflow-hidden rounded-3xl bg-white/5 border border-white/5 p-8 relative">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 h-[520px] md:h-[800px] overflow-hidden rounded-3xl bg-white/5 border border-white/5 p-4 md:p-8 relative">
                     {/* Vignette */}
                     <div className="absolute inset-0 pointer-events-none z-20 shadow-[inset_0_0_100px_rgba(0,0,0,0.8)] rounded-3xl" />
 
@@ -102,7 +102,7 @@ export default function ParallaxGallery() {
                     </motion.div>
                 </div>
 
-                <div className="flex justify-center mt-12">
+                <div className="flex justify-center mt-8 md:mt-12">
                     <Link href="/gallery" className="group flex items-center gap-3 text-white/50 hover:text-teal transition-colors uppercase tracking-widest text-sm font-bold">
                         <span>Enter Full Gallery</span>
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

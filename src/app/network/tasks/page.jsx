@@ -239,7 +239,7 @@ export default function TasksPage() {
         <div className="flex h-full">
             <NetworkSidebar />
 
-            <main className="flex-1 p-6 lg:p-10 pt-24 lg:pt-14 overflow-y-auto">
+            <main className="flex-1 p-6 lg:p-10 pt-20 lg:pt-14 overflow-y-auto">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

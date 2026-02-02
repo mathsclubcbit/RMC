@@ -89,7 +89,7 @@ export default function HolographicCard({ event, index }) {
                 {/* Glitch/Tech Decoration */}
                 <div className="absolute top-6 right-6 flex flex-col gap-2 items-end">
                     <span className="text-[10px] font-mono text-teal/50 border border-teal/20 px-2 py-1 rounded-full uppercase tracking-widest bg-black/50 backdrop-blur-md group-hover:bg-teal/10 transition-colors">
-                        {event.status}
+                        {event.eventType || event.category || event.status}
                     </span>
                     <span className="text-4xl text-white/5 font-black italic select-none group-hover:text-white/10 group-hover:translate-x-1 transition-all duration-300">
                         0{index + 1}

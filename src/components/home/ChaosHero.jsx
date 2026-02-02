@@ -149,7 +149,7 @@ export default function ChaosHero() {
     }, []);
 
     return (
-        <section className="relative w-full h-screen overflow-hidden bg-transparent" style={{ touchAction: 'pan-y' }}>
+        <section className="relative w-full min-h-[80vh] md:min-h-screen overflow-hidden bg-transparent" style={{ touchAction: 'pan-y' }}>
             {/* 3D Scene */}
             <div
                 className="absolute inset-0 z-10 canvas-container"

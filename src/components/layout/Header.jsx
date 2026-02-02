@@ -24,14 +24,16 @@ export default function Header() {
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-4 group">
-                        <Image
-                            src="/rmc-logo.png"
-                            alt="RMC Logo"
-                            width={40}
-                            height={40}
-                            className="group-hover:rotate-12 transition-transform duration-500"
-                            priority
-                        />
+                        <div className="w-10 h-10 rounded-lg overflow-hidden ring-1 ring-white/10 bg-black/20 shadow-[0_0_12px_rgba(45,212,191,0.15)]">
+                            <Image
+                                src="/full logo.png"
+                                alt="RMC Logo"
+                                width={40}
+                                height={40}
+                                className="rounded-lg object-cover group-hover:rotate-12 transition-transform duration-500"
+                                priority
+                            />
+                        </div>
                         <span className="font-sans font-bold text-xl tracking-[0.25em] text-white group-hover:text-teal transition-colors duration-300">
                             RMC
                         </span>

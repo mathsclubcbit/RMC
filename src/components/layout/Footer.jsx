@@ -51,11 +51,11 @@ export default function Footer() {
                             <div className="relative">
                                 <div className="absolute inset-0 bg-teal/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 <Image
-                                    src="/rmc-logo.png"
+                                    src="/full logo.png"
                                     alt="RMC Logo"
                                     width={64}
                                     height={64}
-                                    className="relative z-10"
+                                    className="relative z-10 rounded-full"
                                 />
                             </div>
                             <div>

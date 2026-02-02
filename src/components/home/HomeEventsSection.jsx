@@ -18,7 +18,7 @@ export default function HomeEventsSection() {
     }, []);
 
     return (
-        <section className="py-32 px-4 sm:px-6 lg:px-8 relative bg-black overflow-hidden">
+        <section className="py-20 md:py-32 px-4 sm:px-6 lg:px-8 relative bg-black overflow-hidden">
             {/* Background Atmosphere */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(45,212,191,0.05),transparent_70%)] pointer-events-none" />
 
@@ -26,7 +26,7 @@ export default function HomeEventsSection() {
             <div className="absolute md:left-1/2 left-8 top-0 h-full w-[1px] bg-gradient-to-b from-transparent via-teal/10 to-transparent pointer-events-none z-0" />
 
             <div className="max-w-7xl mx-auto relative z-10">
-                <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6 relative">
+                <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16 gap-6 relative">
                     {/* Decorative Node on Timeline */}
                     <div className="absolute -left-[calc(2rem+1px)] md:left-[calc(50%-4px)] top-1/2 w-2 h-2 rounded-full bg-teal shadow-[0_0_10px_rgba(45,212,191,0.5)] hidden md:block" />
 
