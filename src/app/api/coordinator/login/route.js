@@ -128,14 +128,26 @@ export async function POST(request) {
                 }
             });
 
+        // Host-only cookie (always set)
         response.cookies.set('coordinator_token', token, {
             httpOnly: true,
             secure: isProd,
             sameSite: 'lax',
             path: '/',
-            ...(domain ? { domain } : {}),
             maxAge: 60 * 60 * 24 // 24 hours
         });
+
+        // Domain cookie (for cross-subdomain access)
+        if (domain) {
+            response.cookies.set('coordinator_token', token, {
+                httpOnly: true,
+                secure: isProd,
+                sameSite: 'lax',
+                path: '/',
+                domain,
+                maxAge: 60 * 60 * 24 // 24 hours
+            });
+        }
 
         console.log('[Coordinator Login] Success for event:', event.title);
 

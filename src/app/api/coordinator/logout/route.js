@@ -14,11 +14,20 @@ export async function POST(request) {
         const host = request.headers.get('host') || '';
         const domain = getCookieDomain(host);
         const response = NextResponse.json({ success: true });
+        // Delete host-only cookie
         response.cookies.delete({
             name: "coordinator_token",
             path: '/',
-            ...(domain ? { domain } : {}),
         });
+
+        // Delete domain cookie
+        if (domain) {
+            response.cookies.delete({
+                name: "coordinator_token",
+                path: '/',
+                domain,
+            });
+        }
 
         return response;
     } catch (error) {
@@ -32,11 +41,20 @@ export async function GET(request) {
     const domain = getCookieDomain(host);
     // Support GET method for simpler redirect flows
     const response = NextResponse.redirect(new URL('/coordinator/login', request.url));
+    // Delete host-only cookie
     response.cookies.delete({
         name: "coordinator_token",
         path: '/',
-        ...(domain ? { domain } : {}),
     });
+
+    // Delete domain cookie
+    if (domain) {
+        response.cookies.delete({
+            name: "coordinator_token",
+            path: '/',
+            domain,
+        });
+    }
 
     return response;
 }
