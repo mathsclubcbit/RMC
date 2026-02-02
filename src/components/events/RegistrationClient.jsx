@@ -18,6 +18,7 @@ export default function RegistrationClient({ eventId }) {
     const [formData, setFormData] = useState({
         name: "",
         email: "",
+        phone: "",
         rollNo: "",
         department: "",
         utrId: ""
@@ -158,14 +159,19 @@ export default function RegistrationClient({ eventId }) {
         setErrorMessage("");
 
         if (step === 1) {
-            const { name, email, rollNo, department } = formData;
-            if (!name || !email || !rollNo || !department) {
+            const { name, email, phone, rollNo, department } = formData;
+            if (!name || !email || !phone || !rollNo || !department) {
                 setErrorMessage("Please fill in all fields.");
                 return false;
             }
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 setErrorMessage("Please enter a valid email address.");
+                return false;
+            }
+            const phoneRegex = /^[0-9]{10}$/;
+            if (!phoneRegex.test(phone.replace(/\s/g, ""))) {
+                setErrorMessage("Please enter a valid 10-digit phone number.");
                 return false;
             }
             return true;
@@ -249,6 +255,7 @@ export default function RegistrationClient({ eventId }) {
             data.append('amount', String(amountToPay));
             data.append('name', formData.name);
             data.append('email', formData.email);
+            data.append('phone', formData.phone);
             data.append('rollNo', formData.rollNo);
             data.append('department', formData.department);
             data.append('utrId', formData.utrId);
@@ -329,6 +336,10 @@ export default function RegistrationClient({ eventId }) {
             <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Email Address</label>
                 <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300" placeholder="you@example.com" />
+            </div>
+            <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Phone Number</label>
+                <input type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300" placeholder="9876543210" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-2">

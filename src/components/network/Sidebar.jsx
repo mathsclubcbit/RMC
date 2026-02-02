@@ -193,7 +193,7 @@ export default function NetworkSidebar() {
     return (
         <>
             {/* Mobile Header Bar */}
-            <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[#020617]/80 backdrop-blur-xl border-b border-white/5 z-[60] px-4 flex items-center justify-between">
+            <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[#020617]/80 backdrop-blur-xl border-b border-white/5 z-[90] px-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Image
                         src="/rmc-logo.png"
@@ -231,11 +231,11 @@ export default function NetworkSidebar() {
             <AnimatePresence>
                 {mobileOpen && (
                     <motion.aside
-                        initial={{ x: -280 }}
+                        initial={{ x: "-100%" }}
                         animate={{ x: 0 }}
-                        exit={{ x: -280 }}
+                        exit={{ x: "-100%" }}
                         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                        className="lg:hidden fixed left-0 top-0 bottom-0 w-80 bg-[#020617] border-r border-white/5 z-[80] flex flex-col shadow-2xl"
+                        className="lg:hidden fixed left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-[#020617] border-r border-white/5 z-[100] flex flex-col shadow-2xl"
                     >
                         <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/5">
                             <h2 className="text-white font-serif font-bold text-lg">Navigation</h2>

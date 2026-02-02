@@ -26,6 +26,7 @@ interface TicketEmailData {
     registrationId: string;
     department?: string;
     rollNo?: string;
+    phone?: string;
 }
 
 /**

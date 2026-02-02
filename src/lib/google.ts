@@ -301,6 +301,7 @@ export interface RegistrationData {
     checkedInAt?: string;
     teamMembers?: string; // JSON string of team members from Column P
     memberAttendance?: string; // Attendance record string from Column Q
+    phone?: string; // Column R
 }
 
 /**
@@ -312,7 +313,7 @@ export const getAllRegistrations = async (spreadsheetId: string): Promise<Regist
 
     const response = await sheets.spreadsheets.values.get({
         spreadsheetId,
-        range: sheetRange('A:Q'), // Include column Q for memberAttendance
+        range: sheetRange('A:R'), // Include column R for phone
     });
 
     const rows = response.data.values;
@@ -346,7 +347,8 @@ export const getAllRegistrations = async (spreadsheetId: string): Promise<Regist
         status: normalizeCell(row[13]) || 'PENDING',
         checkedInAt: normalizeCell(row[14]) || '',
         teamMembers: normalizeCell(row[15]) || '',
-        memberAttendance: normalizeCell(row[16]) || ''
+        memberAttendance: normalizeCell(row[16]) || '',
+        phone: normalizeCell(row[17]) || ''
     }));
 };
 

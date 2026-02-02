@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
         const eventName = formData.get('eventName') as string;
         const name = formData.get('name') as string;
         const email = formData.get('email') as string;
+        const phone = formData.get('phone') as string;
         const rollNo = formData.get('rollNo') as string;
         const department = formData.get('department') as string;
         const utrId = formData.get('utrId') as string;
@@ -36,8 +37,14 @@ export async function POST(req: NextRequest) {
         const teamSizeStr = formData.get('teamSize') as string | null;
 
         // 1. Validation
-        if (!eventId || !eventName || !name || !email || !rollNo || !department || !utrId || !screenshot) {
+        if (!eventId || !eventName || !name || !email || !phone || !rollNo || !department || !utrId || !screenshot) {
             return NextResponse.json({ error: 'Missing required fields or file.' }, { status: 400 });
+        }
+
+        // Validate Phone (10 digits)
+        const phoneRegex = /^[0-9]{10}$/;
+        if (!phoneRegex.test(phone.replace(/\s/g, ""))) {
+            return NextResponse.json({ error: 'Invalid phone number. Must be 10 digits.' }, { status: 400 });
         }
 
         // Validate Roll Number (Exactly 12 digits)
@@ -207,7 +214,8 @@ export async function POST(req: NextRequest) {
             status,
             '', // Column O - checkedInAt (empty initially)
             teamMembersStr || '', // Column P - Team Members JSON
-            '' // Column Q - Member Attendance (empty initially)
+            '', // Column Q - Member Attendance (empty initially)
+            phone // Column R - Phone Number
         ];
 
         await appendRowToSheet(spreadsheetId, rowData);
@@ -234,7 +242,8 @@ export async function POST(req: NextRequest) {
             eventVenue,
             registrationId,
             department,
-            rollNo
+            rollNo,
+            phone
         }).catch(err => console.error('Email send failed:', err));
 
         return NextResponse.json({
