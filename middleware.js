@@ -69,17 +69,22 @@ export async function middleware(request) {
 
         const payload = token ? await verifyJwt(token) : null;
         const isLoggedIn = payload?.type === 'coordinator';
+        const authReason = !token ? 'missing-token' : (payload ? 'ok' : 'invalid-token');
 
         if (!isLoginPage && !isLoggedIn) {
             const url = request.nextUrl.clone();
             url.pathname = '/coordinator/login';
-            return NextResponse.redirect(url);
+            const res = NextResponse.redirect(url);
+            res.headers.set('x-coordinator-auth', authReason);
+            return res;
         }
 
         if (isLoginPage && isLoggedIn) {
             const url = request.nextUrl.clone();
             url.pathname = '/coordinator/dashboard';
-            return NextResponse.redirect(url);
+            const res = NextResponse.redirect(url);
+            res.headers.set('x-coordinator-auth', 'ok');
+            return res;
         }
     }
 
