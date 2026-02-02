@@ -69,7 +69,7 @@ export default async function CoordinatorTicketPage({ params }) {
     // Verify this ticket belongs to the coordinator's event
     const ticketEventId = String(ticketRow.eventId || ticketRow['Event ID'] || "").trim();
 
-    if (ticketEventId && ticketEventId !== coordinatorEventId) {
+    if (!ticketEventId || ticketEventId !== coordinatorEventId) {
         return (
             <div className="container mx-auto px-4 py-20 flex justify-center items-center min-h-screen">
                 <GlassCard className="p-8 text-center max-w-md w-full border-red-500/50">

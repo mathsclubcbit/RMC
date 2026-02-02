@@ -338,17 +338,24 @@ export default function RegistrationClient({ eventId }) {
                     <div className="absolute left-[19px] top-4 bottom-4 w-0.5 bg-gradient-to-b from-teal/50 via-teal/20 to-transparent" />
 
                     {event.stages.map((stage, i) => (
-                        <div key={i} className="relative pl-12 pb-8 last:pb-0 group">
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: i * 0.1 }}
+                            key={i}
+                            className="relative pl-12 pb-8 last:pb-0 group"
+                        >
                             {/* Dot */}
                             <div className="absolute left-0 top-1.5 w-10 h-10 rounded-full bg-[#0f111a] border border-teal/30 z-10 flex items-center justify-center group-hover:scale-110 group-hover:border-teal transition-all shadow-[0_0_15px_rgba(45,212,191,0.1)]">
                                 <div className="w-3 h-3 rounded-full bg-teal" />
                             </div>
 
                             {/* Content */}
-                            <div className="bg-[#1a1d26] border border-white/10 rounded-xl p-5 hover:border-teal/30 transition-all shadow-lg">
+                            <div className="bg-[#1a1d26] border border-white/10 rounded-xl p-5 hover:border-teal/30 transition-all shadow-lg hover:shadow-[0_0_20px_rgba(45,212,191,0.05)]">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                                     <h5 className="text-white font-bold text-lg">{stage.name}</h5>
-                                    <span className="text-teal font-mono text-xs bg-teal/10 px-3 py-1 rounded-full border border-teal/20 text-center w-max">{stage.date}</span>
+                                    <span className="text-teal font-mono text-[10px] bg-teal/10 px-3 py-1 rounded-full border border-teal/20 text-center w-max whitespace-nowrap">{stage.date}</span>
                                 </div>
                                 {/* Description Part */}
                                 {stage.description && (
@@ -368,7 +375,7 @@ export default function RegistrationClient({ eventId }) {
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
                 </div>
             </div>
@@ -383,10 +390,11 @@ export default function RegistrationClient({ eventId }) {
                 </h4>
                 <div className="flex flex-wrap gap-3">
                     {event.prizes.winner && (
-                        <div className="flex-1 min-w-[140px] bg-gradient-to-br from-yellow-500/10 to-transparent px-4 py-3 rounded-xl border border-yellow-500/20 text-center shadow-[0_0_15px_rgba(234,179,8,0.1)] hover:shadow-[0_0_25px_rgba(234,179,8,0.2)] transition-all group">
-                            <Trophy className="w-5 h-5 text-yellow-500/80 mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
-                            <div className="text-yellow-200/90 font-bold text-xs uppercase tracking-wide mb-0.5">Winner</div>
-                            <div className="text-white font-medium text-sm">{event.prizes.winner}</div>
+                        <div className="flex-1 min-w-[140px] bg-gradient-to-br from-yellow-500/10 to-transparent px-4 py-3 rounded-xl border border-yellow-500/20 text-center shadow-[0_0_15px_rgba(234,179,8,0.1)] hover:shadow-[0_0_30px_rgba(234,179,8,0.3)] hover:border-yellow-500/40 transition-all duration-500 group relative overflow-hidden">
+                            <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            <Trophy className="w-5 h-5 text-yellow-500/80 mx-auto mb-1.5 group-hover:scale-110 transition-transform duration-500 relative z-10" />
+                            <div className="text-yellow-200/90 font-bold text-xs uppercase tracking-wide mb-0.5 relative z-10">Winner</div>
+                            <div className="text-white font-medium text-sm relative z-10">{event.prizes.winner}</div>
                         </div>
                     )}
                     {event.prizes.runnerUp && (
@@ -1067,8 +1075,8 @@ export default function RegistrationClient({ eventId }) {
                             </div>
 
                             <div className="mt-8 pt-8 border-t border-white/10 flex flex-col gap-3">
-                                <button onClick={() => setShowDetails(true)} className="w-full py-4 rounded-xl bg-gradient-to-r from-teal/10 to-transparent border border-teal/20 hover:border-teal/50 text-teal transition-all flex items-center justify-center gap-2 group">
-                                    <Info className="w-5 h-5" />
+                                <button onClick={() => setShowDetails(true)} className="w-full py-4 rounded-xl bg-gradient-to-r from-teal/10 to-transparent border border-teal/20 hover:border-teal/50 hover:bg-teal/20 text-teal transition-all flex items-center justify-center gap-2 group active:scale-[0.98]">
+                                    <Info className="w-5 h-5 group-hover:scale-110 transition-transform" />
                                     <span className="uppercase tracking-widest font-mono text-xs font-bold">Read Full Rulebook</span>
                                 </button>
 

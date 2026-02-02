@@ -77,7 +77,7 @@ async function getCoordinatorEventAndStats() {
                 }]
             };
         } catch (e) {
-            console.error("Failed to fetch sheet stats", e);
+            console.error("Failed to fetch sheet stats for ID:", spreadsheetId, e);
         }
     }
 

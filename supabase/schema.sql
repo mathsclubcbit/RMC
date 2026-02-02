@@ -397,3 +397,13 @@ DROP TRIGGER IF EXISTS trg_settings_updated_at ON settings;
 CREATE TRIGGER trg_settings_updated_at
 BEFORE UPDATE ON settings
 FOR EACH ROW EXECUTE PROCEDURE public.set_updated_at();
+
+-- ============================================
+-- 14. RLS FOR EVENTS & SETTINGS
+-- ============================================
+-- These tables are primarily accessed via Service Role (Admin) API routes.
+-- Enabling RLS with no policies effectively "Denies All" public access,
+-- which secures them from unauthorized client-side queries.
+
+ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
