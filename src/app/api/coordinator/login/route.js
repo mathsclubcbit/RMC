@@ -6,6 +6,15 @@ import bcrypt from 'bcrypt';
 
 export const runtime = 'nodejs';
 
+function getCookieDomain(host) {
+    if (!host) return undefined;
+    const cleanHost = host.split(':')[0];
+    if (cleanHost.endsWith('rmccbit.in')) {
+        return '.rmccbit.in';
+    }
+    return undefined;
+}
+
 export async function POST(request) {
     try {
         // Parse request body
@@ -89,11 +98,14 @@ export async function POST(request) {
 
         // Set cookie
         const cookieStore = await cookies();
+        const host = request.headers.get('host') || '';
+        const domain = getCookieDomain(host);
         cookieStore.set('coordinator_token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
+            ...(domain ? { domain } : {}),
             maxAge: 60 * 60 * 24 // 24 hours
         });
 
