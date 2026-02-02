@@ -100,10 +100,11 @@ export async function POST(request) {
         const cookieStore = await cookies();
         const host = request.headers.get('host') || '';
         const domain = getCookieDomain(host);
+        const isProd = process.env.NODE_ENV === 'production';
         cookieStore.set('coordinator_token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            secure: isProd,
+            sameSite: isProd ? 'none' : 'lax',
             path: '/',
             ...(domain ? { domain } : {}),
             maxAge: 60 * 60 * 24 // 24 hours

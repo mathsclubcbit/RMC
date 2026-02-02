@@ -29,6 +29,13 @@ async function verifyJwt(token) {
 }
 
 export async function middleware(request) {
+    const forwardedProto = request.headers.get('x-forwarded-proto');
+    if (forwardedProto === 'http') {
+        const url = request.nextUrl.clone();
+        url.protocol = 'https:';
+        return NextResponse.redirect(url);
+    }
+
     let supabaseResponse = NextResponse.next({ request });
 
     // ==========================================
