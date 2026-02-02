@@ -1,18 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
-import { signToken } from '@/lib/jwt';
 import bcrypt from 'bcrypt';
+import { createServerClient } from '@supabase/ssr';
 
 export const runtime = 'nodejs';
-
-function getCookieDomain(host) {
-    if (!host) return undefined;
-    const cleanHost = host.split(':')[0];
-    if (cleanHost.endsWith('rmccbit.in')) {
-        return '.rmccbit.in';
-    }
-    return undefined;
-}
 
 export async function POST(request) {
     try {
@@ -56,8 +47,8 @@ export async function POST(request) {
         const cleanPassword = password.trim();
 
         // Get event from database
-        const supabase = createAdminClient();
-        const { data: event, error: dbError } = await supabase
+        const admin = createAdminClient();
+        const { data: event, error: dbError } = await admin
             .from('events')
             .select('id, title, payload')
             .eq('id', cleanEventId)
@@ -108,16 +99,28 @@ export async function POST(request) {
             return NextResponse.json({ error: msg }, { status: 401 });
         }
 
-        // Create JWT token
-        const token = await signToken(
-            { type: 'coordinator', eventId: cleanEventId },
-            '24h'
-        );
+        const coordinatorEmail = `coord-${cleanEventId}@rmccbit.in`;
 
-        // Set cookie on the response (reliable in Route Handlers)
-        const host = request.headers.get('host') || '';
-        const domain = getCookieDomain(host);
-        const isProd = process.env.NODE_ENV === 'production';
+        const { data: existingUser, error: userLookupError } = await admin.auth.admin.getUserByEmail(coordinatorEmail);
+
+        if (userLookupError) {
+            console.error('[Coordinator Login] Auth lookup error:', userLookupError);
+        }
+
+        if (!existingUser?.user) {
+            await admin.auth.admin.createUser({
+                email: coordinatorEmail,
+                password: cleanPassword,
+                email_confirm: true,
+                app_metadata: { role: 'coordinator', event_id: cleanEventId }
+            });
+        } else {
+            await admin.auth.admin.updateUserById(existingUser.user.id, {
+                password: cleanPassword,
+                app_metadata: { role: 'coordinator', event_id: cleanEventId }
+            });
+        }
+
         const response = isForm
             ? NextResponse.redirect(new URL('/coordinator/dashboard', request.url), 303)
             : NextResponse.json({
@@ -128,25 +131,35 @@ export async function POST(request) {
                 }
             });
 
-        // Host-only cookie (always set)
-        response.cookies.set('coordinator_token', token, {
-            httpOnly: true,
-            secure: isProd,
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 60 * 60 * 24 // 24 hours
+        const routeSupabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+            {
+                cookies: {
+                    getAll() {
+                        return request.cookies.getAll();
+                    },
+                    setAll(cookiesToSet) {
+                        cookiesToSet.forEach(({ name, value, options }) =>
+                            response.cookies.set(name, value, options)
+                        );
+                    },
+                },
+            }
+        );
+
+        const { error: signInError } = await routeSupabase.auth.signInWithPassword({
+            email: coordinatorEmail,
+            password: cleanPassword
         });
 
-        // Domain cookie (for cross-subdomain access)
-        if (domain) {
-            response.cookies.set('coordinator_token', token, {
-                httpOnly: true,
-                secure: isProd,
-                sameSite: 'lax',
-                path: '/',
-                domain,
-                maxAge: 60 * 60 * 24 // 24 hours
-            });
+        if (signInError) {
+            console.error('[Coordinator Login] Supabase sign-in error:', signInError);
+            const msg = 'Authentication failed. Please try again.';
+            if (isForm) {
+                return NextResponse.redirect(new URL(`/coordinator/login?error=${encodeURIComponent(msg)}`, request.url));
+            }
+            return NextResponse.json({ error: msg }, { status: 401 });
         }
 
         console.log('[Coordinator Login] Success for event:', event.title);

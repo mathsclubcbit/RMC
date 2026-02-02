@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 
 function getCookieDomain(host) {
     if (!host) return undefined;
@@ -9,11 +10,32 @@ function getCookieDomain(host) {
     return undefined;
 }
 
+function createRouteSupabaseClient(request, response) {
+    return createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        {
+            cookies: {
+                getAll() {
+                    return request.cookies.getAll();
+                },
+                setAll(cookiesToSet) {
+                    cookiesToSet.forEach(({ name, value, options }) =>
+                        response.cookies.set(name, value, options)
+                    );
+                },
+            },
+        }
+    );
+}
+
 export async function POST(request) {
     try {
         const host = request.headers.get('host') || '';
         const domain = getCookieDomain(host);
         const response = NextResponse.json({ success: true });
+        const supabase = createRouteSupabaseClient(request, response);
+        await supabase.auth.signOut();
         // Delete host-only cookie
         response.cookies.delete({
             name: "coordinator_token",
@@ -41,6 +63,8 @@ export async function GET(request) {
     const domain = getCookieDomain(host);
     // Support GET method for simpler redirect flows
     const response = NextResponse.redirect(new URL('/coordinator/login', request.url));
+    const supabase = createRouteSupabaseClient(request, response);
+    await supabase.auth.signOut();
     // Delete host-only cookie
     response.cookies.delete({
         name: "coordinator_token",

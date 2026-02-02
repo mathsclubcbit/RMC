@@ -1,26 +1,18 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
-import { cookies } from 'next/headers';
-import { jwtVerify } from 'jose';
-import { getSecret } from '@/lib/jwt';
+import { createClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 
 async function getCoordinatorEventId() {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("coordinator_token")?.value;
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!token) return null;
-
-    try {
-        const { payload } = await jwtVerify(token, getSecret());
-        if (payload?.type !== 'coordinator' || !payload?.eventId) {
-            return null;
-        }
-        return payload.eventId;
-    } catch {
+    if (!user || user?.app_metadata?.role !== 'coordinator' || !user?.app_metadata?.event_id) {
         return null;
     }
+
+    return user.app_metadata.event_id;
 }
 
 export async function POST(request) {

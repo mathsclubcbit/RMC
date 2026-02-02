@@ -1,20 +1,12 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { jwtVerify } from "jose";
-import { getSecret } from "@/lib/jwt";
 import CoordinatorScanClient from "./CoordinatorScanClient";
 import { unstable_noStore as noStore } from 'next/cache';
+import { createClient } from "@/lib/supabase/server";
 
 async function isCoordinatorAuthenticated() {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("coordinator_token")?.value;
-    if (!token) return false;
-    try {
-        const { payload } = await jwtVerify(token, getSecret());
-        return payload?.type === 'coordinator' && !!payload?.eventId;
-    } catch {
-        return false;
-    }
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.app_metadata?.role === 'coordinator' && !!user?.app_metadata?.event_id;
 }
 
 export const metadata = {

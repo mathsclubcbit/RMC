@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { jwtVerify } from 'jose';
 import { getSecret } from '@/lib/jwt';
 import bcrypt from 'bcrypt';
@@ -46,17 +46,11 @@ async function verifyAdminOrCoordinator(request, eventId) {
         }
     }
 
-    // Check coordinator JWT
-    const coordinatorToken = request.cookies.get('coordinator_token')?.value;
-    if (coordinatorToken) {
-        try {
-            const { payload } = await jwtVerify(coordinatorToken, getSecret());
-            if (payload?.type === 'coordinator' && payload?.eventId === eventId) {
-                return { authorized: true, isAdmin: false };
-            }
-        } catch {
-            // Invalid coordinator token
-        }
+    // Check coordinator Supabase session
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.app_metadata?.role === 'coordinator' && String(user?.app_metadata?.event_id) === String(eventId)) {
+        return { authorized: true, isAdmin: false };
     }
 
     return { authorized: false };

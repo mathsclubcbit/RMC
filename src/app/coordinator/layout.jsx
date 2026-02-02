@@ -1,7 +1,4 @@
-import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
-import { createAdminClient } from "@/lib/supabase/server";
-import { getSecret } from "@/lib/jwt";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import CoordinatorNav from "./CoordinatorNav";
 import CoordinatorLayoutClient from "./CoordinatorLayoutClient";
 
@@ -9,32 +6,25 @@ import CoordinatorLayoutClient from "./CoordinatorLayoutClient";
 export const dynamic = 'force-dynamic';
 
 async function getEventInfo() {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("coordinator_token")?.value;
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!token) return null;
-
-    try {
-        const { payload } = await jwtVerify(token, getSecret());
-        if (payload?.type !== 'coordinator' || !payload?.eventId) {
-            return null;
-        }
-
-        // Fetch event title
-        const supabase = createAdminClient();
-        const { data: event } = await supabase
-            .from("events")
-            .select("title")
-            .eq("id", payload.eventId)
-            .single();
-
-        return {
-            eventId: payload.eventId,
-            eventTitle: event?.title || null
-        };
-    } catch {
+    if (!user || user?.app_metadata?.role !== 'coordinator' || !user?.app_metadata?.event_id) {
         return null;
     }
+
+    // Fetch event title
+    const admin = createAdminClient();
+    const { data: event } = await admin
+        .from("events")
+        .select("title")
+        .eq("id", user.app_metadata.event_id)
+        .single();
+
+    return {
+        eventId: user.app_metadata.event_id,
+        eventTitle: event?.title || null
+    };
 }
 
 export default async function CoordinatorLayout({ children }) {

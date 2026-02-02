@@ -1,37 +1,25 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createAdminClient } from "@/lib/supabase/server";
-import { LogOut, QrCode, Edit3, Settings } from "lucide-react";
-import { jwtVerify } from "jose";
-import { getSecret } from "@/lib/jwt";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { LogOut, QrCode, Edit3 } from "lucide-react";
 
 import { getAllRegistrations } from "@/lib/google";
 
 export const dynamic = 'force-dynamic';
 
 async function getCoordinatorEventAndStats() {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("coordinator_token")?.value;
-
-    if (!token) return null;
-
-    // Verify JWT and extract eventId
-    let eventId;
-    try {
-        const { payload } = await jwtVerify(token, getSecret());
-        if (payload?.type !== 'coordinator' || !payload?.eventId) {
-            return null;
-        }
-        eventId = payload.eventId;
-    } catch {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || user?.app_metadata?.role !== 'coordinator' || !user?.app_metadata?.event_id) {
         return null;
     }
 
-    const supabase = createAdminClient();
+    const eventId = user.app_metadata.event_id;
+
+    const admin = createAdminClient();
 
     // Fetch Event
-    const { data: event, error } = await supabase
+    const { data: event, error } = await admin
         .from("events")
         .select("*")
         .eq("id", eventId)

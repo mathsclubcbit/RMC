@@ -28,11 +28,38 @@ async function verifyJwt(token) {
     }
 }
 
+function createSupabaseMiddlewareClient(request, supabaseResponse) {
+    return createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        {
+            cookies: {
+                getAll() {
+                    return request.cookies.getAll();
+                },
+                setAll(cookiesToSet) {
+                    cookiesToSet.forEach(({ name, value, options }) => {
+                        request.cookies.set(name, value);
+                        supabaseResponse.cookies.set(name, value, options);
+                    });
+                },
+            },
+        }
+    );
+}
+
 export async function middleware(request) {
     const forwardedProto = request.headers.get('x-forwarded-proto');
     if (forwardedProto === 'http') {
         const url = request.nextUrl.clone();
         url.protocol = 'https:';
+        return NextResponse.redirect(url);
+    }
+
+    const host = request.headers.get('host') || '';
+    if (host === 'rmccbit.in') {
+        const url = request.nextUrl.clone();
+        url.host = 'www.rmccbit.in';
         return NextResponse.redirect(url);
     }
 
@@ -65,11 +92,10 @@ export async function middleware(request) {
     // ==========================================
     if (request.nextUrl.pathname.startsWith('/coordinator')) {
         const isLoginPage = request.nextUrl.pathname === '/coordinator/login';
-        const token = request.cookies.get('coordinator_token')?.value;
-
-        const payload = token ? await verifyJwt(token) : null;
-        const isLoggedIn = payload?.type === 'coordinator';
-        const authReason = !token ? 'missing-token' : (payload ? 'ok' : 'invalid-token');
+        const supabase = createSupabaseMiddlewareClient(request, supabaseResponse);
+        const { data: { user } } = await supabase.auth.getUser();
+        const isLoggedIn = user?.app_metadata?.role === 'coordinator' && !!user?.app_metadata?.event_id;
+        const authReason = !user ? 'missing-token' : (isLoggedIn ? 'ok' : 'invalid-token');
 
         if (!isLoginPage && !isLoggedIn) {
             const url = request.nextUrl.clone();
@@ -147,26 +173,7 @@ export async function middleware(request) {
     // 2. AUTH PROTECTION FOR /network ROUTES
     // ==========================================
     if (request.nextUrl.pathname.startsWith('/network')) {
-        const supabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-            {
-                cookies: {
-                    getAll() {
-                        return request.cookies.getAll();
-                    },
-                    setAll(cookiesToSet) {
-                        cookiesToSet.forEach(({ name, value }) => {
-                            request.cookies.set(name, value);
-                        });
-                        supabaseResponse = NextResponse.next({ request });
-                        cookiesToSet.forEach(({ name, value, options }) =>
-                            supabaseResponse.cookies.set(name, value, options)
-                        );
-                    },
-                },
-            }
-        );
+        const supabase = createSupabaseMiddlewareClient(request, supabaseResponse);
 
         // Refresh session if expired
         const { data: { user } } = await supabase.auth.getUser();
