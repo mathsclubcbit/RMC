@@ -57,6 +57,7 @@ export default function CoordinatorLoginPage() {
             const response = await fetch("/api/coordinator/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include",
                 body: JSON.stringify({
                     eventId: selectedEventId,
                     password: password.trim()

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
-import { cookies } from 'next/headers';
 import { signToken } from '@/lib/jwt';
 import bcrypt from 'bcrypt';
 
@@ -96,12 +95,19 @@ export async function POST(request) {
             '24h'
         );
 
-        // Set cookie
-        const cookieStore = await cookies();
+        // Set cookie on the response (reliable in Route Handlers)
         const host = request.headers.get('host') || '';
         const domain = getCookieDomain(host);
         const isProd = process.env.NODE_ENV === 'production';
-        cookieStore.set('coordinator_token', token, {
+        const response = NextResponse.json({
+            success: true,
+            event: {
+                id: event.id,
+                title: event.title
+            }
+        });
+
+        response.cookies.set('coordinator_token', token, {
             httpOnly: true,
             secure: isProd,
             sameSite: isProd ? 'none' : 'lax',
@@ -112,13 +118,7 @@ export async function POST(request) {
 
         console.log('[Coordinator Login] Success for event:', event.title);
 
-        return NextResponse.json({
-            success: true,
-            event: {
-                id: event.id,
-                title: event.title
-            }
-        });
+        return response;
 
     } catch (error) {
         console.error('[Coordinator Login] Error:', error);
