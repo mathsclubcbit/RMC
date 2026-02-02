@@ -16,23 +16,39 @@ function getCookieDomain(host) {
 
 export async function POST(request) {
     try {
+        const contentType = request.headers.get('content-type') || '';
+        const isJson = contentType.includes('application/json');
+        const isForm = contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data');
+
         // Parse request body
-        const body = await request.json();
-        const { eventId, password } = body;
+        let eventId;
+        let password;
+
+        if (isJson) {
+            const body = await request.json();
+            eventId = body?.eventId;
+            password = body?.password;
+        } else if (isForm) {
+            const form = await request.formData();
+            eventId = form.get('eventId');
+            password = form.get('password');
+        }
 
         // Validate inputs
         if (!eventId || typeof eventId !== 'string') {
-            return NextResponse.json(
-                { error: 'Event ID is required' },
-                { status: 400 }
-            );
+            const msg = 'Event ID is required';
+            if (isForm) {
+                return NextResponse.redirect(new URL(`/coordinator/login?error=${encodeURIComponent(msg)}`, request.url));
+            }
+            return NextResponse.json({ error: msg }, { status: 400 });
         }
 
         if (!password || typeof password !== 'string') {
-            return NextResponse.json(
-                { error: 'Password is required' },
-                { status: 400 }
-            );
+            const msg = 'Password is required';
+            if (isForm) {
+                return NextResponse.redirect(new URL(`/coordinator/login?error=${encodeURIComponent(msg)}`, request.url));
+            }
+            return NextResponse.json({ error: msg }, { status: 400 });
         }
 
         // Clean inputs
@@ -50,10 +66,11 @@ export async function POST(request) {
         // Check if event exists
         if (dbError || !event) {
             console.log('[Coordinator Login] Event not found:', cleanEventId);
-            return NextResponse.json(
-                { error: 'Invalid Event ID' },
-                { status: 401 }
-            );
+            const msg = 'Invalid Event ID';
+            if (isForm) {
+                return NextResponse.redirect(new URL(`/coordinator/login?error=${encodeURIComponent(msg)}`, request.url));
+            }
+            return NextResponse.json({ error: msg }, { status: 401 });
         }
 
         // Get stored password from event payload
@@ -63,10 +80,11 @@ export async function POST(request) {
         // Check if event has a password set
         if (!storedPassword) {
             console.log('[Coordinator Login] No password set for event:', cleanEventId);
-            return NextResponse.json(
-                { error: 'This event has no password set. Please contact the admin.' },
-                { status: 403 }
-            );
+            const msg = 'This event has no password set. Please contact the admin.';
+            if (isForm) {
+                return NextResponse.redirect(new URL(`/coordinator/login?error=${encodeURIComponent(msg)}`, request.url));
+            }
+            return NextResponse.json({ error: msg }, { status: 403 });
         }
 
         // Compare passwords - support both hashed (new) and plaintext (legacy)
@@ -83,10 +101,11 @@ export async function POST(request) {
 
         if (!passwordMatch) {
             console.log('[Coordinator Login] Password mismatch for event:', cleanEventId);
-            return NextResponse.json(
-                { error: 'Incorrect password' },
-                { status: 401 }
-            );
+            const msg = 'Incorrect password';
+            if (isForm) {
+                return NextResponse.redirect(new URL(`/coordinator/login?error=${encodeURIComponent(msg)}`, request.url));
+            }
+            return NextResponse.json({ error: msg }, { status: 401 });
         }
 
         // Create JWT token
@@ -99,13 +118,15 @@ export async function POST(request) {
         const host = request.headers.get('host') || '';
         const domain = getCookieDomain(host);
         const isProd = process.env.NODE_ENV === 'production';
-        const response = NextResponse.json({
-            success: true,
-            event: {
-                id: event.id,
-                title: event.title
-            }
-        });
+        const response = isForm
+            ? NextResponse.redirect(new URL('/coordinator/dashboard', request.url))
+            : NextResponse.json({
+                success: true,
+                event: {
+                    id: event.id,
+                    title: event.title
+                }
+            });
 
         response.cookies.set('coordinator_token', token, {
             httpOnly: true,
@@ -122,9 +143,12 @@ export async function POST(request) {
 
     } catch (error) {
         console.error('[Coordinator Login] Error:', error);
-        return NextResponse.json(
-            { error: 'Internal server error' },
-            { status: 500 }
-        );
+        const msg = 'Internal server error';
+        const contentType = request.headers.get('content-type') || '';
+        const isForm = contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data');
+        if (isForm) {
+            return NextResponse.redirect(new URL(`/coordinator/login?error=${encodeURIComponent(msg)}`, request.url));
+        }
+        return NextResponse.json({ error: msg }, { status: 500 });
     }
 }

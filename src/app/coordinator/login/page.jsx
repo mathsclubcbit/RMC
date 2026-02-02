@@ -1,18 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Lock, ChevronDown, Calendar, AlertCircle } from "lucide-react";
 
 export default function CoordinatorLoginPage() {
-    const router = useRouter();
+    const searchParams = useSearchParams();
     const [events, setEvents] = useState([]);
     const [loadingEvents, setLoadingEvents] = useState(true);
     const [selectedEventId, setSelectedEventId] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const errorParam = searchParams.get("error");
+        if (errorParam) setError(errorParam);
+    }, [searchParams]);
 
     // Fetch events on mount
     useEffect(() => {
@@ -37,48 +42,21 @@ export default function CoordinatorLoginPage() {
         loadEvents();
     }, []);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
+    const handleSubmit = (e) => {
         if (!selectedEventId) {
+            e.preventDefault();
             setError("Please select an event");
             return;
         }
 
         if (!password.trim()) {
+            e.preventDefault();
             setError("Please enter the password");
             return;
         }
 
         setError("");
         setLoading(true);
-
-        try {
-            const response = await fetch("/api/coordinator/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({
-                    eventId: selectedEventId,
-                    password: password.trim()
-                }),
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || "Login failed");
-            }
-
-            // Success - redirect to dashboard (full page reload to ensure cookie is read by middleware)
-            window.location.href = "/coordinator/dashboard";
-
-        } catch (err) {
-            console.error("Login error:", err);
-            setError(err.message || "Login failed. Please try again.");
-        } finally {
-            setLoading(false);
-        }
     };
 
     const selectedEvent = events.find(e => e.id === selectedEventId);
@@ -114,7 +92,7 @@ export default function CoordinatorLoginPage() {
                 <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-teal-500/50 to-transparent" />
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} action="/api/coordinator/login" method="POST" className="space-y-5">
                         {/* Error Message */}
                         {error && (
                             <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs">
@@ -141,6 +119,7 @@ export default function CoordinatorLoginPage() {
                                     </div>
                                 ) : (
                                     <select
+                                        name="eventId"
                                         value={selectedEventId}
                                         onChange={(e) => setSelectedEventId(e.target.value)}
                                         className="w-full bg-black/40 border border-white/10 rounded-xl pl-11 pr-10 py-3.5 text-white text-sm appearance-none cursor-pointer focus:border-teal-500/50 focus:bg-black/60 outline-none transition-all"
@@ -175,6 +154,7 @@ export default function CoordinatorLoginPage() {
                             <div className="relative">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                                 <input
+                                    name="password"
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
