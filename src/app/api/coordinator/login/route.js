@@ -119,7 +119,7 @@ export async function POST(request) {
         const domain = getCookieDomain(host);
         const isProd = process.env.NODE_ENV === 'production';
         const response = isForm
-            ? NextResponse.redirect(new URL('/coordinator/dashboard', request.url))
+            ? NextResponse.redirect(new URL('/coordinator/dashboard', request.url), 303)
             : NextResponse.json({
                 success: true,
                 event: {
