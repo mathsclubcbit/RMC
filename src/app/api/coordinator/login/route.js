@@ -131,7 +131,7 @@ export async function POST(request) {
         response.cookies.set('coordinator_token', token, {
             httpOnly: true,
             secure: isProd,
-            sameSite: isProd ? 'none' : 'lax',
+            sameSite: 'lax',
             path: '/',
             ...(domain ? { domain } : {}),
             maxAge: 60 * 60 * 24 // 24 hours
