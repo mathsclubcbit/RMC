@@ -36,6 +36,8 @@ export async function POST(req: NextRequest) {
         const teamMembersStr = formData.get('teamMembers') as string | null; // Optional team members
         const teamSizeStr = formData.get('teamSize') as string | null;
 
+        const abstract = formData.get('abstract') as string | null;
+
         const pptFile = formData.get('ppt') as File | null;
 
         // 1. Validation
@@ -75,7 +77,7 @@ export async function POST(req: NextRequest) {
         }
 
         // 1b. Determine team size and compute expected amount from event config.
-        let teamMembers: Array<{ name?: string; rollNo?: string }> = [];
+        let teamMembers: Array<{ name?: string; rollNo?: string; phone?: string }> = [];
         if (teamMembersStr) {
             try {
                 const parsed = JSON.parse(teamMembersStr);
@@ -256,7 +258,8 @@ export async function POST(req: NextRequest) {
             teamMembersStr || '', // Column P - Team Members JSON
             '', // Column Q - Member Attendance (empty initially)
             phone, // Column R - Phone Number
-            pptDriveFile?.webViewLink || '' // Column S - PPT Link
+            pptDriveFile?.webViewLink || '', // Column S - PPT Link
+            abstract || '' // Column T - Abstract
         ];
 
         await appendRowToSheet(spreadsheetId, rowData);
