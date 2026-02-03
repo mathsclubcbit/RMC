@@ -26,6 +26,7 @@ export default function RegistrationClient({ eventId }) {
     const [teamMembers, setTeamMembers] = useState([]);
     const [screenshot, setScreenshot] = useState(null);
     const [pptFile, setPptFile] = useState(null);
+    const [abstract, setAbstract] = useState("");
 
     // Submission State
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -213,27 +214,46 @@ export default function RegistrationClient({ eventId }) {
         }
 
         if (step === 3) {
-            if (event?.variablePricingEnabled) {
-                const tiers = Array.isArray(event?.pricingTiers) ? event.pricingTiers : [];
-                const match = tiers.find((t) => Number(t?.teamSize) === Number(currentTeamSize));
-                if (!match) {
-                    setErrorMessage(`Price is not configured for team size ${currentTeamSize}. Please adjust teammates or contact the organizer.`);
+            if (isHackathonOrIdeathon) {
+                // Submission Step Validation (Hackathon)
+                if (!abstract || abstract.trim().length === 0) {
+                    setErrorMessage("Please provide a brief abstract/project description.");
                     return false;
                 }
+                if (!pptFile) {
+                    setErrorMessage("Please upload your presentation (PPT/PDF).");
+                    return false;
+                }
+                return true;
+            } else {
+                // Payment Step Validation (Regular Event)
+                return validatePaymentStep();
             }
-            if (!formData.utrId) {
-                setErrorMessage("Please enter the UTR / Transaction ID.");
+        }
+
+        if (step === 4) {
+            // Payment Step Validation (Hackathon)
+            return validatePaymentStep();
+        }
+        return true;
+    };
+
+    const validatePaymentStep = () => {
+        if (event?.variablePricingEnabled) {
+            const tiers = Array.isArray(event?.pricingTiers) ? event.pricingTiers : [];
+            const match = tiers.find((t) => Number(t?.teamSize) === Number(currentTeamSize));
+            if (!match) {
+                setErrorMessage(`Price is not configured for team size ${currentTeamSize}. Please adjust teammates or contact the organizer.`);
                 return false;
             }
-            if (!screenshot) {
-                setErrorMessage("Please upload the payment screenshot.");
-                return false;
-            }
-            if (isHackathonOrIdeathon && !pptFile) {
-                setErrorMessage("Please upload your presentation (PPT/PDF).");
-                return false;
-            }
-            return true;
+        }
+        if (!formData.utrId) {
+            setErrorMessage("Please enter the UTR / Transaction ID.");
+            return false;
+        }
+        if (!screenshot) {
+            setErrorMessage("Please upload the payment screenshot.");
+            return false;
         }
         return true;
     };
@@ -252,6 +272,9 @@ export default function RegistrationClient({ eventId }) {
     };
 
     const prevStep = () => {
+        if (currentStep === 1) return;
+
+        // Skip Step 2 if single player
         if (currentStep === 3 && !requiresTeamStep) {
             setCurrentStep(1);
         } else {
@@ -263,7 +286,8 @@ export default function RegistrationClient({ eventId }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!validateStep(3)) return;
+        const finalStep = isHackathonOrIdeathon ? 4 : 3;
+        if (!validateStep(finalStep)) return;
 
         setIsSubmitting(true);
         setErrorMessage("");
@@ -287,6 +311,9 @@ export default function RegistrationClient({ eventId }) {
             data.append('screenshot', screenshot);
             if (pptFile) {
                 data.append('ppt', pptFile);
+            }
+            if (abstract) {
+                data.append('abstract', abstract);
             }
 
             const response = await fetch('/api/register', {
@@ -557,29 +584,40 @@ export default function RegistrationClient({ eventId }) {
             </motion.div>
         </motion.div>
     );
-    const renderStepper = () => (
-        <div className="flex items-center justify-center md:justify-between mb-8 md:mb-10 px-4">
-            {[1, 2, 3].map((step) => {
-                if (step === 2 && !requiresTeamStep) return null;
+    const renderStepper = () => {
+        const steps = isHackathonOrIdeathon ? [1, 2, 3, 4] : [1, 2, 3];
+        return (
+            <div className="flex items-center justify-between mb-8 md:mb-10 px-2 md:px-4 relative">
+                {/* Mobile Progress Bar (Background) */}
+                <div className="absolute left-4 right-4 top-1/2 -translate-y-1/2 h-0.5 bg-white/10 -z-10 md:hidden" />
 
-                const isActive = step === currentStep;
-                const isDone = step < currentStep;
-                const stepLabel = step === 1 ? 'Identity' : step === 2 ? 'Squad' : 'Payment';
+                {steps.map((step) => {
+                    if (step === 2 && !requiresTeamStep) return null;
 
-                return (
-                    <div key={step} className="flex items-center gap-2 md:gap-3">
-                        <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-sm font-bold font-mono transition-all duration-300 ${isActive ? 'bg-gradient-to-br from-teal to-emerald-500 text-black scale-110 shadow-[0_0_25px_rgba(45,212,191,0.4)]' : isDone ? 'bg-teal/20 text-teal ring-1 ring-teal/30' : 'bg-white/5 text-white/30 ring-1 ring-white/10'}`}>
-                            {isDone ? <CheckCircle className="w-4 h-4 md:w-5 md:h-5" /> : step}
+                    const isActive = step === currentStep;
+                    const isDone = step < currentStep;
+
+                    let stepLabel = '';
+                    if (isHackathonOrIdeathon) {
+                        stepLabel = step === 1 ? 'Identity' : step === 2 ? 'Squad' : step === 3 ? 'Submission' : 'Payment';
+                    } else {
+                        stepLabel = step === 1 ? 'Identity' : step === 2 ? 'Squad' : 'Payment';
+                    }
+
+                    return (
+                        <div key={step} className="flex flex-col items-center gap-2 relative bg-[#020617] md:bg-transparent px-2 md:px-0 z-10">
+                            <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-sm font-bold font-mono transition-all duration-500 ${isActive ? 'bg-gradient-to-br from-teal to-emerald-500 text-black scale-110 shadow-[0_0_25px_rgba(45,212,191,0.4)] ring-4 ring-[#020617]' : isDone ? 'bg-teal/20 text-teal ring-1 ring-teal/30' : 'bg-[#0f111a] text-white/30 ring-1 ring-white/10'}`}>
+                                {isDone ? <CheckCircle className="w-4 h-4 md:w-5 md:h-5" /> : step}
+                            </div>
+                            <span className={`text-[10px] md:text-xs uppercase tracking-[0.15em] font-mono transition-colors absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap ${isActive ? 'text-teal font-bold' : 'text-white/30 hidden md:block'}`}>
+                                {stepLabel}
+                            </span>
                         </div>
-                        <span className={`text-[10px] md:text-xs uppercase tracking-[0.15em] font-mono transition-colors ${isActive ? 'text-white' : 'text-white/30'}`}>
-                            {stepLabel}
-                        </span>
-                        {step !== 3 && <div className={`hidden md:block w-8 lg:w-16 h-px transition-colors ${isDone ? 'bg-teal/40' : 'bg-white/10'}`} />}
-                    </div>
-                );
-            })}
-        </div>
-    );
+                    );
+                })}
+            </div>
+        );
+    };
 
     const renderStep1 = () => (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="space-y-6">
@@ -713,7 +751,91 @@ export default function RegistrationClient({ eventId }) {
         </motion.div>
     );
 
-    const renderStep3 = () => (
+    const renderSubmissionStep = () => (
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="space-y-6">
+            <div className="bg-teal/5 border border-teal/20 rounded-xl p-4 sm:p-6 mb-6">
+                <h4 className="flex items-center gap-2 text-teal font-bold uppercase tracking-wider text-xs mb-3">
+                    <Sparkles className="w-4 h-4" /> Submission Requirements
+                </h4>
+                <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
+                    Please provide a brief abstract of your idea and upload your presentation. This helps us evaluate your project before the event.
+                </p>
+            </div>
+
+            <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Project Abstract</label>
+                <textarea
+                    value={abstract}
+                    onChange={(e) => setAbstract(e.target.value)}
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300 min-h-[150px] resize-none"
+                    placeholder="Describe your project idea in 100-200 words..."
+                />
+            </div>
+
+            <div className="space-y-4 pt-4 border-t border-white/10">
+                <div className="flex items-center justify-between">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Presentation Upload</label>
+                    <a
+                        href={event?.samplePpt || "/sample-presentation.pptx"}
+                        download={!event?.samplePpt}
+                        target={event?.samplePpt ? "_blank" : "_self"}
+                        rel={event?.samplePpt ? "noopener noreferrer" : ""}
+                        className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-teal hover:text-teal/80 transition-colors group"
+                    >
+                        <FileText className="w-3 h-3 group-hover:scale-110 transition-transform" />
+                        <span className="border-b border-teal/30 group-hover:border-teal transition-colors">Download Sample PPT</span>
+                    </a>
+                </div>
+
+                <div className="relative group">
+                    <input
+                        type="file"
+                        ref={pptInputRef}
+                        onChange={handlePptChange}
+                        className="hidden"
+                        accept=".ppt,.pptx,.pdf,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => pptInputRef.current?.click()}
+                        className={`w-full py-10 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all duration-500 relative overflow-hidden ${pptFile ? 'border-teal bg-teal/5' : 'border-white/10 hover:border-teal/30 hover:bg-white/[0.03]'}`}
+                    >
+                        {/* Glow Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-tr from-teal/0 via-teal/0 to-teal/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                        {pptFile ? (
+                            <div className="relative z-10 flex flex-col items-center animate-in fade-in zoom-in duration-300">
+                                <div className="w-12 h-12 rounded-full bg-teal/10 flex items-center justify-center mb-3 shadow-[0_0_15px_rgba(45,212,191,0.2)]">
+                                    <CheckCircle className="w-6 h-6 text-teal" />
+                                </div>
+                                <span className="text-teal text-sm font-bold font-mono px-4 text-center truncate w-full max-w-[250px]">{pptFile.name}</span>
+                                <span className="text-[10px] text-teal/50 mt-1 uppercase tracking-widest">Ready for Submission</span>
+                            </div>
+                        ) : (
+                            <div className="relative z-10 flex flex-col items-center">
+                                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-teal/10 transition-all duration-300">
+                                    <Upload className="w-6 h-6 text-white/30 group-hover:text-teal transition-colors" />
+                                </div>
+                                <span className="text-white/60 text-sm font-medium group-hover:text-white transition-colors">Upload Presentation</span>
+                                <span className="text-[10px] text-white/30 mt-1 font-mono">PPT / PPTX / PDF • Max 10MB</span>
+                            </div>
+                        )}
+                    </button>
+                    {pptFile && (
+                        <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setPptFile(null); }}
+                            className="absolute top-3 right-3 p-1.5 rounded-full bg-black/40 text-white/30 hover:text-red-400 hover:bg-black/60 transition-colors backdrop-blur-sm border border-white/5"
+                        >
+                            <X className="w-3 h-3" />
+                        </button>
+                    )}
+                </div>
+            </div >
+        </motion.div >
+    );
+
+    const renderPaymentStep = () => (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="space-y-6">
             {/* Payment Summary */}
             <div className="bg-gradient-to-br from-teal/10 to-black rounded-xl p-6 border border-teal/20 text-center relative overflow-hidden">
@@ -785,54 +907,7 @@ export default function RegistrationClient({ eventId }) {
                     </button>
                 </div>
 
-                {isHackathonOrIdeathon && (
-                    <div className="space-y-4 pt-4 border-t border-white/10">
-                        <div className="flex items-center justify-between">
-                            <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Presentation Upload</label>
-                            <a
-                                href={event?.samplePpt || "/sample-presentation.pptx"}
-                                download={!event?.samplePpt}
-                                target={event?.samplePpt ? "_blank" : "_self"}
-                                rel={event?.samplePpt ? "noopener noreferrer" : ""}
-                                className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-teal hover:text-teal/80 transition-colors"
-                            >
-                                <FileText className="w-3 h-3" /> Download Sample PPT
-                            </a>
-                        </div>
-                        <p className="text-white/40 text-xs leading-relaxed px-1">
-                            Please upload your idea presentation following the sample format. This is mandatory for participation.
-                        </p>
 
-                        <div className="relative group">
-                            <input
-                                type="file"
-                                ref={pptInputRef}
-                                onChange={handlePptChange}
-                                className="hidden"
-                                accept=".ppt,.pptx,.pdf,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => pptInputRef.current?.click()}
-                                className={`w-full py-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all duration-300 ${pptFile ? 'border-teal bg-teal/5' : 'border-white/10 hover:border-teal/30 hover:bg-white/[0.03]'}`}
-                            >
-                                {pptFile ? (
-                                    <>
-                                        <CheckCircle className="w-8 h-8 text-teal mb-2" />
-                                        <span className="text-teal text-sm font-medium px-4 text-center truncate w-full">{pptFile.name}</span>
-                                        <span className="text-xs text-white/30 mt-1">Click to change</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Trophy className="w-8 h-8 text-white/30 mb-2 group-hover:text-teal transition-colors" />
-                                        <span className="text-white/50 text-sm">Upload Presentation</span>
-                                        <span className="text-[10px] text-white/20 mt-1">PPT/PPTX/PDF • Max 10MB</span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                )}
             </div>
         </motion.div>
     );
@@ -1241,9 +1316,14 @@ export default function RegistrationClient({ eventId }) {
                                         </AnimatePresence>
 
                                         <form onSubmit={e => e.preventDefault()} className="flex-1">
-                                            {currentStep === 1 && renderStep1()}
-                                            {currentStep === 2 && renderStep2()}
-                                            {currentStep === 3 && renderStep3()}
+                                            <div className="w-full">
+                                                {currentStep === 1 && renderStep1()}
+                                                {currentStep === 2 && renderStep2()}
+                                                {currentStep === 3 && (isHackathonOrIdeathon ? renderSubmissionStep() : renderPaymentStep())}
+                                                {currentStep === 4 && renderPaymentStep()}
+                                            </div>
+
+
                                         </form>
                                     </>
                                 )}
@@ -1260,7 +1340,7 @@ export default function RegistrationClient({ eventId }) {
                                         </button>
                                     )}
 
-                                    {currentStep < 3 ? (
+                                    {currentStep < (isHackathonOrIdeathon ? 4 : 3) ? (
                                         <button onClick={nextStep} className="flex-1 py-4 rounded-xl bg-gradient-to-r from-teal to-emerald-500 text-black font-bold uppercase tracking-widest text-xs hover:shadow-[0_0_30px_rgba(45,212,191,0.3)] transition-all flex items-center justify-center gap-2 group">
                                             Continue <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                         </button>
