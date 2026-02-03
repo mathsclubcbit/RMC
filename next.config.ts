@@ -4,6 +4,12 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
   serverExternalPackages: ['bcrypt'],
+  experimental: {
+    // Ensure cookies are sent with RSC requests
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },

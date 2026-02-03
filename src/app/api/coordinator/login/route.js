@@ -168,11 +168,17 @@ export async function POST(request) {
                     },
                     setAll(cookiesToSetArray) {
                         // Store cookies to apply to response later
+                        const url = new URL(request.url);
+                        // Use .rmccbit.in for production to work on both www and bare domain
+                        const cookieDomain = process.env.NODE_ENV === 'production' 
+                            ? (url.hostname.includes('rmccbit.in') ? '.rmccbit.in' : url.hostname)
+                            : undefined;
                         cookiesToSet = cookiesToSetArray.map(({ name, value, options }) => ({
                             name,
                             value,
                             options: {
                                 ...options,
+                                domain: cookieDomain,
                                 path: '/',
                                 secure: process.env.NODE_ENV === 'production',
                                 sameSite: 'lax',

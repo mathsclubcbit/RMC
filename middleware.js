@@ -29,6 +29,11 @@ async function verifyJwt(token) {
 }
 
 function createSupabaseMiddlewareClient(request, supabaseResponse) {
+    const url = new URL(request.url);
+    // Use .rmccbit.in for production to work on both www and bare domain
+    const cookieDomain = process.env.NODE_ENV === 'production' 
+        ? (url.hostname.includes('rmccbit.in') ? '.rmccbit.in' : url.hostname)
+        : undefined;
     return createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -42,6 +47,7 @@ function createSupabaseMiddlewareClient(request, supabaseResponse) {
                         request.cookies.set(name, value);
                         supabaseResponse.cookies.set(name, value, {
                             ...options,
+                            domain: cookieDomain,
                             path: '/',
                             secure: process.env.NODE_ENV === 'production',
                             sameSite: 'lax',
