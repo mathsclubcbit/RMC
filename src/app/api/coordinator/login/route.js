@@ -101,25 +101,58 @@ export async function POST(request) {
 
         const coordinatorEmail = `coord-${cleanEventId}@rmccbit.in`;
 
-        const { data: existingUser, error: userLookupError } = await admin.auth.admin.getUserByEmail(coordinatorEmail);
-
-        if (userLookupError) {
-            console.error('[Coordinator Login] Auth lookup error:', userLookupError);
+        let userId;
+        
+        // Try to find existing user by listing users (getUserByEmail doesn't exist in current Supabase JS)
+        let existingUser = null;
+        try {
+            // Use listUsers to find the coordinator user
+            const { data: listData, error: listError } = await admin.auth.admin.listUsers();
+            
+            if (!listError && listData?.users) {
+                existingUser = listData.users.find(u => u.email === coordinatorEmail);
+            }
+        } catch (listErr) {
+            console.error('[Coordinator Login] Error listing users:', listErr);
         }
 
-        if (!existingUser?.user) {
-            await admin.auth.admin.createUser({
+        if (!existingUser) {
+            // Create new coordinator user
+            const { data: newUser, error: createError } = await admin.auth.admin.createUser({
                 email: coordinatorEmail,
                 password: cleanPassword,
                 email_confirm: true,
                 app_metadata: { role: 'coordinator', event_id: cleanEventId }
             });
+            
+            if (createError) {
+                console.error('[Coordinator Login] Failed to create user:', createError);
+                const msg = 'Failed to set up coordinator account. Please try again.';
+                if (isForm) {
+                    return NextResponse.redirect(new URL(`/coordinator/login?error=${encodeURIComponent(msg)}`, request.url));
+                }
+                return NextResponse.json({ error: msg }, { status: 500 });
+            }
+            userId = newUser?.user?.id;
         } else {
-            await admin.auth.admin.updateUserById(existingUser.user.id, {
+            // Update existing user
+            const { error: updateError } = await admin.auth.admin.updateUserById(existingUser.id, {
                 password: cleanPassword,
                 app_metadata: { role: 'coordinator', event_id: cleanEventId }
             });
+            
+            if (updateError) {
+                console.error('[Coordinator Login] Failed to update user:', updateError);
+                const msg = 'Failed to update coordinator account. Please try again.';
+                if (isForm) {
+                    return NextResponse.redirect(new URL(`/coordinator/login?error=${encodeURIComponent(msg)}`, request.url));
+                }
+                return NextResponse.json({ error: msg }, { status: 500 });
+            }
+            userId = existingUser.id;
         }
+        
+        console.log('[Coordinator Login] User ready:', coordinatorEmail, 'ID:', userId);
 
         const response = isForm
             ? NextResponse.redirect(new URL('/coordinator/dashboard', request.url), 303)
@@ -168,12 +201,14 @@ export async function POST(request) {
 
     } catch (error) {
         console.error('[Coordinator Login] Error:', error);
+        console.error('[Coordinator Login] Error stack:', error?.stack);
+        console.error('[Coordinator Login] Error message:', error?.message);
         const msg = 'Internal server error';
         const contentType = request.headers.get('content-type') || '';
         const isForm = contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data');
         if (isForm) {
             return NextResponse.redirect(new URL(`/coordinator/login?error=${encodeURIComponent(msg)}`, request.url));
         }
-        return NextResponse.json({ error: msg }, { status: 500 });
+        return NextResponse.json({ error: msg, details: error?.message }, { status: 500 });
     }
 }

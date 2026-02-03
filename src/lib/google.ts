@@ -38,28 +38,46 @@ const matchesRegistrationId = (storedId: string, wantedId: string): boolean => {
 const getAuthClient = async (): Promise<any> => {
     // 1. Try OAuth 2.0 (User Account - Free 15GB Quota)
     if (process.env.GOOGLE_REFRESH_TOKEN && process.env.GOOGLE_CLIENT_ID) {
-        const oauth2Client = new google.auth.OAuth2(
-            process.env.GOOGLE_CLIENT_ID,
-            process.env.GOOGLE_CLIENT_SECRET,
-            process.env.GOOGLE_REDIRECT_URI || 'https://developers.google.com/oauthplayground'
-        );
+        try {
+            const oauth2Client = new google.auth.OAuth2(
+                process.env.GOOGLE_CLIENT_ID,
+                process.env.GOOGLE_CLIENT_SECRET,
+                process.env.GOOGLE_REDIRECT_URI || 'https://developers.google.com/oauthplayground'
+            );
 
-        oauth2Client.setCredentials({
-            refresh_token: process.env.GOOGLE_REFRESH_TOKEN
-        });
+            oauth2Client.setCredentials({
+                refresh_token: process.env.GOOGLE_REFRESH_TOKEN
+            });
 
-        return oauth2Client;
+            // Test the credentials by getting a new access token
+            const { credentials } = await oauth2Client.refreshAccessToken();
+            oauth2Client.setCredentials(credentials);
+
+            return oauth2Client;
+        } catch (error: any) {
+            console.error('[Google Auth] OAuth refresh token error:', error.message);
+            // If OAuth fails, try service account fallback
+            if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+                console.warn('[Google Auth] OAuth failed, falling back to service account');
+            } else {
+                throw new Error(`Google OAuth token is invalid or expired. Please regenerate the refresh token. Error: ${error.message}`);
+            }
+        }
     }
 
     // 2. Fallback to Service Account (0GB Quota unless billed)
     if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
-        const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
-        const auth = new google.auth.GoogleAuth({
-            credentials,
-            scopes: SCOPES,
-        });
-        const client = await auth.getClient();
-        return client;
+        try {
+            const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+            const auth = new google.auth.GoogleAuth({
+                credentials,
+                scopes: SCOPES,
+            });
+            const client = await auth.getClient();
+            return client;
+        } catch (error: any) {
+            throw new Error(`Google Service Account authentication failed: ${error.message}`);
+        }
     }
 
     throw new Error('Missing Google Credentials: Set GOOGLE_REFRESH_TOKEN (User) or GOOGLE_SERVICE_ACCOUNT_JSON (Service Account)');
