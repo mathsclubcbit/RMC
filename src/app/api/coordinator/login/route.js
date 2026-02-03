@@ -173,9 +173,16 @@ export async function POST(request) {
                         return request.cookies.getAll();
                     },
                     setAll(cookiesToSet) {
-                        cookiesToSet.forEach(({ name, value, options }) =>
-                            response.cookies.set(name, value, options)
-                        );
+                        cookiesToSet.forEach(({ name, value, options }) => {
+                            // Ensure cookies work in production (Vercel)
+                            response.cookies.set(name, value, {
+                                ...options,
+                                path: '/',
+                                secure: process.env.NODE_ENV === 'production',
+                                sameSite: 'lax',
+                                httpOnly: true
+                            });
+                        });
                     },
                 },
             }

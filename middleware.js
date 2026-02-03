@@ -40,7 +40,12 @@ function createSupabaseMiddlewareClient(request, supabaseResponse) {
                 setAll(cookiesToSet) {
                     cookiesToSet.forEach(({ name, value, options }) => {
                         request.cookies.set(name, value);
-                        supabaseResponse.cookies.set(name, value, options);
+                        supabaseResponse.cookies.set(name, value, {
+                            ...options,
+                            path: '/',
+                            secure: process.env.NODE_ENV === 'production',
+                            sameSite: 'lax',
+                        });
                     });
                 },
             },
@@ -93,7 +98,10 @@ export async function middleware(request) {
     if (request.nextUrl.pathname.startsWith('/coordinator')) {
         const isLoginPage = request.nextUrl.pathname === '/coordinator/login';
         const supabase = createSupabaseMiddlewareClient(request, supabaseResponse);
-        const { data: { user } } = await supabase.auth.getUser();
+        
+        // Refresh session to ensure cookies are fresh
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
         const isLoggedIn = user?.app_metadata?.role === 'coordinator' && !!user?.app_metadata?.event_id;
         const authReason = !user ? 'missing-token' : (isLoggedIn ? 'ok' : 'invalid-token');
 
@@ -102,6 +110,14 @@ export async function middleware(request) {
             url.pathname = '/coordinator/login';
             const res = NextResponse.redirect(url);
             res.headers.set('x-coordinator-auth', authReason);
+            // Copy cookies from supabaseResponse to ensure session is preserved
+            supabaseResponse.cookies.getAll().forEach(cookie => {
+                res.cookies.set(cookie.name, cookie.value, {
+                    path: '/',
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax',
+                });
+            });
             return res;
         }
 
@@ -110,8 +126,19 @@ export async function middleware(request) {
             url.pathname = '/coordinator/dashboard';
             const res = NextResponse.redirect(url);
             res.headers.set('x-coordinator-auth', 'ok');
+            // Copy cookies to maintain session
+            supabaseResponse.cookies.getAll().forEach(cookie => {
+                res.cookies.set(cookie.name, cookie.value, {
+                    path: '/',
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax',
+                });
+            });
             return res;
         }
+        
+        // Return the response with refreshed cookies
+        return supabaseResponse;
     }
 
     // ==========================================
