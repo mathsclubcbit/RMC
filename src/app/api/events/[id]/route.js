@@ -123,8 +123,8 @@ export async function PUT(request, { params }) {
             const posterDesktopFile = form.get('posterDesktopFile');
             if (posterDesktopFile instanceof File && posterDesktopFile.size > 0) files.posterDesktopFile = posterDesktopFile;
 
-            const posterMobileFile = form.get('posterMobileFile');
-            if (posterMobileFile instanceof File && posterMobileFile.size > 0) files.posterMobileFile = posterMobileFile;
+            const samplePptFile = form.get('samplePptFile');
+            if (samplePptFile instanceof File && samplePptFile.size > 0) files.samplePptFile = samplePptFile;
         } else {
             patch = await request.json();
         }
@@ -211,9 +211,9 @@ export async function PUT(request, { params }) {
             const url = await uploadOne(files.posterDesktopFile, 'posterDesktop');
             if (url) next.posterDesktop = url;
         }
-        if (files.posterMobileFile) {
-            const url = await uploadOne(files.posterMobileFile, 'posterMobile');
-            if (url) next.posterMobile = url;
+        if (files.samplePptFile) {
+            const url = await uploadOne(files.samplePptFile, 'samplePpt');
+            if (url) next.samplePpt = url;
         }
 
         const { data: updated, error } = await supabase

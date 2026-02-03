@@ -36,6 +36,8 @@ export async function POST(req: NextRequest) {
         const teamMembersStr = formData.get('teamMembers') as string | null; // Optional team members
         const teamSizeStr = formData.get('teamSize') as string | null;
 
+        const pptFile = formData.get('ppt') as File | null;
+
         // 1. Validation
         if (!eventId || !eventName || !name || !email || !phone || !rollNo || !department || !utrId || !screenshot) {
             return NextResponse.json({ error: 'Missing required fields or file.' }, { status: 400 });
@@ -52,15 +54,15 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Roll Number must be exactly 12 digits.' }, { status: 400 });
         }
 
-        // Validate File Size (3MB)
+        // Validate File Size (3MB for Screenshot)
         if (screenshot.size > 3 * 1024 * 1024) {
-            return NextResponse.json({ error: 'File size too large. Max 3MB.' }, { status: 400 });
+            return NextResponse.json({ error: 'Screenshot file size too large. Max 3MB.' }, { status: 400 });
         }
 
-        // Validate File Type
+        // Validate Screenshot File Type
         const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
         if (!validTypes.includes(screenshot.type)) {
-            return NextResponse.json({ error: 'Invalid file type. Only JPEG, PNG, and PDF allowed.' }, { status: 400 });
+            return NextResponse.json({ error: 'Invalid screenshot file type. Only JPEG, PNG, and PDF allowed.' }, { status: 400 });
         }
 
         const normalizedUTR = utrId.trim().toUpperCase();
@@ -102,49 +104,78 @@ export async function POST(req: NextRequest) {
         };
 
         let expectedAmount = parseAmount(amountFromClient);
+        let isHackathonOrIdeathon = false;
 
         try {
             const supabase = createAdminClient();
             const { data: eventRow, error: eventError } = await supabase
                 .from('events')
-                .select('payload')
+                .select('payload, event_type, category')
                 .eq('id', String(eventId))
                 .single();
 
-            if (!eventError && eventRow?.payload) {
-                const payload = eventRow.payload as EventPayload;
+            if (!eventError && eventRow) {
+                // Check if event is Hackathon or Ideathon
+                const row = eventRow as any;
+                const eType = row.event_type || row.eventType || '';
+                const eCat = row.category || '';
+                isHackathonOrIdeathon =
+                    eType === 'Hackathon' || eType === 'Ideathon' ||
+                    eCat === 'Hackathon' || eCat === 'Ideathon';
 
-                const legacyTeamSize = Number(payload?.teamSize);
-                const minTeamSize = Number(payload?.minTeamSize);
-                const maxTeamSize = Number(payload?.maxTeamSize);
+                const payload = row.payload as EventPayload;
 
-                const resolvedMin = Number.isFinite(minTeamSize) && minTeamSize > 0
-                    ? minTeamSize
-                    : (Number.isFinite(legacyTeamSize) && legacyTeamSize > 0 ? legacyTeamSize : 1);
-
-                const resolvedMax = Number.isFinite(maxTeamSize) && maxTeamSize > 0
-                    ? maxTeamSize
-                    : (Number.isFinite(legacyTeamSize) && legacyTeamSize > 0 ? legacyTeamSize : resolvedMin);
-
-                if (computedTeamSize < resolvedMin) {
-                    return NextResponse.json({ error: 'TEAM_SIZE_TOO_SMALL', minTeamSize: resolvedMin }, { status: 400 });
-                }
-                if (computedTeamSize > resolvedMax) {
-                    return NextResponse.json({ error: 'TEAM_SIZE_TOO_LARGE', maxTeamSize: resolvedMax }, { status: 400 });
-                }
-
-                if (Boolean(payload?.variablePricingEnabled)) {
-                    const tiersRaw = Array.isArray(payload?.pricingTiers) ? (payload.pricingTiers as unknown[]) : [];
-                    const tiers: PricingTier[] = tiersRaw.filter((t) => typeof t === 'object' && t !== null) as PricingTier[];
-                    const tier = tiers.find((t) => Number(t?.teamSize) === computedTeamSize);
-                    const price = parseAmount(tier?.price);
-                    if (!Number.isFinite(price) || price < 0) {
-                        return NextResponse.json({ error: 'PRICE_NOT_CONFIGURED', teamSize: computedTeamSize }, { status: 400 });
+                // If Hackathon/Ideathon, validate PPT
+                if (isHackathonOrIdeathon) {
+                    if (!pptFile) {
+                        return NextResponse.json({ error: 'Presentation file (PPT/PDF) is required for this event.' }, { status: 400 });
                     }
-                    expectedAmount = price;
-                } else {
-                    const fee = parseAmount(payload?.registrationFee);
-                    expectedAmount = Number.isFinite(fee) && fee >= 0 ? fee : 0;
+                    if (pptFile.size > 10 * 1024 * 1024) { // 10MB limit for PPT
+                        return NextResponse.json({ error: 'Presentation file size too large. Max 10MB.' }, { status: 400 });
+                    }
+
+                    const pptName = pptFile.name.toLowerCase();
+                    const validExtensions = ['.pdf', '.ppt', '.pptx'];
+                    const hasValidExt = validExtensions.some(ext => pptName.endsWith(ext));
+
+                    if (!hasValidExt) {
+                        return NextResponse.json({ error: 'Invalid presentation file type. Only PPT, PPTX, and PDF allowed.' }, { status: 400 });
+                    }
+                }
+
+                if (payload) {
+                    const legacyTeamSize = Number(payload?.teamSize);
+                    const minTeamSize = Number(payload?.minTeamSize);
+                    const maxTeamSize = Number(payload?.maxTeamSize);
+
+                    const resolvedMin = Number.isFinite(minTeamSize) && minTeamSize > 0
+                        ? minTeamSize
+                        : (Number.isFinite(legacyTeamSize) && legacyTeamSize > 0 ? legacyTeamSize : 1);
+
+                    const resolvedMax = Number.isFinite(maxTeamSize) && maxTeamSize > 0
+                        ? maxTeamSize
+                        : (Number.isFinite(legacyTeamSize) && legacyTeamSize > 0 ? legacyTeamSize : resolvedMin);
+
+                    if (computedTeamSize < resolvedMin) {
+                        return NextResponse.json({ error: 'TEAM_SIZE_TOO_SMALL', minTeamSize: resolvedMin }, { status: 400 });
+                    }
+                    if (computedTeamSize > resolvedMax) {
+                        return NextResponse.json({ error: 'TEAM_SIZE_TOO_LARGE', maxTeamSize: resolvedMax }, { status: 400 });
+                    }
+
+                    if (Boolean(payload?.variablePricingEnabled)) {
+                        const tiersRaw = Array.isArray(payload?.pricingTiers) ? (payload.pricingTiers as unknown[]) : [];
+                        const tiers: PricingTier[] = tiersRaw.filter((t) => typeof t === 'object' && t !== null) as PricingTier[];
+                        const tier = tiers.find((t) => Number(t?.teamSize) === computedTeamSize);
+                        const price = parseAmount(tier?.price);
+                        if (!Number.isFinite(price) || price < 0) {
+                            return NextResponse.json({ error: 'PRICE_NOT_CONFIGURED', teamSize: computedTeamSize }, { status: 400 });
+                        }
+                        expectedAmount = price;
+                    } else {
+                        const fee = parseAmount(payload?.registrationFee);
+                        expectedAmount = Number.isFinite(fee) && fee >= 0 ? fee : 0;
+                    }
                 }
             }
         } catch (err) {
@@ -179,6 +210,15 @@ export async function POST(req: NextRequest) {
         const fileName = `${eventId}_${name}_${normalizedUTR}.${fileExtension}`;
 
         const driveFile = await uploadToDrive(buffer, screenshot.type, fileName, eventFolderId);
+
+        // 3b. Upload PPT if applicable
+        let pptDriveFile: any = null;
+        if (isHackathonOrIdeathon && pptFile) {
+            const pptBuffer = Buffer.from(await pptFile.arrayBuffer());
+            const pptExt = pptFile.name.split('.').pop() || 'pptx';
+            const pptName = `${eventId}_${name}_PPT.${pptExt}`;
+            pptDriveFile = await uploadToDrive(pptBuffer, pptFile.type, pptName, eventFolderId);
+        }
 
         // 4. Append to Google Sheet
         // Generate a 6-digit ticket code (stored as Registration ID) and ensure it is unique.
@@ -215,7 +255,8 @@ export async function POST(req: NextRequest) {
             '', // Column O - checkedInAt (empty initially)
             teamMembersStr || '', // Column P - Team Members JSON
             '', // Column Q - Member Attendance (empty initially)
-            phone // Column R - Phone Number
+            phone, // Column R - Phone Number
+            pptDriveFile?.webViewLink || '' // Column S - PPT Link
         ];
 
         await appendRowToSheet(spreadsheetId, rowData);

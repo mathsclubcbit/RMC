@@ -225,7 +225,8 @@ const defaultEvent = {
     password: "",
     img: "",
     posterDesktop: "",
-    posterMobile: "",
+    posterDesktop: "",
+    samplePpt: "",
     qrCode: "",
     teamSize: "",
     minTeamSize: "",
@@ -288,7 +289,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
     });
     const [imgFile, setImgFile] = useState(null);
     const [posterDesktopFile, setPosterDesktopFile] = useState(null);
-    const [posterMobileFile, setPosterMobileFile] = useState(null);
+    const [samplePptFile, setSamplePptFile] = useState(null);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -379,7 +380,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
             form.append("payload", JSON.stringify(payload));
             if (imgFile) form.append("imgFile", imgFile);
             if (posterDesktopFile) form.append("posterDesktopFile", posterDesktopFile);
-            if (posterMobileFile) form.append("posterMobileFile", posterMobileFile);
+            if (samplePptFile) form.append("samplePptFile", samplePptFile);
 
             const res = await fetch(url, { method, body: form });
             const data = await res.json().catch(() => ({}));
@@ -413,7 +414,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
             // Clear files
             setImgFile(null);
             setPosterDesktopFile(null);
-            setPosterMobileFile(null);
+            setSamplePptFile(null);
 
         } catch (err) {
             setError(err?.message || "Failed to save");
@@ -758,12 +759,6 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                                 <input type="file" accept="image/*" onChange={(e) => setPosterDesktopFile(e.target.files?.[0])} className="text-sm text-white/60" />
                             </div>
                         </Field>
-                        <Field label="Mobile Poster" hint="Vertical banner.">
-                            <div className="flex flex-col gap-3">
-                                <input value={event.posterMobile || ""} onChange={(e) => setField("posterMobile", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/poster-m.jpg" />
-                                <input type="file" accept="image/*" onChange={(e) => setPosterMobileFile(e.target.files?.[0])} className="text-sm text-white/60" />
-                            </div>
-                        </Field>
                     </div>
                 );
             }
@@ -787,10 +782,15 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                                 <input type="file" accept="image/*" onChange={(e) => setPosterDesktopFile(e.target.files?.[0])} className="text-sm text-white/60" />
                             </div>
                         </Field>
-                        <Field label="Mobile Poster" hint="Vertical banner.">
+                        <Field label="Sample Presentation" hint="PPT/PDF for participants.">
                             <div className="flex flex-col gap-3">
-                                <input value={event.posterMobile || ""} onChange={(e) => setField("posterMobile", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/poster-m.jpg" />
-                                <input type="file" accept="image/*" onChange={(e) => setPosterMobileFile(e.target.files?.[0])} className="text-sm text-white/60" />
+                                <input value={event.samplePpt || ""} onChange={(e) => setField("samplePpt", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/sample.pptx" />
+                                <input
+                                    type="file"
+                                    accept=".ppt,.pptx,.pdf"
+                                    onChange={(e) => setSamplePptFile(e.target.files?.[0])}
+                                    className="text-sm text-white/60 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-white/10 file:text-white hover:file:bg-white/20"
+                                />
                             </div>
                         </Field>
                     </div>

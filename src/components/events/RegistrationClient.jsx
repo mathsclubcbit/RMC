@@ -25,6 +25,7 @@ export default function RegistrationClient({ eventId }) {
     });
     const [teamMembers, setTeamMembers] = useState([]);
     const [screenshot, setScreenshot] = useState(null);
+    const [pptFile, setPptFile] = useState(null);
 
     // Submission State
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,6 +43,7 @@ export default function RegistrationClient({ eventId }) {
     });
 
     const fileInputRef = useRef(null);
+    const pptInputRef = useRef(null);
 
     const isHackathonOrIdeathon = event?.eventType === 'Hackathon' || event?.eventType === 'Ideathon' || event?.category === 'Hackathon' || event?.category === 'Ideathon';
 
@@ -158,6 +160,12 @@ export default function RegistrationClient({ eventId }) {
         }
     };
 
+    const handlePptChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            setPptFile(e.target.files[0]);
+        }
+    };
+
     const validateStep = (step) => {
         setErrorMessage("");
 
@@ -216,6 +224,10 @@ export default function RegistrationClient({ eventId }) {
                 setErrorMessage("Please upload the payment screenshot.");
                 return false;
             }
+            if (isHackathonOrIdeathon && !pptFile) {
+                setErrorMessage("Please upload your presentation (PPT/PDF).");
+                return false;
+            }
             return true;
         }
         return true;
@@ -268,6 +280,9 @@ export default function RegistrationClient({ eventId }) {
             }
             data.append('teamSize', String(currentTeamSize));
             data.append('screenshot', screenshot);
+            if (pptFile) {
+                data.append('ppt', pptFile);
+            }
 
             const response = await fetch('/api/register', {
                 method: 'POST',
@@ -457,6 +472,20 @@ export default function RegistrationClient({ eventId }) {
                             </li>
                         ))}
                     </ul>
+                    {isHackathonOrIdeathon && (
+                        <div className="mt-4 pt-4 border-t border-white/10">
+                            <a
+                                href={event?.samplePpt || "/sample-presentation.pptx"}
+                                download={!event?.samplePpt}
+                                target={event?.samplePpt ? "_blank" : "_self"}
+                                rel={event?.samplePpt ? "noopener noreferrer" : ""}
+                                className="flex items-center gap-2 text-teal hover:text-teal/80 transition-colors text-sm font-medium w-max"
+                            >
+                                <FileText className="w-4 h-4" />
+                                Download Sample Presentation Format
+                            </a>
+                        </div>
+                    )}
                 </section>
             )}
 
@@ -739,6 +768,55 @@ export default function RegistrationClient({ eventId }) {
                         )}
                     </button>
                 </div>
+
+                {isHackathonOrIdeathon && (
+                    <div className="space-y-4 pt-4 border-t border-white/10">
+                        <div className="flex items-center justify-between">
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Presentation Upload</label>
+                            <a
+                                href={event?.samplePpt || "/sample-presentation.pptx"}
+                                download={!event?.samplePpt}
+                                target={event?.samplePpt ? "_blank" : "_self"}
+                                rel={event?.samplePpt ? "noopener noreferrer" : ""}
+                                className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-teal hover:text-teal/80 transition-colors"
+                            >
+                                <FileText className="w-3 h-3" /> Download Sample PPT
+                            </a>
+                        </div>
+                        <p className="text-white/40 text-xs leading-relaxed px-1">
+                            Please upload your idea presentation following the sample format. This is mandatory for participation.
+                        </p>
+
+                        <div className="relative group">
+                            <input
+                                type="file"
+                                ref={pptInputRef}
+                                onChange={handlePptChange}
+                                className="hidden"
+                                accept=".ppt,.pptx,.pdf,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => pptInputRef.current?.click()}
+                                className={`w-full py-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all duration-300 ${pptFile ? 'border-teal bg-teal/5' : 'border-white/10 hover:border-teal/30 hover:bg-white/[0.03]'}`}
+                            >
+                                {pptFile ? (
+                                    <>
+                                        <CheckCircle className="w-8 h-8 text-teal mb-2" />
+                                        <span className="text-teal text-sm font-medium px-4 text-center truncate w-full">{pptFile.name}</span>
+                                        <span className="text-xs text-white/30 mt-1">Click to change</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trophy className="w-8 h-8 text-white/30 mb-2 group-hover:text-teal transition-colors" />
+                                        <span className="text-white/50 text-sm">Upload Presentation</span>
+                                        <span className="text-[10px] text-white/20 mt-1">PPT/PPTX/PDF • Max 10MB</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </motion.div>
     );

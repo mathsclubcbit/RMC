@@ -98,54 +98,7 @@ export async function middleware(request) {
         }
     }
 
-    // ==========================================
-    // 0.5. COORDINATOR SESSION PROTECTION
-    // ==========================================
-    if (request.nextUrl.pathname.startsWith('/coordinator')) {
-        const isLoginPage = request.nextUrl.pathname === '/coordinator/login';
-        const supabase = createSupabaseMiddlewareClient(request, supabaseResponse);
-        
-        // Refresh session to ensure cookies are fresh
-        const { data: { user }, error } = await supabase.auth.getUser();
-        
-        const isLoggedIn = user?.app_metadata?.role === 'coordinator' && !!user?.app_metadata?.event_id;
-        const authReason = !user ? 'missing-token' : (isLoggedIn ? 'ok' : 'invalid-token');
-
-        if (!isLoginPage && !isLoggedIn) {
-            const url = request.nextUrl.clone();
-            url.pathname = '/coordinator/login';
-            const res = NextResponse.redirect(url);
-            res.headers.set('x-coordinator-auth', authReason);
-            // Copy cookies from supabaseResponse to ensure session is preserved
-            supabaseResponse.cookies.getAll().forEach(cookie => {
-                res.cookies.set(cookie.name, cookie.value, {
-                    path: '/',
-                    secure: process.env.NODE_ENV === 'production',
-                    sameSite: 'lax',
-                });
-            });
-            return res;
-        }
-
-        if (isLoginPage && isLoggedIn) {
-            const url = request.nextUrl.clone();
-            url.pathname = '/coordinator/dashboard';
-            const res = NextResponse.redirect(url);
-            res.headers.set('x-coordinator-auth', 'ok');
-            // Copy cookies to maintain session
-            supabaseResponse.cookies.getAll().forEach(cookie => {
-                res.cookies.set(cookie.name, cookie.value, {
-                    path: '/',
-                    secure: process.env.NODE_ENV === 'production',
-                    sameSite: 'lax',
-                });
-            });
-            return res;
-        }
-        
-        // Return the response with refreshed cookies
-        return supabaseResponse;
-    }
+    // Coordinator routes use page-level auth checks instead of middleware
 
     // ==========================================
     // 1. RATE LIMITING FOR API ROUTES

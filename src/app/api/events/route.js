@@ -103,8 +103,8 @@ export async function POST(request) {
             const posterDesktopFile = form.get('posterDesktopFile');
             if (posterDesktopFile instanceof File && posterDesktopFile.size > 0) files.posterDesktopFile = posterDesktopFile;
 
-            const posterMobileFile = form.get('posterMobileFile');
-            if (posterMobileFile instanceof File && posterMobileFile.size > 0) files.posterMobileFile = posterMobileFile;
+            const samplePptFile = form.get('samplePptFile');
+            if (samplePptFile instanceof File && samplePptFile.size > 0) files.samplePptFile = samplePptFile;
         } else {
             payload = await request.json();
         }
@@ -198,13 +198,13 @@ export async function POST(request) {
             const url = await uploadOne(files.posterDesktopFile, 'posterDesktop');
             if (url) patchedEvent.posterDesktop = url;
         }
-        if (files.posterMobileFile) {
-            const url = await uploadOne(files.posterMobileFile, 'posterMobile');
-            if (url) patchedEvent.posterMobile = url;
+        if (files.samplePptFile) {
+            const url = await uploadOne(files.samplePptFile, 'samplePpt');
+            if (url) patchedEvent.samplePpt = url;
         }
 
         // If any uploads succeeded (or attempted), persist patched payload.
-        const anyUploadAttempted = Boolean(files.imgFile || files.posterDesktopFile || files.posterMobileFile);
+        const anyUploadAttempted = Boolean(files.imgFile || files.posterDesktopFile || files.samplePptFile);
         if (anyUploadAttempted) {
             await supabase
                 .from('events')
