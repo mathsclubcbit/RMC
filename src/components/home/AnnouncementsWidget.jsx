@@ -43,7 +43,11 @@ export default function AnnouncementsWidget() {
             try {
                 const res = await fetch('/api/announcements');
                 const data = await res.json();
-                setAnnouncements(data);
+                if (Array.isArray(data)) {
+                    setAnnouncements(data);
+                } else {
+                    setAnnouncements([]);
+                }
             } catch (error) {
                 console.error("Failed to load announcements", error);
             } finally {

@@ -223,6 +223,9 @@ export async function POST(req: NextRequest) {
         }
 
         // 4. Append to Google Sheet
+        const { ensureRegistrationSheet } = await import('@/lib/google');
+        await ensureRegistrationSheet(spreadsheetId);
+
         // Generate a 6-digit ticket code (stored as Registration ID) and ensure it is unique.
         let registrationId = '';
         for (let attempt = 0; attempt < 10; attempt++) {
@@ -239,27 +242,50 @@ export async function POST(req: NextRequest) {
         const timestamp = new Date().toISOString();
         const status = 'PENDING';
 
+        /*
+            New Optimized Column Structure (A-T):
+            A: Timestamp
+            B: Ticket Code
+            C: Event Name
+            D: Name
+            E: Email
+            F: Phone
+            G: Roll No
+            H: Department
+            I: Team Members (JSON)
+            J: UTR ID
+            K: Amount
+            L: Status
+            M: Screenshot Link
+            N: Abstract
+            O: PPT Link
+            P: Check-In Time
+            Q: Member Attendance
+            R: Event ID
+            S: File ID
+            T: Download Link
+        */
         const rowData = [
-            timestamp,
-            registrationId,
-            eventId,
-            eventName,
-            name,
-            email,
-            rollNo,
-            department,
-            normalizedUTR,
-            String(expectedAmount),
-            driveFile.id || '',
-            driveFile.webViewLink || '',
-            driveFile.webContentLink || '',
-            status,
-            '', // Column O - checkedInAt (empty initially)
-            teamMembersStr || '', // Column P - Team Members JSON
-            '', // Column Q - Member Attendance (empty initially)
-            phone, // Column R - Phone Number
-            pptDriveFile?.webViewLink || '', // Column S - PPT Link
-            abstract || '' // Column T - Abstract
+            timestamp,              // A
+            registrationId,         // B
+            eventName,              // C
+            name,                   // D
+            email,                  // E
+            phone,                  // F
+            rollNo,                 // G
+            department,             // H
+            teamMembersStr || '',   // I
+            normalizedUTR,          // J
+            String(expectedAmount), // K
+            status,                 // L
+            driveFile.webViewLink || '', // M
+            abstract || '',         // N
+            pptDriveFile?.webViewLink || '', // O
+            '',                     // P (Check-In)
+            '',                     // Q (Member Attendance)
+            eventId,                // R
+            driveFile.id || '',     // S
+            driveFile.webContentLink || '' // T
         ];
 
         await appendRowToSheet(spreadsheetId, rowData);

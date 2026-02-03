@@ -18,7 +18,8 @@ export async function GET() {
 
         const data = await getAnnouncements(SPREADSHEET_ID);
         return NextResponse.json(data);
-    } catch {
-        return NextResponse.json({ error: 'Failed to fetch announcements' }, { status: 500 });
+    } catch (error) {
+        console.error('Announcements API Error:', error);
+        return NextResponse.json([], { status: 200 });
     }
 }

@@ -93,7 +93,7 @@ function StagesBuilder({ stages, onChange }) {
                         type="date"
                         value={stage.date || ""}
                         onChange={(e) => updateStage(idx, "date", e.target.value)}
-                        className="w-full px-4 py-2 rounded-lg bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
+                        className="w-full px-4 py-2 rounded-lg bg-black/40 border border-white/10 outline-none focus:border-teal-400/50 [color-scheme:dark]"
                     />
                     <textarea
                         value={stage.description || ""}
@@ -568,7 +568,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                                             setField("startDate", e.target.value);
                                             setField("date", e.target.value);
                                         }}
-                                        className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
+                                        className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50 [color-scheme:dark]"
                                     />
                                 </Field>
                                 <Field label="Start Time">
@@ -576,7 +576,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                                         type="time"
                                         value={event.startTime || ""}
                                         onChange={(e) => setField("startTime", e.target.value)}
-                                        className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
+                                        className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50 [color-scheme:dark]"
                                     />
                                 </Field>
                                 <Field label="End Time">
@@ -584,17 +584,17 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                                         type="time"
                                         value={event.endTime || ""}
                                         onChange={(e) => setField("endTime", e.target.value)}
-                                        className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
+                                        className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50 [color-scheme:dark]"
                                     />
                                 </Field>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <Field label="Start Date">
-                                    <input type="date" value={event.startDate || ""} onChange={(e) => setField("startDate", e.target.value)} className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 focus:border-teal-400/50 outline-none" />
+                                    <input type="date" value={event.startDate || ""} onChange={(e) => setField("startDate", e.target.value)} className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 focus:border-teal-400/50 outline-none [color-scheme:dark]" />
                                 </Field>
                                 <Field label="End Date">
-                                    <input type="date" value={event.endDate || ""} onChange={(e) => setField("endDate", e.target.value)} className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 focus:border-teal-400/50 outline-none" />
+                                    <input type="date" value={event.endDate || ""} onChange={(e) => setField("endDate", e.target.value)} className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 focus:border-teal-400/50 outline-none [color-scheme:dark]" />
                                 </Field>
                             </div>
                         )}
@@ -609,10 +609,10 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                 <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <Field label="Reg Start Date">
-                            <input type="date" value={event.regStartDate || ""} onChange={(e) => setField("regStartDate", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-teal-400/50 outline-none" />
+                            <input type="date" value={event.regStartDate || ""} onChange={(e) => setField("regStartDate", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-teal-400/50 outline-none [color-scheme:dark]" />
                         </Field>
                         <Field label="Reg End Date">
-                            <input type="date" value={event.regEndDate || ""} onChange={(e) => setField("regEndDate", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-teal-400/50 outline-none" />
+                            <input type="date" value={event.regEndDate || ""} onChange={(e) => setField("regEndDate", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-teal-400/50 outline-none [color-scheme:dark]" />
                         </Field>
                     </div>
 

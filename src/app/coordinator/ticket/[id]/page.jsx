@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { XCircle } from "lucide-react";
 import { unstable_noStore as noStore } from 'next/cache';
-import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { jwtVerify } from "jose";
 
 import { getRegistrationById } from "@/lib/google";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -14,15 +15,30 @@ import { TicketExpiredView } from "@/components/ticket-expired-view";
 // Prevent Vercel from caching this page's auth state
 export const dynamic = 'force-dynamic';
 
-async function getCoordinatorEventId() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+const getJwtSecret = () => {
+    const rawSecret = process.env.JWT_SECRET;
+    if (!rawSecret) return null;
+    return new TextEncoder().encode(rawSecret);
+};
 
-    if (!user || user?.app_metadata?.role !== 'coordinator' || !user?.app_metadata?.event_id) {
+async function getCoordinatorEventId() {
+    try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('coordinator_token')?.value;
+        if (!token) return null;
+
+        const secret = getJwtSecret();
+        if (!secret) return null;
+
+        const { payload } = await jwtVerify(token, secret);
+        if (payload.type !== 'coordinator' || !payload.eventId) {
+            return null;
+        }
+
+        return payload.eventId;
+    } catch {
         return null;
     }
-
-    return user.app_metadata.event_id;
 }
 
 export default async function CoordinatorTicketPage({ params }) {
