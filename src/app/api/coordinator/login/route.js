@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import bcrypt from 'bcrypt';
-import { createServerClient } from '@supabase/ssr';
+import { SignJWT } from 'jose';
 
 export const runtime = 'nodejs';
+
+const getJwtSecret = () => {
+    const rawSecret = process.env.JWT_SECRET;
+    if (!rawSecret) {
+        throw new Error('JWT_SECRET is not set');
+    }
+    return new TextEncoder().encode(rawSecret);
+};
 
 export async function POST(request) {
     try {
@@ -154,61 +162,21 @@ export async function POST(request) {
         
         console.log('[Coordinator Login] User ready:', coordinatorEmail, 'ID:', userId);
 
-        // Create response object that will hold our cookies
-        let cookiesToSet = [];
-
-        // Create Supabase client with cookie handler
-        const routeSupabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-            {
-                cookies: {
-                    getAll() {
-                        return request.cookies.getAll();
-                    },
-                    setAll(cookiesToSetArray) {
-                        // Store cookies to apply to response later
-                        const url = new URL(request.url);
-                        // Use .rmccbit.in for production to work on both www and bare domain
-                        const cookieDomain = process.env.NODE_ENV === 'production' 
-                            ? (url.hostname.includes('rmccbit.in') ? '.rmccbit.in' : url.hostname)
-                            : undefined;
-                        cookiesToSet = cookiesToSetArray.map(({ name, value, options }) => ({
-                            name,
-                            value,
-                            options: {
-                                ...options,
-                                domain: cookieDomain,
-                                path: '/',
-                                secure: process.env.NODE_ENV === 'production',
-                                sameSite: 'lax',
-                                httpOnly: true,
-                                maxAge: options.maxAge || 60 * 60 * 24 * 7 // 7 days default
-                            }
-                        }));
-                    },
-                },
-            }
-        );
-
-        // Sign in to create session and trigger cookie generation
-        const { error: signInError } = await routeSupabase.auth.signInWithPassword({
+        // Create JWT token for coordinator session
+        const token = await new SignJWT({
+            type: 'coordinator',
+            eventId: cleanEventId,
             email: coordinatorEmail,
-            password: cleanPassword
-        });
+            userId: userId,
+        })
+            .setProtectedHeader({ alg: 'HS256' })
+            .setExpirationTime('7d')
+            .setIssuedAt()
+            .sign(getJwtSecret());
 
-        if (signInError) {
-            console.error('[Coordinator Login] Supabase sign-in error:', signInError);
-            const msg = 'Authentication failed. Please try again.';
-            if (isForm) {
-                return NextResponse.redirect(new URL(`/coordinator/login?error=${encodeURIComponent(msg)}`, request.url));
-            }
-            return NextResponse.json({ error: msg }, { status: 401 });
-        }
+        console.log('[Coordinator Login] Success for event:', event.title);
 
-        console.log('[Coordinator Login] Success for event:', event.title, '- Setting', cookiesToSet.length, 'cookies');
-
-        // NOW create the response with all cookies
+        // Create response
         const response = isForm
             ? NextResponse.redirect(new URL('/coordinator/dashboard', request.url), 303)
             : NextResponse.json({
@@ -219,9 +187,13 @@ export async function POST(request) {
                 }
             });
 
-        // Apply all cookies to response
-        cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
+        // Set simple JWT cookie
+        response.cookies.set('coordinator_token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 7, // 7 days
         });
 
         return response;

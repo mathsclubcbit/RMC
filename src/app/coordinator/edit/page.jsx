@@ -1,20 +1,45 @@
 import { redirect } from "next/navigation";
-import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import EventForm from "@/app/admin/events/EventForm";
 import { unstable_noStore as noStore } from 'next/cache';
+import { cookies } from "next/headers";
+import { jwtVerify } from "jose";
 
 // Prevent Vercel from caching this page's auth state
 export const dynamic = 'force-dynamic';
 
-async function getCoordinatorEventId() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+const getJwtSecret = () => {
+    const rawSecret = process.env.JWT_SECRET;
+    if (!rawSecret) return null;
+    return new TextEncoder().encode(rawSecret);
+};
 
-    if (!user || user?.app_metadata?.role !== 'coordinator' || !user?.app_metadata?.event_id) {
+async function verifyCoordinatorToken() {
+    try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('coordinator_token')?.value;
+        if (!token) return null;
+        
+        const secret = getJwtSecret();
+        if (!secret) return null;
+        
+        const { payload } = await jwtVerify(token, secret);
+        if (payload.type === 'coordinator' && payload.eventId) {
+            return payload;
+        }
+        return null;
+    } catch {
+        return null;
+    }
+}
+
+async function getCoordinatorEventId() {
+    const coordinator = await verifyCoordinatorToken();
+    if (!coordinator) {
         return null;
     }
 
-    return user.app_metadata.event_id;
+    return coordinator.eventId;
 }
 
 export default async function CoordinatorEditPage() {

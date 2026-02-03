@@ -1,20 +1,46 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { LogOut, QrCode, Edit3 } from "lucide-react";
+import { cookies } from "next/headers";
+import { jwtVerify } from "jose";
 
 import { getAllRegistrations } from "@/lib/google";
 
 export const dynamic = 'force-dynamic';
 
+const getJwtSecret = () => {
+    const rawSecret = process.env.JWT_SECRET;
+    if (!rawSecret) return null;
+    return new TextEncoder().encode(rawSecret);
+};
+
+async function verifyCoordinatorToken() {
+    try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('coordinator_token')?.value;
+        if (!token) return null;
+        
+        const secret = getJwtSecret();
+        if (!secret) return null;
+        
+        const { payload } = await jwtVerify(token, secret);
+        if (payload.type === 'coordinator' && payload.eventId) {
+            return payload;
+        }
+        return null;
+    } catch {
+        return null;
+    }
+}
+
 async function getCoordinatorEventAndStats() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user?.app_metadata?.role !== 'coordinator' || !user?.app_metadata?.event_id) {
+    const coordinator = await verifyCoordinatorToken();
+    if (!coordinator) {
         return null;
     }
 
-    const eventId = user.app_metadata.event_id;
+    const eventId = coordinator.eventId;
 
     const admin = createAdminClient();
 
