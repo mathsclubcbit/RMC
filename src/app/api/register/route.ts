@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { randomInt } from 'crypto';
 import { uploadToDrive, checkDuplicateRegistrationId, checkDuplicateUTR, appendRowToSheet, getOrCreateFolder } from '@/lib/google';
 import { createAdminClient } from '@/lib/supabase/server';
+import { withRateLimit, getQueueStatus } from '@/lib/rate-limiter';
 
 type PricingTier = {
     teamSize?: unknown;
@@ -107,6 +108,10 @@ export async function POST(req: NextRequest) {
 
         let expectedAmount = parseAmount(amountFromClient);
         let isHackathonOrIdeathon = false;
+        // Event details for email (will be populated from Supabase if available)
+        let eventDate = 'To be announced';
+        let eventTime = '';
+        let eventVenue = 'CBIT Campus';
 
         try {
             const supabase = createAdminClient();
@@ -125,7 +130,54 @@ export async function POST(req: NextRequest) {
                     eType === 'Hackathon' || eType === 'Ideathon' ||
                     eCat === 'Hackathon' || eCat === 'Ideathon';
 
-                const payload = row.payload as EventPayload;
+                const payload = row.payload as EventPayload & {
+                    date?: string;
+                    time?: string;
+                    location?: string;
+                    venue?: string;
+                    startDate?: string;
+                    startTime?: string;
+                    endTime?: string;
+                };
+
+                // Extract event date/time/venue from payload
+                if (payload) {
+                    // Date
+                    const rawDate = payload.date || payload.startDate || '';
+                    if (rawDate) {
+                        try {
+                            const dateObj = new Date(rawDate);
+                            if (!isNaN(dateObj.getTime())) {
+                                eventDate = dateObj.toLocaleDateString('en-IN', {
+                                    weekday: 'long',
+                                    day: 'numeric',
+                                    month: 'long',
+                                    year: 'numeric'
+                                });
+                            } else {
+                                eventDate = rawDate;
+                            }
+                        } catch {
+                            eventDate = rawDate;
+                        }
+                    }
+
+                    // Time
+                    const rawTime = payload.time || '';
+                    if (rawTime) {
+                        eventTime = rawTime;
+                    } else if (payload.startTime) {
+                        eventTime = payload.endTime
+                            ? `${payload.startTime} - ${payload.endTime}`
+                            : payload.startTime;
+                    }
+
+                    // Venue
+                    const rawVenue = payload.location || payload.venue || '';
+                    if (rawVenue) {
+                        eventVenue = rawVenue;
+                    }
+                }
 
                 // If Hackathon/Ideathon, validate PPT
                 if (isHackathonOrIdeathon) {
@@ -197,40 +249,40 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        // 2. Duplicate Check
-        const isDuplicate = await checkDuplicateUTR(spreadsheetId, normalizedUTR);
+        // 2. Duplicate Check (with rate limiting)
+        const isDuplicate = await withRateLimit(() => checkDuplicateUTR(spreadsheetId, normalizedUTR));
         if (isDuplicate) {
             return NextResponse.json({ error: 'UTR_ALREADY_USED', message: 'This UTR ID has already been submitted.' }, { status: 409 });
         }
 
-        // 3. Upload Screenshot
+        // 3. Upload Screenshot (with rate limiting)
         // Get specific event folder inside the main Drive folder
-        const eventFolderId = await getOrCreateFolder(eventName, driveFolderId);
+        const eventFolderId = await withRateLimit(() => getOrCreateFolder(eventName, driveFolderId));
 
         const buffer = Buffer.from(await screenshot.arrayBuffer());
         const fileExtension = screenshot.name.split('.').pop() || 'png';
         const fileName = `${eventId}_${name}_${normalizedUTR}.${fileExtension}`;
 
-        const driveFile = await uploadToDrive(buffer, screenshot.type, fileName, eventFolderId);
+        const driveFile = await withRateLimit(() => uploadToDrive(buffer, screenshot.type, fileName, eventFolderId));
 
-        // 3b. Upload PPT if applicable
+        // 3b. Upload PPT if applicable (with rate limiting)
         let pptDriveFile: any = null;
         if (isHackathonOrIdeathon && pptFile) {
             const pptBuffer = Buffer.from(await pptFile.arrayBuffer());
             const pptExt = pptFile.name.split('.').pop() || 'pptx';
             const pptName = `${eventId}_${name}_PPT.${pptExt}`;
-            pptDriveFile = await uploadToDrive(pptBuffer, pptFile.type, pptName, eventFolderId);
+            pptDriveFile = await withRateLimit(() => uploadToDrive(pptBuffer, pptFile.type, pptName, eventFolderId));
         }
 
-        // 4. Append to Google Sheet
+        // 4. Append to Google Sheet (with rate limiting)
         const { ensureRegistrationSheet } = await import('@/lib/google');
-        await ensureRegistrationSheet(spreadsheetId);
+        await withRateLimit(() => ensureRegistrationSheet(spreadsheetId));
 
         // Generate a 6-digit ticket code (stored as Registration ID) and ensure it is unique.
         let registrationId = '';
         for (let attempt = 0; attempt < 10; attempt++) {
             const candidate = generateTicketCode();
-            const exists = await checkDuplicateRegistrationId(spreadsheetId, candidate);
+            const exists = await withRateLimit(() => checkDuplicateRegistrationId(spreadsheetId, candidate));
             if (!exists) {
                 registrationId = candidate;
                 break;
@@ -288,7 +340,7 @@ export async function POST(req: NextRequest) {
             driveFile.webContentLink || '' // T
         ];
 
-        await appendRowToSheet(spreadsheetId, rowData);
+        await withRateLimit(() => appendRowToSheet(spreadsheetId, rowData));
 
         // 5. Generate QR Code and Send Ticket Email
 
@@ -296,10 +348,7 @@ export async function POST(req: NextRequest) {
         const { generateQRCode } = await import('@/lib/qrcode');
         const qrCode = await generateQRCode(registrationId);
 
-        // Import event details for email
-        const eventDate = 'TBD'; // Will be shown in ticket page
-        const eventTime = 'TBD';
-        const eventVenue = 'CBIT Campus';
+        // Import event details for email (already populated from Supabase above)
 
         // Send QR ticket email (non-blocking)
         const { sendTicketEmail } = await import('@/lib/email');

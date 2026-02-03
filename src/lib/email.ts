@@ -71,10 +71,10 @@ const generateTicketEmailHTML = (data: TicketEmailData, qrCodeDataUrl: string): 
                     <tr>
                         <td style="padding: 20px 40px; text-align: center;">
                             <p style="margin: 0; color: #a1a1aa; font-size: 16px; font-style: italic; letter-spacing: 1px;">
-                                "The Art of the Infinite."
+                                "Journey to Infinity."
                             </p>
                             <h2 style="margin: 20px 0 0; color: #ffffff; font-size: 24px; font-weight: 400; letter-spacing: 1px;">
-                                Welcome to the Enigma, ${data.participantName}
+                                Your Registration is Confirmed, ${data.participantName}!
                             </h2>
                         </td>
                     </tr>
@@ -105,21 +105,19 @@ const generateTicketEmailHTML = (data: TicketEmailData, qrCodeDataUrl: string): 
                                                 <td style="padding: 30px; background: rgba(0,0,0,0.5);">
                                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                                         <tr>
-                                                            <td width="50%" style="padding-bottom: 20px;">
+                                                            <td style="padding-bottom: 20px;">
                                                                 <span style="color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Event</span><br>
                                                                 <span style="color: #ffffff; font-size: 18px;">${data.eventName}</span>
                                                             </td>
-                                                            <td width="50%" style="padding-bottom: 20px; text-align: right;">
-                                                                <span style="color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Row / Seat</span><br>
-                                                                <span style="color: #2dd4bf; font-size: 18px;">π / e</span>
+                                                        </tr>
+                                                        <tr>
+                                                            <td width="50%" style="padding-bottom: 20px;">
+                                                                <span style="color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Date & Time</span><br>
+                                                                <span style="color: #2dd4bf; font-size: 16px;">${data.eventDate} | ${data.eventTime}</span>
                                                             </td>
                                                         </tr>
                                                         <tr>
-                                                            <td width="50%">
-                                                                <span style="color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Date & Time</span><br>
-                                                                <span style="color: #ffffff; font-size: 15px;">${data.eventDate} | ${data.eventTime}</span>
-                                                            </td>
-                                                            <td width="50%" style="text-align: right;">
+                                                            <td>
                                                                 <span style="color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Venue</span><br>
                                                                 <span style="color: #ffffff; font-size: 15px;">${data.eventVenue}</span>
                                                             </td>
