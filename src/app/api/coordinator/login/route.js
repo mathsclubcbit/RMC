@@ -154,16 +154,10 @@ export async function POST(request) {
         
         console.log('[Coordinator Login] User ready:', coordinatorEmail, 'ID:', userId);
 
-        const response = isForm
-            ? NextResponse.redirect(new URL('/coordinator/dashboard', request.url), 303)
-            : NextResponse.json({
-                success: true,
-                event: {
-                    id: event.id,
-                    title: event.title
-                }
-            });
+        // Create response object that will hold our cookies
+        let cookiesToSet = [];
 
+        // Create Supabase client with cookie handler
         const routeSupabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -172,22 +166,26 @@ export async function POST(request) {
                     getAll() {
                         return request.cookies.getAll();
                     },
-                    setAll(cookiesToSet) {
-                        cookiesToSet.forEach(({ name, value, options }) => {
-                            // Ensure cookies work in production (Vercel)
-                            response.cookies.set(name, value, {
+                    setAll(cookiesToSetArray) {
+                        // Store cookies to apply to response later
+                        cookiesToSet = cookiesToSetArray.map(({ name, value, options }) => ({
+                            name,
+                            value,
+                            options: {
                                 ...options,
                                 path: '/',
                                 secure: process.env.NODE_ENV === 'production',
                                 sameSite: 'lax',
-                                httpOnly: true
-                            });
-                        });
+                                httpOnly: true,
+                                maxAge: options.maxAge || 60 * 60 * 24 * 7 // 7 days default
+                            }
+                        }));
                     },
                 },
             }
         );
 
+        // Sign in to create session and trigger cookie generation
         const { error: signInError } = await routeSupabase.auth.signInWithPassword({
             email: coordinatorEmail,
             password: cleanPassword
@@ -202,7 +200,23 @@ export async function POST(request) {
             return NextResponse.json({ error: msg }, { status: 401 });
         }
 
-        console.log('[Coordinator Login] Success for event:', event.title);
+        console.log('[Coordinator Login] Success for event:', event.title, '- Setting', cookiesToSet.length, 'cookies');
+
+        // NOW create the response with all cookies
+        const response = isForm
+            ? NextResponse.redirect(new URL('/coordinator/dashboard', request.url), 303)
+            : NextResponse.json({
+                success: true,
+                event: {
+                    id: event.id,
+                    title: event.title
+                }
+            });
+
+        // Apply all cookies to response
+        cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+        });
 
         return response;
 
