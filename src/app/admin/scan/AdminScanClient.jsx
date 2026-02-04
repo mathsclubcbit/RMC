@@ -24,16 +24,16 @@ export default function AdminScanPage() {
             // ignore
         }
 
-        const scanner = new Html5QrcodeScanner(
-            "rmc-qr-reader",
-            {
+        const scanner = new Html5QrcodeScanner({
+            elementId: "rmc-qr-reader",
+            config: {
                 fps: 10,
                 qrbox: { width: 250, height: 250 },
                 rememberLastUsedCamera: true,
                 showTorchButtonIfSupported: true,
             },
-            false
-        );
+            verbose: false,
+        });
 
         scanner.render(
             (decodedText) => {

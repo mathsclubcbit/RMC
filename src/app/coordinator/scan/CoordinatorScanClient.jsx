@@ -38,16 +38,16 @@ export default function CoordinatorScanPage() {
                 };
             }
 
-            const scanner = new Html5QrcodeScanner(
-                "coordinator-qr-reader",
-                {
+            const scanner = new Html5QrcodeScanner({
+                elementId: "coordinator-qr-reader",
+                config: {
                     fps: 10,
                     qrbox: { width: 250, height: 250 },
                     rememberLastUsedCamera: true,
                     showTorchButtonIfSupported: true,
                 },
-                false
-            );
+                verbose: false,
+            });
 
             scannerRef.current = scanner;
 
