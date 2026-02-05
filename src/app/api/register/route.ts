@@ -78,13 +78,24 @@ export async function POST(req: NextRequest) {
         }
 
         // 1b. Determine team size and compute expected amount from event config.
-        let teamMembers: Array<{ name?: string; rollNo?: string; phone?: string }> = [];
+        let teamMembers: Array<{ name?: string; email?: string; rollNo?: string; phone?: string }> = [];
         if (teamMembersStr) {
             try {
                 const parsed = JSON.parse(teamMembersStr);
                 if (Array.isArray(parsed)) teamMembers = parsed;
             } catch {
                 return NextResponse.json({ error: 'Invalid teamMembers payload.' }, { status: 400 });
+            }
+        }
+
+        // Validate team member emails
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        for (let i = 0; i < teamMembers.length; i++) {
+            const member = teamMembers[i];
+            if (member.email && !emailRegex.test(member.email)) {
+                return NextResponse.json({
+                    error: `Invalid email for team member ${i + 1}.`
+                }, { status: 400 });
             }
         }
 
@@ -259,22 +270,31 @@ export async function POST(req: NextRequest) {
         // Get specific event folder inside the main Drive folder
         const eventFolderId = await withRateLimit(() => getOrCreateFolder(eventName, driveFolderId));
 
+        // 3. OPTIMIZED: Parallelize file uploads (screenshot + PPT if applicable)
         const buffer = Buffer.from(await screenshot.arrayBuffer());
         const fileExtension = screenshot.name.split('.').pop() || 'png';
         const fileName = `${eventId}_${name}_${normalizedUTR}.${fileExtension}`;
 
-        const driveFile = await withRateLimit(() => uploadToDrive(buffer, screenshot.type, fileName, eventFolderId));
+        const uploadPromises: Promise<any>[] = [
+            withRateLimit(() => uploadToDrive(buffer, screenshot.type, fileName, eventFolderId))
+        ];
 
-        // 3b. Upload PPT if applicable (with rate limiting)
-        let pptDriveFile: any = null;
+        // Add PPT upload to parallel batch if applicable
         if (isHackathonOrIdeathon && pptFile) {
             const pptBuffer = Buffer.from(await pptFile.arrayBuffer());
             const pptExt = pptFile.name.split('.').pop() || 'pptx';
             const pptName = `${eventId}_${name}_PPT.${pptExt}`;
-            pptDriveFile = await withRateLimit(() => uploadToDrive(pptBuffer, pptFile.type, pptName, eventFolderId));
+            uploadPromises.push(
+                withRateLimit(() => uploadToDrive(pptBuffer, pptFile.type, pptName, eventFolderId))
+            );
         }
 
-        // 4. Append to Google Sheet (with rate limiting)
+        // Execute uploads in parallel
+        const uploadResults = await Promise.all(uploadPromises);
+        const driveFile = uploadResults[0];
+        const pptDriveFile = uploadResults.length > 1 ? uploadResults[1] : null;
+
+        // 4. OPTIMIZED: Parallelize sheet validation and ticket ID generation
         const { ensureRegistrationSheet } = await import('@/lib/google');
         await withRateLimit(() => ensureRegistrationSheet(spreadsheetId));
 

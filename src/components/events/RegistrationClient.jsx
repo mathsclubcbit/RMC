@@ -127,7 +127,7 @@ export default function RegistrationClient({ eventId }) {
             const minMembers = Math.max(0, (teamConstraints.minTeamSize || 1) - 1);
             setTeamMembers((prev) => {
                 if (Array.isArray(prev) && prev.length >= minMembers) return prev;
-                const initialMembers = Array.from({ length: minMembers }, () => ({ name: "", rollNo: "", phone: "" }));
+                const initialMembers = Array.from({ length: minMembers }, () => ({ name: "", email: "", rollNo: "", phone: "" }));
                 return initialMembers;
             });
         } else {
@@ -141,7 +141,7 @@ export default function RegistrationClient({ eventId }) {
             const current = Array.isArray(prev) ? prev : [];
             if (current.length >= maxMembers) return current;
             if (current.length >= maxMembers) return current;
-            return [...current, { name: "", rollNo: "", phone: "" }];
+            return [...current, { name: "", email: "", rollNo: "", phone: "" }];
         });
     };
 
@@ -201,8 +201,13 @@ export default function RegistrationClient({ eventId }) {
                 return false;
             }
             for (let i = 0; i < teamMembers.length; i++) {
-                if (!teamMembers[i].name || !teamMembers[i].rollNo || !teamMembers[i].phone) {
+                if (!teamMembers[i].name || !teamMembers[i].email || !teamMembers[i].rollNo || !teamMembers[i].phone) {
                     setErrorMessage(`Please complete details for Team Member ${i + 2}.`);
+                    return false;
+                }
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(teamMembers[i].email)) {
+                    setErrorMessage(`Invalid email for Team Member ${i + 2}.`);
                     return false;
                 }
                 if (!/^[0-9]{10}$/.test(teamMembers[i].phone.replace(/\s/g, ""))) {
@@ -696,6 +701,17 @@ export default function RegistrationClient({ eventId }) {
                                     onChange={e => {
                                         const newMembers = [...teamMembers];
                                         newMembers[idx].name = e.target.value;
+                                        setTeamMembers(newMembers);
+                                    }}
+                                    className="w-full bg-transparent border-b border-white/10 py-1 text-white placeholder-white/20 focus:border-teal/50 outline-none transition-all"
+                                />
+                                <input
+                                    type="email"
+                                    placeholder="Email Address"
+                                    value={member.email}
+                                    onChange={e => {
+                                        const newMembers = [...teamMembers];
+                                        newMembers[idx].email = e.target.value;
                                         setTeamMembers(newMembers);
                                     }}
                                     className="w-full bg-transparent border-b border-white/10 py-1 text-white placeholder-white/20 focus:border-teal/50 outline-none transition-all"

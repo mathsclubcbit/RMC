@@ -2,16 +2,17 @@
  * Rate Limiter for Google API Calls
  * 
  * Implements a token bucket algorithm to control the rate of API requests.
- * Google Sheets API allows 100 requests per 100 seconds (~1 req/sec).
+ * Google Sheets API allows 60 write requests per minute (~1 req/sec).
  * 
- * This limiter ensures we stay well within limits by:
- * - Allowing a burst of up to 20 requests
- * - Refilling tokens at 1 token per second
- * - Queuing requests when tokens are exhausted
+ * OPTIMIZED for production load:
+ * - Increased burst capacity to 30 (was 20) for handling traffic spikes
+ * - Refilling tokens at 1 token per second (safe rate)
+ * - Extended timeout to 60s (was 30s) for better queue handling
+ * - Works with caching optimizations in lib/google.ts to reduce API calls
  */
 
 // Configuration
-const MAX_TOKENS = 20;           // Maximum burst capacity
+const MAX_TOKENS = 30;           // Maximum burst capacity (OPTIMIZED from 20)
 const REFILL_RATE = 1;           // Tokens added per second
 const REFILL_INTERVAL = 1000;    // Refill every 1 second
 
@@ -68,10 +69,10 @@ async function processQueue(): Promise<void> {
  * Acquire a token before making a Google API call.
  * Returns a promise that resolves when it's safe to proceed.
  * 
- * @param timeout Maximum time to wait in ms (default: 30 seconds)
+ * @param timeout Maximum time to wait in ms (default: 60 seconds, increased for production)
  * @throws Error if timeout is exceeded
  */
-export async function acquireToken(timeout: number = 30000): Promise<void> {
+export async function acquireToken(timeout: number = 60000): Promise<void> {
     refillTokens();
 
     // If we have tokens available, proceed immediately

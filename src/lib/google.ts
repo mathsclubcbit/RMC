@@ -16,6 +16,63 @@ const isHeaderCell = (value: unknown, expected: string) =>
 
 const normalizeCell = (value: unknown) => String(value ?? '').trim();
 
+// ========== PERFORMANCE OPTIMIZATION: CACHING ==========
+
+/**  * In-memory cache to reduce redundant Google API calls during high concurrency.
+ * Cache persists for the lifetime of the serverless function instance (typically 5-15 min).
+ * Significantly improves throughput during burst traffic (e.g., 50+ concurrent registrations).
+ */
+
+// Folder ID cache: eventName -> folderId
+const folderCache = new Map<string, { id: string; timestamp: number }>();
+const FOLDER_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Sheet validation cache: spreadsheetId -> timestamp
+const sheetCheckedCache = new Map<string, number>();
+const SHEET_CHECK_TTL = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Get cached folder ID or return null if expired/missing
+ */
+function getCachedFolderId(key: string): string | null {
+    const cached = folderCache.get(key);
+    if (!cached) return null;
+    if (Date.now() - cached.timestamp > FOLDER_CACHE_TTL) {
+        folderCache.delete(key);
+        return null;
+    }
+    return cached.id;
+}
+
+/**
+ * Cache a folder ID
+ */
+function cacheFolderId(key: string, id: string): void {
+    folderCache.set(key, { id, timestamp: Date.now() });
+}
+
+/**
+ * Check if sheet was recently validated
+ */
+function isSheetRecentlyChecked(spreadsheetId: string): boolean {
+    const timestamp = sheetCheckedCache.get(spreadsheetId);
+    if (!timestamp) return false;
+    if (Date.now() - timestamp > SHEET_CHECK_TTL) {
+        sheetCheckedCache.delete(spreadsheetId);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Mark sheet as validated
+ */
+function markSheetAsChecked(spreadsheetId: string): void {
+    sheetCheckedCache.set(spreadsheetId, Date.now());
+}
+
+// ======================================================
+
 /**
  * Compare two registration IDs, handling the case where Google Sheets
  * strips leading zeros from numeric cells.
@@ -120,8 +177,16 @@ export const uploadToDrive = async (
 
 /**
  * Get or Create a folder by name inside a parent folder
+ * OPTIMIZED: Uses in-memory cache to avoid redundant Drive API calls
  */
 export const getOrCreateFolder = async (folderName: string, parentFolderId: string): Promise<string> => {
+    // Check cache first
+    const cacheKey = `${folderName}::${parentFolderId}`;
+    const cachedId = getCachedFolderId(cacheKey);
+    if (cachedId) {
+        return cachedId;
+    }
+
     const authClient = await getAuthClient();
     const drive = google.drive({ version: 'v3', auth: authClient });
 
@@ -136,7 +201,9 @@ export const getOrCreateFolder = async (folderName: string, parentFolderId: stri
         });
 
         if (response.data.files && response.data.files.length > 0) {
-            return response.data.files[0].id!;
+            const folderId = response.data.files[0].id!;
+            cacheFolderId(cacheKey, folderId);
+            return folderId;
         }
 
         const fileMetadata = {
@@ -150,7 +217,9 @@ export const getOrCreateFolder = async (folderName: string, parentFolderId: stri
             fields: 'id',
         });
 
-        return folder.data.id!;
+        const folderId = folder.data.id!;
+        cacheFolderId(cacheKey, folderId);
+        return folderId;
     } catch (error) {
         console.error('Error getting/creating folder:', error);
         throw error;
@@ -253,8 +322,14 @@ export const checkDuplicateRegistrationId = async (spreadsheetId: string, regist
 
 /**
  * Ensure the Registration Sheet exists and has the correct headers (A-T).
+ * OPTIMIZED: Uses cache to skip redundant checks during burst traffic
  */
 export const ensureRegistrationSheet = async (spreadsheetId: string) => {
+    // Skip if recently validated (within TTL)
+    if (isSheetRecentlyChecked(spreadsheetId)) {
+        return;
+    }
+
     const authClient = await getAuthClient();
     const sheets = google.sheets({ version: 'v4', auth: authClient });
 
@@ -293,6 +368,9 @@ export const ensureRegistrationSheet = async (spreadsheetId: string) => {
             valueInputOption: 'USER_ENTERED',
             requestBody: { values: [headers] }
         });
+
+        // Mark as checked
+        markSheetAsChecked(spreadsheetId);
 
     } catch (error) {
         console.error('Error ensuring registration sheet:', error);

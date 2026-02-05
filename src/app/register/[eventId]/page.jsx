@@ -1,4 +1,4 @@
-import RegistrationClient from "@/components/events/RegistrationClient";
+import RegistrationClient from "@/components/events/registration";
 import { createAdminClient } from "@/lib/supabase/server";
 
 function hasSupabaseConfig() {
