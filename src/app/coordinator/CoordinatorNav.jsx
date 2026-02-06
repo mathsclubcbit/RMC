@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, QrCode, Edit3, LogOut, Home, ChevronRight } from "lucide-react";
+import { LayoutDashboard, QrCode, Edit3, LogOut, Home, ChevronRight, Users } from "lucide-react";
 import { useLoading } from "@/context/LoadingContext";
 
 const navItems = [
     { href: "/coordinator/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/coordinator/participants", label: "Participants", icon: Users },
     { href: "/coordinator/scan", label: "Scan", icon: QrCode },
     { href: "/coordinator/edit", label: "Edit", icon: Edit3 },
 ];

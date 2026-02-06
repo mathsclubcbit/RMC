@@ -2,6 +2,7 @@ import { google } from 'googleapis';
 import { Readable } from 'stream';
 import { OAuth2Client } from 'google-auth-library';
 import { JSONClient } from 'google-auth-library/build/src/auth/googleauth';
+import { cacheService } from './cache-service';
 
 const SCOPES = [
     'https://www.googleapis.com/auth/drive.file',
@@ -432,46 +433,49 @@ export interface RegistrationData {
 
 /**
  * Fetch all registrations from Google Sheet (Cols A-T)
+ * OPTIMIZED: Uses cacheService to reduce Google API calls (TTL: 120s)
  */
 export const getAllRegistrations = async (spreadsheetId: string): Promise<RegistrationData[]> => {
-    const authClient = await getAuthClient();
-    const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+    return cacheService.getOrSet(`registrations::${spreadsheetId}`, async () => {
+        const authClient = await getAuthClient();
+        const sheets = google.sheets({ version: 'v4', auth: authClient as any });
 
-    const response = await sheets.spreadsheets.values.get({
-        spreadsheetId,
-        range: sheetRange('A:T'),
-    });
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: sheetRange('A:T'),
+        });
 
-    const rows = response.data.values;
-    if (!rows || rows.length === 0) return [];
+        const rows = response.data.values;
+        if (!rows || rows.length === 0) return [];
 
-    // Header check
-    const firstRow = rows[0] || [];
-    const hasHeader = isHeaderCell(firstRow[1], 'ticket code') || isHeaderCell(firstRow[1], 'registration id');
-    const dataRows = hasHeader ? rows.slice(1) : rows;
+        // Header check
+        const firstRow = rows[0] || [];
+        const hasHeader = isHeaderCell(firstRow[1], 'ticket code') || isHeaderCell(firstRow[1], 'registration id');
+        const dataRows = hasHeader ? rows.slice(1) : rows;
 
-    return dataRows.map(row => ({
-        timestamp: normalizeCell(row[0]),
-        registrationId: normalizeCell(row[1]),     // B
-        eventName: normalizeCell(row[2]),          // C
-        name: normalizeCell(row[3]),               // D
-        email: normalizeCell(row[4]),              // E
-        phone: normalizeCell(row[5]),              // F
-        rollNo: normalizeCell(row[6]),             // G
-        department: normalizeCell(row[7]),         // H
-        teamMembers: normalizeCell(row[8]),        // I
-        utrId: normalizeCell(row[9]),              // J
-        amount: parseFloat(normalizeCell(row[10])) || 0, // K
-        status: normalizeCell(row[11]) || 'PENDING', // L
-        driveViewUrl: normalizeCell(row[12]),      // M (Screenshot)
-        abstract: normalizeCell(row[13]),          // N
-        pptLink: normalizeCell(row[14]),           // O
-        checkedInAt: normalizeCell(row[15]),       // P
-        memberAttendance: normalizeCell(row[16]),  // Q
-        eventId: normalizeCell(row[17]),           // R
-        driveFileId: normalizeCell(row[18]),       // S
-        driveDownloadUrl: normalizeCell(row[19])   // T
-    }));
+        return dataRows.map(row => ({
+            timestamp: normalizeCell(row[0]),
+            registrationId: normalizeCell(row[1]),     // B
+            eventName: normalizeCell(row[2]),          // C
+            name: normalizeCell(row[3]),               // D
+            email: normalizeCell(row[4]),              // E
+            phone: normalizeCell(row[5]),              // F
+            rollNo: normalizeCell(row[6]),             // G
+            department: normalizeCell(row[7]),         // H
+            teamMembers: normalizeCell(row[8]),        // I
+            utrId: normalizeCell(row[9]),              // J
+            amount: parseFloat(normalizeCell(row[10])) || 0, // K
+            status: normalizeCell(row[11]) || 'PENDING', // L
+            driveViewUrl: normalizeCell(row[12]),      // M (Screenshot)
+            abstract: normalizeCell(row[13]),          // N
+            pptLink: normalizeCell(row[14]),           // O
+            checkedInAt: normalizeCell(row[15]),       // P
+            memberAttendance: normalizeCell(row[16]),  // Q
+            eventId: normalizeCell(row[17]),           // R
+            driveFileId: normalizeCell(row[18]),       // S
+            driveDownloadUrl: normalizeCell(row[19])   // T
+        }));
+    }, 120); // 2 minute TTL
 };
 
 /**
@@ -592,17 +596,19 @@ const ensureSheetExists = async (spreadsheetId: string, title: string) => {
 };
 
 export const getAnnouncements = async (spreadsheetId: string): Promise<AnnouncementData[]> => {
-    const authClient = await getAuthClient();
-    const sheets = google.sheets({ version: 'v4', auth: authClient });
-    try {
-        await ensureSheetExists(spreadsheetId, 'Announcements');
-        const response = await sheets.spreadsheets.values.get({ spreadsheetId, range: 'Announcements!A:F' });
-        const rows = response.data.values;
-        if (!rows || rows.length <= 1) return [];
-        return rows.slice(1).map((row) => ({
-            id: row[0] || '', title: row[1] || '', content: row[2] || '', category: row[3] || '', date: row[4] || '', postedBy: row[5] || 'Admin',
-        })).reverse();
-    } catch (error) { return []; }
+    return cacheService.getOrSet(`announcements::${spreadsheetId}`, async () => {
+        const authClient = await getAuthClient();
+        const sheets = google.sheets({ version: 'v4', auth: authClient });
+        try {
+            await ensureSheetExists(spreadsheetId, 'Announcements');
+            const response = await sheets.spreadsheets.values.get({ spreadsheetId, range: 'Announcements!A:F' });
+            const rows = response.data.values;
+            if (!rows || rows.length <= 1) return [];
+            return rows.slice(1).map((row) => ({
+                id: row[0] || '', title: row[1] || '', content: row[2] || '', category: row[3] || '', date: row[4] || '', postedBy: row[5] || 'Admin',
+            })).reverse();
+        } catch (error) { return []; }
+    }, 300); // 5 minute TTL
 };
 
 export const createAnnouncement = async (spreadsheetId: string, announcement: AnnouncementData) => {

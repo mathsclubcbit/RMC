@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/server";
-import { LogOut, QrCode, Edit3 } from "lucide-react";
+import { LogOut, QrCode, Edit3, Users } from "lucide-react";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 
@@ -20,10 +20,10 @@ async function verifyCoordinatorToken() {
         const cookieStore = await cookies();
         const token = cookieStore.get('coordinator_token')?.value;
         if (!token) return null;
-        
+
         const secret = getJwtSecret();
         if (!secret) return null;
-        
+
         const { payload } = await jwtVerify(token, secret);
         if (payload.type === 'coordinator' && payload.eventId) {
             return payload;
@@ -170,6 +170,22 @@ export default async function CoordinatorDashboard() {
                     {/* Action Modules */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         {/* Primary Action: Scan */}
+                        <Link
+                            href="/coordinator/participants"
+                            className="group relative h-[200px] rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden hover:border-blue-400/30 transition-all duration-500"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                            <div className="absolute top-6 right-6 p-3 rounded-2xl bg-blue-400/10 text-blue-300 border border-blue-400/20 group-hover:scale-110 transition-transform duration-500">
+                                <Users className="w-6 h-6" />
+                            </div>
+
+                            <div className="absolute bottom-6 left-6 right-6">
+                                <div className="text-[11px] font-mono text-blue-300/80 uppercase tracking-widest mb-1">Data Management</div>
+                                <h3 className="text-2xl font-bold text-white group-hover:text-blue-50 transition-colors">Participants</h3>
+                                <p className="mt-1 text-sm text-white/50 group-hover:text-white/70">View, search and manage all enrollees.</p>
+                            </div>
+                        </Link>
+
                         <Link
                             href="/coordinator/scan"
                             className="group relative h-[200px] rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden hover:border-teal-400/30 transition-all duration-500"

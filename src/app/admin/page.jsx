@@ -5,86 +5,88 @@ import { redirect } from "next/navigation";
 import AdminDashboardClient from "./AdminDashboardClient";
 import CoordinatorCredentialsManager from "./CoordinatorCredentialsManager";
 import { getAllRegistrations } from "@/lib/google";
+import { cacheService } from "@/lib/cache-service";
 
 // Revalidate dashboard every 60 seconds for better performance
-export const revalidate = 60;
 
 async function getDashboardStats() {
-    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
-    if (!spreadsheetId) return { enabled: false };
+    return cacheService.getOrSet('admin-dashboard-stats', async () => {
+        const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+        if (!spreadsheetId) return { enabled: false };
 
-    try {
-        const regs = await getAllRegistrations(spreadsheetId);
-        const now = Date.now();
-        const last24hMs = 24 * 60 * 60 * 1000;
+        try {
+            const regs = await getAllRegistrations(spreadsheetId);
+            const now = Date.now();
+            const last24hMs = 24 * 60 * 60 * 1000;
 
-        const toTime = (value) => {
-            const t = Date.parse(String(value || ""));
-            return Number.isFinite(t) ? t : null;
-        };
+            const toTime = (value) => {
+                const t = Date.parse(String(value || ""));
+                return Number.isFinite(t) ? t : null;
+            };
 
-        const safeAmount = (value) => {
-            const n = Number(value);
-            return Number.isFinite(n) ? n : 0;
-        };
+            const safeAmount = (value) => {
+                const n = Number(value);
+                return Number.isFinite(n) ? n : 0;
+            };
 
-        const isCheckedIn = (r) =>
-            String(r?.checkedInAt || "").trim().length > 0 || String(r?.status || "").toUpperCase() === "ATTENDED";
+            const isCheckedIn = (r) =>
+                String(r?.checkedInAt || "").trim().length > 0 || String(r?.status || "").toUpperCase() === "ATTENDED";
 
-        const totalRegistrations = regs.length;
-        const totalCheckedIn = regs.filter(isCheckedIn).length;
-        const totalRevenue = regs.reduce((sum, r) => sum + safeAmount(r?.amount), 0);
+            const totalRegistrations = regs.length;
+            const totalCheckedIn = regs.filter(isCheckedIn).length;
+            const totalRevenue = regs.reduce((sum, r) => sum + safeAmount(r?.amount), 0);
 
-        const registrationsLast24h = regs.filter((r) => {
-            const t = toTime(r.timestamp);
-            return t != null && now - t <= last24hMs;
-        }).length;
+            const registrationsLast24h = regs.filter((r) => {
+                const t = toTime(r.timestamp);
+                return t != null && now - t <= last24hMs;
+            }).length;
 
-        const checkedInLast24h = regs.filter((r) => {
-            const t = toTime(r.checkedInAt);
-            return t != null && now - t <= last24hMs;
-        }).length;
+            const checkedInLast24h = regs.filter((r) => {
+                const t = toTime(r.checkedInAt);
+                return t != null && now - t <= last24hMs;
+            }).length;
 
-        const byEvent = new Map();
-        for (const r of regs) {
-            const eventId = String(r?.eventId || "").trim();
-            const eventName = String(r?.eventName || "").trim();
-            const key = (eventId || "_") + "::" + (eventName || "Unknown Event");
+            const byEvent = new Map();
+            for (const r of regs) {
+                const eventId = String(r?.eventId || "").trim();
+                const eventName = String(r?.eventName || "").trim();
+                const key = (eventId || "_") + "::" + (eventName || "Unknown Event");
 
-            if (!byEvent.has(key)) {
-                byEvent.set(key, {
-                    eventId: eventId || "",
-                    eventName: eventName || "Unknown Event",
-                    registrations: 0,
-                    checkedIn: 0,
-                    revenue: 0,
-                });
+                if (!byEvent.has(key)) {
+                    byEvent.set(key, {
+                        eventId: eventId || "",
+                        eventName: eventName || "Unknown Event",
+                        registrations: 0,
+                        checkedIn: 0,
+                        revenue: 0,
+                    });
+                }
+
+                const agg = byEvent.get(key);
+                agg.registrations += 1;
+                if (isCheckedIn(r)) agg.checkedIn += 1;
+                agg.revenue += safeAmount(r?.amount);
             }
 
-            const agg = byEvent.get(key);
-            agg.registrations += 1;
-            if (isCheckedIn(r)) agg.checkedIn += 1;
-            agg.revenue += safeAmount(r?.amount);
+            const eventBreakdown = Array.from(byEvent.values())
+                .sort((a, b) => {
+                    if (b.registrations !== a.registrations) return b.registrations - a.registrations;
+                    return b.revenue - a.revenue;
+                });
+
+            return {
+                enabled: true,
+                totalRegistrations,
+                totalCheckedIn,
+                registrationsLast24h,
+                checkedInLast24h,
+                totalRevenue,
+                eventBreakdown,
+            };
+        } catch {
+            return { enabled: false };
         }
-
-        const eventBreakdown = Array.from(byEvent.values())
-            .sort((a, b) => {
-                if (b.registrations !== a.registrations) return b.registrations - a.registrations;
-                return b.revenue - a.revenue;
-            });
-
-        return {
-            enabled: true,
-            totalRegistrations,
-            totalCheckedIn,
-            registrationsLast24h,
-            checkedInLast24h,
-            totalRevenue,
-            eventBreakdown,
-        };
-    } catch {
-        return { enabled: false };
-    }
+    }, 60); // 1 minute TTL
 }
 
 export default async function AdminDashboardPage() {

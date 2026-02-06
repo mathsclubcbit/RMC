@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { unstable_cache } from 'next/cache';
 
 /**
  * Creates a Supabase client for use in Server Components, Route Handlers, and Server Actions.
@@ -53,3 +54,36 @@ export function createAdminClient() {
         }
     );
 }
+
+/**
+ * Cached getter for events.
+ * Uses Next.js native caching with tag-based invalidation.
+ */
+export const getCachedEvents = unstable_cache(
+    async () => {
+        const supabase = createAdminClient();
+        const { data, error } = await supabase
+            .from('events')
+            .select('id,title,date,payload,created_at,updated_at')
+            .order('date', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching cached events:', error);
+            return [];
+        }
+
+        return (data || []).map((row) => ({
+            ...(row.payload || {}),
+            id: String(row.id),
+            title: row.title,
+            date: row.date,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
+        }));
+    },
+    ['events-list'],
+    {
+        revalidate: 3600, // 1 hour revalidation
+        tags: ['events']
+    }
+);
