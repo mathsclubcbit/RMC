@@ -4,7 +4,7 @@ export default function SectionDivider({ type = "lemma", number = "1", text, cla
     // Type can be: 'lemma', 'theorem', 'qed', 'axiom', 'generic'
 
     return (
-        <div className={`flex items-center gap-4 opacity-50 justify-center my-12 ${className}`}>
+        <div className={`flex items-center gap-4 justify-center my-12 ${className}`}>
 
             {type === "qed" ? (
                 <>

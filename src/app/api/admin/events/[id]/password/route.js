@@ -7,7 +7,7 @@ import bcrypt from 'bcrypt';
 
 const SALT_ROUNDS = 12;
 
-async function verifyAdmin(request) {
+async function verifyAdmin() {
     const cookieStore = await cookies();
     const token = cookieStore.get('admin_token')?.value;
     if (!token) return false;

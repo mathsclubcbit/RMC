@@ -7,11 +7,10 @@ import { cn } from "@/lib/utils";
 
 interface SectionWrapperProps extends HTMLMotionProps<"div"> {
     children: React.ReactNode;
-    delay?: number;
     className?: string;
 }
 
-export function SectionWrapper({ children, delay = 0, className, ...props }: SectionWrapperProps) {
+export function SectionWrapper({ children, className, ...props }: SectionWrapperProps) {
     const ref = useRef(null);
     useInView(ref, { once: true, margin: "-100px" });
 

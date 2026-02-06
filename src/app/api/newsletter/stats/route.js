@@ -26,7 +26,7 @@ export async function GET() {
             if (payload?.type !== 'admin') {
                 return NextResponse.json({ error: "Forbidden" }, { status: 403 });
             }
-        } catch (err) {
+        } catch {
             return NextResponse.json({ error: "Invalid Session" }, { status: 401 });
         }
 

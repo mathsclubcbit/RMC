@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Check, Loader2, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Loader2 } from 'lucide-react';
 
 export default function NewsletterSignup() {
     const [email, setEmail] = useState('');

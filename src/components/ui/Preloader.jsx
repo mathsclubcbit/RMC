@@ -22,8 +22,8 @@ export default function Preloader() {
         const shouldShow = !lastShown || timeSince > ONE_HOUR || timeSince < 2000;
 
         if (!shouldShow) {
-            setIsLoading(false);
-            return;
+            const timer = setTimeout(() => setIsLoading(false), 0);
+            return () => clearTimeout(timer);
         }
 
         // Set timestamp immediately

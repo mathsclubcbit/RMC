@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Image as ImageIcon, ArrowUpRight, Users } from "lucide-react";
-import { adminLogoutAction, isAdminAuthenticated } from "./actions";
+import { isAdminAuthenticated } from "./actions";
 import { redirect } from "next/navigation";
 import AdminDashboardClient from "./AdminDashboardClient";
 import CoordinatorCredentialsManager from "./CoordinatorCredentialsManager";
@@ -211,13 +211,6 @@ export default async function AdminDashboardPage() {
 // --- Components ---
 
 function StatCard({ label, value, subValue, accent, isCurrency }) {
-    const colors = {
-        indigo: "text-indigo-400 border-indigo-500/20 bg-indigo-500/5",
-        emerald: "text-emerald-400 border-emerald-500/20 bg-emerald-500/5",
-        amber: "text-amber-400 border-amber-500/20 bg-amber-500/5",
-        violet: "text-violet-400 border-violet-500/20 bg-violet-500/5",
-        teal: "text-teal-400 border-teal-500/20 bg-teal-500/5",
-    };
 
     const glows = {
         indigo: "bg-indigo-500/20",
@@ -227,7 +220,6 @@ function StatCard({ label, value, subValue, accent, isCurrency }) {
         teal: "bg-teal-500/20",
     };
 
-    const theme = colors[accent] || colors.indigo;
     const glowColor = glows[accent] || glows.indigo;
 
     const formatted = isCurrency

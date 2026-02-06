@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import SectionTitle from "@/components/ui/SectionTitle";
-import EventsList from "@/components/ui/EventsList"; // Fallback/Alternative view
 import Link from "next/link";
 import TimeWarpHero from "@/components/events/TimeWarpHero";
 import Timeline from "@/components/ui/Timeline";

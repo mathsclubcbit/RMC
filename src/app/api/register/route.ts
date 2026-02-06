@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { randomInt } from 'crypto';
 import { uploadToDrive, checkDuplicateRegistrationId, checkDuplicateUTR, appendRowToSheet, getOrCreateFolder } from '@/lib/google';
 import { createAdminClient } from '@/lib/supabase/server';
-import { withRateLimit, getQueueStatus } from '@/lib/rate-limiter';
+import { withRateLimit } from '@/lib/rate-limiter';
 
 type PricingTier = {
     teamSize?: unknown;
     price?: unknown;
+};
+
+type DriveFile = {
+    id?: string | null;
+    webViewLink?: string | null;
+    webContentLink?: string | null;
 };
 
 type EventPayload = {
@@ -134,7 +140,7 @@ export async function POST(req: NextRequest) {
 
             if (!eventError && eventRow) {
                 // Check if event is Hackathon or Ideathon
-                const row = eventRow as any;
+                const row = eventRow as { payload: EventPayload; event_type?: string; eventType?: string; category?: string };
                 const eType = row.event_type || row.eventType || '';
                 const eCat = row.category || '';
                 isHackathonOrIdeathon =
@@ -275,7 +281,7 @@ export async function POST(req: NextRequest) {
         const fileExtension = screenshot.name.split('.').pop() || 'png';
         const fileName = `${eventId}_${name}_${normalizedUTR}.${fileExtension}`;
 
-        const uploadPromises: Promise<any>[] = [
+        const uploadPromises: Promise<DriveFile>[] = [
             withRateLimit(() => uploadToDrive(buffer, screenshot.type, fileName, eventFolderId))
         ];
 

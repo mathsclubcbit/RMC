@@ -44,7 +44,7 @@ export default function MathTitle({ text = "Ramanujan", className = "" }) {
                 variants={containerVars}
                 initial="hidden"
                 animate="visible"
-                className="relative z-10 flex items-center justify-center py-4"
+                className="relative z-10 flex items-center justify-center py-1 md:py-4"
             >
                 {letters.map((char, index) => (
                     <motion.span
@@ -87,7 +87,7 @@ export default function MathTitle({ text = "Ramanujan", className = "" }) {
                 initial={{ width: 0, opacity: 0 }}
                 animate={{ width: "100px", opacity: 1 }}
                 transition={{ delay: 1, duration: 1, ease: "easeOut" }}
-                className="h-[1px] bg-gradient-to-r from-transparent via-teal/50 to-transparent mt-2"
+                className="h-[1px] bg-gradient-to-r from-transparent via-teal/50 to-transparent mt-1 md:mt-2"
             />
         </div>
     );

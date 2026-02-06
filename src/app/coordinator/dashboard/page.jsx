@@ -242,7 +242,7 @@ function StatCard({ label, value, accent, isCurrency }) {
         violet: "bg-violet-500/10",
     };
 
-    const theme = colors[accent] || colors.teal;
+
     const glowColor = glows[accent] || glows.teal;
 
     const formatted = isCurrency

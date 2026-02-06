@@ -7,8 +7,18 @@ import { TicketCheckInForm } from "@/components/ticket-check-in-form";
 import { TicketDetailsCard } from "@/components/ticket-details-card";
 import { Button } from "@/components/ui/button";
 
+interface TicketData {
+    id: string;
+    name: string;
+    roll: string;
+    event: string;
+    team: string;
+    members: string;
+    timestamp: string;
+}
+
 interface AdminTicketManagerProps {
-    ticket: any;
+    ticket: TicketData;
 }
 
 export function AdminTicketManager({ ticket }: AdminTicketManagerProps) {

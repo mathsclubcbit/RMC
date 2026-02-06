@@ -392,7 +392,43 @@ textarea:focus {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
 .scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+/* ===== Liquid Text Animation ===== */
+.liquid-text-fill {
+  background-image: linear-gradient(to top, var(--rmc-teal) 50%, white 50%);
+  background-size: 100% 210%;
+  /* Extra height to ensure full coverage */
+  background-position: top;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  transition: background-position 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.group:hover .liquid-text-fill {
+  background-position: bottom;
+}
+
+/* Glow Pulse */
+@keyframes glow-pulse {
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 20px rgba(58, 188, 179, 0.3));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 40px rgba(58, 188, 179, 0.6));
+  }
+}
+
+.hover-glow-pulse:hover {
+  animation: glow-pulse 2s ease-in-out infinite;
 }

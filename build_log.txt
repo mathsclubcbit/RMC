@@ -1,0 +1,94 @@
+﻿
+> main@0.1.0 build
+> next build
+
+Ôû▓ Next.js 16.1.3 (Turbopack)
+- Environments: .env.local
+- Experiments (use with caution):
+  ┬À serverActions
+
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 15.0s
+  Running TypeScript ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/50) ...
+  Generating static pages using 15 workers (12/50) 
+  Generating static pages using 15 workers (24/50) 
+  Generating static pages using 15 workers (37/50) 
+Ô£ô Generating static pages using 15 workers (50/50) in 1165.4ms
+  Finalizing page optimization ...
+
+Route (app)                                Revalidate  Expire
+Ôöî Ôùï /
+Ôö£ Ôùï /_not-found
+Ôö£ Ôùï /about
+Ôö£ ãÆ /admin
+Ôö£ ãÆ /admin/announcements
+Ôö£ ãÆ /admin/events
+Ôö£ ãÆ /admin/events/[id]/edit
+Ôö£ ãÆ /admin/events/new
+Ôö£ ãÆ /admin/gallery
+Ôö£ Ôùï /admin/hub
+Ôö£ Ôùï /admin/login
+Ôö£ ãÆ /admin/newsletter
+Ôö£ ãÆ /admin/scan
+Ôö£ Ôùï /admin/setup-2fa
+Ôö£ ãÆ /admin/team
+Ôö£ ãÆ /admin/ticket/[id]
+Ôö£ Ôùï /announcements
+Ôö£ ãÆ /api/admin/create-user
+Ôö£ ãÆ /api/admin/delete-user
+Ôö£ ãÆ /api/admin/events/[id]/password
+Ôö£ ãÆ /api/admin/update-credentials
+Ôö£ ãÆ /api/announcements
+Ôö£ ãÆ /api/coordinator/login
+Ôö£ ãÆ /api/coordinator/logout
+Ôö£ ãÆ /api/coordinator/participants
+Ôö£ ãÆ /api/coordinator/session-check
+Ôö£ ãÆ /api/coordinator/verify
+Ôö£ ãÆ /api/cron/reminders
+Ôö£ ãÆ /api/events
+Ôö£ ãÆ /api/events/[id]
+Ôö£ ãÆ /api/hub
+Ôö£ ãÆ /api/hub/upload
+Ôö£ ãÆ /api/network/resources/upload
+Ôö£ ãÆ /api/network/resources/upload/get-url
+Ôö£ ãÆ /api/newsletter/send
+Ôö£ ãÆ /api/newsletter/stats
+Ôö£ ãÆ /api/newsletter/subscribe
+Ôö£ ãÆ /api/notifications/send
+Ôö£ ãÆ /api/notifications/subscribe
+Ôö£ ãÆ /api/register
+Ôö£ ãÆ /api/tasks
+Ôö£ Ôùï /contact
+Ôö£ ãÆ /coordinator/dashboard
+Ôö£ ãÆ /coordinator/edit
+Ôö£ ãÆ /coordinator/login
+Ôö£ ãÆ /coordinator/participants
+Ôö£ ãÆ /coordinator/scan
+Ôö£ ãÆ /coordinator/ticket/[id]
+Ôö£ Ôùï /events                                        1h      1y
+Ôö£ Ôùï /gallery
+Ôö£ ãÆ /gallery/[id]
+Ôö£ ãÆ /hub
+Ôö£ Ôùï /join
+Ôö£ Ôùï /network/calendar
+Ôö£ Ôùï /network/dashboard
+Ôö£ Ôùï /network/login
+Ôö£ Ôùï /network/my-team
+Ôö£ Ôùï /network/personnel
+Ôö£ Ôùï /network/resources
+Ôö£ Ôùï /network/settings
+Ôö£ Ôùï /network/tasks
+Ôö£ Ôùï /network/teams
+Ôö£ Ôùï /register
+Ôö£ ãÆ /register/[eventId]
+Ôö£ Ôùï /resources
+Ôöö ãÆ /team
+
+
+ãÆ Proxy (Middleware)
+
+Ôùï  (Static)   prerendered as static content
+ãÆ  (Dynamic)  server-rendered on demand
+

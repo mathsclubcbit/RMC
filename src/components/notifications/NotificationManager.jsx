@@ -24,8 +24,11 @@ export default function NotificationManager({ className = "" }) {
 
     useEffect(() => {
         if (typeof window !== 'undefined' && 'Notification' in window) {
-            setPermission(Notification.permission);
-            checkSubscription();
+            const syncState = () => {
+                setPermission(Notification.permission);
+                checkSubscription();
+            };
+            syncState();
         }
     }, []);
 

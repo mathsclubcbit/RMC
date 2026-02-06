@@ -13,11 +13,13 @@ export function useTeamMembers(teamConstraints) {
     useEffect(() => {
         if (teamConstraints.maxTeamSize > 1) {
             const minMembers = Math.max(0, teamConstraints.minTeamSize - 1);
-            setTeamMembers(prev => {
-                if (Array.isArray(prev) && prev.length >= minMembers) return prev;
-                return Array.from({ length: minMembers }, () => ({
-                    name: '', email: '', rollNo: '', phone: ''
-                }));
+            Promise.resolve().then(() => {
+                setTeamMembers(prev => {
+                    if (Array.isArray(prev) && prev.length >= minMembers) return prev;
+                    return Array.from({ length: minMembers }, () => ({
+                        name: '', email: '', rollNo: '', phone: ''
+                    }));
+                });
             });
         }
     }, [teamConstraints]);

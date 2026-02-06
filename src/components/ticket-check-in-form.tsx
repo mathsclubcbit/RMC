@@ -67,7 +67,7 @@ export function TicketCheckInForm({ ticket }: TicketCheckInFormProps) {
             } else {
                 router.refresh();
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error("Check-in failed", error);
             setModal({
                 isOpen: true,
@@ -102,14 +102,14 @@ export function TicketCheckInForm({ ticket }: TicketCheckInFormProps) {
                             key={idx}
                             onClick={() => toggleMember(member)}
                             className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all duration-200 ${isSelected
-                                    ? "bg-primary/20 border-primary/50 shadow-[inset_0_0_10px_rgba(124,58,237,0.1)]"
-                                    : "bg-white/5 border-white/10 hover:bg-white/10"
+                                ? "bg-primary/20 border-primary/50 shadow-[inset_0_0_10px_rgba(124,58,237,0.1)]"
+                                : "bg-white/5 border-white/10 hover:bg-white/10"
                                 }`}
                         >
                             <span
                                 className={`text-sm ${isSelected
-                                        ? "text-primary-foreground font-medium"
-                                        : "text-muted-foreground"
+                                    ? "text-primary-foreground font-medium"
+                                    : "text-muted-foreground"
                                     }`}
                             >
                                 {member}

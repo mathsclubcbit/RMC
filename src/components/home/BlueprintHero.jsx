@@ -7,7 +7,7 @@ export default function BlueprintHero() {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        setIsVisible(true);
+        const timer = setTimeout(() => setIsVisible(true), 0);
         const handleMouseMove = (e) => {
             const x = (e.clientX / window.innerWidth - 0.5) * 20;
             const y = (e.clientY / window.innerHeight - 0.5) * 20;
@@ -16,6 +16,7 @@ export default function BlueprintHero() {
         };
         window.addEventListener("mousemove", handleMouseMove);
         return () => {
+            clearTimeout(timer);
             window.removeEventListener("mousemove", handleMouseMove);
         };
     }, []);

@@ -21,7 +21,7 @@ const getAdminCredentials = () => {
 };
 
 export async function adminLoginAction(prevState, formData) {
-    const { username: expectedUser, password: expectedPass, totpSecret } = getAdminCredentials();
+    const { password: expectedPass, totpSecret } = getAdminCredentials();
 
     // If we are in step 2 (verifying OTP)
     const isStep2 = formData.get("step") === "2";

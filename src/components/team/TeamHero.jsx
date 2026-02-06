@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import MathBackground from "@/components/ui/MathBackground";
 import MathTitle from "@/components/ui/MathTitle";

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, CheckCircle, Upload, FileText, Users, X, Info, Calendar, Trophy, Target, Shield, Phone, Sparkles } from "lucide-react";
+import { CheckCircle, Upload, FileText, Users, X, Info, Calendar, Trophy, Shield, Phone, Sparkles, Gift, Target, ArrowLeft, ArrowRight } from "lucide-react";
 import TicketDownloadButton from "./TicketDownloadButton";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 

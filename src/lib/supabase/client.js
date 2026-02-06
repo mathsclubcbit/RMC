@@ -8,6 +8,11 @@ let supabaseClient = null;
  * Uses singleton pattern to avoid recreating client on every call.
  */
 export function createClient() {
+    // Only create the client in the browser environment
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
     if (supabaseClient) {
         return supabaseClient;
     }

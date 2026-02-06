@@ -11,7 +11,7 @@ import {
     LayoutDashboard,
     Users,
     UserCog,
-    Calendar,
+    Calendar as CalendarIcon,
     ListTodo,
     FolderOpen,
     Settings,
@@ -23,78 +23,17 @@ import {
     RefreshCw
 } from "lucide-react";
 
-export default function NetworkSidebar() {
-    const [collapsed, setCollapsed] = useState(false);
-    const [mobileOpen, setMobileOpen] = useState(false);
-    const pathname = usePathname();
-    const router = useRouter();
-    const { profile, signOut, isPresident, canManageTeams, canManageMembers } = useAuth();
-
-    // Close mobile menu on route change
-    useEffect(() => {
-        if (mobileOpen) setMobileOpen(false);
-    }, [pathname]);
-
-    const getNavLinks = () => {
-        const links = [
-            { href: "/network/dashboard", label: "Dashboard", icon: LayoutDashboard, always: true },
-        ];
-
-        // Teams link - visible to all, but admin functions only for authorized users
-        if (isPresident() || canManageTeams()) {
-            links.push({ href: "/network/teams", label: "Teams", icon: Users });
-        }
-
-        // Personnel - President and delegated only
-        if (isPresident() || canManageMembers()) {
-            links.push({ href: "/network/personnel", label: "Personnel", icon: UserCog });
-        }
-
-        // My Team - For heads and members
-        if (profile?.role === "head" || profile?.role === "member") {
-            links.push({ href: "/network/my-team", label: "My Team", icon: Users });
-        }
-
-        // Calendar - Everyone
-        links.push({ href: "/network/calendar", label: "Calendar", icon: Calendar, always: true });
-
-        // Tasks - Everyone
-        links.push({ href: "/network/tasks", label: "Tasks", icon: ListTodo, always: true });
-
-        // Resources - Everyone
-        links.push({ href: "/network/resources", label: "Resources", icon: FolderOpen, always: true });
-
-        // Settings - President only
-        if (isPresident()) {
-            links.push({ href: "/network/settings", label: "Settings", icon: Settings });
-        }
-
-        return links;
-    };
-
-    const navLinks = getNavLinks();
-
-    const handleSignOut = async () => {
-        await signOut();
-        router.push("/network/login");
-    };
-
-    const windowReload = () => {
-        if (typeof window !== 'undefined') window.location.reload();
-    };
-
-    const commonProps = {
-        collapsed,
-        profile,
-        navLinks,
-        pathname,
-        handleSignOut,
-        windowReload
-    };
-
-    const { startLoading } = useLoading();
-
-    const NavContent = ({ hideLogo = false, collapsed, profile, navLinks, pathname, handleSignOut, windowReload }) => (
+function NavContent({
+    hideLogo = false,
+    collapsed,
+    profile,
+    navLinks,
+    pathname,
+    handleSignOut,
+    windowReload,
+    startLoading
+}) {
+    return (
         <>
             {/* Logo */}
             {!hideLogo && (
@@ -189,6 +128,82 @@ export default function NetworkSidebar() {
             </div>
         </>
     );
+}
+
+export default function NetworkSidebar() {
+    if (typeof window === 'undefined') return null;
+    const [collapsed, setCollapsed] = useState(false);
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const pathname = usePathname();
+    const router = useRouter();
+    const { profile, signOut, isPresident, canManageTeams, canManageMembers } = useAuth();
+
+    // Close mobile menu on route change
+    useEffect(() => {
+        if (mobileOpen) {
+            const timer = setTimeout(() => setMobileOpen(false), 0);
+            return () => clearTimeout(timer);
+        }
+    }, [pathname, mobileOpen]);
+
+    function getNavLinks() {
+        const links = [
+            { href: "/network/dashboard", label: "Dashboard", icon: LayoutDashboard, always: true },
+        ];
+
+        // Teams link - visible to all, but admin functions only for authorized users
+        if (isPresident() || canManageTeams()) {
+            links.push({ href: "/network/teams", label: "Teams", icon: Users });
+        }
+
+        // Personnel - President and delegated only
+        if (isPresident() || canManageMembers()) {
+            links.push({ href: "/network/personnel", label: "Personnel", icon: UserCog });
+        }
+
+        // My Team - For heads and members
+        if (profile?.role === "head" || profile?.role === "member") {
+            links.push({ href: "/network/my-team", label: "My Team", icon: Users });
+        }
+
+        // Calendar - Everyone
+        links.push({ href: "/network/calendar", label: "Calendar", icon: CalendarIcon, always: true });
+
+        // Tasks - Everyone
+        links.push({ href: "/network/tasks", label: "Tasks", icon: ListTodo, always: true });
+
+        // Resources - Everyone
+        links.push({ href: "/network/resources", label: "Resources", icon: FolderOpen, always: true });
+
+        // Settings - President only
+        if (isPresident()) {
+            links.push({ href: "/network/settings", label: "Settings", icon: Settings });
+        }
+
+        return links;
+    }
+
+    const navLinks = getNavLinks();
+
+    async function handleSignOut() {
+        await signOut();
+        router.push("/network/login");
+    }
+
+    function windowReload() {
+        if (typeof window !== 'undefined') window.location.reload();
+    }
+
+    const { startLoading } = useLoading();
+    const commonProps = {
+        collapsed,
+        profile,
+        navLinks,
+        pathname,
+        handleSignOut,
+        windowReload,
+        startLoading
+    };
 
     return (
         <>

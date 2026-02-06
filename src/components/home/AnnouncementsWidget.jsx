@@ -18,7 +18,7 @@ export default function AnnouncementsWidget() {
 
         // Calculate Delay based on Preloader logic
         const checkPreloader = () => {
-            const lastShown = localStorage.getItem("rmc-legacy-preloader-timestamp");
+            const lastShown = typeof window !== 'undefined' ? localStorage.getItem("rmc-legacy-preloader-timestamp") : null;
             const now = Date.now();
             const timeSince = lastShown ? now - (parseInt(lastShown) || 0) : Infinity;
             const ONE_HOUR = 60 * 60 * 1000;

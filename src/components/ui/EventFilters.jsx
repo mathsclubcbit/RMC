@@ -27,7 +27,6 @@ function CustomSelect({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const selectedLabel = options.find(opt => opt === value) || placeholder || value;
     const isAllSelected = value === defaultValue;
 
     return (

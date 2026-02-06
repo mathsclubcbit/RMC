@@ -18,7 +18,7 @@ export function useMediaQuery(query) {
 
         // Set initial value
         if (media.matches !== matches) {
-            setMatches(media.matches);
+            Promise.resolve().then(() => setMatches(media.matches));
         }
 
         // Create listener

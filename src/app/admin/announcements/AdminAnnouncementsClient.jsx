@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Send, Users, Shield, Radio, Loader2 } from "lucide-react";
+import { Bell, Send, Users, Shield, Loader2 } from "lucide-react";
 
 export default function AdminAnnouncementsPage() {
     const [title, setTitle] = useState("");
@@ -60,8 +60,8 @@ export default function AdminAnnouncementsPage() {
                                         type="button"
                                         onClick={() => setTargetRole(role.id)}
                                         className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${targetRole === role.id
-                                                ? "bg-teal-500/20 border-teal-500/50 text-teal-300"
-                                                : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10"
+                                            ? "bg-teal-500/20 border-teal-500/50 text-teal-300"
+                                            : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10"
                                             }`}
                                     >
                                         <role.icon className="w-5 h-5" />

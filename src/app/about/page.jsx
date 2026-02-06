@@ -7,7 +7,7 @@ import SpotlightCard from "@/components/ui/SpotlightCard";
 import SectionDivider from "@/components/ui/SectionDivider";
 import HeroParticles from "@/components/about/HeroParticles";
 import CouncilGrid from "@/components/about/CouncilGrid";
-import { Target, Telescope, Users, Award, Brain, BookOpen, Calculator, Sigma, Variable } from "lucide-react";
+import { Target, Telescope, Users, Award, Brain, BookOpen } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useState, useEffect } from "react";
 
@@ -67,12 +67,6 @@ export default function AboutPage() {
         { year: "2025", event: "Reached 500+ Member Milestone" },
     ];
 
-    const team = [
-        { name: "S. Ramanujan", role: "Faculty Advisor", icon: Sigma, color: "text-teal" },
-        { name: "John Nash", role: "President", icon: Variable, color: "text-purple-400" },
-        { name: "Ada Lovelace", role: "Vice President", icon: Calculator, color: "text-lime" },
-        { name: "Alan Turing", role: "Tech Lead", icon: Brain, color: "text-blue-400" },
-    ];
 
     const [council, setCouncil] = useState([]);
     const [loading, setLoading] = useState(true);

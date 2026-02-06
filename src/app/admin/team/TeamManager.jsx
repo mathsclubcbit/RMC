@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
-import { Trash2, Upload, Loader2, Plus, User, Linkedin, Mail, BadgeCheck, AlertTriangle, Pencil, X } from "lucide-react";
+import { Trash2, Upload, Loader2, Plus, User, Linkedin, Mail, BadgeCheck, AlertTriangle, Pencil } from "lucide-react";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { cn } from "@/lib/utils";
 import { uploadToCloudinary } from "@/lib/cloudinary";
@@ -48,9 +48,9 @@ export default function TeamManager() {
 
     useEffect(() => {
         fetchMembers();
-    }, []);
+    }, [fetchMembers]);
 
-    const fetchMembers = async () => {
+    const fetchMembers = useCallback(async () => {
         const { data, error } = await supabase
             .from('rmc_council')
             .select('*');
@@ -89,7 +89,7 @@ export default function TeamManager() {
             setMembers(sortedData);
         }
         setLoading(false);
-    };
+    }, [supabase]);
 
     const showModal = (title, message, type = "info", onConfirm = null) => {
         setModal({ isOpen: true, title, message, type, onConfirm });
@@ -202,7 +202,7 @@ export default function TeamManager() {
         }
     };
 
-    const handleDelete = async (id, imageUrl) => {
+    const handleDelete = async (id) => {
         showModal("Delete Member?", "Are you sure? This cannot be undone.", "confirm", async () => {
             const result = await deleteTeamMemberAction(id);
             if (result.error) {

@@ -1,7 +1,5 @@
 import { google } from 'googleapis';
 import { Readable } from 'stream';
-import { OAuth2Client } from 'google-auth-library';
-import { JSONClient } from 'google-auth-library/build/src/auth/googleauth';
 import { cacheService } from './cache-service';
 
 const SCOPES = [
@@ -93,7 +91,7 @@ const matchesRegistrationId = (storedId: string, wantedId: string): boolean => {
 /**
  * Authenticate using Service Account from Environment Variable
  */
-const getAuthClient = async (): Promise<any> => {
+const getAuthClient = async (): Promise<any> => { // eslint-disable-line @typescript-eslint/no-explicit-any
     // 1. Try OAuth 2.0 (User Account - Free 15GB Quota)
     if (process.env.GOOGLE_REFRESH_TOKEN && process.env.GOOGLE_CLIENT_ID) {
         try {
@@ -112,7 +110,7 @@ const getAuthClient = async (): Promise<any> => {
             oauth2Client.setCredentials(credentials);
 
             return oauth2Client;
-        } catch (error: any) {
+        } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             console.error('[Google Auth] OAuth refresh token error:', error.message);
             // If OAuth fails, try service account fallback
             if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
@@ -133,7 +131,7 @@ const getAuthClient = async (): Promise<any> => {
             });
             const client = await auth.getClient();
             return client;
-        } catch (error: any) {
+        } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             throw new Error(`Google Service Account authentication failed: ${error.message}`);
         }
     }
@@ -277,7 +275,7 @@ export const checkDuplicateUTR = async (
     utr: string
 ): Promise<boolean> => {
     const authClient = await getAuthClient();
-    const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+    const sheets = google.sheets({ version: 'v4', auth: authClient as any }); // eslint-disable-line @typescript-eslint/no-explicit-any
     const range = sheetRange('J:J');
 
     const response = await sheets.spreadsheets.values.get({
@@ -301,7 +299,7 @@ export const checkDuplicateUTR = async (
  */
 export const checkDuplicateRegistrationId = async (spreadsheetId: string, registrationId: string): Promise<boolean> => {
     const authClient = await getAuthClient();
-    const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+    const sheets = google.sheets({ version: 'v4', auth: authClient as any }); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     const response = await sheets.spreadsheets.values.get({
         spreadsheetId,
@@ -400,9 +398,9 @@ export const appendRowToSheet = async (
             },
         });
 
-        const updates: any = (res as any)?.data?.updates;
+        const updates = (res as any)?.data?.updates; // eslint-disable-line @typescript-eslint/no-explicit-any
         console.info('Sheets append ok', { updatedRows: updates?.updatedRows });
-    } catch (error: any) {
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
         console.error('Sheets append failed', error.message);
         throw error;
     }
@@ -438,7 +436,7 @@ export interface RegistrationData {
 export const getAllRegistrations = async (spreadsheetId: string): Promise<RegistrationData[]> => {
     return cacheService.getOrSet(`registrations::${spreadsheetId}`, async () => {
         const authClient = await getAuthClient();
-        const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+        const sheets = google.sheets({ version: 'v4', auth: authClient as any }); // eslint-disable-line @typescript-eslint/no-explicit-any
 
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
@@ -487,7 +485,7 @@ export const markRegistrationAttendance = async (
     updates: { status?: string; checkedInAt?: string; memberAttendance?: string }
 ) => {
     const authClient = await getAuthClient();
-    const sheets = google.sheets({ version: 'v4', auth: authClient as any });
+    const sheets = google.sheets({ version: 'v4', auth: authClient as any }); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     try {
         const response = await sheets.spreadsheets.values.get({ spreadsheetId, range: sheetRange('B:B') });

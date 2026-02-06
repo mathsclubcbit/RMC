@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Scan, Keyboard, Lightbulb } from "lucide-react";
 
 export default function AdminScanPage() {
@@ -13,17 +12,23 @@ export default function AdminScanPage() {
     const normalized = useMemo(() => String(ticketCode || "").replace(/\s+/g, "").trim(), [ticketCode]);
     const isValid = /^\d{6}$/.test(normalized);
 
+    // Detect environment on mount
     useEffect(() => {
-        try {
-            setEnvInfo({
-                secure: Boolean(window.isSecureContext),
-                hasMedia: Boolean(navigator?.mediaDevices?.getUserMedia),
-                origin: window.location.origin,
-            });
-        } catch {
-            // ignore
-        }
+        const detectEnv = () => {
+            try {
+                setEnvInfo({
+                    secure: Boolean(window.isSecureContext),
+                    hasMedia: Boolean(navigator?.mediaDevices?.getUserMedia),
+                    origin: window.location.origin,
+                });
+            } catch {
+                // ignore
+            }
+        };
+        detectEnv();
+    }, []);
 
+    useEffect(() => {
         const scanner = new Html5QrcodeScanner({
             elementId: "rmc-qr-reader",
             config: {

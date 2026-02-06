@@ -15,29 +15,24 @@ export default function CoordinatorScanPage() {
     const normalized = useMemo(() => String(ticketCode || "").replace(/\s+/g, "").trim(), [ticketCode]);
     const isValid = /^\d{6}$/.test(normalized);
 
+    // Detect environment on mount
     useEffect(() => {
-        let isMounted = true;
-
-        try {
-            const nextEnv = {
+        const detectEnv = () => {
+            setEnvInfo({
                 secure: Boolean(window.isSecureContext),
                 hasMedia: Boolean(navigator?.mediaDevices?.getUserMedia),
                 origin: window.location.origin,
-            };
-            if (isMounted) setEnvInfo(nextEnv);
+            });
+        };
+        detectEnv();
+    }, []);
 
-            if (!nextEnv.secure || !nextEnv.hasMedia) {
-                return () => {
-                    isMounted = false;
-                };
-            }
+    useEffect(() => {
+        if (!envInfo.secure || !envInfo.hasMedia) return;
+        if (scannerRef.current) return;
 
-            if (scannerRef.current) {
-                return () => {
-                    isMounted = false;
-                };
-            }
-
+        let isMounted = true;
+        try {
             const scanner = new Html5QrcodeScanner({
                 elementId: "coordinator-qr-reader",
                 config: {
@@ -69,7 +64,9 @@ export default function CoordinatorScanPage() {
             );
         } catch (err) {
             if (isMounted) {
-                setScannerError("Unable to start the camera. Please use manual entry or check permissions.");
+                Promise.resolve().then(() => {
+                    setScannerError("Unable to start the camera. Please use manual entry or check permissions.");
+                });
             }
         }
 
@@ -80,7 +77,7 @@ export default function CoordinatorScanPage() {
                 scannerRef.current = null;
             }
         };
-    }, [router]);
+    }, [router, envInfo.secure, envInfo.hasMedia]);
 
     return (
         <div className="min-h-[100dvh] bg-black text-white relative overflow-hidden">

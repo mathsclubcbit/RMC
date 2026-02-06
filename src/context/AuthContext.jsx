@@ -30,85 +30,6 @@ export function AuthProvider({ children }) {
     // Track in-flight requests to prevent double fetching
     const fetchPromises = useRef(new Map());
 
-    useEffect(() => {
-        let isMounted = true;
-
-        const initializeAuth = async () => {
-            try {
-                // Get the current session
-                const { data: { session }, error } = await supabase.auth.getSession();
-
-                if (error) {
-                    console.error("Session error:", error);
-                    if (isMounted) {
-                        setLoading(false);
-                        setAuthReady(true);
-                    }
-                    return;
-                }
-
-                // If no session, we're ready (logged out state)
-                if (!session && isMounted) {
-                    setLoading(false);
-                    setAuthReady(true);
-                }
-
-                // If session exists, we let onAuthStateChange handle the profile fetch
-            } catch (error) {
-                console.warn("Auth initialization error:", error);
-                if (isMounted) {
-                    setLoading(false);
-                    setAuthReady(true);
-                }
-            }
-        };
-
-        initializeAuth();
-
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
-                console.log("Auth state changed:", event);
-
-                if (!isMounted) return;
-
-                if (event === 'SIGNED_OUT' || !session) {
-                    setUser(null);
-                    setProfile(null);
-                    setPermissions(null);
-                    setLoading(false);
-                    setAuthReady(true);
-                    return;
-                }
-
-                // If user is already set and same ID, and we have a profile, don't refetch
-                if (userRef.current?.id === session.user.id && profileRef.current) {
-                    setLoading(false);
-                    setAuthReady(true);
-                    return;
-                }
-
-                setUser(session.user);
-
-                // UNBLOCK UI: Set ready immediately, fetch profile in background
-                if (isMounted) {
-                    setLoading(false);
-                    setAuthReady(true);
-                }
-
-                // Fetch profile in background (don't await)
-                fetchProfile(session.user.id).catch(err =>
-                    console.error("Background profile fetch failed:", err)
-                );
-            }
-        );
-
-        return () => {
-            isMounted = false;
-            subscription.unsubscribe();
-        };
-    }, [supabase]);
-
     // Unified, iterative fetchProfile function
     const fetchProfile = useCallback(async (userId) => {
         const fetchKey = userId;
@@ -124,7 +45,7 @@ export function AuthProvider({ children }) {
             // Retry loop: up to 3 attempts (0, 1, 2)
             for (let attempt = 0; attempt < 3; attempt++) {
                 try {
-                    console.log(`Fetching profile for user: ${userId} (Attempt ${attempt + 1})`);
+                    if (!supabase) throw new Error("Supabase client not initialized");
 
                     // Race condition: 5s timeout vs Supabase request
                     const { data: profileData, error } = await Promise.race([
@@ -158,41 +79,25 @@ export function AuthProvider({ children }) {
                     return; // Success! Exit the function.
 
                 } catch (err) {
-                    // Check for specific Supabase error codes
-                    // PGRST116: The result contains 0 rows (Profile not found)
                     if (err?.code === 'PGRST116') {
-                        console.warn("Profile not found for user (PGRST116). Stopping retries.");
-                        // Treat as success but with null profile
                         setProfile(null);
                         setPermissions(null);
                         return;
                     }
-
-                    console.warn(`Profile fetch attempt ${attempt + 1} failed:`, err.message || err);
                     lastError = err;
-
-                    // Wait before retrying (exponential backoff: 1s, 2s)
                     if (attempt < 2) {
                         const delay = Math.pow(2, attempt) * 1000;
                         await new Promise(resolve => setTimeout(resolve, delay));
                     }
                 }
             }
-
-            // If we exit the loop, all attempts failed
-            console.error("All profile fetch attempts failed. User logged in without profile data.", lastError);
-            // We do NOT set a dummy "member" profile here. 
-            // We leave profile as null. The UI should handle this state (e.g. show restricted view or loading).
+            console.error("All profile fetch attempts failed.", lastError);
         })();
 
-        // Store promise in map
         fetchPromises.current.set(fetchKey, promise);
-
-        // Cleanup map when promise completes (success or fail)
         promise.finally(() => {
             fetchPromises.current.delete(fetchKey);
         });
-
         return promise;
     }, [supabase]);
 
@@ -203,17 +108,13 @@ export function AuthProvider({ children }) {
                 email: email.trim().toLowerCase(),
                 password
             });
-
             if (error) {
                 setLoading(false);
                 return { data: null, error };
             }
-
-            // Wait for profile to be fetched
             if (data?.user) {
                 await fetchProfile(data.user.id);
             }
-
             setLoading(false);
             return { data, error: null };
         } catch (error) {
@@ -229,7 +130,6 @@ export function AuthProvider({ children }) {
             setUser(null);
             setProfile(null);
             setPermissions(null);
-            // setAuthReady(true);
         } catch (error) {
             console.error("Sign out error:", error);
         } finally {
@@ -237,7 +137,6 @@ export function AuthProvider({ children }) {
         }
     }, [supabase]);
 
-    // Helper functions for permission checks
     const isPresident = useCallback(() => profile?.role === "president", [profile?.role]);
     const isCoreCouncil = useCallback(() => ["president", "vice_president", "general_secretary", "joint_secretary", "faculty"].includes(profile?.role), [profile?.role]);
     const isHead = useCallback(() => profile?.role === "head", [profile?.role]);
@@ -247,11 +146,7 @@ export function AuthProvider({ children }) {
     const signUp = useCallback(async (email, password, options = {}) => {
         setLoading(true);
         try {
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-                options
-            });
+            const { data, error } = await supabase.auth.signUp({ email, password, options });
             setLoading(false);
             return { data, error };
         } catch (error) {
@@ -261,6 +156,83 @@ export function AuthProvider({ children }) {
     }, [supabase]);
 
     const refreshProfile = useCallback(() => user && fetchProfile(user.id), [user, fetchProfile]);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const initializeAuth = async () => {
+            if (!supabase) {
+                if (isMounted) {
+                    setLoading(false);
+                    setAuthReady(true);
+                }
+                return;
+            }
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error || !session) {
+                    if (isMounted) {
+                        setLoading(false);
+                        setAuthReady(true);
+                    }
+                }
+                // Note: we let onAuthStateChange handle the profile fetch if session exists
+            } catch (error) {
+                if (isMounted) {
+                    setLoading(false);
+                    setAuthReady(true);
+                }
+            }
+        };
+
+        initializeAuth();
+
+        if (!supabase) return;
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+                if (!isMounted) return;
+
+                if (event === 'SIGNED_OUT' || !session) {
+                    setUser(null);
+                    setProfile(null);
+                    setPermissions(null);
+                    setLoading(false);
+                    setAuthReady(true);
+                    return;
+                }
+
+                // Logic partially restored: State updates only
+                if (userRef.current?.id === session.user.id && profileRef.current) {
+                    setLoading(false);
+                    setAuthReady(true);
+                    return;
+                }
+
+                setUser(session.user);
+
+                // UNBLOCK UI: Set ready immediately, fetch profile in background
+                if (isMounted) {
+                    setLoading(false);
+                    setAuthReady(true);
+                }
+
+                // Defer profile fetch to next tick to avoid initialization race conditions during build
+                setTimeout(() => {
+                    if (isMounted && session?.user?.id) {
+                        fetchProfile(session.user.id).catch(err =>
+                            console.error("Background profile fetch failed:", err)
+                        );
+                    }
+                }, 0);
+            }
+        );
+
+        return () => {
+            isMounted = false;
+            if (subscription) subscription.unsubscribe();
+        };
+    }, [supabase, fetchProfile]);
 
     const value = {
         user,

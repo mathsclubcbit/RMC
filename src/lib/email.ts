@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { generateQRCode, generateStyledQRCode } from './qrcode';
+import { generateStyledQRCode } from './qrcode';
 
 /**
  * Configure the SMTP Transporter

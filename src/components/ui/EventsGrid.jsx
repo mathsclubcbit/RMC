@@ -1,9 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Calendar, MapPin, Clock } from "lucide-react";
+import { ArrowRight, Calendar } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 import { useState } from "react";
 
 export default function EventsGrid({ items }) {
@@ -17,7 +16,6 @@ export default function EventsGrid({ items }) {
 }
 
 function EventCard({ item, index }) {
-    const [isHovered, setIsHovered] = useState(false);
 
     return (
         <motion.div
@@ -25,8 +23,6 @@ function EventCard({ item, index }) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
             className="group relative h-full flex flex-col bg-black/40 border border-white/5 hover:border-teal/30 rounded-2xl overflow-hidden transition-all duration-500 hover:bg-black/60 hover:-translate-y-1 hover:shadow-[0_0_30px_-10px_rgba(45,155,148,0.3)]"
         >
             {/* Spotlight Gradient Effect */}

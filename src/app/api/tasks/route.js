@@ -8,7 +8,6 @@ const supabase = createClient(
 export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
-    const team = searchParams.get('team');
 
     let query = supabase.from('tasks').select('*');
 

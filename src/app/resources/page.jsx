@@ -4,7 +4,7 @@ import SectionTitle from "@/components/ui/SectionTitle";
 import SpotlightCard from "@/components/ui/SpotlightCard";
 import PageHeader from "@/components/ui/PageHeader";
 import SectionDivider from "@/components/ui/SectionDivider";
-import { Book, Puzzle, Globe, ExternalLink, Download, Brain, Sparkles, Lightbulb, FileText, FolderOpen } from "lucide-react";
+import { Book, Puzzle, Globe, ExternalLink, Download, Brain, Sparkles, Lightbulb, FolderOpen } from "lucide-react";
 
 export default function ResourcesPage() {
 

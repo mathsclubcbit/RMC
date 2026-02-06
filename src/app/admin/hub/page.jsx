@@ -28,7 +28,6 @@ export default function AdminHubPage() {
     const [success, setSuccess] = useState("");
 
     // Modal states
-    const [editingCategory, setEditingCategory] = useState(null);
     const [editingLink, setEditingLink] = useState(null);
     const [newCategoryName, setNewCategoryName] = useState("");
     const [linkForm, setLinkForm] = useState({ name: "", url: "", image: "" });
@@ -39,7 +38,7 @@ export default function AdminHubPage() {
             const res = await fetch("/api/hub");
             const data = await res.json();
             setCategories(data.categories || []);
-        } catch (err) {
+        } catch {
             setError("Failed to load hub data");
         } finally {
             setLoading(false);

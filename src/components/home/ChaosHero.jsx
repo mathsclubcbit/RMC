@@ -5,6 +5,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Float, Stars } from "@react-three/drei";
 import * as THREE from "three";
 import { motion } from "framer-motion";
+import MathTitle from "@/components/ui/MathTitle";
 
 // --- Math Constants (Lorenz System) ---
 // sigma = 10, rho = 28, beta = 8/3
@@ -114,13 +115,13 @@ function ResponsiveCamera() {
             if (isMobile) {
                 // FOV 50: Balanced perspective
                 // Y 0: Perfectly centered
-                // eslint-disable-next-line react-hooks/immutability
+
                 camera.fov = 50;
                 camera.position.z = 80; // Was 90, now 80 (Closer = Bigger)
                 camera.position.y = 0;
             } else {
                 // Desktop: Standard Cinematic
-                // eslint-disable-next-line react-hooks/immutability
+
                 camera.fov = 40;
                 camera.position.z = 60;
                 camera.position.y = 8; // Slight lift on desktop
@@ -149,7 +150,7 @@ export default function ChaosHero() {
     }, []);
 
     return (
-        <section className="relative w-full min-h-[80vh] md:min-h-screen overflow-hidden bg-transparent" style={{ touchAction: 'pan-y' }}>
+        <section className="relative w-full min-h-[60vh] md:min-h-screen overflow-hidden bg-transparent" style={{ touchAction: 'pan-y' }}>
             {/* 3D Scene */}
             <div
                 className="absolute inset-0 z-10 canvas-container"
@@ -195,26 +196,28 @@ export default function ChaosHero() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 1 }}
-                        className="mb-10"
+                        className="mb-4 md:mb-10"
                     >
-                        <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-teal/20 bg-teal/5 backdrop-blur-md shadow-[0_0_20px_-5px_rgba(45,212,191,0.2)]">
+                        <div className="inline-flex items-center gap-3 px-3 py-1 md:px-5 md:py-2 rounded-full border border-teal/20 bg-teal/5 backdrop-blur-md shadow-[0_0_20px_-5px_rgba(45,212,191,0.2)]">
                             <span className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse shadow-[0_0_10px_rgba(45,212,191,0.8)]" />
-                            <span className="font-[family-name:var(--font-cinzel)] text-teal/90 text-xs tracking-[0.2em] font-bold">
+                            <span className="font-[family-name:var(--font-cinzel)] text-teal/90 text-[10px] md:text-xs tracking-[0.2em] font-bold">
                                 EST. MMXVIII
                             </span>
                         </div>
                     </motion.div>
 
-                    {/* Main Title - Serif & Huge */}
-                    <motion.h1
+                    {/* Main Title - Serif & Huge (Using MathTitle component for consistency) */}
+                    <div className="mb-2 md:mb-6 scale-90 md:scale-100 origin-center pointer-events-auto">
+                        <MathTitle text="RAMANUJAN" className="text-5xl md:text-7xl lg:text-9xl font-black tracking-tight" />
+                    </div>
+
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 1.5, ease: "easeOut" }}
-                        className="font-[family-name:var(--font-montserrat)] font-black text-5xl md:text-7xl lg:text-9xl text-transparent bg-clip-text bg-gradient-to-b from-white to-white/80 tracking-tight leading-none mb-6 uppercase drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]"
+                        transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
                     >
-                        RAMANUJAN <br />
-                        <span className="block mt-4 font-[family-name:var(--font-cormorant)] text-3xl md:text-5xl italic text-teal font-light tracking-wide normal-case drop-shadow-none">Maths Club</span>
-                    </motion.h1>
+                        <span className="block mt-1 md:mt-4 font-[family-name:var(--font-cormorant)] text-2xl md:text-3xl lg:text-5xl italic text-teal font-light tracking-wide normal-case drop-shadow-none">Maths Club</span>
+                    </motion.div>
 
                     {/* Subtitle - Definition Style */}
                     <motion.div
@@ -225,8 +228,6 @@ export default function ChaosHero() {
                     >
                         Journey to Infinity
                     </motion.div>
-
-                    {/* Math Notation Decoration */}
 
 
                 </div>

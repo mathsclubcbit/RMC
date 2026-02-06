@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import SectionTitle from "@/components/ui/SectionTitle";
-import SpotlightCard from "@/components/ui/SpotlightCard";
 import GalleryHero from "@/components/gallery/GalleryHero";
 import SectionDivider from "@/components/ui/SectionDivider";
-import { Play, Loader2, ImageOff, Calendar, ArrowRight, ImageIcon } from "lucide-react";
+import { Loader2, ImageOff, Calendar, ArrowRight, ImageIcon } from "lucide-react";
 import Tilt from "react-parallax-tilt";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";

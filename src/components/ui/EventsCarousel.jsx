@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Calendar, MapPin } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowRight, Calendar } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 

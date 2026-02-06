@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
-import { Trash2, Upload, Loader2, Plus, Image as ImageIcon, Calendar, CheckCircle, AlertTriangle, FolderX } from "lucide-react";
+import { Trash2, Upload, Loader2, Plus, Image as ImageIcon, CheckCircle, AlertTriangle, FolderX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { uploadToCloudinary } from "@/lib/cloudinary";
@@ -40,7 +40,7 @@ export default function GalleryManager() {
 
     useEffect(() => {
         fetchAlbums();
-    }, []);
+    }, [fetchAlbums]);
 
     useEffect(() => {
         if (selectedAlbumId) {
@@ -48,7 +48,7 @@ export default function GalleryManager() {
         } else {
             setUploadedImages([]);
         }
-    }, [selectedAlbumId]);
+    }, [selectedAlbumId, fetchAlbumImages]);
 
     const showModal = (title, message, type = "info", onConfirm = null) => {
         setModal({ isOpen: true, title, message, type, onConfirm });
@@ -58,7 +58,7 @@ export default function GalleryManager() {
         setModal(prev => ({ ...prev, isOpen: false }));
     };
 
-    const fetchAlbums = async () => {
+    const fetchAlbums = useCallback(async () => {
         const { data, error } = await supabase
             .from('gallery_events')
             .select('*')
@@ -72,9 +72,9 @@ export default function GalleryManager() {
             }
         }
         setLoading(false);
-    };
+    }, [supabase, selectedAlbumId]);
 
-    const fetchAlbumImages = async (eventId) => {
+    const fetchAlbumImages = useCallback(async (eventId) => {
         const { data, error } = await supabase
             .from('gallery_images')
             .select('*')
@@ -83,7 +83,7 @@ export default function GalleryManager() {
 
         if (error) console.error("Error fetching images:", error);
         else setUploadedImages(data || []);
-    };
+    }, [supabase]);
 
     // --- ALBUM CREATION ---
     const handleCreateAlbum = async (e) => {

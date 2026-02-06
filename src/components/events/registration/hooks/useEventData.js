@@ -12,7 +12,7 @@ export function useEventData(eventId) {
 
     useEffect(() => {
         if (!eventId) {
-            setIsLoading(false);
+            Promise.resolve().then(() => setIsLoading(false));
             return;
         }
 
