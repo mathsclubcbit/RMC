@@ -1,5 +1,6 @@
 import RegistrationClient from "@/components/events/registration";
 import { createAdminClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
 function hasSupabaseConfig() {
     return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -57,18 +58,18 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function RegistrationPage({ params }) {
-    // In Next.js 15+, params is a Promise. In 14, it's an object. 
-    // We treat it as a potential promise to be safe or just access it if we know the version.
-    // Given the build output showed "Next.js 16", params IS A PROMISE that needs awaiting.
-    // However, trying to await it might break if it's not. 
-    // Safe bet for Next 16: const { eventId } = await params;
-
-    // But since I don't want to risk "await params" syntax if the linter/ts config is strict or older...
-    // Let's assume standard object access for now based on typical 14/15 interop behavior, 
-    // OR just use it directly. 
-    // WAIT: The previous error showed "Next.js 16.1.3". In 15+, params must be awaited.
-
     const { eventId } = await params;
+    const event = await getEventById(eventId);
+
+    // Fallback Redirect Logic
+    if (event?.useExternalRegistration && event?.externalRegistrationUrl) {
+        let targetUrl = event.externalRegistrationUrl.trim();
+        // If the URL doesn't start with a protocol, assume https
+        if (!/^https?:\/\//i.test(targetUrl)) {
+            targetUrl = `https://${targetUrl}`;
+        }
+        redirect(targetUrl);
+    }
 
     return <RegistrationClient eventId={eventId} />;
 }

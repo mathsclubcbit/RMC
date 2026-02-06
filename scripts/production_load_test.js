@@ -23,12 +23,12 @@ async function runProductionTests() {
         return;
     }
 
-    console.log(`   Target: http://localhost:3000/api/register`);
+    console.log(`   Target: https://rmccbit.in/api/register`);
     console.log(`   Event: ${event.name} (ID: ${event.id})\n`);
 
     const results = {
         timestamp: new Date().toISOString(),
-        deployment: 'localhost:3000',
+        deployment: 'https://rmccbit.in',
         event,
         tests: []
     };

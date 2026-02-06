@@ -10,7 +10,7 @@ const path = require('path');
 const FormData = require('form-data');
 const fetch = require('node-fetch');
 
-const API_URL = 'http://localhost:3000/api/register';
+const API_URL = 'https://rmccbit.in/api/register';
 const RESULTS_DIR = path.join(__dirname, '../tests/load-test-results');
 
 // Ensure results directory exists
@@ -197,7 +197,7 @@ async function runLoadTest(testName, concurrency, eventId, eventName) {
 async function fetchActiveEvent() {
     try {
         console.log('🔍 Fetching events from API...');
-        const response = await fetch('http://localhost:3000/api/events');
+        const response = await fetch('https://rmccbit.in/api/events');
 
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);

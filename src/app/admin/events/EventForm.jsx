@@ -225,7 +225,6 @@ const defaultEvent = {
     password: "",
     img: "",
     posterDesktop: "",
-    posterDesktop: "",
     samplePpt: "",
     qrCode: "",
     teamSize: "",
@@ -238,6 +237,12 @@ const defaultEvent = {
     endDate: "",
     startTime: "",
     endTime: "",
+    // Fallback Redirect
+    useExternalRegistration: false,
+    externalRegistrationUrl: "",
+    // Success Content
+    successMessage: "You're In!",
+    whatsappLink: "",
     // Hackathon/Ideathon specific
     themes: [],
     eligibility: "",
@@ -368,7 +373,6 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
         if (event.variablePricingEnabled) {
             const tiers = Array.isArray(event.pricingTiers) ? event.pricingTiers : [];
             if (!tiers.length) return setError("Add at least one pricing tier");
-            // ... (rest of validation logic kept same but simplified for brevity in this replace) ...
         }
 
         setSaving(true);
@@ -607,6 +611,48 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
         if (currentStep === 3) {
             return (
                 <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                    {/* Fallback Redirect Section */}
+                    <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-4 mb-8">
+                        <div className="flex items-center justify-between border-b border-amber-500/20 pb-4 mb-2">
+                            <h3 className="text-lg font-semibold text-amber-400 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                                Fallback Registration Redirect
+                            </h3>
+                        </div>
+
+                        <p className="text-sm text-white/70 mb-2">
+                            Enable this to instantly redirect users to an external Google Form if the internal system is down.
+                        </p>
+
+                        <div className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/5">
+                            <label className="flex items-center gap-3 font-semibold cursor-pointer text-amber-200">
+                                <input
+                                    type="checkbox"
+                                    checked={!!event.useExternalRegistration}
+                                    onChange={(e) => setField("useExternalRegistration", e.target.checked)}
+                                    className="w-5 h-5 accent-amber-500"
+                                />
+                                Activate External Redirect
+                            </label>
+                            {event.useExternalRegistration && (
+                                <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-1 rounded-full animate-pulse uppercase font-bold">Active</span>
+                            )}
+                        </div>
+
+                        {event.useExternalRegistration && (
+                            <div className="animate-in slide-in-from-top-2 duration-300">
+                                <Field label="External Registration URL" hint="Link to Google Form (starts with https://)">
+                                    <input
+                                        value={event.externalRegistrationUrl || ""}
+                                        onChange={(e) => setField("externalRegistrationUrl", e.target.value)}
+                                        className="w-full px-4 py-3 rounded-xl bg-black/40 border border-amber-500/30 outline-none focus:border-amber-400 transition-all font-mono text-sm text-amber-100 placeholder:text-white/10"
+                                        placeholder="https://forms.gle/your-form-link"
+                                    />
+                                </Field>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <Field label="Reg Start Date">
                             <input type="date" value={event.regStartDate || ""} onChange={(e) => setField("regStartDate", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-teal-400/50 outline-none [color-scheme:dark]" />
@@ -626,6 +672,10 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                     </div>
 
                     <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-4">
+                        <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+                            <h3 className="text-lg font-semibold text-white/90">Registration Pricing</h3>
+                        </div>
+
                         <div className="flex items-center justify-between">
                             <label className="flex items-center gap-3 font-medium cursor-pointer">
                                 <input type="checkbox" checked={!!event.variablePricingEnabled} onChange={(e) => setField("variablePricingEnabled", e.target.checked)} className="w-4 h-4 accent-teal-400" />
@@ -651,6 +701,35 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                                 </div>
                             </Field>
                         )}
+                    </div>
+
+                    {/* Post-Registration Content Section */}
+                    <div className="p-5 rounded-2xl bg-teal-500/5 border border-teal-500/20 space-y-4">
+                        <div className="flex items-center justify-between border-b border-teal-500/10 pb-4 mb-2">
+                            <h3 className="text-lg font-semibold text-teal-400">Post-Registration Content</h3>
+                        </div>
+
+                        <p className="text-sm text-white/60 mb-2">
+                            This content is shown to the user AFTER they successfully register.
+                        </p>
+
+                        <Field label="Success Message" hint="Displayed at the top of the success screen">
+                            <input
+                                value={event.successMessage || ""}
+                                onChange={(e) => setField("successMessage", e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50 transition-all font-sans"
+                                placeholder="You're In!"
+                            />
+                        </Field>
+
+                        <Field label="WhatsApp Group Link" hint="Displayed as a 'Join Group' button">
+                            <input
+                                value={event.whatsappLink || ""}
+                                onChange={(e) => setField("whatsappLink", e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50 transition-all font-mono text-sm"
+                                placeholder="https://chat.whatsapp.com/..."
+                            />
+                        </Field>
                     </div>
                 </div>
             );
