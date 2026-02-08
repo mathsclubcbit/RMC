@@ -34,7 +34,7 @@ export default async function Home() {
 
             {/* Hero Section - CRITICAL Path (LCP) */}
             {/* These render immediately without waiting for the data above */}
-            <section className="relative w-full min-h-[50vh] md:min-h-[70vh] overflow-hidden bg-transparent" style={{ touchAction: 'pan-y' }}>
+            <section className="relative w-full min-h-[60vh] md:min-h-screen overflow-hidden bg-transparent" style={{ touchAction: 'pan-y' }}>
                 <HeroOverlay />
                 <ChaosBackground />
             </section>
@@ -49,10 +49,10 @@ export default async function Home() {
                 </Suspense>
             </div>
 
-            {/* Gallery - Visual Proof */}
-            <div className="relative pb-12">
+            {/* Gallery - Visual Proof (HIDDEN FOR NOW) */}
+            {/* <div className="relative pb-24">
                 <ParallaxGallery />
-            </div>
+            </div> */}
         </div>
     );
 }
