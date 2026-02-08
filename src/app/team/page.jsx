@@ -17,78 +17,33 @@ async function getTeamMembers() {
 }
 
 export default async function TeamPage() {
-    const members = await getTeamMembers();
+    const allMembers = await getTeamMembers();
 
-    // Role Priority Helper
-    const rolePriority = {
-        "President": 1,
-        "Vice President": 2,
-        "General Secretary": 3,
-        "Joint Secretary": 4,
-        "Head": 1,
-        "Member": 2
-    };
+    // --- Strict Filtering Logic --- //
 
-    const sortByRole = (a, b) => {
-        const pA = rolePriority[a.position] || 99;
-        const pB = rolePriority[b.position] || 99;
-        return pA - pB;
-    };
+    // 1. The Visionaries (Faculty)
+    const faculty = allMembers.filter(m =>
+        ['Faculty Advisor', 'Faculty', 'Patron'].includes(m.category)
+    );
 
-    // Strict Hierarchy Filtering (with Backward Compatibility)
-    const faculty = members.filter(m => ['Faculty Advisor', 'Faculty', 'Patron'].includes(m.category));
-    const core = members.filter(m => ['Core Committee', 'Core Matrix', 'Lead', 'President', 'Vice President'].includes(m.category)).sort(sortByRole);
-    const pr = members.filter(m => ['PR', 'PR Team', 'Public Relations'].includes(m.category)).sort(sortByRole);
-    const event = members.filter(m => ['Event', 'Events', 'Event Management'].includes(m.category)).sort(sortByRole);
-    const content = members.filter(m => ['Content', 'Content Writing'].includes(m.category)).sort(sortByRole);
-    const design = members.filter(m => ['Design', 'Design Team', 'Visual Media', 'Creative'].includes(m.category)).sort(sortByRole);
+    // 2. The High Council (Apex Leadership)
+    const president = allMembers.find(m => m.position === 'President');
+    const vicePresident = allMembers.find(m => m.position === 'Vice President');
+    const generalSecretary = allMembers.find(m => m.position === 'General Secretary');
 
-    // Technical is intentionally hidden for now
+    // 3. The Core Council (Joint Secretaries & Core Members)
+    // Filter for Core Committee/Matrix but EXCLUDE the High Council roles to avoid duplicates
+    const coreCouncil = allMembers.filter(m => {
+        const isCoreCat = ['Core Committee', 'Core Matrix'].includes(m.category);
+        const isHighCouncil = ['President', 'Vice President', 'General Secretary'].includes(m.position);
+        return isCoreCat && !isHighCouncil;
+    }).sort((a, b) => {
+        // Sort: Joint Secretaries first, then by priority_order
+        if (a.position === 'Joint Secretary' && b.position !== 'Joint Secretary') return -1;
+        if (a.position !== 'Joint Secretary' && b.position === 'Joint Secretary') return 1;
+        return (a.priority_order || 99) - (b.priority_order || 99);
+    });
 
-    const sections = [
-        {
-            id: "mentors",
-            title: "The Visionaries",
-            subtitle: "Guiding Light & Wisdom",
-            items: faculty,
-            cols: "grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto" // Centered layout for faculty
-        },
-        {
-            id: "core",
-            title: "The Core Council",
-            subtitle: "Orchestrating the Infinite",
-            items: core,
-            cols: "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-        },
-        {
-            id: "pr",
-            title: "Public Relations",
-            subtitle: "The Voice of RMC",
-            items: pr,
-            cols: "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-        },
-        {
-            id: "events",
-            title: "Events Directorate",
-            subtitle: "Architects of Experience",
-            items: event,
-            cols: "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-        },
-        {
-            id: "content",
-            title: "Content Strategy",
-            subtitle: "Weaving Mathematical Narratives",
-            items: content,
-            cols: "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-        },
-        {
-            id: "design",
-            title: "Design & Visuals",
-            subtitle: "Crafting the Aesthetic",
-            items: design,
-            cols: "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-        }
-    ].filter(s => s.items.length > 0);
 
     return (
         <div className="min-h-screen bg-[#020617] text-white pt-0 pb-20 overflow-x-hidden selection:bg-teal selection:text-black">
@@ -96,45 +51,103 @@ export default async function TeamPage() {
             {/* Cinematic Hero */}
             <TeamHero />
 
-            <div className="relative z-10 max-w-7xl mx-auto px-6 mt-16 md:mt-0">
+            <div className="relative z-10 max-w-7xl mx-auto px-6 mt-16 md:mt-24 space-y-32">
 
-                <div className="space-y-40">
-                    {sections.map((section) => (
-                        <section key={section.id} className="relative">
-                            {/* Section Header */}
-                            <div className="flex flex-col items-center mb-16 relative">
-                                <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-teal/20 to-transparent" />
-                                <div className="relative bg-[#020617] px-8 py-2 border border-teal/10 rounded-full backdrop-blur-xl z-10">
-                                    <h2 className="text-2xl md:text-3xl font-bold text-white font-[family-name:var(--font-cormorant)] tracking-wider text-center">
-                                        {section.title}
-                                    </h2>
+                {/* --- Section 1: The Visionaries --- */}
+                {faculty.length > 0 && (
+                    <section className="relative">
+                        <SectionHeader title="The Visionaries" subtitle="Guiding Light & Wisdom" />
+                        <div className="flex flex-wrap justify-center gap-10 md:gap-16">
+                            {faculty.map((member, idx) => (
+                                <div key={member.id} className="w-full max-w-sm md:w-[350px]">
+                                    <TeamCard {...member} index={idx} />
                                 </div>
-                                <p className="mt-4 text-sm font-mono text-teal/60 uppercase tracking-widest bg-[#020617] px-4 relative z-10">
-                                    {section.subtitle}
-                                </p>
-                            </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
 
-                            {/* Grid */}
-                            <div className={`grid ${section.cols} gap-3 md:gap-8 gap-y-8 md:gap-y-16`}>
-                                {section.items.map((member, idx) => (
-                                    <TeamCard
-                                        key={member.id}
-                                        {...member}
-                                        index={idx} // Pass index if needed for staggering
-                                    />
-                                ))}
-                            </div>
-                        </section>
-                    ))}
-                </div>
 
-                {/* Footer Message */}
-                <div className="text-center mt-32 pb-10">
-                    <p className="text-white/20 font-mono text-xs">
-                        © 2026 Ramanujan Maths Club
-                    </p>
-                </div>
+                {/* --- Section 2: The High Council (Hierarchy) --- */}
+                <section className="relative">
+                    <SectionHeader title="The High Council" subtitle="Architects of the Infinite" />
+
+                    <div className="flex flex-col items-center gap-16 md:gap-24">
+
+                        {/* Tier 1: The President (Apex) */}
+                        {president && (
+                            <div className="relative z-10 w-full max-w-md md:w-[450px] transform hover:scale-105 transition-transform duration-700">
+                                {/* Golden Halo for President */}
+                                <div className="absolute -inset-4 bg-gradient-to-t from-amber-500/20 to-transparent blur-3xl opacity-40 rounded-full pointer-events-none" />
+                                <TeamCard {...president} />
+                                <div className="mt-6 text-center">
+                                    <div className="h-px w-24 bg-gradient-to-r from-transparent via-amber-500/50 to-transparent mx-auto mb-2" />
+                                    <p className="font-[family-name:var(--font-cinzel)] text-amber-500/80 tracking-[0.2em] text-sm uppercase">HEAD OF COUNCIL</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Tier 2: The Pillars (VP & GS) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-24 w-full max-w-5xl px-4">
+                            {vicePresident && (
+                                <div className="w-full">
+                                    <TeamCard {...vicePresident} />
+                                </div>
+                            )}
+                            {generalSecretary && (
+                                <div className="w-full">
+                                    <TeamCard {...generalSecretary} />
+                                </div>
+                            )}
+                        </div>
+
+                    </div>
+                </section>
+
+
+                {/* --- Section 3: The Core Matrix --- */}
+                {coreCouncil.length > 0 && (
+                    <section className="relative">
+                        <SectionHeader title="The Core Matrix" subtitle="The Foundation of Logic" />
+
+                        {/* Joint Secretaries & Core Members Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+                            {coreCouncil.map((member, idx) => (
+                                <TeamCard key={member.id} {...member} index={idx} />
+                            ))}
+                        </div>
+                    </section>
+                )}
+
             </div>
+
+            {/* Footer Message */}
+            <div className="text-center mt-40 pb-10">
+                <div className="h-px w-32 bg-gradient-to-r from-transparent via-teal/20 to-transparent mx-auto mb-6" />
+                <p className="text-white/30 font-mono text-xs tracking-widest uppercase">
+                    © 2026 Ramanujan Maths Club
+                </p>
+            </div>
+        </div>
+    );
+}
+
+// Helper Component for Section Headers
+function SectionHeader({ title, subtitle }) {
+    return (
+        <div className="flex flex-col items-center mb-16 relative perspective-[1000px]">
+            {/* Glowing Line */}
+            <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-teal/20 to-transparent" />
+
+            <div className="relative bg-[#020617]/80 px-10 py-3 border border-teal/10 rounded-full backdrop-blur-xl z-10 shadow-[0_0_30px_-10px_rgba(45,212,191,0.1)]">
+                <h2 className="text-2xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 font-[family-name:var(--font-cinzel)] tracking-widest text-center">
+                    {title}
+                </h2>
+            </div>
+
+            <p className="mt-4 text-[10px] md:text-sm font-mono text-teal/60 uppercase tracking-[0.3em] bg-[#020617] px-4 relative z-10">
+                {subtitle}
+            </p>
         </div>
     );
 }
