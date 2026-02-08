@@ -125,7 +125,7 @@ export default function Footer() {
                         <h4 className="font-serif font-bold text-lg mb-6">Visit Us</h4>
                         <div className="space-y-4 text-sm text-muted font-light">
                             <p>
-                                Chaitanya Bharathi Institute of Technology<br />
+                                Math Department, Chaitanya Bharathi Institute of Technology<br />
                                 Gandipet, Hyderabad - 500075
                             </p>
                         </div>

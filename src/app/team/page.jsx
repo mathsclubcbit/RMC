@@ -28,7 +28,7 @@ export default async function TeamPage() {
 
     // 2. The High Council (Apex Leadership)
     const president = allMembers.find(m => m.position === 'President');
-    const vicePresident = allMembers.find(m => m.position === 'Vice President');
+    const vicePresidents = allMembers.filter(m => m.position === 'Vice President');
     const generalSecretary = allMembers.find(m => m.position === 'General Secretary');
 
     // 3. The Core Council (Joint Secretaries & Core Members)
@@ -59,7 +59,7 @@ export default async function TeamPage() {
                         <SectionHeader title="The Visionaries" subtitle="Guiding Light & Wisdom" />
                         <div className="flex flex-wrap justify-center gap-6 md:gap-12">
                             {faculty.map((member, idx) => (
-                                <div key={member.id} className="w-full max-w-sm md:w-[350px]">
+                                <div key={member.id} className="w-full max-w-[260px] md:w-[280px]">
                                     <TeamCard {...member} index={idx} />
                                 </div>
                             ))}
@@ -76,7 +76,7 @@ export default async function TeamPage() {
 
                         {/* Tier 1: The President (Apex) */}
                         {president && (
-                            <div className="relative z-10 w-full max-w-md md:w-[450px] transform hover:scale-105 transition-transform duration-700">
+                            <div className="relative z-10 w-full max-w-[300px] md:w-[350px] transform hover:scale-105 transition-transform duration-700">
                                 {/* Golden Halo for President */}
                                 <div className="absolute -inset-4 bg-gradient-to-t from-amber-500/20 to-transparent blur-3xl opacity-40 rounded-full pointer-events-none" />
                                 <TeamCard {...president} />
@@ -87,15 +87,18 @@ export default async function TeamPage() {
                             </div>
                         )}
 
-                        {/* Tier 2: The Pillars (VP & GS) */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 w-full max-w-5xl px-4">
-                            {vicePresident && (
-                                <div className="w-full">
-                                    <TeamCard {...vicePresident} />
+                        {/* Tier 2: The Pillars (VPs & GS) */}
+                        <div className="flex flex-wrap justify-center gap-6 md:gap-12 w-full max-w-5xl px-4">
+                            {/* Vice Presidents */}
+                            {vicePresidents.map((vp) => (
+                                <div key={vp.id} className="w-full max-w-[280px]">
+                                    <TeamCard {...vp} />
                                 </div>
-                            )}
+                            ))}
+
+                            {/* General Secretary */}
                             {generalSecretary && (
-                                <div className="w-full">
+                                <div className="w-full max-w-[280px]">
                                     <TeamCard {...generalSecretary} />
                                 </div>
                             )}
@@ -111,7 +114,7 @@ export default async function TeamPage() {
                         <SectionHeader title="The Core Matrix" subtitle="The Foundation of Logic" />
 
                         {/* Joint Secretaries & Core Members Grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-5">
                             {coreCouncil.map((member, idx) => (
                                 <TeamCard key={member.id} {...member} index={idx} />
                             ))}
