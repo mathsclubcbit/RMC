@@ -46,10 +46,6 @@ export default function TeamManager() {
 
     const supabase = createClient();
 
-    useEffect(() => {
-        fetchMembers();
-    }, [fetchMembers]);
-
     const fetchMembers = useCallback(async () => {
         const { data, error } = await supabase
             .from('rmc_council')
@@ -90,6 +86,10 @@ export default function TeamManager() {
         }
         setLoading(false);
     }, [supabase]);
+
+    useEffect(() => {
+        fetchMembers();
+    }, [fetchMembers]);
 
     const showModal = (title, message, type = "info", onConfirm = null) => {
         setModal({ isOpen: true, title, message, type, onConfirm });

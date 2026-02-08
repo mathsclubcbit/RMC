@@ -56,7 +56,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 3. Bind trigger
 DROP TRIGGER IF EXISTS tr_notify_on_task ON public.tasks;

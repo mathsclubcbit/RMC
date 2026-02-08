@@ -38,26 +38,6 @@ export default function GalleryManager() {
 
     const supabase = createClient();
 
-    useEffect(() => {
-        fetchAlbums();
-    }, [fetchAlbums]);
-
-    useEffect(() => {
-        if (selectedAlbumId) {
-            fetchAlbumImages(selectedAlbumId);
-        } else {
-            setUploadedImages([]);
-        }
-    }, [selectedAlbumId, fetchAlbumImages]);
-
-    const showModal = (title, message, type = "info", onConfirm = null) => {
-        setModal({ isOpen: true, title, message, type, onConfirm });
-    };
-
-    const closeModal = () => {
-        setModal(prev => ({ ...prev, isOpen: false }));
-    };
-
     const fetchAlbums = useCallback(async () => {
         const { data, error } = await supabase
             .from('gallery_events')
@@ -85,6 +65,26 @@ export default function GalleryManager() {
         else setUploadedImages(data || []);
     }, [supabase]);
 
+    useEffect(() => {
+        fetchAlbums();
+    }, [fetchAlbums]);
+
+    useEffect(() => {
+        if (selectedAlbumId) {
+            fetchAlbumImages(selectedAlbumId);
+        } else {
+            setUploadedImages([]);
+        }
+    }, [selectedAlbumId, fetchAlbumImages]);
+
+    const showModal = (title, message, type = "info", onConfirm = null) => {
+        setModal({ isOpen: true, title, message, type, onConfirm });
+    };
+
+    const closeModal = () => {
+        setModal(prev => ({ ...prev, isOpen: false }));
+    };
+
     // --- ALBUM CREATION ---
     const handleCreateAlbum = async (e) => {
         e.preventDefault();
@@ -99,20 +99,22 @@ export default function GalleryManager() {
             // 1. Upload Cover Image to Cloudinary
             const publicUrl = await uploadToCloudinary(coverImage);
 
-            // 2. Insert Event Record
-            const { data, error: dbError } = await supabase
-                .from('gallery_events')
-                .insert({
+            // 2. Insert Event Record via API (uses service role)
+            const response = await fetch('/api/gallery/events', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
                     title: newAlbum.title,
                     description: newAlbum.description,
                     category: newAlbum.category,
                     event_date: newAlbum.date || new Date().toISOString(),
                     cover_image: publicUrl
                 })
-                .select()
-                .single();
+            });
 
-            if (dbError) throw dbError;
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Failed to create album');
+            const data = result.data;
 
             showModal("Success!", "Album Created Successfully.", "success", () => {
                 setNewAlbum({ title: "", description: "", category: "General", date: "" });
@@ -156,33 +158,58 @@ export default function GalleryManager() {
         }
 
         setUploading(true);
+        let successCount = 0;
+        let failCount = 0;
 
         try {
-            const uploadPromises = files.map(async (file) => {
-                // Upload to Cloudinary
-                const publicUrl = await uploadToCloudinary(file);
+            console.log(`Starting upload of ${files.length} photos to album ${selectedAlbumId}`);
 
-                // Get Dimensions
-                const { width, height } = await getImageDimensions(file);
+            for (const file of files) {
+                try {
+                    // Upload to Cloudinary
+                    const publicUrl = await uploadToCloudinary(file);
+                    console.log("Uploaded to Cloudinary:", publicUrl);
 
-                // Insert to DB
-                return supabase.from('gallery_images').insert({
-                    url: publicUrl,
-                    width,
-                    height,
-                    event_id: selectedAlbumId
-                });
-            });
+                    // Get Dimensions
+                    const { width, height } = await getImageDimensions(file);
 
-            await Promise.all(uploadPromises);
+                    // Insert to DB via API (uses service role)
+                    const response = await fetch('/api/gallery/images', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            url: publicUrl,
+                            width,
+                            height,
+                            event_id: selectedAlbumId
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        console.error("Database insert error:", errData.error);
+                        failCount++;
+                    } else {
+                        successCount++;
+                    }
+                } catch (err) {
+                    console.error("Individual file upload error:", err);
+                    failCount++;
+                }
+            }
 
             setFiles([]);
             fetchAlbumImages(selectedAlbumId);
-            showModal("Upload Complete", "All photos have been successfully uploaded.", "success");
+
+            if (failCount === 0) {
+                showModal("Upload Complete", `Successfully uploaded ${successCount} photos.`, "success");
+            } else {
+                showModal("Upload Finished", `Uploaded ${successCount} photos. ${failCount} failed. Check console for details.`, successCount > 0 ? "info" : "error");
+            }
 
         } catch (error) {
-            console.error("Upload error:", error);
-            showModal("Upload Error", "There was an error uploading some images.", "error");
+            console.error("Batch upload error:", error);
+            showModal("Upload Error", "There was an error processing the upload batch.", "error");
         } finally {
             setUploading(false);
         }
@@ -194,24 +221,31 @@ export default function GalleryManager() {
             "Are you sure you want to delete this image? This action cannot be undone.",
             "confirm",
             async () => {
-                // Extract path from URL for storage deletion (if applicable)
-                const path = url.split('/gallery/')[1];
+                try {
+                    // Delete from DB via API
+                    const response = await fetch(`/api/gallery/images?id=${id}`, {
+                        method: 'DELETE'
+                    });
 
-                // Delete from Storage if using Supabase Storage (Cloudinary doesn't need this step usually via URL unless using admin API)
-                // Assuming Cloudinary logic from user might not need manual delete or it's handled elsewhere.
-                // Keeping logic:
-                if (path) {
-                    await supabase.storage.from('gallery').remove([path]);
-                }
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        console.error("Error deleting image from DB:", errData.error);
+                        showModal("Error", "Failed to delete image entry from database.", "error");
+                    } else {
+                        // If using Supabase Storage (legacy), try to remove, but don't fail if it's not there
+                        if (url.includes('storage.googleapis.com') || url.includes('/storage/v1/object/public/')) {
+                            const path = url.split('/gallery/')[1];
+                            if (path) {
+                                await supabase.storage.from('gallery').remove([path]);
+                            }
+                        }
 
-                // Delete from DB
-                const { error } = await supabase.from('gallery_images').delete().eq('id', id);
-
-                if (error) {
-                    showModal("Error", "Failed to delete image.", "error");
-                } else {
-                    setUploadedImages(prev => prev.filter(img => img.id !== id));
-                    closeModal();
+                        setUploadedImages(prev => prev.filter(img => img.id !== id));
+                        closeModal();
+                    }
+                } catch (err) {
+                    console.error("Delete operation failed:", err);
+                    showModal("Error", "An unexpected error occurred while deleting.", "error");
                 }
             }
         );
@@ -230,26 +264,14 @@ export default function GalleryManager() {
             "confirm",
             async () => {
                 try {
-                    // 1. Delete all images from this album first
-                    if (imageCount > 0) {
-                        const { error: imagesError } = await supabase
-                            .from('gallery_images')
-                            .delete()
-                            .eq('event_id', selectedAlbumId);
+                    // Delete album and all its images via API (handles both in one call)
+                    const response = await fetch(`/api/gallery/events?id=${selectedAlbumId}`, {
+                        method: 'DELETE'
+                    });
 
-                        if (imagesError) {
-                            throw new Error("Failed to delete album images: " + imagesError.message);
-                        }
-                    }
-
-                    // 2. Delete the album itself
-                    const { error: albumError } = await supabase
-                        .from('gallery_events')
-                        .delete()
-                        .eq('id', selectedAlbumId);
-
-                    if (albumError) {
-                        throw new Error("Failed to delete album: " + albumError.message);
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.error || "Failed to delete album");
                     }
 
                     // 3. Clear state and refresh

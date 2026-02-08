@@ -50,9 +50,9 @@ alter table public.notifications_subscriptions enable row level security;
 alter table public.announcements enable row level security;
 alter table public.tasks enable row level security;
 
--- Subscriptions: Everyone can inserting (subscribing). Users can see their own.
+-- Subscriptions: Everyone can inserting (subscribing) with basic check on endpoint presence.
 create policy "Anyone can subscribe"
-    on public.notifications_subscriptions for insert with check (true);
+    on public.notifications_subscriptions for insert with check (length(endpoint) > 0);
 
 create policy "Users manage own subscriptions"
     on public.notifications_subscriptions for select

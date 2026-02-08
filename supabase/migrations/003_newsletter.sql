@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS public.newsletter_subscribers (
 ALTER TABLE public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
 
 -- Policies
--- 1. Everyone can insert (subscribe)
+-- 1. Everyone can insert (subscribe) with basic email format check
 CREATE POLICY "Enable insert for everyone" ON public.newsletter_subscribers
-    FOR INSERT WITH CHECK (true);
+    FOR INSERT WITH CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
 
 -- 2. Only authenticated users (admins) can view/select
 CREATE POLICY "Enable select for authenticated users only" ON public.newsletter_subscribers
