@@ -85,15 +85,14 @@ export function validateTeamMembers(teamMembers, teamConstraints, currentTeamSiz
  * Validate submission step (Hackathon/Ideathon)
  * @param {string} abstract - Project abstract
  * @param {File | null} pptFile - Presentation file
+ * @param {boolean} isIdeathon - Whether the event is an ideathon
  * @returns {string | null} Error message or null if valid
  */
-export function validateSubmission(abstract, pptFile) {
-    if (!abstract || abstract.trim().length === 0) {
-        return 'Please provide a brief abstract/project description.';
-    }
-
+export function validateSubmission(abstract, pptFile, isIdeathon = false) {
     if (!pptFile) {
-        return 'Please upload your presentation (PPT/PDF).';
+        return isIdeathon
+            ? 'Please upload your abstract document.'
+            : 'Please upload your presentation (PPT/PDF).';
     }
 
     return null;

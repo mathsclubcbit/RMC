@@ -19,12 +19,23 @@ export function GlassCard({
 }: GlassCardProps) {
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
+    const boundsRef = React.useRef<DOMRect | null>(null);
 
     function handleMouseMove({ currentTarget, clientX, clientY }: React.MouseEvent) {
         if (!spotlight) return;
-        const { left, top } = currentTarget.getBoundingClientRect();
+        if (!boundsRef.current) return;
+        const { left, top } = boundsRef.current;
         mouseX.set(clientX - left);
         mouseY.set(clientY - top);
+    }
+
+    function handleMouseEnter({ currentTarget }: React.MouseEvent) {
+        if (!spotlight) return;
+        boundsRef.current = currentTarget.getBoundingClientRect();
+    }
+
+    function handleMouseLeave() {
+        boundsRef.current = null;
     }
 
     return (
@@ -36,6 +47,8 @@ export function GlassCard({
                 className
             )}
             onMouseMove={handleMouseMove}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
             {...props}
         >
             {spotlight && (

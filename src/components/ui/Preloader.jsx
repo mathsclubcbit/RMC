@@ -32,16 +32,16 @@ export default function Preloader() {
         // Prevent scrolling during loading
         document.body.style.overflow = "hidden";
 
-        // Smooth Counter Animation using Framer Motion's animate
+        // Cinematic Counter Animation - Optimized for Speed (0.8s instead of 2.0s)
         const controls = animate(2018, 2026, {
-            duration: 2,
-            ease: "easeInOut",
+            duration: 0.8,
+            ease: [0.76, 0, 0.24, 1],
             onUpdate: (value) => setCount(Math.floor(value)),
             onComplete: () => {
                 setTimeout(() => {
                     setIsLoading(false);
                     document.body.style.overflow = "";
-                }, 200);
+                }, 50); // Faster transition to content
             }
         });
 

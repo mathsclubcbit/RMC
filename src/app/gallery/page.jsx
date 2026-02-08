@@ -23,6 +23,16 @@ export default function GalleryPage() {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [categories, setCategories] = useState(galleryCategories);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        // Detect mobile for conditional rendering
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -118,16 +128,8 @@ export default function GalleryPage() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {filteredEvents.map((evt) => (
-                                    <Tilt
-                                        key={evt.id}
-                                        tiltMaxAngleX={3}
-                                        tiltMaxAngleY={3}
-                                        perspective={1000}
-                                        scale={1.02}
-                                        transitionSpeed={1500}
-                                        className="h-full"
-                                    >
+                                {filteredEvents.map((evt) => {
+                                    const CardContent = (
                                         <Link href={`/gallery/${evt.id}`} className="block h-full">
                                             <div className="relative h-full group overflow-hidden cursor-pointer rounded-2xl bg-white/5 border border-white/5 hover:border-teal/30 transition-all duration-500 flex flex-col">
 
@@ -139,6 +141,9 @@ export default function GalleryPage() {
                                                             alt={evt.title}
                                                             fill
                                                             className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
+                                                            loading="lazy"
+                                                            quality={isMobile ? 60 : 75}
+                                                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                                         />
                                                     ) : (
                                                         <div className="absolute inset-0 flex items-center justify-center bg-white/5 text-white/20">
@@ -178,8 +183,27 @@ export default function GalleryPage() {
                                                 </div>
                                             </div>
                                         </Link>
-                                    </Tilt>
-                                ))}
+                                    );
+
+                                    // Conditionally wrap with Tilt only on desktop
+                                    return isMobile ? (
+                                        <div key={evt.id} className="h-full">
+                                            {CardContent}
+                                        </div>
+                                    ) : (
+                                        <Tilt
+                                            key={evt.id}
+                                            tiltMaxAngleX={3}
+                                            tiltMaxAngleY={3}
+                                            perspective={1000}
+                                            scale={1.02}
+                                            transitionSpeed={1500}
+                                            className="h-full"
+                                        >
+                                            {CardContent}
+                                        </Tilt>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>

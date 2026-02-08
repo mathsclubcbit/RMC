@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    optimizeCss: true,
+    cssChunking: 'strict',
   },
   images: {
     // Modern image formats for better compression

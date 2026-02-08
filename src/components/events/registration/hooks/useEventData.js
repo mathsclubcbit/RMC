@@ -30,12 +30,15 @@ export function useEventData(eventId) {
             });
     }, [eventId]);
 
+    const isIdeathon = useMemo(() => {
+        return event?.eventType === 'Ideathon' || event?.category === 'Ideathon';
+    }, [event]);
+
     const isHackathonOrIdeathon = useMemo(() => {
         return event?.eventType === 'Hackathon' ||
-            event?.eventType === 'Ideathon' ||
-            event?.category === 'Hackathon' ||
-            event?.category === 'Ideathon';
-    }, [event]);
+            isIdeathon ||
+            event?.category === 'Hackathon';
+    }, [event, isIdeathon]);
 
     const teamConstraints = useMemo(() => {
         const legacy = Number(event?.teamSize);
@@ -98,6 +101,7 @@ export function useEventData(eventId) {
         event,
         isLoading,
         isHackathonOrIdeathon,
+        isIdeathon,
         teamConstraints,
         requiresTeamStep,
         qrImageSrc,

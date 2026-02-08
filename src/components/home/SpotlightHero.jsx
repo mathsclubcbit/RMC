@@ -173,14 +173,24 @@ function HiddenMathLayer() {
     );
 }
 
-// Magnetic Button Component
+// Magnetic Button Component - Optimized to avoid forced reflows
 function MagneticButton({ children }) {
     const ref = useRef(null);
+    const boundsRef = useRef(null);
     const [position, setPosition] = useState({ x: 0, y: 0 });
 
+    // Cache bounds on mouseenter to avoid getBoundingClientRect on every mousemove
+    const handleMouseEnter = () => {
+        if (ref.current) {
+            boundsRef.current = ref.current.getBoundingClientRect();
+        }
+    };
+
     const handleMouse = (e) => {
+        // Use cached bounds instead of reading layout on every move
+        if (!boundsRef.current) return;
         const { clientX, clientY } = e;
-        const { height, width, left, top } = ref.current.getBoundingClientRect();
+        const { height, width, left, top } = boundsRef.current;
         const middleX = clientX - (left + width / 2);
         const middleY = clientY - (top + height / 2);
         setPosition({ x: middleX * 0.2, y: middleY * 0.2 });
@@ -188,12 +198,14 @@ function MagneticButton({ children }) {
 
     const reset = () => {
         setPosition({ x: 0, y: 0 });
+        boundsRef.current = null;
     };
 
     const { x, y } = position;
     return (
         <motion.div
             ref={ref}
+            onMouseEnter={handleMouseEnter}
             onMouseMove={handleMouse}
             onMouseLeave={reset}
             animate={{ x, y }}
@@ -203,3 +215,4 @@ function MagneticButton({ children }) {
         </motion.div>
     );
 }
+

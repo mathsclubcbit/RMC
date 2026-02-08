@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 import { Readable } from 'stream';
-import { cacheService } from './cache-service';
+import { unstable_cache } from 'next/cache';
 
 const SCOPES = [
     'https://www.googleapis.com/auth/drive.file',
@@ -431,10 +431,10 @@ export interface RegistrationData {
 
 /**
  * Fetch all registrations from Google Sheet (Cols A-T)
- * OPTIMIZED: Uses cacheService to reduce Google API calls (TTL: 120s)
+ * OPTIMIZED: Uses unstable_cache to reduce Google API calls (TTL: 120s)
  */
-export const getAllRegistrations = async (spreadsheetId: string): Promise<RegistrationData[]> => {
-    return cacheService.getOrSet(`registrations::${spreadsheetId}`, async () => {
+export const getAllRegistrations = unstable_cache(
+    async (spreadsheetId: string): Promise<RegistrationData[]> => {
         const authClient = await getAuthClient();
         const sheets = google.sheets({ version: 'v4', auth: authClient as any }); // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -473,8 +473,13 @@ export const getAllRegistrations = async (spreadsheetId: string): Promise<Regist
             driveFileId: normalizeCell(row[18]),       // S
             driveDownloadUrl: normalizeCell(row[19])   // T
         }));
-    }, 120); // 2 minute TTL
-};
+    },
+    ['all-registrations-list'],
+    {
+        revalidate: 120, // 2 minutes
+        tags: ['registrations']
+    }
+);
 
 /**
  * Mark attendance: Status (L), Checked-in (P), Member Attendance (Q)
@@ -593,8 +598,8 @@ const ensureSheetExists = async (spreadsheetId: string, title: string) => {
     } catch (error) { console.error(`Error ensuring sheet '${title}'`, error); }
 };
 
-export const getAnnouncements = async (spreadsheetId: string): Promise<AnnouncementData[]> => {
-    return cacheService.getOrSet(`announcements::${spreadsheetId}`, async () => {
+export const getAnnouncements = unstable_cache(
+    async (spreadsheetId: string): Promise<AnnouncementData[]> => {
         const authClient = await getAuthClient();
         const sheets = google.sheets({ version: 'v4', auth: authClient });
         try {
@@ -606,8 +611,13 @@ export const getAnnouncements = async (spreadsheetId: string): Promise<Announcem
                 id: row[0] || '', title: row[1] || '', content: row[2] || '', category: row[3] || '', date: row[4] || '', postedBy: row[5] || 'Admin',
             })).reverse();
         } catch (error) { return []; }
-    }, 300); // 5 minute TTL
-};
+    },
+    ['announcements-list'],
+    {
+        revalidate: 3600, // 1 hour revalidation
+        tags: ['announcements']
+    }
+);
 
 export const createAnnouncement = async (spreadsheetId: string, announcement: AnnouncementData) => {
     const authClient = await getAuthClient();

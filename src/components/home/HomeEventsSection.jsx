@@ -7,15 +7,18 @@ import Link from "next/link";
 import SectionTitle from "@/components/ui/SectionTitle";
 import HolographicCard from "@/components/events/HolographicCard";
 
-export default function HomeEventsSection() {
-    const [events, setEvents] = useState([]);
+export default function HomeEventsSection({ initialEvents = [] }) {
+    const [events, setEvents] = useState(initialEvents);
 
     useEffect(() => {
-        fetch('/api/events')
-            .then(res => res.json())
-            .then(data => setEvents(data))
-            .catch(err => console.error("Error fetching events:", err));
-    }, []);
+        // Only fetch if no initial data (fallback)
+        if (initialEvents.length === 0) {
+            fetch('/api/events')
+                .then(res => res.json())
+                .then(data => setEvents(data))
+                .catch(err => console.error("Error fetching events:", err));
+        }
+    }, [initialEvents]);
 
     return (
         <section className="py-20 md:py-32 px-4 sm:px-6 lg:px-8 relative bg-black overflow-hidden">

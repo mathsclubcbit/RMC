@@ -1,40 +1,52 @@
-"use client";
+import { Suspense } from "react";
+import HeroOverlay from "@/components/home/HeroOverlay";
+import AnnouncementsWidgetClient from "@/components/home/AnnouncementsWidgetClient";
+import HomeEventsSectionClient from "@/components/home/HomeEventsSectionClient";
+import { getAnnouncements } from "@/lib/google";
+import { getCachedEvents } from "@/lib/supabase/server";
 
-import Link from "next/link";
-import dynamic from "next/dynamic"; // [OPTIMIZATION]
-import LenisScroll from "@/components/ui/LenisScroll";
-import AnnouncementsWidget from "@/components/home/AnnouncementsWidget";
-import MathBackground from "@/components/ui/MathBackground";
-import StatsSection from "@/components/home/StatsSection";
-import HomeEventsSection from "@/components/home/HomeEventsSection";
-import ParallaxGallery from "@/components/home/ParallaxGallery";
+import { ChaosBackground, StatsSection, ParallaxGallery } from "@/components/home/HomeSections";
 
-// [OPTIMIZATION] Defer heavy 3D scene
-const ChaosHero = dynamic(() => import("@/components/home/ChaosHero"), {
-    ssr: false,
-    loading: () => <div className="h-screen w-full bg-[#020617]" />
-});
+// [STRATEGY] Incremental Static Regeneration (ISR)
+// Revalidate the page every 60 seconds on the edge
+export const revalidate = 60;
 
-export default function Home() {
+// [STREAMING] Components to handle their own data fetching to prevent blocking LCP
+async function AnnouncementsFeed() {
+    const data = await getAnnouncements(process.env.GOOGLE_SHEET_ID || '').catch(() => []);
+    return <AnnouncementsWidgetClient initialData={data} />;
+}
+
+async function EventsFeed() {
+    const data = await getCachedEvents().catch(() => []);
+    return <HomeEventsSectionClient initialEvents={data} />;
+}
+
+export default async function Home() {
     return (
         <div className="relative overflow-x-hidden min-h-screen bg-[#020617] selection:bg-teal/30 selection:text-teal">
-            <MathBackground />
-            <LenisScroll />
-            <AnnouncementsWidget /> {/* [NEW WIDGET] */}
+            {/* MathBackground already rendered in ConditionalShell layout wrapper */}
 
-            {/* Background Layer - Moved to Layout */}
+            {/* Non-blocking data fetching with Suspense */}
+            <Suspense>
+                <AnnouncementsFeed />
+            </Suspense>
 
-            {/* Hero Section - The Chaos System */}
-            <ChaosHero />
-
-
+            {/* Hero Section - CRITICAL Path (LCP) */}
+            {/* These render immediately without waiting for the data above */}
+            <section className="relative w-full min-h-[60vh] md:min-h-screen overflow-hidden bg-transparent" style={{ touchAction: 'pan-y' }}>
+                <HeroOverlay />
+                <ChaosBackground />
+            </section>
 
             {/* Live Data Module (Stats) */}
             <StatsSection />
 
-            {/* Featured Events - Carousel */}
+            {/* Featured Events - Streams in later */}
             <div className="relative">
-                <HomeEventsSection />
+                <Suspense fallback={<div className="min-h-[400px] animate-pulse bg-white/5 mx-8 rounded-3xl" />}>
+                    <EventsFeed />
+                </Suspense>
             </div>
 
             {/* Gallery - Visual Proof */}
@@ -44,3 +56,4 @@ export default function Home() {
         </div>
     );
 }
+

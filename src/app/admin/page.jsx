@@ -5,12 +5,10 @@ import { redirect } from "next/navigation";
 import AdminDashboardClient from "./AdminDashboardClient";
 import CoordinatorCredentialsManager from "./CoordinatorCredentialsManager";
 import { getAllRegistrations } from "@/lib/google";
-import { cacheService } from "@/lib/cache-service";
+import { unstable_cache } from 'next/cache';
 
-// Revalidate dashboard every 60 seconds for better performance
-
-async function getDashboardStats() {
-    return cacheService.getOrSet('admin-dashboard-stats', async () => {
+const getDashboardStats = unstable_cache(
+    async () => {
         const spreadsheetId = process.env.GOOGLE_SHEET_ID;
         if (!spreadsheetId) return { enabled: false };
 
@@ -86,8 +84,13 @@ async function getDashboardStats() {
         } catch {
             return { enabled: false };
         }
-    }, 60); // 1 minute TTL
-}
+    },
+    ['admin-dashboard-stats'],
+    {
+        revalidate: 60, // 1 minute
+        tags: ['admin', 'registrations']
+    }
+);
 
 export default async function AdminDashboardPage() {
     // Strong Authentication Check (Server-Side)

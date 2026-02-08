@@ -5,10 +5,9 @@ import { X } from 'lucide-react';
 import EventDetailsContent from './EventDetailsContent';
 
 /**
- * EventDetailsModal - Full-screen modal for viewing event details
- * @param {{ event: object, isOpen: boolean, onClose: () => void, isHackathonOrIdeathon: boolean }} props
+ * @param {{ event: object, isOpen: boolean, onClose: () => void, isHackathonOrIdeathon: boolean, isIdeathon: boolean }} props
  */
-export default function EventDetailsModal({ event, isOpen, onClose, isHackathonOrIdeathon = false }) {
+export default function EventDetailsModal({ event, isOpen, onClose, isHackathonOrIdeathon = false, isIdeathon = false }) {
     if (!isOpen || !event) return null;
 
     return (
@@ -45,7 +44,11 @@ export default function EventDetailsModal({ event, isOpen, onClose, isHackathonO
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
-                    <EventDetailsContent event={event} isHackathonOrIdeathon={isHackathonOrIdeathon} />
+                    <EventDetailsContent
+                        event={event}
+                        isHackathonOrIdeathon={isHackathonOrIdeathon}
+                        isIdeathon={isIdeathon}
+                    />
                 </div>
             </motion.div>
         </motion.div>

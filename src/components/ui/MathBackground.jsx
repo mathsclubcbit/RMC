@@ -77,23 +77,48 @@ export default function MathBackground() {
 
         // Initialize symbols
         const isMobileInit = canvas.width < 768;
-        const maxSymbolsCount = isMobileInit ? 8 : 18;
+        const cores = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) || 4;
+        const memory = (typeof navigator !== 'undefined' && navigator.deviceMemory) || 4;
+        const isLowEnd = cores < 4 || memory < 4;
+
+        // Disable canvas on very low-end devices to save resources
+        if (isLowEnd && isMobileInit) {
+            console.log('MathBackground: Disabled on low-end mobile device for performance');
+            return;
+        }
+
+        const maxSymbolsCount = isMobileInit ? 5 : 18;
 
         for (let i = 0; i < maxSymbolsCount; i++) {
             floatingSymbols.push(new FloatingSymbol(canvas.width, canvas.height));
         }
 
-        // Settings
-        const spacing = 40;
+        // Settings - Increased spacing for better performance
+        const spacing = isMobileInit ? 80 : 60;
         const length = 12;
         let time = 0;
 
         // Track if animation is running
         let isRunning = true;
 
+        // Throttle to 30fps for better performance
+        let lastTime = 0;
+        const fps = 30;
+        const fpsInterval = 1000 / fps;
+
         // Animation Loop
-        const render = () => {
+        const render = (currentTime) => {
             if (!isRunning) return;
+
+            const elapsed = currentTime - lastTime;
+
+            // Throttle rendering to 30fps
+            if (elapsed < fpsInterval) {
+                animationFrameId = requestAnimationFrame(render);
+                return;
+            }
+
+            lastTime = currentTime - (elapsed % fpsInterval);
 
             time += 0.005;
             ctx.clearRect(0, 0, canvas.width, canvas.height);

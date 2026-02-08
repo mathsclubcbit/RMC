@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 export default function GalleryHero({ title, subtitle }) {
     const containerRef = useRef(null);
+    const boundsRef = useRef(null);
     const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
 
     // Smooth mouse movement for parallax
@@ -16,12 +17,21 @@ export default function GalleryHero({ title, subtitle }) {
 
     const handleMouseMove = (e) => {
         const { clientX, clientY, currentTarget } = e;
-        const { width, height } = currentTarget.getBoundingClientRect();
+        if (!boundsRef.current) return;
+        const { width, height } = boundsRef.current;
         const x = clientX / width;
         const y = clientY / height;
         smoothMouse.x.set(x);
         smoothMouse.y.set(y);
         setMouse({ x, y });
+    };
+
+    const handleMouseEnter = ({ currentTarget }) => {
+        boundsRef.current = currentTarget.getBoundingClientRect();
+    };
+
+    const handleMouseLeave = () => {
+        boundsRef.current = null;
     };
 
     // Parallax transforms based on smooth mouse
@@ -36,6 +46,8 @@ export default function GalleryHero({ title, subtitle }) {
             ref={containerRef}
             className="relative min-h-[60vh] flex items-center justify-center overflow-hidden bg-[#020617] perspective-1000"
             onMouseMove={handleMouseMove}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
         >
             {/* Background Grid */}
             <div className="absolute inset-0 z-0 opacity-20 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(to_bottom,white,transparent)]" />

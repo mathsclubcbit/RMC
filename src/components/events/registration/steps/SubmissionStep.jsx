@@ -6,16 +6,16 @@ import { Sparkles, FileText, Upload, CheckCircle, X } from 'lucide-react';
 import { PremiumInput } from '../components';
 
 /**
- * SubmissionStep - Step 3 for Hackathons/Ideathons: Abstract and PPT upload
  * @param {{ 
  *   abstract: string,
  *   setAbstract: (value: string) => void,
  *   pptFile: File | null,
  *   onPptChange: (file: File | null) => void,
- *   samplePptUrl?: string
+ *   samplePptUrl?: string,
+ *   isIdeathon?: boolean
  * }} props
  */
-function SubmissionStep({ abstract, setAbstract, pptFile, onPptChange, samplePptUrl }) {
+function SubmissionStep({ abstract, setAbstract, pptFile, onPptChange, samplePptUrl, isIdeathon = false }) {
     const pptInputRef = useRef(null);
 
     const handlePptChange = (e) => {
@@ -45,36 +45,33 @@ function SubmissionStep({ abstract, setAbstract, pptFile, onPptChange, samplePpt
                     <Sparkles className="w-4 h-4" /> Submission Requirements
                 </h4>
                 <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
-                    Please provide a brief abstract of your idea and upload your presentation. This helps us evaluate your project before the event.
+                    {isIdeathon
+                        ? "Please provide a brief abstract of your project and upload the document. This helps us evaluate your idea before the event."
+                        : "Please provide a brief abstract of your idea and upload your presentation. This helps us evaluate your project before the event."
+                    }
                 </p>
             </div>
 
-            <PremiumInput
-                as="textarea"
-                label="Project Abstract"
-                value={abstract}
-                onChange={(e) => setAbstract(e.target.value)}
-                className="min-h-[150px] resize-none"
-                placeholder="Describe your project idea in 100-200 words..."
-            />
 
             <div className="space-y-4 pt-4 border-t border-white/10">
                 <div className="flex items-center justify-between">
                     <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">
-                        Presentation Upload
+                        {isIdeathon ? "Abstract Upload" : "Presentation Upload"}
                     </label>
-                    <a
-                        href={samplePptUrl || "/sample-presentation.pptx"}
-                        download={!samplePptUrl}
-                        target={samplePptUrl ? "_blank" : "_self"}
-                        rel={samplePptUrl ? "noopener noreferrer" : ""}
-                        className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-teal hover:text-teal/80 transition-colors group"
-                    >
-                        <FileText className="w-3 h-3 group-hover:scale-110 transition-transform" />
-                        <span className="border-b border-teal/30 group-hover:border-teal transition-colors">
-                            Download Sample PPT
-                        </span>
-                    </a>
+                    {!isIdeathon && (
+                        <a
+                            href={samplePptUrl || "/sample-presentation.pptx"}
+                            download={!samplePptUrl}
+                            target={samplePptUrl ? "_blank" : "_self"}
+                            rel={samplePptUrl ? "noopener noreferrer" : ""}
+                            className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-teal hover:text-teal/80 transition-colors group"
+                        >
+                            <FileText className="w-3 h-3 group-hover:scale-110 transition-transform" />
+                            <span className="border-b border-teal/30 group-hover:border-teal transition-colors">
+                                Download Sample PPT
+                            </span>
+                        </a>
+                    )}
                 </div>
 
                 <div className="relative group">
@@ -89,8 +86,8 @@ function SubmissionStep({ abstract, setAbstract, pptFile, onPptChange, samplePpt
                         type="button"
                         onClick={() => pptInputRef.current?.click()}
                         className={`w-full py-10 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all duration-500 relative overflow-hidden group/btn ${pptFile
-                                ? 'border-teal bg-teal/5'
-                                : 'border-white/10 hover:border-teal/30 hover:bg-white/[0.03]'
+                            ? 'border-teal bg-teal/5'
+                            : 'border-white/10 hover:border-teal/30 hover:bg-white/[0.03]'
                             }`}
                     >
                         {/* Glow Effect */}
@@ -114,10 +111,10 @@ function SubmissionStep({ abstract, setAbstract, pptFile, onPptChange, samplePpt
                                     <Upload className="w-6 h-6 text-white/30 group-hover/btn:text-teal transition-colors" />
                                 </div>
                                 <span className="text-white/60 text-sm font-medium group-hover/btn:text-white transition-colors">
-                                    Upload Presentation
+                                    {isIdeathon ? "Upload Abstract" : "Upload Presentation"}
                                 </span>
                                 <span className="text-[10px] text-white/30 mt-1 font-mono">
-                                    PPT / PPTX / PDF • Max 10MB
+                                    {isIdeathon ? "PDF / DOCX / PDF • Max 10MB" : "PPT / PPTX / PDF • Max 10MB"}
                                 </span>
                             </div>
                         )}

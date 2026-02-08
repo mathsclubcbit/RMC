@@ -46,7 +46,8 @@ export default function RegistrationClient({ eventId }) {
     const fileInputRef = useRef(null);
     const pptInputRef = useRef(null);
 
-    const isHackathonOrIdeathon = event?.eventType === 'Hackathon' || event?.eventType === 'Ideathon' || event?.category === 'Hackathon' || event?.category === 'Ideathon';
+    const isIdeathon = event?.eventType === 'Ideathon' || event?.category === 'Ideathon';
+    const isHackathonOrIdeathon = event?.eventType === 'Hackathon' || isIdeathon || event?.category === 'Hackathon';
 
     const teamConstraints = (() => {
         const legacy = Number(event?.teamSize);
@@ -221,12 +222,8 @@ export default function RegistrationClient({ eventId }) {
         if (step === 3) {
             if (isHackathonOrIdeathon) {
                 // Submission Step Validation (Hackathon)
-                if (!abstract || abstract.trim().length === 0) {
-                    setErrorMessage("Please provide a brief abstract/project description.");
-                    return false;
-                }
                 if (!pptFile) {
-                    setErrorMessage("Please upload your presentation (PPT/PDF).");
+                    setErrorMessage(isIdeathon ? "Please upload your abstract document." : "Please upload your presentation (PPT/PDF).");
                     return false;
                 }
                 return true;
@@ -509,7 +506,7 @@ export default function RegistrationClient({ eventId }) {
                             </li>
                         ))}
                     </ul>
-                    {isHackathonOrIdeathon && (
+                    {isHackathonOrIdeathon && !isIdeathon && (
                         <div className="mt-4 pt-4 border-t border-white/10">
                             <a
                                 href={event?.samplePpt || "/sample-presentation.pptx"}
@@ -774,33 +771,31 @@ export default function RegistrationClient({ eventId }) {
                     <Sparkles className="w-4 h-4" /> Submission Requirements
                 </h4>
                 <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
-                    Please provide a brief abstract of your idea and upload your presentation. This helps us evaluate your project before the event.
+                    {isIdeathon
+                        ? "Please provide a brief abstract of your project and upload the document. This helps us evaluate your idea before the event."
+                        : "Please provide a brief abstract of your idea and upload your presentation. This helps us evaluate your project before the event."
+                    }
                 </p>
             </div>
 
-            <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Project Abstract</label>
-                <textarea
-                    value={abstract}
-                    onChange={(e) => setAbstract(e.target.value)}
-                    className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] outline-none transition-all duration-300 min-h-[150px] resize-none"
-                    placeholder="Describe your project idea in 100-200 words..."
-                />
-            </div>
 
             <div className="space-y-4 pt-4 border-t border-white/10">
                 <div className="flex items-center justify-between">
-                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">Presentation Upload</label>
-                    <a
-                        href={event?.samplePpt || "/sample-presentation.pptx"}
-                        download={!event?.samplePpt}
-                        target={event?.samplePpt ? "_blank" : "_self"}
-                        rel={event?.samplePpt ? "noopener noreferrer" : ""}
-                        className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-teal hover:text-teal/80 transition-colors group"
-                    >
-                        <FileText className="w-3 h-3 group-hover:scale-110 transition-transform" />
-                        <span className="border-b border-teal/30 group-hover:border-teal transition-colors">Download Sample PPT</span>
-                    </a>
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">
+                        {isIdeathon ? "Abstract Upload" : "Presentation Upload"}
+                    </label>
+                    {!isIdeathon && (
+                        <a
+                            href={event?.samplePpt || "/sample-presentation.pptx"}
+                            download={!event?.samplePpt}
+                            target={event?.samplePpt ? "_blank" : "_self"}
+                            rel={event?.samplePpt ? "noopener noreferrer" : ""}
+                            className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-teal hover:text-teal/80 transition-colors group"
+                        >
+                            <FileText className="w-3 h-3 group-hover:scale-110 transition-transform" />
+                            <span className="border-b border-teal/30 group-hover:border-teal transition-colors">Download Sample PPT</span>
+                        </a>
+                    )}
                 </div>
 
                 <div className="relative group">
@@ -832,8 +827,12 @@ export default function RegistrationClient({ eventId }) {
                                 <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-teal/10 transition-all duration-300">
                                     <Upload className="w-6 h-6 text-white/30 group-hover:text-teal transition-colors" />
                                 </div>
-                                <span className="text-white/60 text-sm font-medium group-hover:text-white transition-colors">Upload Presentation</span>
-                                <span className="text-[10px] text-white/30 mt-1 font-mono">PPT / PPTX / PDF • Max 10MB</span>
+                                <span className="text-white/60 text-sm font-medium group-hover:text-white transition-colors">
+                                    {isIdeathon ? "Upload Abstract" : "Upload Presentation"}
+                                </span>
+                                <span className="text-[10px] text-white/30 mt-1 font-mono">
+                                    {isIdeathon ? "PDF / DOCX / PDF • Max 10MB" : "PPT / PPTX / PDF • Max 10MB"}
+                                </span>
                             </div>
                         )}
                     </button>

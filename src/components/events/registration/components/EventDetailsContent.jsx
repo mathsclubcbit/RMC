@@ -1,25 +1,136 @@
 'use client';
 
-import { memo } from 'react';
-import { motion } from 'framer-motion';
-import { FileText, Users, Info, Calendar, Trophy, Phone } from 'lucide-react';
+import { FileText, Users, Info, Calendar, Trophy, Phone, ChevronDown, GraduationCap, ClipboardList, HelpCircle } from 'lucide-react';
+import { useState, memo } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+
+/**
+ * FAQ Section - Accordion Style
+ */
+function FAQSection({ faqs }) {
+    if (!faqs?.length) return null;
+
+    return (
+        <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <h4 className="flex items-center gap-2 text-teal font-bold mb-4 uppercase tracking-wider text-sm">
+                <HelpCircle className="w-4 h-4" /> Frequently Asked Questions
+            </h4>
+            <div className="space-y-3">
+                {faqs.map((faq, i) => (
+                    <FAQItem key={i} question={faq.question} answer={faq.answer} />
+                ))}
+            </div>
+        </section>
+    );
+}
+
+function FAQItem({ question, answer }) {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <div className="border border-white/5 rounded-xl bg-black/20 overflow-hidden">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full flex items-center justify-between p-4 text-left hover:bg-white/5 transition-colors"
+                aria-expanded={isOpen}
+            >
+                <span className="font-medium text-white/90 text-sm">{question}</span>
+                <ChevronDown className={`w-4 h-4 text-teal transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <div className="p-4 pt-0 text-white/70 text-sm leading-relaxed border-t border-white/5">
+                            {answer}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+/**
+ * Mentors / Judges Section
+ */
+function MentorsSection({ mentors, title = "Mentors & Judges" }) {
+    if (!mentors?.length) return null;
+
+    return (
+        <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <h4 className="flex items-center gap-2 text-teal font-bold mb-6 uppercase tracking-wider text-sm">
+                <GraduationCap className="w-4 h-4" /> {title}
+            </h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {mentors.map((person, i) => (
+                    <div key={i} className="bg-black/20 p-4 rounded-xl border border-white/5 flex flex-col items-center text-center hover:border-teal/30 transition-all hover:-translate-y-1">
+                        {/* Avatar Placeholder or Image */}
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal/20 to-purple-500/20 mb-3 flex items-center justify-center border border-white/10">
+                             {person.image ? (
+                                <img src={person.image} alt={person.name} className="w-full h-full rounded-full object-cover" />
+                             ) : (
+                                <span className="text-xl font-bold text-teal">{person.name.charAt(0)}</span>
+                             )}
+                        </div>
+                        <h5 className="text-white font-bold text-sm mb-1">{person.name}</h5>
+                        <p className="text-white/50 text-xs font-mono">{person.role || "Judge"}</p>
+                        {person.company && <p className="text-teal/80 text-[10px] uppercase tracking-wider mt-2">{person.company}</p>}
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+}
+
+/**
+ * Evaluation Criteria Section
+ */
+function EvaluationSection({ criteria }) {
+    if (!criteria?.length) return null;
+
+    return (
+        <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <h4 className="flex items-center gap-2 text-teal font-bold mb-4 uppercase tracking-wider text-sm">
+                <ClipboardList className="w-4 h-4" /> Evaluation Criteria
+            </h4>
+            <div className="grid gap-3 sm:grid-cols-1">
+                {criteria.map((item, i) => (
+                    <div key={i} className="flex gap-4 items-start p-3 rounded-lg hover:bg-white/5 transition-colors">
+                        <div className="w-8 h-8 rounded-full bg-teal/10 flex items-center justify-center shrink-0 border border-teal/20 text-teal font-bold text-xs mt-0.5">
+                            {i + 1}
+                        </div>
+                        <div>
+                            <h5 className="text-white font-medium text-sm mb-1">{item.title}</h5>
+                            <p className="text-white/60 text-xs leading-relaxed">{item.description}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+}
 
 /**
  * Event themes section
  */
-function ThemesSection({ themes }) {
+function ThemesSection({ themes, title = "Themes & Tracks" }) {
     if (!themes?.length) return null;
 
     return (
         <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
             <h4 className="flex items-center gap-2 text-teal font-bold mb-4 uppercase tracking-wider text-sm">
-                Themes & Tracks
+                <Info className="w-4 h-4" /> {title}
             </h4>
             <div className="grid gap-3 sm:grid-cols-2">
                 {themes.map((theme, i) => (
-                    <div key={i} className="bg-black/20 p-4 rounded-xl border border-white/5 text-white/90 text-sm flex items-center gap-3 hover:border-teal/30 transition-colors">
-                        <div className="w-1.5 h-1.5 rounded-full bg-teal shadow-[0_0_10px_rgba(45,212,191,0.5)]" />
-                        {theme}
+                    <div key={i} className="bg-black/20 p-4 rounded-xl border border-white/5 text-white/90 text-sm flex items-start gap-3 hover:border-teal/30 transition-colors">
+                        <div className="w-1.5 h-1.5 rounded-full bg-teal shadow-[0_0_10px_rgba(45,212,191,0.5)] shrink-0 mt-1.5" />
+                        <span className="leading-relaxed">{theme}</span>
                     </div>
                 ))}
             </div>
@@ -129,9 +240,9 @@ function PrizesSection({ prizes }) {
 
 /**
  * EventDetailsContent - Displays event description, themes, timeline, prizes, rules, and contacts
- * @param {{ event: object, isHackathonOrIdeathon: boolean }} props
+ * @param {{ event: object, isHackathonOrIdeathon: boolean, isIdeathon: boolean }} props
  */
-function EventDetailsContent({ event, isHackathonOrIdeathon = false }) {
+function EventDetailsContent({ event, isHackathonOrIdeathon = false, isIdeathon = false }) {
     if (!event) return null;
 
     return (
@@ -149,9 +260,18 @@ function EventDetailsContent({ event, isHackathonOrIdeathon = false }) {
                 </p>
             </section>
 
-            <ThemesSection themes={event.themes} />
+            <ThemesSection 
+                themes={event.themes} 
+                title={isHackathonOrIdeathon ? "Problem Statements" : "Themes & Tracks"} 
+            />
+            
+            {/* New Sections for Hackathons/Ideathons */}
+            <EvaluationSection criteria={event.evaluationCriteria} />
+            <MentorsSection mentors={event.mentors} />
+
             <TimelineSection stages={event.stages} />
             <PrizesSection prizes={event.prizes} />
+            <FAQSection faqs={event.faqs} />
 
             {/* Eligibility */}
             {event.eligibility && (
@@ -177,7 +297,7 @@ function EventDetailsContent({ event, isHackathonOrIdeathon = false }) {
                             </li>
                         ))}
                     </ul>
-                    {isHackathonOrIdeathon && (
+                    {isHackathonOrIdeathon && !isIdeathon && (
                         <div className="mt-4 pt-4 border-t border-white/10">
                             <a
                                 href={event?.samplePpt || "/sample-presentation.pptx"}

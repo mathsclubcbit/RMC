@@ -10,18 +10,27 @@ const COLOR_MAP = {
 export default function SpotlightCard({ children, className = "", color = "teal" }) {
     const divRef = useRef(null);
     const [opacity, setOpacity] = useState(0);
+    const boundsRef = useRef(null);
 
     const handleMouseMove = (e) => {
-        if (!divRef.current) return;
-        const rect = divRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        if (!boundsRef.current) return;
+        const { left, top } = boundsRef.current;
+        const x = e.clientX - left;
+        const y = e.clientY - top;
         divRef.current.style.setProperty("--mouse-x", `${x}px`);
         divRef.current.style.setProperty("--mouse-y", `${y}px`);
     };
 
-    const handleMouseEnter = () => setOpacity(1);
-    const handleMouseLeave = () => setOpacity(0);
+    const handleMouseEnter = () => {
+        if (divRef.current) {
+            boundsRef.current = divRef.current.getBoundingClientRect();
+        }
+        setOpacity(1);
+    };
+    const handleMouseLeave = () => {
+        boundsRef.current = null;
+        setOpacity(0);
+    };
 
     return (
         <div

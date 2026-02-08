@@ -47,6 +47,7 @@ export default function RegistrationClient({ eventId }) {
         event,
         isLoading,
         isHackathonOrIdeathon,
+        isIdeathon,
         teamConstraints,
         requiresTeamStep,
         qrImageSrc,
@@ -133,7 +134,7 @@ export default function RegistrationClient({ eventId }) {
 
         if (step === 3) {
             if (isHackathonOrIdeathon) {
-                const error = validateSubmission(abstract, pptFile);
+                const error = validateSubmission(abstract, pptFile, isIdeathon);
                 if (error) {
                     setErrorMessage(error);
                     return false;
@@ -302,6 +303,7 @@ export default function RegistrationClient({ eventId }) {
                         pptFile={pptFile}
                         onPptChange={setPptFile}
                         samplePptUrl={event?.samplePpt}
+                        isIdeathon={isIdeathon}
                     />
                 );
             }
@@ -363,6 +365,7 @@ export default function RegistrationClient({ eventId }) {
                         isOpen={showDetails}
                         onClose={() => setShowDetails(false)}
                         isHackathonOrIdeathon={isHackathonOrIdeathon}
+                        isIdeathon={isIdeathon}
                     />
                 )}
             </AnimatePresence>
@@ -410,11 +413,15 @@ export default function RegistrationClient({ eventId }) {
                             {/* Event Info */}
                             <div className="flex-1 overflow-y-auto p-6 lg:p-8 custom-scrollbar">
                                 <h1 className="text-2xl lg:text-3xl font-serif font-bold text-white mb-2 tracking-wide">{event.title}</h1>
-                                <p className="text-white/40 text-xs font-mono uppercase tracking-widest mb-6 flex items-center gap-2">
+                                <p className="text-white/60 text-xs font-mono uppercase tracking-widest mb-6 flex items-center gap-2">
                                     <span className="w-1.5 h-1.5 rounded-full bg-teal shadow-[0_0_10px_rgba(45,212,191,0.8)]" />
                                     {event.date} • {event.eventType}
                                 </p>
-                                <EventDetailsContent event={event} isHackathonOrIdeathon={isHackathonOrIdeathon} />
+                                <EventDetailsContent
+                                    event={event}
+                                    isHackathonOrIdeathon={isHackathonOrIdeathon}
+                                    isIdeathon={isIdeathon}
+                                />
                             </div>
                         </div>
 
@@ -423,7 +430,7 @@ export default function RegistrationClient({ eventId }) {
                             {/* Mobile Header */}
                             <div className="pt-16 pb-4 px-6 md:pt-8 md:px-12 flex-shrink-0 md:hidden">
                                 <h2 className="text-2xl md:text-3xl font-serif font-bold text-white mb-1 tracking-wide">{event.title}</h2>
-                                <p className="text-white/40 text-xs font-mono uppercase tracking-widest">{event.date}</p>
+                                <p className="text-white/60 text-xs font-mono uppercase tracking-widest">{event.date}</p>
                             </div>
 
                             {/* Desktop Header spacer */}
@@ -461,7 +468,11 @@ export default function RegistrationClient({ eventId }) {
                                     <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden border border-white/10 shadow-lg mb-6">
                                         <Image src={event.posterMobile || event.img} alt={event.title} fill className="object-cover" />
                                     </div>
-                                    <EventDetailsContent event={event} isHackathonOrIdeathon={isHackathonOrIdeathon} />
+                                    <EventDetailsContent
+                                        event={event}
+                                        isHackathonOrIdeathon={isHackathonOrIdeathon}
+                                        isIdeathon={isIdeathon}
+                                    />
                                 </div>
 
                                 {/* Registration Content */}

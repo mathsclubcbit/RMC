@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
+import { useRef } from "react";
 import { ArrowRight, Calendar, MapPin } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -20,12 +21,22 @@ const GlitchText = ({ text, className }) => {
 export default function HolographicCard({ event, index }) {
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
+    const boundsRef = useRef(null);
 
     function handleMouseMove({ currentTarget, clientX, clientY }) {
-        let { left, top } = currentTarget.getBoundingClientRect();
+        if (!boundsRef.current) return;
+        let { left, top } = boundsRef.current;
 
         mouseX.set(clientX - left);
         mouseY.set(clientY - top);
+    }
+
+    function handleMouseEnter({ currentTarget }) {
+        boundsRef.current = currentTarget.getBoundingClientRect();
+    }
+
+    function handleMouseLeave() {
+        boundsRef.current = null;
     }
 
     // Determine which poster to show (fallback to img, then to null)
@@ -40,6 +51,8 @@ export default function HolographicCard({ event, index }) {
             viewport={{ once: true }}
             className="group relative w-full overflow-hidden rounded-3xl bg-black border border-white/10 hover:border-teal/50 transition-colors duration-500"
             onMouseMove={handleMouseMove}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
         >
             <motion.div
                 className="pointer-events-none absolute -inset-px rounded-3xl opacity-0 transition duration-300 group-hover:opacity-100 z-30"
@@ -64,7 +77,9 @@ export default function HolographicCard({ event, index }) {
                                 alt={event.title}
                                 fill
                                 className="object-cover"
-                                sizes="(min-width: 768px) 33vw, 100vw"
+                                sizes="(max-width: 1024px) 50vw, 33vw"
+                                priority={index === 0}
+                                fetchPriority={index === 0 ? "high" : "auto"}
                             />
                         </div>
                         <div className="md:hidden absolute inset-0">
@@ -74,6 +89,8 @@ export default function HolographicCard({ event, index }) {
                                 fill
                                 className="object-cover"
                                 sizes="100vw"
+                                priority={index === 0}
+                                fetchPriority={index === 0 ? "high" : "auto"}
                             />
                         </div>
                     </div>

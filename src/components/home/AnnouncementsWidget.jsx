@@ -6,11 +6,11 @@ import { X, Radio, Bell, AlertTriangle, Calendar, ChevronRight } from "lucide-re
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function AnnouncementsWidget() {
+export default function AnnouncementsWidget({ initialData = [] }) {
     const [isOpen, setIsOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
-    const [announcements, setAnnouncements] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [announcements, setAnnouncements] = useState(initialData);
+    const [isLoading, setIsLoading] = useState(initialData.length === 0);
     const [entranceDelay, setEntranceDelay] = useState(1); // Default short delay
 
     useEffect(() => {
@@ -40,6 +40,10 @@ export default function AnnouncementsWidget() {
         checkPreloader();
 
         const fetchAnnouncements = async () => {
+            if (initialData.length > 0) {
+                setIsLoading(false);
+                return;
+            }
             try {
                 const res = await fetch('/api/announcements');
                 const data = await res.json();

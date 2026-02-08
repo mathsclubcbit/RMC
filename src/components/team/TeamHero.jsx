@@ -7,21 +7,30 @@ import MathTitle from "@/components/ui/MathTitle";
 
 export default function TeamHero() {
     const heroRef = useRef(null);
+    const boundsRef = useRef(null);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [opacity, setOpacity] = useState(0);
 
     // Spotlight Effect Handler
     const handleMouseMove = (e) => {
-        if (!heroRef.current) return;
-        const rect = heroRef.current.getBoundingClientRect();
+        if (!boundsRef.current) return;
+        const rect = boundsRef.current;
         setMousePosition({
             x: e.clientX - rect.left,
             y: e.clientY - rect.top,
         });
     };
 
-    const handleMouseEnter = () => setOpacity(1);
-    const handleMouseLeave = () => setOpacity(0);
+    const handleMouseEnter = () => {
+        if (heroRef.current) {
+            boundsRef.current = heroRef.current.getBoundingClientRect();
+        }
+        setOpacity(1);
+    };
+    const handleMouseLeave = () => {
+        boundsRef.current = null;
+        setOpacity(0);
+    };
 
     return (
         <div
