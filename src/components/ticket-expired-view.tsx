@@ -14,12 +14,12 @@ interface TicketExpiredViewProps {
 export function TicketExpiredView({ attendedAt, memberAttendance }: TicketExpiredViewProps) {
     const attendanceList = memberAttendance
         ? memberAttendance
-              .split(",")
-              .map(entry => {
-                  const [name, status] = entry.split(":");
-                  return { name: name?.trim(), status: status?.trim() };
-              })
-              .filter(item => item.name)
+            .split(",")
+            .map(entry => {
+                const [name, status] = entry.split(":");
+                return { name: name?.trim(), status: status?.trim() };
+            })
+            .filter(item => item.name)
         : [];
 
     return (
@@ -50,11 +50,10 @@ export function TicketExpiredView({ attendedAt, memberAttendance }: TicketExpire
                             <div key={idx} className="flex justify-between items-center text-sm">
                                 <span className="text-gray-300">{item.name}</span>
                                 <span
-                                    className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${
-                                        item.status === "Present"
-                                            ? "bg-green-500/20 text-green-400"
-                                            : "bg-red-500/20 text-red-400"
-                                    }`}
+                                    className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${item.status === "Present"
+                                        ? "bg-green-500/20 text-green-400"
+                                        : "bg-red-500/20 text-red-400"
+                                        }`}
                                 >
                                     {item.status || "Unknown"}
                                 </span>
@@ -63,13 +62,6 @@ export function TicketExpiredView({ attendedAt, memberAttendance }: TicketExpire
                     </div>
                 </div>
             )}
-
-            <Button className="w-full" variant="outline" asChild>
-                <Link href="/admin/scan">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Scan Next Ticket
-                </Link>
-            </Button>
         </GlassCard>
     );
 }

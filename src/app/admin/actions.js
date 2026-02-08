@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { getRegistrationById, markRegistrationAttendance, markRegistrationCheckedIn } from "@/lib/google";
 import { signToken, verifyToken } from "@/lib/jwt";
 import { authenticator } from '@otplib/preset-default';
@@ -120,6 +120,19 @@ export async function isAdminAuthenticated() {
     return payload?.type === 'admin';
 }
 
+// Helper to verify coordinator session and get their event ID
+export async function isCoordinatorAuthenticated() {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("coordinator_token")?.value;
+    if (!token) return null;
+
+    const payload = await verifyToken(token);
+    if (payload?.type === 'coordinator' && payload?.eventId) {
+        return payload.eventId;
+    }
+    return null;
+}
+
 export async function markCheckedInAction(formData) {
     if (!(await isAdminAuthenticated())) {
         return { error: "Unauthorized" };
@@ -154,11 +167,15 @@ export async function markCheckedInAction(formData) {
     }
 
     revalidatePath(`/admin/ticket/${registrationId}`);
+    revalidateTag('registrations');
     return { success: true };
 }
 
 export async function markAttendanceAction(ticketId, attendanceStatus) {
-    if (!(await isAdminAuthenticated())) {
+    const isAdmin = await isAdminAuthenticated();
+    const coordinatorEventId = await isCoordinatorAuthenticated();
+
+    if (!isAdmin && !coordinatorEventId) {
         return { error: "Unauthorized" };
     }
 
@@ -177,6 +194,14 @@ export async function markAttendanceAction(ticketId, attendanceStatus) {
         return { error: "Ticket not found" };
     }
 
+    // SECURITY CHECK: Coordinators can only check in tickets for their own event
+    if (!isAdmin && coordinatorEventId) {
+        const ticketEventId = String(existing.eventId || existing['Event ID'] || "").trim();
+        if (ticketEventId !== String(coordinatorEventId).trim()) {
+            return { error: "Security Alert: You are not authorized to check in tickets for this event." };
+        }
+    }
+
     if (existing.checkedInAt) {
         return { error: "Already checked in" };
     }
@@ -193,5 +218,7 @@ export async function markAttendanceAction(ticketId, attendanceStatus) {
     }
 
     revalidatePath(`/admin/ticket/${registrationId}`);
+    revalidatePath(`/coordinator/ticket/${registrationId}`);
+    revalidateTag('registrations');
     return { success: true };
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { randomInt } from 'crypto';
 import { uploadToDrive, checkDuplicateRegistrationId, checkDuplicateUTR, appendRowToSheet, getOrCreateFolder } from '@/lib/google';
 import { createAdminClient } from '@/lib/supabase/server';
@@ -367,6 +368,8 @@ export async function POST(req: NextRequest) {
         ];
 
         await withRateLimit(() => appendRowToSheet(spreadsheetId, rowData));
+        // @ts-ignore - revalidateTag typing issue in this env
+        revalidateTag('registrations');
 
         // 5. Generate QR Code and Send Ticket Email
 

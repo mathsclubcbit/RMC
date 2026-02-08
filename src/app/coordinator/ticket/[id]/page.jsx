@@ -140,7 +140,7 @@ export default async function CoordinatorTicketPage({ params }) {
             <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
             <SectionWrapper className="relative z-10 w-full max-w-md flex flex-col items-center">
                 {uiTicket.attended === "Yes" ? (
-                    <TicketExpiredView attendedAt={uiTicket.attendedAt} memberAttendance={uiTicket.memberAttendance} />
+                    <TicketExpiredView attendedAt={uiTicket.attendedAt} memberAttendance={uiTicket.memberAttendance} returnUrl="/coordinator/scan" />
                 ) : (
                     <AdminTicketManager ticket={uiTicket} />
                 )}

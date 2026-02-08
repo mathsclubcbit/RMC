@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
-import { createClient } from '@/lib/supabase/server';
+import { verifyToken } from '@/lib/jwt';
 
 export const runtime = 'nodejs';
 
 async function getCoordinatorEventId() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const cookieStore = await (import('next/headers').then(h => h.cookies()));
+    const token = cookieStore.get('coordinator_token')?.value;
+    if (!token) return null;
 
-    if (!user || user?.app_metadata?.role !== 'coordinator' || !user?.app_metadata?.event_id) {
-        return null;
+    const payload = await verifyToken(token);
+    if (payload?.type === 'coordinator' && payload?.eventId) {
+        return payload.eventId;
     }
-
-    return user.app_metadata.event_id;
+    return null;
 }
 
 export async function POST(request) {

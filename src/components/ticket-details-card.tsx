@@ -21,9 +21,9 @@ interface TicketDetailsCardProps {
 export function TicketDetailsCard({ ticket, actionButton }: TicketDetailsCardProps) {
     const membersList = ticket.members
         ? ticket.members
-              .split(",")
-              .map(m => m.trim())
-              .filter(Boolean)
+            .split(",")
+            .map(m => m.trim())
+            .filter(Boolean)
         : [];
 
     return (
@@ -73,7 +73,7 @@ export function TicketDetailsCard({ ticket, actionButton }: TicketDetailsCardPro
             </div>
 
             <p className="text-xs text-muted-foreground mb-6">
-                Registered on {new Date(ticket.timestamp).toLocaleDateString()}
+                Registered on {new Date(ticket.timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
             </p>
 
             {actionButton ? (

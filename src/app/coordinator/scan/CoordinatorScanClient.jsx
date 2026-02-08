@@ -1,83 +1,96 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { Html5Qrcode } from "html5-qrcode";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Scan, Keyboard, Lightbulb } from "lucide-react";
+import { useCameraPermission } from "@/hooks/useCameraPermission";
+import { CameraPermissionPrompt } from "@/components/ui/CameraPermissionPrompt";
 
 export default function CoordinatorScanPage() {
     const router = useRouter();
     const [ticketCode, setTicketCode] = useState("");
-    const [envInfo, setEnvInfo] = useState({ secure: true, hasMedia: true, origin: "" });
     const [scannerError, setScannerError] = useState("");
+    const [isScanning, setIsScanning] = useState(false);
+    const [showManualEntry, setShowManualEntry] = useState(false);
     const scannerRef = useRef(null);
+    const manualInputRef = useRef(null);
+
     const normalized = useMemo(() => String(ticketCode || "").replace(/\s+/g, "").trim(), [ticketCode]);
     const isValid = /^\d{6}$/.test(normalized);
 
-    // Detect environment on mount
-    useEffect(() => {
-        const detectEnv = () => {
-            setEnvInfo({
-                secure: Boolean(window.isSecureContext),
-                hasMedia: Boolean(navigator?.mediaDevices?.getUserMedia),
-                origin: window.location.origin,
-            });
-        };
-        detectEnv();
+    const {
+        permissionState,
+        error: permissionError,
+        requestPermission,
+        isGranted,
+    } = useCameraPermission();
+
+    // Focus manual input when shown
+    const handleManualEntry = useCallback(() => {
+        setShowManualEntry(true);
+        setTimeout(() => manualInputRef.current?.focus(), 100);
     }, []);
 
+    // Start scanner only after permission is granted
     useEffect(() => {
-        if (!envInfo.secure || !envInfo.hasMedia) return;
-        if (scannerRef.current) return;
+        if (!isGranted) return;
 
         let isMounted = true;
-        try {
-            const scanner = new Html5QrcodeScanner({
-                elementId: "coordinator-qr-reader",
-                config: {
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 },
-                    rememberLastUsedCamera: true,
-                    showTorchButtonIfSupported: true,
-                },
-                verbose: false,
-            });
+        const scannerId = "coordinator-qr-reader";
 
-            scannerRef.current = scanner;
+        const startScanner = async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
 
-            scanner.render(
-                (decodedText) => {
-                    const id = String(decodedText || "").trim();
-                    if (!id) return;
+            const element = document.getElementById(scannerId);
+            if (!element || !isMounted) {
+                console.warn("Scanner element not found or component unmounted");
+                return;
+            }
 
-                    scanner
-                        .clear()
-                        .catch(() => { })
-                        .finally(() => {
+            const html5QrCode = new Html5Qrcode(scannerId);
+            scannerRef.current = html5QrCode;
+
+            try {
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    (decodedText) => {
+                        const id = String(decodedText || "").trim();
+                        if (!id) return;
+
+                        html5QrCode.stop().then(() => {
+                            router.push(`/coordinator/ticket/${encodeURIComponent(id)}`);
+                        }).catch(e => {
+                            console.error("Stop failed", e);
                             router.push(`/coordinator/ticket/${encodeURIComponent(id)}`);
                         });
-                },
-                () => {
-                    // ignore per-frame errors
+                    },
+                    () => { /* ignore per-frame errors */ }
+                );
+                if (isMounted) setIsScanning(true);
+            } catch (err) {
+                console.error("Scanner start error:", err);
+                if (isMounted) {
+                    setScannerError("Camera initialization failed. Please check permissions.");
                 }
-            );
-        } catch (err) {
-            if (isMounted) {
-                Promise.resolve().then(() => {
-                    setScannerError("Unable to start the camera. Please use manual entry or check permissions.");
-                });
             }
-        }
+        };
+
+        startScanner();
 
         return () => {
             isMounted = false;
             if (scannerRef.current) {
-                scannerRef.current.clear().catch(() => { });
+                const scanner = scannerRef.current;
+                if (scanner.isScanning) {
+                    scanner.stop().catch(e => console.warn("Cleanup stop failed", e));
+                }
                 scannerRef.current = null;
             }
         };
-    }, [router, envInfo.secure, envInfo.hasMedia]);
+    }, [router, isGranted]);
 
     return (
         <div className="min-h-[100dvh] bg-black text-white relative overflow-hidden">
@@ -112,61 +125,60 @@ export default function CoordinatorScanPage() {
                                     <Scan className="w-4 h-4 text-teal-400" />
                                     <span className="text-sm font-semibold text-white/90">Camera Feed</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                                    <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">LIVE</span>
-                                </div>
+                                {isScanning && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                        <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">LIVE</span>
+                                    </div>
+                                )}
                             </div>
 
-                            {!envInfo.hasMedia || !envInfo.secure ? (
-                                <div className="p-5">
-                                    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4">
-                                        <div className="text-sm font-semibold text-amber-200">Camera blocked by browser security</div>
-                                        <div className="mt-1 text-xs text-amber-200/70">
-                                            Camera access needs a secure context, localhost, or HTTPS.
+                            {!isGranted ? (
+                                <CameraPermissionPrompt
+                                    permissionState={permissionState}
+                                    error={permissionError}
+                                    onRequestPermission={requestPermission}
+                                    onManualEntry={handleManualEntry}
+                                    accentColor="teal"
+                                />
+                            ) : (
+                                <>
+                                    {scannerError && (
+                                        <div className="px-5 pb-5">
+                                            <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
+                                                <div className="text-sm font-semibold text-red-200">Camera Error</div>
+                                                <div className="mt-1 text-xs text-red-200/70">{scannerError}</div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            ) : null}
+                                    )}
 
-                            {scannerError ? (
-                                <div className="px-5 pb-5">
-                                    <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
-                                        <div className="text-sm font-semibold text-red-200">Camera Error</div>
-                                        <div className="mt-1 text-xs text-red-200/70">
-                                            {scannerError}
+                                    <div className="p-4 md:p-6 relative">
+                                        {/* HUD Overlay */}
+                                        <div className="absolute inset-4 md:inset-6 pointer-events-none z-10 overflow-hidden rounded-2xl border border-teal-500/20">
+                                            <div className="absolute top-0 left-0 right-0 h-0.5 bg-teal-400 shadow-[0_0_15px_rgba(45,212,191,1)] animate-[scan_2s_ease-in-out_infinite]" />
+                                            <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-teal-400 rounded-tl-lg" />
+                                            <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-teal-400 rounded-tr-lg" />
+                                            <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-teal-400 rounded-bl-lg" />
+                                            <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-teal-400 rounded-br-lg" />
                                         </div>
+
+                                        <div id="coordinator-qr-reader" className="rmc-qr-shell rounded-2xl overflow-hidden bg-black/50 border border-white/10 shadow-inner relative z-0" />
                                     </div>
-                                </div>
-                            ) : null}
-
-                            <div className="p-4 md:p-6 relative">
-                                {/* HUD Overlay (Pointer events none allows clicking underlying buttons) */}
-                                <div className="absolute inset-4 md:inset-6 pointer-events-none z-10 overflow-hidden rounded-2xl border border-teal-500/20">
-                                    {/* Scanning Line Animation */}
-                                    <div className="absolute top-0 left-0 right-0 h-0.5 bg-teal-400 shadow-[0_0_15px_rgba(45,212,191,1)] animate-[scan_2s_ease-in-out_infinite]" />
-
-                                    {/* Corner Brackets */}
-                                    <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-teal-400 rounded-tl-lg" />
-                                    <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-teal-400 rounded-tr-lg" />
-                                    <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-teal-400 rounded-bl-lg" />
-                                    <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-teal-400 rounded-br-lg" />
-                                </div>
-
-                                <div id="coordinator-qr-reader" className="rmc-qr-shell rounded-2xl overflow-hidden bg-black/50 border border-white/10 shadow-inner relative z-0" />
-                            </div>
+                                </>
+                            )}
                         </div>
 
                         {/* Sidebar */}
                         <div className="space-y-6">
                             {/* Manual Entry */}
-                            <div className="rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-5 md:p-6">
+                            <div className={`rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-5 md:p-6 transition-all ${showManualEntry ? 'ring-2 ring-teal-500/50' : ''}`}>
                                 <div className="flex items-center gap-2 mb-4 text-white/50">
                                     <Keyboard className="w-4 h-4" />
                                     <span className="text-[11px] font-mono uppercase tracking-widest">Manual Override</span>
                                 </div>
                                 <div className="flex flex-col gap-3">
                                     <input
+                                        ref={manualInputRef}
                                         value={ticketCode}
                                         onChange={(e) => setTicketCode(e.target.value)}
                                         inputMode="numeric"
@@ -220,35 +232,10 @@ export default function CoordinatorScanPage() {
                 #coordinator-qr-reader__header_message { display: none !important; }
                 #coordinator-qr-reader video { width: 100% !important; height: auto !important; border-radius: 12px; object-fit: cover; }
                 
-                /* Aggressive Button Styling */
-                #coordinator-qr-reader button {
-                    display: inline-flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    padding: 12px 24px !important;
-                    background: #2dd4bf !important;
-                    color: black !important;
-                    font-weight: 700 !important;
-                    font-size: 11px !important;
-                    letter-spacing: 0.1em !important;
-                    text-transform: uppercase !important;
-                    border-radius: 12px !important;
-                    border: none !important;
-                    cursor: pointer !important;
-                    box-shadow: 0 0 20px rgba(45,212,191,0.4) !important;
-                    transition: all 0.2s !important;
-                    margin: 20px auto !important;
-                }
-                #coordinator-qr-reader button:hover {
-                    transform: scale(1.05);
-                    box-shadow: 0 0 30px rgba(45,212,191,0.6) !important;
-                }
-
-                /* Hide standard links */
+                /* Hide library buttons - we handle permission ourselves */
+                #coordinator-qr-reader button { display: none !important; }
                 #coordinator-qr-reader__dashboard_section_csr span, 
                 #coordinator-qr-reader__dashboard_section_swaplink { display: none !important; }
-
-                /* Hide error icon and default placeholder icon */
                 img[alt="Info icon"], img[alt="Camera based scan"] { display: none !important; }
                 #coordinator-qr-reader img { display: none !important; }
             `}</style>
