@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/server';
 import { jwtVerify } from 'jose';
 import { getSecret } from '@/lib/jwt';
@@ -228,6 +229,8 @@ export async function POST(request) {
         if (uploadErrors.length) {
             return NextResponse.json({ ...responseEvent, uploadErrors }, { status: 201 });
         }
+
+        revalidateTag('events');
 
         return NextResponse.json(responseEvent, { status: 201 });
     } catch (error) {

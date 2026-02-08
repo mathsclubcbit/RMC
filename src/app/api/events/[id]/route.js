@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag, revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/server';
 import { jwtVerify } from 'jose';
 import { getSecret } from '@/lib/jwt';
@@ -257,6 +258,9 @@ export async function PUT(request, { params }) {
             return NextResponse.json({ ...responseEvent, uploadErrors });
         }
 
+        revalidateTag('events');
+        revalidatePath('/events');
+
         return NextResponse.json(responseEvent);
     } catch (error) {
         console.error('Error updating event:', error);
@@ -291,6 +295,9 @@ export async function DELETE(request, { params }) {
             console.error('Error deleting event (Supabase):', error);
             return NextResponse.json({ error: 'Failed to delete event' }, { status: 500 });
         }
+
+        revalidateTag('events');
+        revalidatePath('/events');
 
         return NextResponse.json({ success: true });
     } catch (error) {
