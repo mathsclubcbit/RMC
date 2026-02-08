@@ -46,18 +46,18 @@ export default async function TeamPage() {
 
 
     return (
-        <div className="min-h-screen bg-[#020617] text-white pt-0 pb-20 overflow-x-hidden selection:bg-teal selection:text-black">
+        <div className="min-h-screen bg-[#020617] text-white pt-0 pb-12 overflow-x-hidden selection:bg-teal selection:text-black">
 
             {/* Cinematic Hero */}
             <TeamHero />
 
-            <div className="relative z-10 max-w-7xl mx-auto px-6 mt-16 md:mt-24 space-y-32">
+            <div className="relative z-10 max-w-7xl mx-auto px-6 mt-8 md:mt-16 space-y-16">
 
                 {/* --- Section 1: The Visionaries --- */}
                 {faculty.length > 0 && (
                     <section className="relative">
                         <SectionHeader title="The Visionaries" subtitle="Guiding Light & Wisdom" />
-                        <div className="flex flex-wrap justify-center gap-10 md:gap-16">
+                        <div className="flex flex-wrap justify-center gap-6 md:gap-12">
                             {faculty.map((member, idx) => (
                                 <div key={member.id} className="w-full max-w-sm md:w-[350px]">
                                     <TeamCard {...member} index={idx} />
@@ -72,7 +72,7 @@ export default async function TeamPage() {
                 <section className="relative">
                     <SectionHeader title="The High Council" subtitle="Architects of the Infinite" />
 
-                    <div className="flex flex-col items-center gap-16 md:gap-24">
+                    <div className="flex flex-col items-center gap-8 md:gap-16">
 
                         {/* Tier 1: The President (Apex) */}
                         {president && (
@@ -88,7 +88,7 @@ export default async function TeamPage() {
                         )}
 
                         {/* Tier 2: The Pillars (VP & GS) */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-24 w-full max-w-5xl px-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 w-full max-w-5xl px-4">
                             {vicePresident && (
                                 <div className="w-full">
                                     <TeamCard {...vicePresident} />
@@ -111,7 +111,7 @@ export default async function TeamPage() {
                         <SectionHeader title="The Core Matrix" subtitle="The Foundation of Logic" />
 
                         {/* Joint Secretaries & Core Members Grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
                             {coreCouncil.map((member, idx) => (
                                 <TeamCard key={member.id} {...member} index={idx} />
                             ))}
@@ -122,7 +122,7 @@ export default async function TeamPage() {
             </div>
 
             {/* Footer Message */}
-            <div className="text-center mt-40 pb-10">
+            <div className="text-center mt-20 pb-8">
                 <div className="h-px w-32 bg-gradient-to-r from-transparent via-teal/20 to-transparent mx-auto mb-6" />
                 <p className="text-white/30 font-mono text-xs tracking-widest uppercase">
                     © 2026 Ramanujan Maths Club
@@ -135,7 +135,7 @@ export default async function TeamPage() {
 // Helper Component for Section Headers
 function SectionHeader({ title, subtitle }) {
     return (
-        <div className="flex flex-col items-center mb-16 relative perspective-[1000px]">
+        <div className="flex flex-col items-center mb-8 relative perspective-[1000px]">
             {/* Glowing Line */}
             <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-teal/20 to-transparent" />
 
