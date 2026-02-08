@@ -1,0 +1,223 @@
+[
+  {
+    "id": "ml5koefnjtkjs3",
+    "title": "IDEATHON",
+    "date": "2026-02-17",
+    "payload": {
+      "id": "ml5koefnjtkjs3",
+      "img": "https://zuczhjbmspuijwaypdjd.supabase.co/storage/v1/object/public/event-images/events/ml5koefnjtkjs3/img-1770065432357.png",
+      "date": "2026-02-17",
+      "rules": [
+        "All submissions must be original",
+        "Plagiarism will lead to immediate disqualification",
+        "Time limits must be strictly followed",
+        "Judges’ decisions will be final and binding",
+        "Participants must carry a valid college ID",
+        "Any form of misconduct will result in disqualification"
+      ],
+      "title": "IDEATHON",
+      "prizes": {
+        "winner": "2000/-",
+        "runnerUp": "",
+        "participation": ""
+      },
+      "stages": [
+        {
+          "date": "2026-02-12",
+          "name": "Initial Screening (Online)",
+          "description": "Participants submit their idea abstracts . \nIdeas reviewed by an expert committee . \nShortlisted teams will be informed via email .",
+          "judgingCriteria": "●\tStrength of mathematical foundation\n●\tOriginality\n●\tPractical relevance\n●\tClarity of explanation"
+        },
+        {
+          "date": "2026-02-17",
+          "name": "Final Presentation (Offline)",
+          "description": "Shortlisted teams will present their ideas offline . \nDuration: 15 minutes per team (including Q&A) . \nJudged by academicians and domain experts .\n",
+          "judgingCriteria": ""
+        }
+      ],
+      "status": "Coming Soon",
+      "themes": [
+        "Mathematics for Social Good",
+        "Mathematical Models for Women Safety",
+        "Mathematics in Healthcare & Disability Aids",
+        "Optimization & Operations Research",
+        "Cryptography & Data Security",
+        "Statistics & Data Analysis for Society",
+        "Mathematical Modeling for Sustainable Development",
+        "Financial Mathematics & Risk Analysis",
+        "Graph Theory & Network Analysis",
+        "AI/ML with Strong Mathematical Foundations",
+        "Open Mathematics Innovation"
+      ],
+      "category": "Competition",
+      "isOneDay": true,
+      "location": "M Block Soft Skills Lab",
+      "password": "$2b$12$Ry3z3wkOTEPgkzHgjIFn3em543i3D0C7JBLX.PhuMH6P/hC4DD6zK",
+      "createdAt": "2026-02-02T19:38:21.927777+00:00",
+      "eventType": "Ideathon",
+      "samplePpt": "https://zuczhjbmspuijwaypdjd.supabase.co/storage/v1/object/public/event-images/events/ml5koefnjtkjs3/samplePpt-1770139677374.pdf",
+      "startDate": "2026-02-17",
+      "updatedAt": "2026-02-04T09:00:21.614828+00:00",
+      "venueType": "Offline",
+      "created_at": "2026-02-02T19:38:21.927777+00:00",
+      "regEndDate": "2026-02-12",
+      "description": "About Mathematics Ideathon 2026\n\nMathematics Ideathon 2026, organized by the Ramanujan Maths Club, is an innovation-driven competition focused on deep mathematical thinking, structured problem-solving, and research-oriented ideation.\n\nThe ideathon provides a platform for students to explore how mathematical logic, models, proofs, algorithms, and formulations can be applied to solve real-world, societal, and technological problems.\n\nParticipants are expected to clearly demonstrate the mathematical foundation of their ideas while ensuring practical relevance and clarity of thought. The event follows a two-stage evaluation process, culminating in offline presentations before an expert jury.",
+      "eligibility": "●Open to UG and PG students\n● Participation can be individual or team-based\n● Maximum team size: 4 members\n● Only one idea per team",
+      "maxTeamSize": 4,
+      "minTeamSize": 1,
+      "participants": 0,
+      "pricingTiers": [
+        {
+          "price": 250,
+          "teamSize": 1
+        },
+        {
+          "price": 400,
+          "teamSize": 2
+        },
+        {
+          "price": 600,
+          "teamSize": 3
+        },
+        {
+          "price": 800,
+          "teamSize": 4
+        }
+      ],
+      "regStartDate": "2026-02-01",
+      "whatsappLink": "https://chat.whatsapp.com/KlIyuKlmRol53o1RappvMK?mode=gi_t",
+      "passwordHashed": true,
+      "successMessage": "You're In!",
+      "registrationFee": "100",
+      "contactOrganizers": [
+        {
+          "name": "Mahathi",
+          "phone": "+91 94907 39984"
+        },
+        {
+          "name": "Manogna",
+          "phone": "+91 94908 79465"
+        }
+      ],
+      "interactiveSessions": "An interactive mathematics and logic games session will be conducted after the final presentations, aimed at engaging participants in a fun and intellectually stimulating environment.",
+      "submissionGuidelines": "●\tIdeas must be original and innovative\n●\tPartial or full implementation is acceptable\n●\tMathematical logic, proofs, models, or formulations must be clearly explained\n●\tIdeas should demonstrate real-world applicability\n●\tSubmissions must be completed before the deadline\n",
+      "variablePricingEnabled": true,
+      "useExternalRegistration": false
+    }
+  },
+  {
+    "id": "mldrqf47hh7o4n",
+    "title": "MATH HUNT",
+    "date": "2026-02-17",
+    "payload": {
+      "id": "mldrqf47hh7o4n",
+      "date": "2026-02-17",
+      "rules": [],
+      "title": "MATH HUNT",
+      "prizes": {
+        "winner": "",
+        "runnerUp": "",
+        "participation": ""
+      },
+      "stages": [],
+      "status": "Registration Open",
+      "themes": [],
+      "category": "Competition",
+      "isOneDay": true,
+      "password": "$2b$12$89JEiKZZmdbpfW6dvv9NwemeT460zF2gTpjGBM8knH4EGoEaE2lk6",
+      "eventType": "Competition",
+      "startDate": "2026-02-17",
+      "venueType": "Offline",
+      "created_at": "2026-02-08T13:18:01.888517+00:00",
+      "participants": 0,
+      "pricingTiers": [
+        {
+          "price": 200,
+          "teamSize": 1
+        },
+        {
+          "price": 300,
+          "teamSize": 2
+        },
+        {
+          "price": 300,
+          "teamSize": 3
+        }
+      ],
+      "passwordHashed": true,
+      "successMessage": "You're In!",
+      "contactOrganizers": [],
+      "variablePricingEnabled": true,
+      "externalRegistrationUrl": "https://www.cbit.ac.in/",
+      "useExternalRegistration": false
+    }
+  },
+  {
+    "id": "mldrrkpx7hb21j",
+    "title": "MATCH THE MATH",
+    "date": "2026-02-07",
+    "payload": {
+      "id": "mldrrkpx7hb21j",
+      "date": "2026-02-07",
+      "rules": [],
+      "title": "MATCH THE MATH",
+      "prizes": {
+        "winner": "",
+        "runnerUp": "",
+        "participation": ""
+      },
+      "stages": [],
+      "status": "Registration Open",
+      "themes": [],
+      "category": "Competition",
+      "isOneDay": true,
+      "password": "$2b$12$OkRcA4ca7jGZsXdnV.mmg.8zU3S/Xx.UTB7gcTk9VlIlMyfMhKP36",
+      "createdAt": "2026-02-08T13:18:55.882723+00:00",
+      "eventType": "Competition",
+      "startDate": "2026-02-07",
+      "updatedAt": "2026-02-08T13:18:55.882723+00:00",
+      "venueType": "Offline",
+      "participants": 0,
+      "pricingTiers": [],
+      "passwordHashed": true,
+      "successMessage": "You're In!",
+      "contactOrganizers": [],
+      "variablePricingEnabled": false,
+      "useExternalRegistration": false
+    }
+  },
+  {
+    "id": "mkwoh9qlgu6nu8",
+    "title": "MATH HEIST",
+    "date": "2026-02-17",
+    "payload": {
+      "id": "mkwoh9qlgu6nu8",
+      "img": "https://zuczhjbmspuijwaypdjd.supabase.co/storage/v1/object/public/event-images/events/mkwoh9qlgu6nu8/img-1769523291894.png",
+      "date": "2026-02-17",
+      "time": "09:00 - 04:00",
+      "year": "2025-26",
+      "title": "MATH HEIST",
+      "status": "Registration Open",
+      "endTime": "04:00",
+      "category": "Competition",
+      "isOneDay": true,
+      "location": "Seminar Hall",
+      "password": "$2b$12$ly2aBRxPT.Eu691V/CUuhuugJZkCr3D4KTmgETFzRgoejPDhWYIVK",
+      "teamSize": 4,
+      "createdAt": "2026-01-27T14:14:51.797408+00:00",
+      "startDate": "2026-02-17",
+      "startTime": "09:00",
+      "updatedAt": "2026-01-31T06:08:55.640987+00:00",
+      "regEndDate": "2026-02-17",
+      "description": "it is an adventorous event based on money heist series mixed with maths",
+      "maxTeamSize": 4,
+      "minTeamSize": 1,
+      "participants": 0,
+      "pricingTiers": [],
+      "regStartDate": "2026-01-26",
+      "passwordHashed": true,
+      "registrationFee": "120",
+      "variablePricingEnabled": false
+    }
+  }
+]

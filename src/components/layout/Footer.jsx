@@ -1,4 +1,4 @@
-"use client";
+"use client"; // Fixed hydration mismatch
 
 import Link from "next/link";
 import Image from "next/image";
@@ -13,11 +13,7 @@ const quickLinks = [
     { href: "/gallery", label: "Gallery" },
 ];
 
-const resourceLinks = [
-    { href: "/resources", label: "Math Resources" },
-    { href: "/resources#puzzles", label: "Puzzles" },
-    { href: "/resources#books", label: "Recommended Books" },
-];
+
 
 const socialLinks = [
     { href: "https://www.instagram.com/rmc.cbit", label: "Instagram", Icon: Instagram },
@@ -44,7 +40,7 @@ export default function Footer() {
                     <NewsletterSignup />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 mb-20">
                     {/* Brand Column - Huge */}
                     <div className="lg:col-span-1">
                         <Link href="/" className="flex items-center gap-4 mb-6 group">
@@ -104,28 +100,15 @@ export default function Footer() {
                     </div>
 
                     {/* Resources */}
-                    <div>
-                        <h4 className="font-serif font-bold text-lg mb-6">Knowledge</h4>
-                        <ul className="space-y-4">
-                            {resourceLinks.map((link) => (
-                                <li key={link.href}>
-                                    <Link
-                                        href={link.href}
-                                        className="text-muted hover:text-teal transition-colors text-sm uppercase tracking-widest"
-                                    >
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+
 
                     {/* Office */}
                     <div>
                         <h4 className="font-serif font-bold text-lg mb-6">Visit Us</h4>
                         <div className="space-y-4 text-sm text-muted font-light">
                             <p>
-                                Math Department, Chaitanya Bharathi Institute of Technology<br />
+                                Math Department<br />
+                                Chaitanya Bharathi Institute of Technology<br />
                                 Gandipet, Hyderabad - 500075
                             </p>
                         </div>

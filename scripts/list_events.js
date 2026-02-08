@@ -26,11 +26,9 @@ async function listEvents() {
         return;
     }
 
-    console.log('--- All Events in Database ---');
-    events.forEach(event => {
-        console.log(`ID: ${event.id} | Title: ${event.title} | Date: ${event.date}`);
-    });
-    console.log('------------------------------');
+    const fs = require('fs');
+    fs.writeFileSync(path.join(__dirname, 'events_list.json'), JSON.stringify(events, null, 2));
+    console.log('Events written to events_list.json');
 }
 
 listEvents();
