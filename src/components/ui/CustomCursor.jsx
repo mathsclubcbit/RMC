@@ -23,6 +23,14 @@ export default function CustomCursor() {
             return;
         }
 
+        // Don't run on low-end devices
+        const cores = navigator.hardwareConcurrency || 4;
+        const memory = navigator.deviceMemory || 4;
+        if (cores < 4 || memory < 4) {
+            console.log('CustomCursor: Disabled on low-end device for performance');
+            return;
+        }
+
         const moveCursor = (e) => {
             cursorX.set(e.clientX - 16);
             cursorY.set(e.clientY - 16);

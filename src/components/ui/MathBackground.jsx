@@ -87,7 +87,7 @@ export default function MathBackground() {
             return;
         }
 
-        const maxSymbolsCount = isMobileInit ? 5 : 18;
+        const maxSymbolsCount = isMobileInit ? 3 : 8;  // Reduced from 5/18
 
         for (let i = 0; i < maxSymbolsCount; i++) {
             floatingSymbols.push(new FloatingSymbol(canvas.width, canvas.height));
@@ -101,9 +101,9 @@ export default function MathBackground() {
         // Track if animation is running
         let isRunning = true;
 
-        // Throttle to 30fps for better performance
+        // Throttle to 15fps for better performance (was 30)
         let lastTime = 0;
-        const fps = 30;
+        const fps = 15;
         const fpsInterval = 1000 / fps;
 
         // Animation Loop
@@ -130,18 +130,18 @@ export default function MathBackground() {
             const cols = Math.floor(canvas.width / spacing);
             const rows = Math.floor(canvas.height / spacing);
 
-            for (let i = 0; i < cols; i++) {
-                for (let j = 0; j < rows; j++) {
-                    const x = i * spacing + spacing / 2;
-                    const y = j * spacing + spacing / 2;
-                    const angle = Math.cos(x * 0.005 + time) * Math.sin(y * 0.005 + time) * Math.PI * 2;
-
-                    ctx.beginPath();
-                    ctx.moveTo(x, y);
-                    ctx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
-                    ctx.stroke();
-                }
-            }
+            // Vector field disabled for performance - using static grid would be even lighter
+            // for (let i = 0; i < cols; i++) {
+            //     for (let j = 0; j < rows; j++) {
+            //         const x = i * spacing + spacing / 2;
+            //         const y = j * spacing + spacing / 2;
+            //         const angle = Math.cos(x * 0.005 + time) * Math.sin(y * 0.005 + time) * Math.PI * 2;
+            //         ctx.beginPath();
+            //         ctx.moveTo(x, y);
+            //         ctx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+            //         ctx.stroke();
+            //     }
+            // }
 
             // Draw Floating Symbols
             for (const symbol of floatingSymbols) {

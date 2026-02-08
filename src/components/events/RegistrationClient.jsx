@@ -357,6 +357,48 @@ export default function RegistrationClient({ eventId }) {
 
     // --- RENDER HELPERS ---
 
+    // Event Highlights Banner - Shows key info upfront
+    const renderEventHighlights = () => (
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+            {/* Event Type Badge */}
+            {isIdeathon && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[10px] font-bold uppercase tracking-wider">
+                    <Sparkles className="w-3 h-3" />
+                    Abstract Required
+                </span>
+            )}
+            {isHackathonOrIdeathon && !isIdeathon && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-wider">
+                    <FileText className="w-3 h-3" />
+                    PPT Required
+                </span>
+            )}
+
+            {/* Team Size Badge */}
+            {teamConstraints.maxTeamSize > 1 && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70 text-[10px] font-mono uppercase tracking-wider">
+                    <Users className="w-3 h-3" />
+                    {teamConstraints.minTeamSize === teamConstraints.maxTeamSize
+                        ? `Team of ${teamConstraints.minTeamSize}`
+                        : `${teamConstraints.minTeamSize}-${teamConstraints.maxTeamSize} Members`}
+                </span>
+            )}
+
+            {/* Sample PDF Download */}
+            {event?.samplePpt && (
+                <a
+                    href={event.samplePpt}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal/10 border border-teal/30 text-teal text-[10px] font-bold uppercase tracking-wider hover:bg-teal/20 transition-colors"
+                >
+                    <FileText className="w-3 h-3" />
+                    {isIdeathon ? "Sample Abstract" : "Sample PPT"}
+                </a>
+            )}
+        </div>
+    );
+
     // --- Sub-Renderers for Granular Control ---
     const renderThemes = () => (
         event.themes?.length > 0 && (
@@ -506,17 +548,16 @@ export default function RegistrationClient({ eventId }) {
                             </li>
                         ))}
                     </ul>
-                    {isHackathonOrIdeathon && !isIdeathon && (
+                    {isHackathonOrIdeathon && event?.samplePpt && (
                         <div className="mt-4 pt-4 border-t border-white/10">
                             <a
-                                href={event?.samplePpt || "/sample-presentation.pptx"}
-                                download={!event?.samplePpt}
-                                target={event?.samplePpt ? "_blank" : "_self"}
-                                rel={event?.samplePpt ? "noopener noreferrer" : ""}
+                                href={event.samplePpt}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="flex items-center gap-2 text-teal hover:text-teal/80 transition-colors text-sm font-medium w-max"
                             >
                                 <FileText className="w-4 h-4" />
-                                Download Sample Presentation Format
+                                {isIdeathon ? "Download Sample Abstract Format" : "Download Sample Presentation Format"}
                             </a>
                         </div>
                     )}
@@ -784,16 +825,17 @@ export default function RegistrationClient({ eventId }) {
                     <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">
                         {isIdeathon ? "Abstract Upload" : "Presentation Upload"}
                     </label>
-                    {!isIdeathon && (
+                    {event?.samplePpt && (
                         <a
-                            href={event?.samplePpt || "/sample-presentation.pptx"}
-                            download={!event?.samplePpt}
-                            target={event?.samplePpt ? "_blank" : "_self"}
-                            rel={event?.samplePpt ? "noopener noreferrer" : ""}
+                            href={event.samplePpt}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-teal hover:text-teal/80 transition-colors group"
                         >
                             <FileText className="w-3 h-3 group-hover:scale-110 transition-transform" />
-                            <span className="border-b border-teal/30 group-hover:border-teal transition-colors">Download Sample PPT</span>
+                            <span className="border-b border-teal/30 group-hover:border-teal transition-colors">
+                                {isIdeathon ? "Download Sample Format" : "Download Sample PPT"}
+                            </span>
                         </a>
                     )}
                 </div>
@@ -1233,12 +1275,14 @@ export default function RegistrationClient({ eventId }) {
                     {/* LEFT PANEL (Desktop Only) */}
                     <div className="hidden md:flex w-[45%] bg-gradient-to-br from-black/40 to-black/20 p-12 lg:p-16 flex-col justify-start pt-20 relative border-r border-white/5 overflow-y-auto custom-scrollbar">
                         {/* Background Poster Blur */}
-                        <div className="absolute inset-0 z-0 opacity-20 hover:opacity-30 transition-opacity duration-1000">
-                            <Image src={event.posterDesktop || event.img} alt="BG" fill className="object-cover blur-xl scale-110" unoptimized />
-                        </div>
+                        {/* Background Poster Blur - REMOVED for cleaner look */}
                         <div className="relative z-10 min-h-max pb-10">
                             <span className="inline-block px-3 py-1 mb-6 rounded-full bg-teal/10 border border-teal/20 text-teal text-[10px] font-mono uppercase tracking-widest">{event.category}</span>
-                            <h1 className="text-5xl font-serif font-bold text-white mb-6 leading-tight">{event.title}</h1>
+                            <h1 className="text-5xl font-serif font-bold text-white mb-4 leading-tight">{event.title}</h1>
+
+                            {/* Event Highlights Banner */}
+                            {renderEventHighlights()}
+
                             <div className="grid grid-cols-2 gap-8 border-t border-white/10 pt-8 mb-8">
                                 <div>
                                     <div className="text-[10px] uppercase tracking-widest text-white/30 font-mono mb-2">Registration Fee</div>
@@ -1252,6 +1296,59 @@ export default function RegistrationClient({ eventId }) {
                                 </div>
                             </div>
 
+                            {/* Submission Requirements Callout (for Hackathon/Ideathon) */}
+                            {isHackathonOrIdeathon && (
+                                <div className="mb-8 bg-gradient-to-r from-purple-500/10 to-teal/5 rounded-xl p-5 border border-purple-500/20">
+                                    <h4 className="flex items-center gap-2 text-purple-300 font-bold mb-3 uppercase tracking-wider text-xs">
+                                        <Sparkles className="w-4 h-4" />
+                                        Submission Requirements
+                                    </h4>
+                                    <p className="text-white/60 text-sm leading-relaxed mb-3">
+                                        {isIdeathon
+                                            ? "Submit your abstract document outlining your innovative idea. Judges will evaluate creativity, feasibility, and impact."
+                                            : "Submit a presentation (PPT/PDF) showcasing your project concept, tech stack, and implementation approach."
+                                        }
+                                    </p>
+                                    {event?.samplePpt && (
+                                        <a
+                                            href={event.samplePpt}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal/20 border border-teal/30 text-teal text-xs font-bold uppercase tracking-wider hover:bg-teal/30 transition-colors"
+                                        >
+                                            <FileText className="w-4 h-4" />
+                                            Download Sample Format
+                                        </a>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Inline Rules Preview */}
+                            {event.rules?.length > 0 && (
+                                <div className="mb-8 bg-white/5 rounded-xl p-5 border border-white/10">
+                                    <h4 className="flex items-center gap-2 text-teal font-bold mb-3 uppercase tracking-wider text-xs">
+                                        <Shield className="w-4 h-4" />
+                                        Key Rules
+                                    </h4>
+                                    <ul className="space-y-2">
+                                        {event.rules.slice(0, 3).map((rule, i) => (
+                                            <li key={i} className="flex gap-2 text-sm text-white/70">
+                                                <span className="text-teal mt-1.5 w-1.5 h-1.5 rounded-full bg-teal shrink-0" />
+                                                <span className="leading-relaxed">{rule}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    {event.rules.length > 3 && (
+                                        <button
+                                            onClick={() => setShowDetails(true)}
+                                            className="mt-3 text-teal/70 hover:text-teal text-xs font-mono transition-colors"
+                                        >
+                                            + {event.rules.length - 3} more rules →
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+
                             {/* Filtered Event Highlights (Timeline, Prizes, Themes) */}
                             <div className="space-y-10">
                                 {renderPrizes()}
@@ -1261,7 +1358,7 @@ export default function RegistrationClient({ eventId }) {
                             <div className="mt-8 pt-8 border-t border-white/10 flex flex-col gap-3">
                                 <button onClick={() => setShowDetails(true)} className="w-full py-4 rounded-xl bg-gradient-to-r from-teal/10 to-transparent border border-teal/20 hover:border-teal/50 hover:bg-teal/20 text-teal transition-all flex items-center justify-center gap-2 group active:scale-[0.98]">
                                     <Info className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                                    <span className="uppercase tracking-widest font-mono text-xs font-bold">Read Full Rulebook</span>
+                                    <span className="uppercase tracking-widest font-mono text-xs font-bold">View All Details</span>
                                 </button>
 
                                 <button onClick={() => setShowPoster(true)} className="flex items-center justify-center gap-2 text-[10px] text-white/30 hover:text-white transition-colors py-2">
@@ -1281,10 +1378,12 @@ export default function RegistrationClient({ eventId }) {
                         <div className="md:hidden pt-20 pb-0 bg-gradient-to-b from-[#020617] via-[#020617] to-transparent z-20 sticky top-0">
                             <div className="px-6 mb-4">
                                 <h1 className="text-3xl font-serif font-bold text-white mb-2 leading-tight">{event.title}</h1>
-                                <div className="flex items-center gap-4 text-xs font-mono text-white/60">
+                                <div className="flex items-center gap-4 text-xs font-mono text-white/60 mb-3">
                                     <span className="bg-white/5 px-2 py-1 rounded border border-white/10">{event.date}</span>
                                     <span className="text-teal">{event.registrationFee || "Free"}</span>
                                 </div>
+                                {/* Event Highlights */}
+                                {renderEventHighlights()}
                             </div>
 
                             {/* Mobile Tabs */}

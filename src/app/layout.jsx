@@ -27,24 +27,24 @@ const inter = Inter({
 const cormorant = Cormorant_Garamond({
     variable: "--font-cormorant",
     subsets: ["latin"],
-    weight: ["300", "400", "500", "600", "700"],
-    display: "optional", // Changed from swap for decorative font
+    weight: ["400", "600"],  // Reduced from 5 weights to 2
+    display: "optional",
     adjustFontFallback: true,
 });
 
 const cinzel = Cinzel({
     variable: "--font-cinzel",
     subsets: ["latin"],
-    weight: ["400", "500", "600", "700"],
-    display: "optional", // Changed from swap for decorative font
+    weight: ["400", "700"],  // Reduced from 4 weights to 2
+    display: "optional",
     adjustFontFallback: true,
 });
 
 const playfair = Playfair_Display({
     variable: "--font-playfair",
     subsets: ["latin"],
-    weight: ["400", "600", "700", "900"],
-    display: "optional", // Changed from swap for decorative font
+    weight: ["400", "700"],  // Reduced from 4 weights to 2
+    display: "optional",
     adjustFontFallback: true,
 });
 

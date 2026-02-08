@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Sparkles, FileText, Users, Shield, Info } from 'lucide-react';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
 // Local imports - hooks
@@ -98,6 +98,48 @@ export default function RegistrationClient({ eventId }) {
     const [isSuccess, setIsSuccess] = useState(false);
     const [registrationId, setRegistrationId] = useState(null);
     const [qrCodeUrl, setQrCodeUrl] = useState(null);
+
+    // Event Highlights Banner - Shows key info upfront
+    const renderEventHighlights = () => (
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+            {/* Event Type Badge */}
+            {isIdeathon && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[10px] font-bold uppercase tracking-wider">
+                    <Sparkles className="w-3 h-3" />
+                    Abstract Required
+                </span>
+            )}
+            {isHackathonOrIdeathon && !isIdeathon && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-wider">
+                    <FileText className="w-3 h-3" />
+                    PPT Required
+                </span>
+            )}
+
+            {/* Team Size Badge */}
+            {teamConstraints.maxTeamSize > 1 && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70 text-[10px] font-mono uppercase tracking-wider">
+                    <Users className="w-3 h-3" />
+                    {teamConstraints.minTeamSize === teamConstraints.maxTeamSize
+                        ? `Team of ${teamConstraints.minTeamSize}`
+                        : `${teamConstraints.minTeamSize}-${teamConstraints.maxTeamSize} Members`}
+                </span>
+            )}
+
+            {/* Sample PDF Download */}
+            {event?.samplePpt && (
+                <a
+                    href={event.samplePpt}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal/10 border border-teal/30 text-teal text-[10px] font-bold uppercase tracking-wider hover:bg-teal/20 transition-colors"
+                >
+                    <FileText className="w-3 h-3" />
+                    {isIdeathon ? "Sample Abstract" : "Sample PPT"}
+                </a>
+            )}
+        </div>
+    );
 
     // Computed values
     const amountToPay = useMemo(() =>
@@ -347,7 +389,7 @@ export default function RegistrationClient({ eventId }) {
             <div className="fixed inset-0 pointer-events-none z-0">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(45,212,191,0.05),transparent_50%)]" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(139,92,246,0.03),transparent_50%)]" />
-                <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")` }} />
+                {/* Noise texture removed for performance */}
             </div>
 
             {/* Poster Modal */}
@@ -386,42 +428,99 @@ export default function RegistrationClient({ eventId }) {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                    className="w-full min-h-screen md:min-h-0 md:w-[95vw] md:max-w-7xl md:rounded-3xl md:border md:border-white/10 md:bg-[#0f111a]/95 md:backdrop-blur-3xl md:shadow-[0_0_60px_rgba(0,0,0,0.5)] md:overflow-hidden flex flex-col md:max-h-[90vh]"
+                    className="w-full min-h-screen md:min-h-0 md:w-[95vw] md:max-w-7xl md:rounded-3xl md:border md:border-white/10 md:bg-[#0f111a]/95 md:backdrop-blur-xl md:shadow-2xl md:overflow-hidden flex flex-col md:max-h-[90vh]"
                 >
                     {/* Desktop: Side-by-side layout */}
                     <div className="flex-1 flex flex-col md:flex-row min-h-0">
                         {/* Left Panel - Event Details (Desktop Only) */}
                         <div className="hidden md:flex flex-col w-[40%] lg:w-[45%] bg-[#080a12] border-r border-white/10 overflow-hidden relative group">
-                            {/* Poster Section */}
-                            <div className="relative aspect-[4/3] flex-shrink-0 overflow-hidden">
-                                <Image
-                                    src={event.posterDesktop || event.img}
-                                    alt={event.title}
-                                    fill
-                                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                                    priority
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#080a12] via-transparent to-transparent" />
-                                <button
-                                    onClick={() => setShowPoster(true)}
-                                    className="absolute bottom-4 right-4 px-4 py-2 bg-black/50 backdrop-blur-md rounded-full text-white/70 hover:text-white text-xs font-mono uppercase tracking-widest border border-white/10 hover:border-teal/50 transition-all opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 duration-300"
-                                >
-                                    View Poster
-                                </button>
-                            </div>
+                            {/* Poster Section - REMOVED for cleaner look per user request */}
 
                             {/* Event Info */}
                             <div className="flex-1 overflow-y-auto p-6 lg:p-8 custom-scrollbar">
                                 <h1 className="text-2xl lg:text-3xl font-serif font-bold text-white mb-2 tracking-wide">{event.title}</h1>
-                                <p className="text-white/60 text-xs font-mono uppercase tracking-widest mb-6 flex items-center gap-2">
+
+                                {/* Event Highlights Banner */}
+                                {renderEventHighlights()}
+
+                                <p className="text-white/60 text-xs font-mono uppercase tracking-widest mb-6 flex items-center gap-2 mt-4">
                                     <span className="w-1.5 h-1.5 rounded-full bg-teal shadow-[0_0_10px_rgba(45,212,191,0.8)]" />
                                     {event.date} • {event.eventType}
                                 </p>
-                                <EventDetailsContent
-                                    event={event}
-                                    isHackathonOrIdeathon={isHackathonOrIdeathon}
-                                    isIdeathon={isIdeathon}
-                                />
+
+                                {/* Submission Requirements Callout (for Hackathon/Ideathon) */}
+                                {isHackathonOrIdeathon && (
+                                    <div className="mb-8 bg-gradient-to-r from-purple-500/10 to-teal/5 rounded-xl p-5 border border-purple-500/20">
+                                        <h4 className="flex items-center gap-2 text-purple-300 font-bold mb-3 uppercase tracking-wider text-xs">
+                                            <Sparkles className="w-4 h-4" />
+                                            Submission Requirements
+                                        </h4>
+                                        <p className="text-white/60 text-sm leading-relaxed mb-3">
+                                            {isIdeathon
+                                                ? "Submit your abstract document outlining your innovative idea. Judges will evaluate creativity, feasibility, and impact."
+                                                : "Submit a presentation (PPT/PDF) showcasing your project concept, tech stack, and implementation approach."
+                                            }
+                                        </p>
+                                        {event?.samplePpt && (
+                                            <a
+                                                href={event.samplePpt}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal/20 border border-teal/30 text-teal text-xs font-bold uppercase tracking-wider hover:bg-teal/30 transition-colors"
+                                            >
+                                                <FileText className="w-4 h-4" />
+                                                Download Sample Format
+                                            </a>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Inline Rules Preview */}
+                                {event.rules?.length > 0 && (
+                                    <div className="mb-8 bg-white/5 rounded-xl p-5 border border-white/10">
+                                        <h4 className="flex items-center gap-2 text-teal font-bold mb-3 uppercase tracking-wider text-xs">
+                                            <Shield className="w-4 h-4" />
+                                            Key Rules
+                                        </h4>
+                                        <ul className="space-y-2">
+                                            {event.rules.slice(0, 3).map((rule, i) => (
+                                                <li key={i} className="flex gap-2 text-sm text-white/70">
+                                                    <span className="text-teal mt-1.5 w-1.5 h-1.5 rounded-full bg-teal shrink-0" />
+                                                    <span className="leading-relaxed">{rule}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        {event.rules.length > 3 && (
+                                            <button
+                                                onClick={() => setShowDetails(true)}
+                                                className="mt-3 text-teal/70 hover:text-teal text-xs font-mono transition-colors"
+                                            >
+                                                + {event.rules.length - 3} more rules →
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="mb-8 border-t border-white/10 pt-6">
+                                    <button
+                                        onClick={() => setShowDetails(true)}
+                                        className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors flex items-center justify-center gap-2 group"
+                                    >
+                                        <Info className="w-4 h-4" />
+                                        <span className="uppercase tracking-widest text-xs font-bold">View All Details</span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => setShowPoster(true)}
+                                        className="w-full mt-3 py-2 text-white/40 hover:text-white transition-colors text-[10px] uppercase tracking-widest font-mono flex items-center justify-center gap-2"
+                                    >
+                                        <FileText className="w-3 h-3" />
+                                        View Poster
+                                    </button>
+                                </div>
+
+                                {/* EventDetailsContent removed from inline view per user request. 
+                                    Access via "View All Details" button which opens modal. */}
                             </div>
                         </div>
 
@@ -430,7 +529,9 @@ export default function RegistrationClient({ eventId }) {
                             {/* Mobile Header */}
                             <div className="pt-16 pb-4 px-6 md:pt-8 md:px-12 flex-shrink-0 md:hidden">
                                 <h2 className="text-2xl md:text-3xl font-serif font-bold text-white mb-1 tracking-wide">{event.title}</h2>
-                                <p className="text-white/60 text-xs font-mono uppercase tracking-widest">{event.date}</p>
+                                <p className="text-white/60 text-xs font-mono uppercase tracking-widest mb-3">{event.date}</p>
+                                {/* Event Highlights (Mobile) */}
+                                {renderEventHighlights()}
                             </div>
 
                             {/* Desktop Header spacer */}

@@ -71,11 +71,11 @@ function MentorsSection({ mentors, title = "Mentors & Judges" }) {
                     <div key={i} className="bg-black/20 p-4 rounded-xl border border-white/5 flex flex-col items-center text-center hover:border-teal/30 transition-all hover:-translate-y-1">
                         {/* Avatar Placeholder or Image */}
                         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal/20 to-purple-500/20 mb-3 flex items-center justify-center border border-white/10">
-                             {person.image ? (
+                            {person.image ? (
                                 <img src={person.image} alt={person.name} className="w-full h-full rounded-full object-cover" />
-                             ) : (
+                            ) : (
                                 <span className="text-xl font-bold text-teal">{person.name.charAt(0)}</span>
-                             )}
+                            )}
                         </div>
                         <h5 className="text-white font-bold text-sm mb-1">{person.name}</h5>
                         <p className="text-white/50 text-xs font-mono">{person.role || "Judge"}</p>
@@ -242,99 +242,159 @@ function PrizesSection({ prizes }) {
  * EventDetailsContent - Displays event description, themes, timeline, prizes, rules, and contacts
  * @param {{ event: object, isHackathonOrIdeathon: boolean, isIdeathon: boolean }} props
  */
+/**
+ * EventDetailsContent - Displays event description, themes, timeline, prizes, rules, and contacts
+ * Refactored to use Tabs for better UX
+ */
 function EventDetailsContent({ event, isHackathonOrIdeathon = false, isIdeathon = false }) {
+    const [activeTab, setActiveTab] = useState('overview');
+
     if (!event) return null;
 
+    const tabs = [
+        { id: 'overview', label: 'Overview', icon: FileText },
+        { id: 'structure', label: 'Structure', icon: Calendar },
+        { id: 'guidelines', label: 'Guidelines', icon: Info }, // Changed Shield to Info as Shield import might be missing in original file
+        { id: 'rewards', label: 'Rewards', icon: Trophy },
+    ];
+
     return (
-        <div className="space-y-8">
-            {/* Description / About - Glassmorphic Card */}
-            <section className="bg-white/5 border border-white/10 rounded-2xl p-6 relative overflow-hidden group hover:border-teal/30 transition-colors">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
-                    <FileText className="w-24 h-24 text-teal" />
-                </div>
-                <h4 className="flex items-center gap-2 text-teal font-bold mb-4 uppercase tracking-wider text-sm relative z-10">
-                    <FileText className="w-4 h-4" /> About The Event
-                </h4>
-                <p className="text-white/80 leading-relaxed text-sm md:text-base whitespace-pre-line relative z-10 font-light">
-                    {event.description}
-                </p>
-            </section>
+        <div className="flex flex-col h-full">
+            {/* Tab Navigation */}
+            <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar md:pb-0">
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border ${activeTab === tab.id
+                            ? 'bg-teal/10 border-teal text-teal shadow-[0_0_15px_rgba(45,212,191,0.2)]'
+                            : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:border-white/20 hover:text-white'
+                            }`}
+                    >
+                        <tab.icon className="w-3.5 h-3.5" />
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
 
-            <ThemesSection 
-                themes={event.themes} 
-                title={isHackathonOrIdeathon ? "Problem Statements" : "Themes & Tracks"} 
-            />
-            
-            {/* New Sections for Hackathons/Ideathons */}
-            <EvaluationSection criteria={event.evaluationCriteria} />
-            <MentorsSection mentors={event.mentors} />
+            {/* Tab Content */}
+            <div className="flex-1 relative min-h-[300px]">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={activeTab}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.3 }}
+                        className="space-y-6 pb-8"
+                    >
+                        {activeTab === 'overview' && (
+                            <>
+                                {/* Description / About */}
+                                <section className="bg-white/5 border border-white/10 rounded-2xl p-6 relative overflow-hidden group hover:border-teal/30 transition-colors">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
+                                        <FileText className="w-24 h-24 text-teal" />
+                                    </div>
+                                    <h4 className="flex items-center gap-2 text-teal font-bold mb-4 uppercase tracking-wider text-sm relative z-10">
+                                        <FileText className="w-4 h-4" /> About The Event
+                                    </h4>
+                                    <p className="text-white/80 leading-relaxed text-sm md:text-base whitespace-pre-line relative z-10 font-light">
+                                        {event.description}
+                                    </p>
+                                </section>
 
-            <TimelineSection stages={event.stages} />
-            <PrizesSection prizes={event.prizes} />
-            <FAQSection faqs={event.faqs} />
+                                {/* Contacts */}
+                                {event.contactOrganizers?.length > 0 && (
+                                    <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                                        <h4 className="flex items-center gap-2 text-teal font-bold mb-6 uppercase tracking-wider text-sm">
+                                            <Phone className="w-4 h-4" /> Organizers
+                                        </h4>
+                                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                            {event.contactOrganizers.map((contact, i) => (
+                                                <div key={i} className="flex items-center gap-4 bg-black/40 p-4 rounded-xl border border-white/10 hover:border-teal/50 transition-all group">
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal to-emerald-600 text-black flex items-center justify-center font-bold text-sm shadow-lg group-hover:scale-110 transition-transform">
+                                                        {contact.name[0]}
+                                                    </div>
+                                                    <div className="overflow-hidden">
+                                                        <div className="text-white font-medium truncate">{contact.name}</div>
+                                                        <div className="text-teal/80 text-xs font-mono mt-0.5">{contact.phone}</div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+                                )}
 
-            {/* Eligibility */}
-            {event.eligibility && (
-                <section className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors">
-                    <h4 className="flex items-center gap-2 text-teal font-bold mb-3 uppercase tracking-wider text-sm">
-                        <Users className="w-4 h-4" /> Eligibility
-                    </h4>
-                    <p className="text-white/80 text-sm leading-relaxed">{event.eligibility}</p>
-                </section>
-            )}
+                                <FAQSection faqs={event.faqs} />
+                            </>
+                        )}
 
-            {/* Rules */}
-            {event.rules?.length > 0 && (
-                <section className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors">
-                    <h4 className="flex items-center gap-2 text-teal font-bold mb-3 uppercase tracking-wider text-sm">
-                        <Info className="w-4 h-4" /> Rules & Guidelines
-                    </h4>
-                    <ul className="space-y-2">
-                        {event.rules.map((rule, i) => (
-                            <li key={i} className="flex gap-3 text-sm text-white/70">
-                                <span className="text-teal mt-1.5 w-1.5 h-1.5 rounded-full bg-teal shrink-0" />
-                                <span className="leading-relaxed">{rule}</span>
-                            </li>
-                        ))}
-                    </ul>
-                    {isHackathonOrIdeathon && !isIdeathon && (
-                        <div className="mt-4 pt-4 border-t border-white/10">
-                            <a
-                                href={event?.samplePpt || "/sample-presentation.pptx"}
-                                download={!event?.samplePpt}
-                                target={event?.samplePpt ? "_blank" : "_self"}
-                                rel={event?.samplePpt ? "noopener noreferrer" : ""}
-                                className="flex items-center gap-2 text-teal hover:text-teal/80 transition-colors text-sm font-medium w-max"
-                            >
-                                <FileText className="w-4 h-4" />
-                                Download Sample Presentation Format
-                            </a>
-                        </div>
-                    )}
-                </section>
-            )}
+                        {activeTab === 'structure' && (
+                            <>
+                                <ThemesSection
+                                    themes={event.themes}
+                                    title={isHackathonOrIdeathon ? "Problem Statements" : "Themes & Tracks"}
+                                />
+                                <TimelineSection stages={event.stages} />
+                            </>
+                        )}
 
-            {/* Contacts */}
-            {event.contactOrganizers?.length > 0 && (
-                <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                    <h4 className="flex items-center gap-2 text-teal font-bold mb-6 uppercase tracking-wider text-sm">
-                        <Phone className="w-4 h-4" /> Organizers
-                    </h4>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {event.contactOrganizers.map((contact, i) => (
-                            <div key={i} className="flex items-center gap-4 bg-black/40 p-4 rounded-xl border border-white/10 hover:border-teal/50 transition-all group">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal to-emerald-600 text-black flex items-center justify-center font-bold text-sm shadow-lg group-hover:scale-110 transition-transform">
-                                    {contact.name[0]}
-                                </div>
-                                <div className="overflow-hidden">
-                                    <div className="text-white font-medium truncate">{contact.name}</div>
-                                    <div className="text-teal/80 text-xs font-mono mt-0.5">{contact.phone}</div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            )}
+                        {activeTab === 'guidelines' && (
+                            <>
+                                <EvaluationSection criteria={event.evaluationCriteria} />
+
+                                {/* Eligibility */}
+                                {event.eligibility && (
+                                    <section className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors">
+                                        <h4 className="flex items-center gap-2 text-teal font-bold mb-3 uppercase tracking-wider text-sm">
+                                            <Users className="w-4 h-4" /> Eligibility
+                                        </h4>
+                                        <p className="text-white/80 text-sm leading-relaxed">{event.eligibility}</p>
+                                    </section>
+                                )}
+
+                                {/* Rules */}
+                                {event.rules?.length > 0 && (
+                                    <section className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors">
+                                        <h4 className="flex items-center gap-2 text-teal font-bold mb-3 uppercase tracking-wider text-sm">
+                                            <Info className="w-4 h-4" /> Rules & Guidelines
+                                        </h4>
+                                        <ul className="space-y-2">
+                                            {event.rules.map((rule, i) => (
+                                                <li key={i} className="flex gap-3 text-sm text-white/70">
+                                                    <span className="text-teal mt-1.5 w-1.5 h-1.5 rounded-full bg-teal shrink-0" />
+                                                    <span className="leading-relaxed">{rule}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        {isHackathonOrIdeathon && !isIdeathon && (
+                                            <div className="mt-4 pt-4 border-t border-white/10">
+                                                <a
+                                                    href={event?.samplePpt || "/sample-presentation.pptx"}
+                                                    download={!event?.samplePpt}
+                                                    target={event?.samplePpt ? "_blank" : "_self"}
+                                                    rel={event?.samplePpt ? "noopener noreferrer" : ""}
+                                                    className="flex items-center gap-2 text-teal hover:text-teal/80 transition-colors text-sm font-medium w-max"
+                                                >
+                                                    <FileText className="w-4 h-4" />
+                                                    Download Sample Presentation Format
+                                                </a>
+                                            </div>
+                                        )}
+                                    </section>
+                                )}
+                            </>
+                        )}
+
+                        {activeTab === 'rewards' && (
+                            <>
+                                <PrizesSection prizes={event.prizes} />
+                                <MentorsSection mentors={event.mentors} />
+                            </>
+                        )}
+                    </motion.div>
+                </AnimatePresence>
+            </div>
         </div>
     );
 }
