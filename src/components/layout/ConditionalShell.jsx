@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import SiteFooter from "@/components/layout/SiteFooter";
 import MathBackground from "@/components/ui/MathBackground";
 import SmoothScroll from "@/components/ui/SmoothScroll";
 
@@ -40,8 +40,7 @@ export default function ConditionalShell({ children }) {
             <main className="flex-1 w-full overflow-x-hidden relative z-10">
                 {children}
             </main>
-            <Footer />
+            <SiteFooter />
         </SmoothScroll>
     );
 }
-

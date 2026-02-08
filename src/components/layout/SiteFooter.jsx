@@ -20,7 +20,7 @@ const socialLinks = [
     { href: "https://www.linkedin.com/company/ramanujan-maths-club/", label: "LinkedIn", Icon: Linkedin },
 ];
 
-export default function Footer() {
+export default function SiteFooter() {
     return (
         <footer className="relative bg-background pt-24 pb-12 overflow-hidden border-t border-border">
             {/* Massive Watermark */}
