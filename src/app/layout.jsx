@@ -1,6 +1,5 @@
 import { Montserrat, Inter, Playfair_Display, JetBrains_Mono, Cormorant_Garamond, Cinzel } from "next/font/google"; // [NEW IMPORTS]
 import "./globals.css";
-import "./globals.css";
 
 // ... existing fonts ...
 

@@ -179,7 +179,7 @@ export default function ChaosHero() {
                     <ambientLight intensity={0.5} />
 
                     <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
-                        <LorenzAttractor count={12000} />
+                        <LorenzAttractor count={isMobile ? 5000 : 12000} />
                     </Float>
 
                     {/* Stars for depth */}

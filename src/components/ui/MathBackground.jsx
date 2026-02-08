@@ -88,8 +88,13 @@ export default function MathBackground() {
         const length = 12;
         let time = 0;
 
+        // Track if animation is running
+        let isRunning = true;
+
         // Animation Loop
         const render = () => {
+            if (!isRunning) return;
+
             time += 0.005;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -122,10 +127,24 @@ export default function MathBackground() {
             animationFrameId = requestAnimationFrame(render);
         };
 
+        // Pause animation when tab is hidden to save CPU
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                isRunning = false;
+                cancelAnimationFrame(animationFrameId);
+            } else {
+                isRunning = true;
+                render();
+            }
+        };
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
         render();
 
         return () => {
+            isRunning = false;
             window.removeEventListener("resize", resize);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
             cancelAnimationFrame(animationFrameId);
         };
     }, []);
