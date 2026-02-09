@@ -106,6 +106,9 @@ export async function POST(request) {
 
             const samplePptFile = form.get('samplePptFile');
             if (samplePptFile instanceof File && samplePptFile.size > 0) files.samplePptFile = samplePptFile;
+
+            const sampleAbstractFile = form.get('sampleAbstractFile');
+            if (sampleAbstractFile instanceof File && sampleAbstractFile.size > 0) files.sampleAbstractFile = sampleAbstractFile;
         } else {
             payload = await request.json();
         }
@@ -203,9 +206,13 @@ export async function POST(request) {
             const url = await uploadOne(files.samplePptFile, 'samplePpt');
             if (url) patchedEvent.samplePpt = url;
         }
+        if (files.sampleAbstractFile) {
+            const url = await uploadOne(files.sampleAbstractFile, 'sampleAbstract');
+            if (url) patchedEvent.sampleAbstract = url;
+        }
 
         // If any uploads succeeded (or attempted), persist patched payload.
-        const anyUploadAttempted = Boolean(files.imgFile || files.posterDesktopFile || files.samplePptFile);
+        const anyUploadAttempted = Boolean(files.imgFile || files.posterDesktopFile || files.samplePptFile || files.sampleAbstractFile);
         if (anyUploadAttempted) {
             await supabase
                 .from('events')

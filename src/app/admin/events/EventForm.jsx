@@ -223,6 +223,7 @@ const defaultEvent = {
     password: "",
     img: "",
     posterDesktop: "",
+    sampleAbstract: "",
     samplePpt: "",
     qrCode: "",
     teamSize: "",
@@ -292,6 +293,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
     });
     const [imgFile, setImgFile] = useState(null);
     const [posterDesktopFile, setPosterDesktopFile] = useState(null);
+    const [sampleAbstractFile, setSampleAbstractFile] = useState(null);
     const [samplePptFile, setSamplePptFile] = useState(null);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
@@ -382,6 +384,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
             form.append("payload", JSON.stringify(payload));
             if (imgFile) form.append("imgFile", imgFile);
             if (posterDesktopFile) form.append("posterDesktopFile", posterDesktopFile);
+            if (sampleAbstractFile) form.append("sampleAbstractFile", sampleAbstractFile);
             if (samplePptFile) form.append("samplePptFile", samplePptFile);
 
             const res = await fetch(url, { method, body: form });
@@ -416,6 +419,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
             // Clear files
             setImgFile(null);
             setPosterDesktopFile(null);
+            setSampleAbstractFile(null);
             setSamplePptFile(null);
 
         } catch (err) {
@@ -859,13 +863,24 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                                 <input type="file" accept="image/*" onChange={(e) => setPosterDesktopFile(e.target.files?.[0])} className="text-sm text-white/60" />
                             </div>
                         </Field>
-                        <Field label="Sample Presentation" hint="PPT/PDF for participants.">
+                        <Field label="Sample Presentation" hint="PPT/PDF format template for participants.">
                             <div className="flex flex-col gap-3">
                                 <input value={event.samplePpt || ""} onChange={(e) => setField("samplePpt", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/sample.pptx" />
                                 <input
                                     type="file"
                                     accept=".ppt,.pptx,.pdf"
                                     onChange={(e) => setSamplePptFile(e.target.files?.[0])}
+                                    className="text-sm text-white/60 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-white/10 file:text-white hover:file:bg-white/20"
+                                />
+                            </div>
+                        </Field>
+                        <Field label="Sample Abstract" hint="Abstract format/template for participants (especially for Ideathon).">
+                            <div className="flex flex-col gap-3">
+                                <input value={event.sampleAbstract || ""} onChange={(e) => setField("sampleAbstract", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/sample-abstract.pdf" />
+                                <input
+                                    type="file"
+                                    accept=".pdf,.doc,.docx"
+                                    onChange={(e) => setSampleAbstractFile(e.target.files?.[0])}
                                     className="text-sm text-white/60 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-white/10 file:text-white hover:file:bg-white/20"
                                 />
                             </div>

@@ -384,7 +384,20 @@ export default function RegistrationClient({ eventId }) {
                 </span>
             )}
 
-            {/* Sample PDF Download */}
+            {/* Sample Abstract Download (for Ideathon) */}
+            {isIdeathon && event?.sampleAbstract && (
+                <a
+                    href={event.sampleAbstract}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[10px] font-bold uppercase tracking-wider hover:bg-purple-500/20 transition-colors"
+                >
+                    <FileText className="w-3 h-3" />
+                    📄 Sample Abstract (PDF/DOC)
+                </a>
+            )}
+
+            {/* Sample PPT Download */}
             {event?.samplePpt && (
                 <a
                     href={event.samplePpt}
@@ -393,7 +406,7 @@ export default function RegistrationClient({ eventId }) {
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal/10 border border-teal/30 text-teal text-[10px] font-bold uppercase tracking-wider hover:bg-teal/20 transition-colors"
                 >
                     <FileText className="w-3 h-3" />
-                    {isIdeathon ? "Sample Abstract" : "Sample PPT"}
+                    📊 Sample PPT (Presentation)
                 </a>
             )}
         </div>
@@ -548,17 +561,30 @@ export default function RegistrationClient({ eventId }) {
                             </li>
                         ))}
                     </ul>
-                    {isHackathonOrIdeathon && event?.samplePpt && (
-                        <div className="mt-4 pt-4 border-t border-white/10">
-                            <a
-                                href={event.samplePpt}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 text-teal hover:text-teal/80 transition-colors text-sm font-medium w-max"
-                            >
-                                <FileText className="w-4 h-4" />
-                                {isIdeathon ? "Download Sample Abstract Format" : "Download Sample Presentation Format"}
-                            </a>
+                    {isHackathonOrIdeathon && (event?.sampleAbstract || event?.samplePpt) && (
+                        <div className="mt-4 pt-4 border-t border-white/10 flex flex-wrap gap-4">
+                            {isIdeathon && event?.sampleAbstract && (
+                                <a
+                                    href={event.sampleAbstract}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-purple-300 hover:text-purple-200 transition-colors text-sm font-medium w-max"
+                                >
+                                    <FileText className="w-4 h-4" />
+                                    📄 Download Abstract Format (PDF/DOC)
+                                </a>
+                            )}
+                            {event?.samplePpt && (
+                                <a
+                                    href={event.samplePpt}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-teal hover:text-teal/80 transition-colors text-sm font-medium w-max"
+                                >
+                                    <FileText className="w-4 h-4" />
+                                    📊 Download PPT Template
+                                </a>
+                            )}
                         </div>
                     )}
                 </section>
@@ -821,23 +847,34 @@ export default function RegistrationClient({ eventId }) {
 
 
             <div className="space-y-4 pt-4 border-t border-white/10">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-end justify-between gap-3 mb-2">
                     <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">
                         {isIdeathon ? "Abstract Upload" : "Presentation Upload"}
                     </label>
-                    {event?.samplePpt && (
-                        <a
-                            href={event.samplePpt}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-teal hover:text-teal/80 transition-colors group"
-                        >
-                            <FileText className="w-3 h-3 group-hover:scale-110 transition-transform" />
-                            <span className="border-b border-teal/30 group-hover:border-teal transition-colors">
-                                {isIdeathon ? "Download Sample Format" : "Download Sample PPT"}
-                            </span>
-                        </a>
-                    )}
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        {isIdeathon && event?.sampleAbstract && (
+                            <a
+                                href={event.sampleAbstract}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/40 text-[10px] uppercase tracking-wider text-purple-300 transition-all group w-full sm:w-auto"
+                            >
+                                <FileText className="w-3 h-3 group-hover:scale-110 transition-transform" />
+                                <span>📄 Abstract Format</span>
+                            </a>
+                        )}
+                        {event?.samplePpt && (
+                            <a
+                                href={event.samplePpt}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-teal/10 border border-teal/20 hover:bg-teal/20 hover:border-teal/40 text-[10px] uppercase tracking-wider text-teal transition-all group w-full sm:w-auto"
+                            >
+                                <FileText className="w-3 h-3 group-hover:scale-110 transition-transform" />
+                                <span>📊 PPT Template</span>
+                            </a>
+                        )}
+                    </div>
                 </div>
 
                 <div className="relative group">

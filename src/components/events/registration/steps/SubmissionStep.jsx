@@ -12,10 +12,11 @@ import { PremiumInput } from '../components';
  *   pptFile: File | null,
  *   onPptChange: (file: File | null) => void,
  *   samplePptUrl?: string,
+ *   sampleAbstractUrl?: string,
  *   isIdeathon?: boolean
  * }} props
  */
-function SubmissionStep({ abstract, setAbstract, pptFile, onPptChange, samplePptUrl, isIdeathon = false }) {
+function SubmissionStep({ abstract, setAbstract, pptFile, onPptChange, samplePptUrl, sampleAbstractUrl, isIdeathon = false }) {
     const pptInputRef = useRef(null);
 
     const handlePptChange = (e) => {
@@ -54,22 +55,27 @@ function SubmissionStep({ abstract, setAbstract, pptFile, onPptChange, samplePpt
 
 
             <div className="space-y-4 pt-4 border-t border-white/10">
-                <div className="flex items-center justify-between">
-                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1">
-                        {isIdeathon ? "Abstract Upload" : "Presentation Upload"}
-                    </label>
-                    {!isIdeathon && (
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-2 sm:mt-0">
+                    {isIdeathon && sampleAbstractUrl && (
                         <a
-                            href={samplePptUrl || "/sample-presentation.pptx"}
-                            download={!samplePptUrl}
-                            target={samplePptUrl ? "_blank" : "_self"}
-                            rel={samplePptUrl ? "noopener noreferrer" : ""}
-                            className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-teal hover:text-teal/80 transition-colors group"
+                            href={sampleAbstractUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/40 text-[10px] uppercase tracking-wider text-purple-300 transition-all group w-full sm:w-auto"
                         >
                             <FileText className="w-3 h-3 group-hover:scale-110 transition-transform" />
-                            <span className="border-b border-teal/30 group-hover:border-teal transition-colors">
-                                Download Sample PPT
-                            </span>
+                            <span>📄 Abstract Format</span>
+                        </a>
+                    )}
+                    {samplePptUrl && (
+                        <a
+                            href={samplePptUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-teal/10 border border-teal/20 hover:bg-teal/20 hover:border-teal/40 text-[10px] uppercase tracking-wider text-teal transition-all group w-full sm:w-auto"
+                        >
+                            <FileText className="w-3 h-3 group-hover:scale-110 transition-transform" />
+                            <span>📊 PPT Template</span>
                         </a>
                     )}
                 </div>

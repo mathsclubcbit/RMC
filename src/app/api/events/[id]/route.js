@@ -132,6 +132,9 @@ export async function PUT(request, { params }) {
 
             const samplePptFile = form.get('samplePptFile');
             if (samplePptFile instanceof File && samplePptFile.size > 0) files.samplePptFile = samplePptFile;
+
+            const sampleAbstractFile = form.get('sampleAbstractFile');
+            if (sampleAbstractFile instanceof File && sampleAbstractFile.size > 0) files.sampleAbstractFile = sampleAbstractFile;
         } else {
             patch = await request.json();
         }
@@ -221,6 +224,10 @@ export async function PUT(request, { params }) {
         if (files.samplePptFile) {
             const url = await uploadOne(files.samplePptFile, 'samplePpt');
             if (url) next.samplePpt = url;
+        }
+        if (files.sampleAbstractFile) {
+            const url = await uploadOne(files.sampleAbstractFile, 'sampleAbstract');
+            if (url) next.sampleAbstract = url;
         }
 
         const { data: updated, error } = await supabase
