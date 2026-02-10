@@ -260,22 +260,24 @@ function EventDetailsContent({ event, isHackathonOrIdeathon = false, isIdeathon 
 
     return (
         <div className="flex flex-col h-full">
-            {/* Tab Navigation */}
-            <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar md:pb-0">
-                {tabs.map((tab) => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border ${activeTab === tab.id
-                            ? 'bg-teal/10 border-teal text-teal shadow-[0_0_15px_rgba(45,212,191,0.2)]'
-                            : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:border-white/20 hover:text-white'
-                            }`}
-                    >
-                        <tab.icon className="w-3.5 h-3.5" />
-                        {tab.label}
-                    </button>
-                ))}
-            </div>
+            {/* Tab Navigation - Only show for Hackathons/Ideathons */}
+            {isHackathonOrIdeathon && (
+                <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar md:pb-0">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border ${activeTab === tab.id
+                                ? 'bg-teal/10 border-teal text-teal shadow-[0_0_15px_rgba(45,212,191,0.2)]'
+                                : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:border-white/20 hover:text-white'
+                                }`}
+                        >
+                            <tab.icon className="w-3.5 h-3.5" />
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+            )}
 
             {/* Tab Content */}
             <div className="flex-1 relative min-h-[300px]">
@@ -303,8 +305,8 @@ function EventDetailsContent({ event, isHackathonOrIdeathon = false, isIdeathon 
                                     </p>
                                 </section>
 
-                                {/* Contacts */}
-                                {event.contactOrganizers?.length > 0 && (
+                                {/* Contacts - Only show for Hackathons */}
+                                {isHackathonOrIdeathon && event.contactOrganizers?.length > 0 && (
                                     <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
                                         <h4 className="flex items-center gap-2 text-teal font-bold mb-6 uppercase tracking-wider text-sm">
                                             <Phone className="w-4 h-4" /> Organizers
@@ -325,7 +327,7 @@ function EventDetailsContent({ event, isHackathonOrIdeathon = false, isIdeathon 
                                     </section>
                                 )}
 
-                                <FAQSection faqs={event.faqs} />
+                                {isHackathonOrIdeathon && <FAQSection faqs={event.faqs} />}
                             </>
                         )}
 

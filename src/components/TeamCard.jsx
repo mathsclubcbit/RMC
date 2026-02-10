@@ -21,6 +21,7 @@ export default function TeamCard({ name, position, category, image_url, linkedin
                     alt={name}
                     fill
                     className="object-cover grayscale-0 md:grayscale md:group-hover:grayscale-0 transition-all duration-700 ease-in-out group-hover:scale-110"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
                 />
 
                 {/* Gradient Overlay */}

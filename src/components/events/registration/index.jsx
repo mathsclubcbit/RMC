@@ -100,59 +100,63 @@ export default function RegistrationClient({ eventId }) {
     const [qrCodeUrl, setQrCodeUrl] = useState(null);
 
     // Event Highlights Banner - Shows key info upfront
-    const renderEventHighlights = () => (
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-            {/* Event Type Badge */}
-            {isIdeathon && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[10px] font-bold uppercase tracking-wider">
-                    <Sparkles className="w-3 h-3" />
-                    Abstract Required
-                </span>
-            )}
-            {isHackathonOrIdeathon && !isIdeathon && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-wider">
-                    <FileText className="w-3 h-3" />
-                    PPT Required
-                </span>
-            )}
+    const renderEventHighlights = () => {
+        if (!isHackathonOrIdeathon) return null;
 
-            {/* Team Size Badge */}
-            {teamConstraints.maxTeamSize > 1 && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70 text-[10px] font-mono uppercase tracking-wider">
-                    <Users className="w-3 h-3" />
-                    {teamConstraints.minTeamSize === teamConstraints.maxTeamSize
-                        ? `Team of ${teamConstraints.minTeamSize}`
-                        : `${teamConstraints.minTeamSize}-${teamConstraints.maxTeamSize} Members`}
-                </span>
-            )}
+        return (
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+                {/* Event Type Badge */}
+                {isIdeathon && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[10px] font-bold uppercase tracking-wider">
+                        <Sparkles className="w-3 h-3" />
+                        Abstract Required
+                    </span>
+                )}
+                {isHackathonOrIdeathon && !isIdeathon && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-wider">
+                        <FileText className="w-3 h-3" />
+                        PPT Required
+                    </span>
+                )}
 
-            {/* Sample Abstract Download (for Ideathon) */}
-            {isIdeathon && event?.sampleAbstract && (
-                <a
-                    href={event.sampleAbstract}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[10px] font-bold uppercase tracking-wider hover:bg-purple-500/20 transition-colors"
-                >
-                    <FileText className="w-3 h-3" />
-                    📄 Sample Abstract (PDF/DOC)
-                </a>
-            )}
+                {/* Team Size Badge */}
+                {teamConstraints.maxTeamSize > 1 && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70 text-[10px] font-mono uppercase tracking-wider">
+                        <Users className="w-3 h-3" />
+                        {teamConstraints.minTeamSize === teamConstraints.maxTeamSize
+                            ? `Team of ${teamConstraints.minTeamSize}`
+                            : `${teamConstraints.minTeamSize}-${teamConstraints.maxTeamSize} Members`}
+                    </span>
+                )}
 
-            {/* Sample PPT Download */}
-            {event?.samplePpt && (
-                <a
-                    href={event.samplePpt}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal/10 border border-teal/30 text-teal text-[10px] font-bold uppercase tracking-wider hover:bg-teal/20 transition-colors"
-                >
-                    <FileText className="w-3 h-3" />
-                    📊 Sample PPT (Presentation)
-                </a>
-            )}
-        </div>
-    );
+                {/* Sample Abstract Download (for Ideathon) */}
+                {isIdeathon && event?.sampleAbstract && (
+                    <a
+                        href={event.sampleAbstract}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[10px] font-bold uppercase tracking-wider hover:bg-purple-500/20 transition-colors"
+                    >
+                        <FileText className="w-3 h-3" />
+                        📄 Sample Abstract (PDF/DOC)
+                    </a>
+                )}
+
+                {/* Sample PPT Download */}
+                {event?.samplePpt && (
+                    <a
+                        href={event.samplePpt}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal/10 border border-teal/30 text-teal text-[10px] font-bold uppercase tracking-wider hover:bg-teal/20 transition-colors"
+                    >
+                        <FileText className="w-3 h-3" />
+                        📊 Sample PPT (Presentation)
+                    </a>
+                )}
+            </div>
+        );
+    };
 
     // Computed values
     const amountToPay = useMemo(() =>
