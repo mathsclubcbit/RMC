@@ -33,7 +33,7 @@ function ThemesBuilder({ themes, onChange }) {
             {themes.map((theme, idx) => (
                 <div key={idx} className="flex gap-2">
                     <input
-                        value={theme}
+                        value={theme || ""}
                         onChange={(e) => updateTheme(idx, e.target.value)}
                         className="flex-1 px-4 py-3 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
                         placeholder={`Theme ${idx + 1}`}
@@ -134,7 +134,7 @@ function RulesBuilder({ rules, onChange }) {
             {rules.map((rule, idx) => (
                 <div key={idx} className="flex gap-2">
                     <input
-                        value={rule}
+                        value={rule || ""}
                         onChange={(e) => updateRule(idx, e.target.value)}
                         className="flex-1 px-4 py-3 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-teal-400/50"
                         placeholder={`Rule ${idx + 1}`}
@@ -666,10 +666,10 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
 
                     <div className="grid grid-cols-2 gap-5">
                         <Field label="Min Team Size">
-                            <input type="number" placeholder="1" value={event.minTeamSize ?? ""} onChange={(e) => setField("minTeamSize", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-teal-400/50 outline-none" />
+                            <input type="number" placeholder="1" value={event.minTeamSize || ""} onChange={(e) => setField("minTeamSize", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-teal-400/50 outline-none" />
                         </Field>
                         <Field label="Max Team Size">
-                            <input type="number" placeholder="5" value={event.maxTeamSize ?? ""} onChange={(e) => setField("maxTeamSize", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-teal-400/50 outline-none" />
+                            <input type="number" placeholder="5" value={event.maxTeamSize || ""} onChange={(e) => setField("maxTeamSize", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-teal-400/50 outline-none" />
                         </Field>
                     </div>
 
@@ -1080,14 +1080,14 @@ function PricingTiersEditor({ tiers = [], onChange }) {
                     <input
                         type="number"
                         placeholder="Size"
-                        value={t.teamSize}
+                        value={t.teamSize || ""}
                         onChange={(e) => updateTier(idx, "teamSize", e.target.value)}
                         className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 focus:border-teal-400/50 outline-none"
                     />
                     <input
                         type="number"
                         placeholder="Price"
-                        value={t.price}
+                        value={t.price || ""}
                         onChange={(e) => updateTier(idx, "price", e.target.value)}
                         className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 focus:border-teal-400/50 outline-none"
                     />
