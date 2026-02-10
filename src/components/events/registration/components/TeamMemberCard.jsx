@@ -44,7 +44,12 @@ function TeamMemberCard({ member, index, onChange, onRemove, canRemove }) {
                             variant="minimal"
                             placeholder="Roll No"
                             value={member.rollNo}
-                            onChange={e => handleChange('rollNo', e.target.value)}
+                            onChange={e => {
+                                const value = e.target.value.replace(/\D/g, '').slice(0, 12);
+                                handleChange('rollNo', value);
+                            }}
+                            maxLength={12}
+                            inputMode="numeric"
                             className="font-mono text-sm"
                         />
                         <PremiumInput

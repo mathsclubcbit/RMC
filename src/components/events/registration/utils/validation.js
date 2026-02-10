@@ -73,6 +73,10 @@ export function validateTeamMembers(teamMembers, teamConstraints, currentTeamSiz
             return `Invalid email for Team Member ${i + 2}.`;
         }
 
+        if (!/^\d{12}$/.test(member.rollNo)) {
+            return `Team Member ${i + 2}: Roll Number must be exactly 12 digits.`;
+        }
+
         if (!phoneRegex.test(member.phone.replace(/\s/g, ''))) {
             return `Invalid phone number for Team Member ${i + 2}.`;
         }

@@ -46,7 +46,12 @@ function PersonalInfoStep({ formData, onFieldChange }) {
                 <PremiumInput
                     label="Roll Number"
                     value={formData.rollNo}
-                    onChange={e => onFieldChange('rollNo', e.target.value)}
+                    onChange={e => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 12);
+                        onFieldChange('rollNo', value);
+                    }}
+                    maxLength={12}
+                    inputMode="numeric"
                     placeholder="1601..."
                     className="font-mono"
                 />
