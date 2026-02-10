@@ -77,6 +77,10 @@
   --color-lime: var(--rmc-lime);
   --color-coral: var(--rmc-coral);
   --color-orange: var(--rmc-orange);
+  
+  /* Force Hex for compatibility */
+  --color-white: #ffffff;
+  --color-black: #000000;
 
   /* Fonts */
   --font-serif: var(--font-cormorant), serif;

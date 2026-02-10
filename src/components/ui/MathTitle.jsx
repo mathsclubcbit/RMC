@@ -55,7 +55,7 @@ export default function MathTitle({ text = "Ramanujan", className = "" }) {
                 variants={containerVars}
                 initial={false}
                 animate={isMounted ? "visible" : false}
-                className="relative z-10 flex items-center justify-center py-1 md:py-4"
+                className="relative z-10 flex items-center justify-center py-0.5 md:py-4"
             >
                 {letters.map((char, index) => {
                     const charContent = char === " " ? "\u00A0" : char;
@@ -92,7 +92,7 @@ export default function MathTitle({ text = "Ramanujan", className = "" }) {
 
             {/* Cinematic Underline - Static for LCP stability */}
             <div
-                className="h-[1px] bg-gradient-to-r from-transparent via-teal/50 to-transparent mt-1 md:mt-2 w-[100px] opacity-100"
+                className="h-[1px] bg-gradient-to-r from-transparent via-teal/50 to-transparent mt-0.5 md:mt-2 w-[100px] opacity-100"
             />
         </div>
     );

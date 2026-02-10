@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 import { Readable } from 'stream';
-import { unstable_cache } from 'next/cache';
+import { unstable_cache, revalidateTag } from 'next/cache';
 
 const SCOPES = [
     'https://www.googleapis.com/auth/drive.file',
@@ -629,4 +629,52 @@ export const createAnnouncement = async (spreadsheetId: string, announcement: An
         valueInputOption: 'USER_ENTERED',
         requestBody: { values: [[announcement.id, announcement.title, announcement.content, announcement.category, announcement.date, announcement.postedBy]] },
     });
+    // Invalidate cache immediately so new announcements show up
+    revalidateTag('announcements');
+};
+
+export const deleteAnnouncement = async (spreadsheetId: string, announcementId: string) => {
+    const authClient = await getAuthClient();
+    const sheets = google.sheets({ version: 'v4', auth: authClient });
+
+    // 1. Find the row index
+    const response = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: 'Announcements!A:A',
+    });
+
+    const rows = response.data.values;
+    if (!rows) return;
+
+    const rowIndex = rows.findIndex(row => row[0] === announcementId);
+    if (rowIndex === -1) return;
+
+    // 2. Delete the row
+    // Note: deleteDimension is 0-indexed, but it affects the actual sheet rows.
+    // If rowIndex is 1 (second row in the array/sheet), it deletes row 2.
+    const res = await sheets.spreadsheets.get({ spreadsheetId });
+    const sheetId = res.data.sheets?.find(s => s.properties?.title === 'Announcements')?.properties?.sheetId;
+
+    if (sheetId === undefined) return;
+
+    await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        requestBody: {
+            requests: [
+                {
+                    deleteDimension: {
+                        range: {
+                            sheetId,
+                            dimension: 'ROWS',
+                            startIndex: rowIndex,
+                            endIndex: rowIndex + 1,
+                        },
+                    },
+                },
+            ],
+        },
+    });
+
+    // 3. Invalidate cache
+    revalidateTag('announcements');
 };

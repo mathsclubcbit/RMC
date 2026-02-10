@@ -23,27 +23,27 @@ export default function AnnouncementsWidget({ initialData = [] }) {
             const timeSince = lastShown ? now - (parseInt(lastShown) || 0) : Infinity;
             const ONE_HOUR = 60 * 60 * 1000;
 
-            // Logic matches Preloader.jsx condition
-            // If it ran recently (< 5s), or will run (expired/never shown)
-            // We verify if it's "active" for this session
-            const isPreloaderActive = !lastShown || timeSince > ONE_HOUR || timeSince < 5000;
+            // Align with Preloader.jsx: Show if never shown, expired (> 1h), or just started (< 2s)
+            const isPreloaderActive = !lastShown || timeSince > ONE_HOUR || timeSince < 2000;
 
             if (isPreloaderActive) {
-                // Preloader (3s) + 1s requested delay = 4s total
-                // Adding slight buffer for smoothness
-                setEntranceDelay(4.2);
+                // Preloader finishes its counter (0.8s) + exit transition.
+                // We show the widget shortly after the page content becomes visible.
+                setEntranceDelay(2.5);
             } else {
-                setEntranceDelay(1);
+                setEntranceDelay(0.5); // Fast appearance if no preloader
             }
         };
 
         checkPreloader();
 
         const fetchAnnouncements = async () => {
-            if (initialData.length > 0) {
+            // OPTIMIZATION: Skip fetch if server already sent data
+            if (initialData && initialData.length > 0) {
                 setIsLoading(false);
                 return;
             }
+
             try {
                 const res = await fetch('/api/announcements');
                 const data = await res.json();
@@ -60,7 +60,7 @@ export default function AnnouncementsWidget({ initialData = [] }) {
         };
 
         fetchAnnouncements();
-    }, []);
+    }, [initialData]);
 
     if (!mounted) return null;
 

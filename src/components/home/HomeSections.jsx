@@ -15,6 +15,10 @@ export const StatsSection = dynamic(() => import("./StatsSection"), {
     loading: () => <div className="min-h-[400px] bg-[#020617]" />,
 });
 
+export const HeroOverlay = dynamic(() => import("./HeroOverlay"), {
+    ssr: false,
+});
+
 export const ParallaxGallery = dynamic(() => import("./ParallaxGallery"), {
     ssr: false,
     loading: () => <div className="min-h-[500px] bg-[#020617]" />,

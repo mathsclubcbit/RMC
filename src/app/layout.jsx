@@ -89,7 +89,7 @@ import ConditionalShell from "@/components/layout/ConditionalShell";
 
 export default function RootLayout({ children }) {
     return (
-        <html lang="en" className="scroll-smooth" suppressHydrationWarning>
+        <html lang="en" className="scroll-smooth" suppressHydrationWarning data-scroll-behavior="smooth">
             <body
                 className={`${montserrat.variable} ${inter.variable} ${playfair.variable} ${jetbrains.variable} ${cormorant.variable} ${cinzel.variable} ${julius.variable} antialiased min-h-screen flex flex-col bg-[#020617] text-foreground`}
             >

@@ -26,7 +26,7 @@ const StatItem = ({ end, label, suffix = "" }) => {
 
 export default function StatsSection() {
     return (
-        <section className="py-12 md:py-16 px-4 sm:px-6 lg:px-8 border-y border-white/5 bg-black/40 backdrop-blur-md relative z-20">
+        <section className="py-8 md:py-16 px-4 sm:px-6 lg:px-8 border-y border-white/5 bg-black/40 backdrop-blur-md relative z-20">
             {/* Background Noise */}
             <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay pointer-events-none" />
 

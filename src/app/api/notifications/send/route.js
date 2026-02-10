@@ -1,5 +1,6 @@
 import webpush from 'web-push';
 import { createClient } from '@supabase/supabase-js';
+import { createAnnouncement } from '@/lib/google';
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -14,7 +15,7 @@ webpush.setVapidDetails(
 
 export async function POST(request) {
     try {
-        const { title, body, target_role, url } = await request.json();
+        const { title, body, target_role, url, category = 'Bell' } = await request.json();
 
         // 1. Fetch Subscriptions based on target_role
         let query = supabase.from('notifications_subscriptions').select('*');
@@ -57,12 +58,28 @@ export async function POST(request) {
 
         await Promise.all(promises);
 
-        // 3. Log Announcement to DB
+        // 3. Log Announcement to DB (Supabase)
         await supabase.from('announcements').insert({
             title,
             body,
             target_role: target_role || 'all'
         });
+
+        // 4. SAVE TO GOOGLE SHEETS (Bridge to Home Page Widget)
+        if (process.env.GOOGLE_SHEET_ID) {
+            await createAnnouncement(process.env.GOOGLE_SHEET_ID, {
+                id: Date.now().toString(),
+                title,
+                content: body,
+                category,
+                date: new Date().toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                }).replace(/ /g, ' '),
+                postedBy: 'Admin'
+            }).catch(err => console.error('Google Sheets Sync Error:', err));
+        }
 
         return new Response(JSON.stringify({ success: true, count: subscriptions.length }), {
             status: 200,

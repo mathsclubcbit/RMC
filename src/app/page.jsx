@@ -1,11 +1,10 @@
 import { Suspense } from "react";
-import HeroOverlay from "@/components/home/HeroOverlay";
 import AnnouncementsWidgetClient from "@/components/home/AnnouncementsWidgetClient";
 import HomeEventsSectionClient from "@/components/home/HomeEventsSectionClient";
 import { getAnnouncements } from "@/lib/google";
 import { getCachedEvents } from "@/lib/supabase/server";
 
-import { ChaosBackground, StatsSection, ParallaxGallery } from "@/components/home/HomeSections";
+import { HeroOverlay, ChaosBackground, StatsSection, ParallaxGallery } from "@/components/home/HomeSections";
 
 // [STRATEGY] Incremental Static Regeneration (ISR)
 // Revalidate the page every 60 seconds on the edge
@@ -34,7 +33,7 @@ export default async function Home() {
 
             {/* Hero Section - CRITICAL Path (LCP) */}
             {/* These render immediately without waiting for the data above */}
-            <section className="relative w-full min-h-[60vh] md:min-h-screen overflow-hidden bg-transparent" style={{ touchAction: 'pan-y' }}>
+            <section className="relative w-full min-h-screen overflow-hidden bg-transparent" style={{ touchAction: 'pan-y' }}>
                 <HeroOverlay />
                 <ChaosBackground />
             </section>
