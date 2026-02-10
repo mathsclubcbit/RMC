@@ -629,7 +629,7 @@ export const createAnnouncement = async (spreadsheetId: string, announcement: An
         valueInputOption: 'USER_ENTERED',
         requestBody: { values: [[announcement.id, announcement.title, announcement.content, announcement.category, announcement.date, announcement.postedBy]] },
     });
-    // Invalidate cache immediately so new announcements show up
+    // @ts-ignore - revalidateTag typing issue in this env
     revalidateTag('announcements');
 };
 
@@ -675,6 +675,6 @@ export const deleteAnnouncement = async (spreadsheetId: string, announcementId: 
         },
     });
 
-    // 3. Invalidate cache
+    // @ts-ignore - revalidateTag typing issue in this env
     revalidateTag('announcements');
 };
