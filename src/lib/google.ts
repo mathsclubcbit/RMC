@@ -426,6 +426,7 @@ export interface RegistrationData {
     phone?: string;
     abstract?: string;
     pptLink?: string;
+    timeSlot?: string;
 }
 
 /**
@@ -439,7 +440,7 @@ export const getAllRegistrations = unstable_cache(
 
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
-            range: sheetRange('A:T'),
+            range: sheetRange('A:V'),
         });
 
         const rows = response.data.values;
@@ -470,12 +471,13 @@ export const getAllRegistrations = unstable_cache(
             memberAttendance: normalizeCell(row[16]),  // Q
             eventId: normalizeCell(row[17]),           // R
             driveFileId: normalizeCell(row[18]),       // S
-            driveDownloadUrl: normalizeCell(row[19])   // T
+            driveDownloadUrl: normalizeCell(row[19]),  // T
+            timeSlot: normalizeCell(row[20])           // U
         }));
     },
     ['all-registrations-list'],
     {
-        revalidate: 120, // 2 minutes
+        revalidate: 60, // 1 minute
         tags: ['registrations']
     }
 );
@@ -526,6 +528,14 @@ export const markRegistrationAttendance = async (
                 valueInputOption: 'USER_ENTERED',
                 requestBody: { values: [[updates.memberAttendance]] },
             });
+        }
+
+        // Invalidate cache since we modified the sheet
+        try {
+            // @ts-expect-error - revalidateTag typing issue in this env
+            revalidateTag('registrations');
+        } catch (e) {
+            console.warn('RevalidateTag failed in markRegistrationAttendance:', e);
         }
 
         return { success: true, rowNumber: sheetRowNumber };
@@ -609,7 +619,7 @@ export const getAnnouncements = unstable_cache(
             return rows.slice(1).map((row) => ({
                 id: row[0] || '', title: row[1] || '', content: row[2] || '', category: row[3] || '', date: row[4] || '', postedBy: row[5] || 'Admin',
             })).reverse();
-        } catch (error) { return []; }
+        } catch { return []; }
     },
     ['announcements-list'],
     {
@@ -628,7 +638,7 @@ export const createAnnouncement = async (spreadsheetId: string, announcement: An
         valueInputOption: 'USER_ENTERED',
         requestBody: { values: [[announcement.id, announcement.title, announcement.content, announcement.category, announcement.date, announcement.postedBy]] },
     });
-    // @ts-ignore - revalidateTag typing issue in this env
+    // @ts-expect-error - revalidateTag typing issue in this env
     revalidateTag('announcements');
 };
 
@@ -674,6 +684,6 @@ export const deleteAnnouncement = async (spreadsheetId: string, announcementId: 
         },
     });
 
-    // @ts-ignore - revalidateTag typing issue in this env
+    // @ts-expect-error - revalidateTag typing issue in this env
     revalidateTag('announcements');
 };

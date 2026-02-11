@@ -11,10 +11,22 @@ import { CheckCircle } from 'lucide-react';
  *   requiresTeamStep: boolean 
  * }} props
  */
-function RegistrationStepper({ currentStep, isHackathonOrIdeathon, requiresTeamStep }) {
-    const steps = isHackathonOrIdeathon ? [1, 2, 3, 4] : [1, 2, 3];
+function RegistrationStepper({ currentStep, isHackathonOrIdeathon, requiresTeamStep, hasTimeSlots }) {
+    // Build steps array dynamically based on event features
+    let steps;
+    if (isHackathonOrIdeathon) {
+        steps = hasTimeSlots ? [1, 2, 3, 4, 5] : [1, 2, 3, 4];
+    } else {
+        steps = hasTimeSlots ? [1, 2, 3, 4] : [1, 2, 3];
+    }
 
     const getStepLabel = (step) => {
+        if (hasTimeSlots) {
+            if (isHackathonOrIdeathon) {
+                return step === 1 ? 'Identity' : step === 2 ? 'Slot' : step === 3 ? 'Squad' : step === 4 ? 'Submission' : 'Payment';
+            }
+            return step === 1 ? 'Identity' : step === 2 ? 'Slot' : step === 3 ? 'Squad' : 'Payment';
+        }
         if (isHackathonOrIdeathon) {
             return step === 1 ? 'Identity' : step === 2 ? 'Squad' : step === 3 ? 'Submission' : 'Payment';
         }
@@ -27,20 +39,21 @@ function RegistrationStepper({ currentStep, isHackathonOrIdeathon, requiresTeamS
             <div className="absolute left-4 right-4 top-1/2 -translate-y-1/2 h-0.5 bg-white/10 -z-10 md:hidden" />
 
             {steps.map((step) => {
-                if (step === 2 && !requiresTeamStep) return null;
+                // Skip team step only when it's the Squad step and team is not required
+                const stepLabel = getStepLabel(step);
+                if (stepLabel === 'Squad' && !requiresTeamStep) return null;
 
                 const isActive = step === currentStep;
                 const isDone = step < currentStep;
-                const stepLabel = getStepLabel(step);
 
                 return (
                     <div key={step} className="flex flex-col items-center gap-2 relative bg-[#020617] md:bg-transparent px-2 md:px-0 z-10">
                         <div
                             className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-sm font-bold font-mono transition-all duration-500 ${isActive
-                                    ? 'bg-gradient-to-br from-teal to-emerald-500 text-black scale-110 shadow-[0_0_25px_rgba(45,212,191,0.4)] ring-4 ring-[#020617]'
-                                    : isDone
-                                        ? 'bg-teal/20 text-teal ring-1 ring-teal/30'
-                                        : 'bg-[#0f111a] text-white/30 ring-1 ring-white/10'
+                                ? 'bg-gradient-to-br from-teal to-emerald-500 text-black scale-110 shadow-[0_0_25px_rgba(45,212,191,0.4)] ring-4 ring-[#020617]'
+                                : isDone
+                                    ? 'bg-teal/20 text-teal ring-1 ring-teal/30'
+                                    : 'bg-[#0f111a] text-white/30 ring-1 ring-white/10'
                                 }`}
                         >
                             {isDone ? <CheckCircle className="w-4 h-4 md:w-5 md:h-5" /> : step}

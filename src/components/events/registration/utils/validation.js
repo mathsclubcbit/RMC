@@ -47,6 +47,18 @@ export function validatePersonalInfo(formData) {
 }
 
 /**
+ * Validate time slot selection
+ * @param {string} selectedTimeSlot - Selected time slot name
+ * @returns {string | null} Error message or null if valid
+ */
+export function validateTimeSlot(selectedTimeSlot) {
+    if (!selectedTimeSlot || selectedTimeSlot.trim() === '') {
+        return 'Please select a time slot.';
+    }
+    return null;
+}
+
+/**
  * Validate team members (Step 2)
  * @param {Array} teamMembers - Array of team member objects
  * @param {{ minTeamSize: number, maxTeamSize: number }} teamConstraints

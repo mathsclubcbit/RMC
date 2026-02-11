@@ -3,7 +3,12 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath, revalidateTag } from "next/cache";
-import { getRegistrationById, markRegistrationAttendance, markRegistrationCheckedIn } from "@/lib/google";
+import { createAdminClient } from "@/lib/supabase/server";
+import {
+    getRegistrationById,
+    markRegistrationAttendance,
+    markRegistrationCheckedIn
+} from "@/lib/google";
 import { signToken, verifyToken } from "@/lib/jwt";
 import { authenticator } from '@otplib/preset-default';
 import QRCode from 'qrcode';
@@ -161,12 +166,35 @@ export async function markCheckedInAction(formData) {
         return { error: "Already checked in" };
     }
 
-    const result = await markRegistrationCheckedIn(spreadsheetId, registrationId);
+    const checkedInAt = new Date().toISOString();
+    const prettyDate = new Date().toLocaleString();
+
+    // 1. Update Google Sheets
+    const result = await markRegistrationCheckedIn(spreadsheetId, registrationId, prettyDate);
     if (!result.success) {
         return { error: result.error || "Failed to check in" };
     }
 
+    // 2. Update Supabase
+    try {
+        const supabase = createAdminClient();
+        await supabase
+            .from('registrations')
+            .update({
+                checked_in_at: checkedInAt,
+                status: 'ATTENDED'
+            })
+            .eq('registration_id', registrationId);
+    } catch (e) {
+        console.error("Supabase check-in update failed", e);
+    }
+
     revalidatePath(`/admin/ticket/${registrationId}`);
+    revalidatePath('/admin');
+    revalidatePath('/coordinator/dashboard');
+    revalidatePath('/coordinator/participants');
+    revalidatePath('/coordinator', 'layout');
+    revalidatePath('/');
     revalidateTag('registrations');
     return { success: true };
 }
@@ -189,6 +217,7 @@ export async function markAttendanceAction(ticketId, attendanceStatus) {
         return { error: "Server misconfiguration: missing GOOGLE_SHEET_ID" };
     }
 
+    // 1. Fetch from Google Sheets for verification
     const existing = await getRegistrationById(spreadsheetId, registrationId);
     if (!existing) {
         return { error: "Ticket not found" };
@@ -196,9 +225,9 @@ export async function markAttendanceAction(ticketId, attendanceStatus) {
 
     // SECURITY CHECK: Coordinators can only check in tickets for their own event
     if (!isAdmin && coordinatorEventId) {
-        const ticketEventId = String(existing.eventId || existing['Event ID'] || "").trim();
+        const ticketEventId = String(existing.eventId || "").trim();
         if (ticketEventId !== String(coordinatorEventId).trim()) {
-            return { error: "Security Alert: You are not authorized to check in tickets for this event." };
+            return { error: "Security Alert: You are not authorized for this event." };
         }
     }
 
@@ -206,9 +235,12 @@ export async function markAttendanceAction(ticketId, attendanceStatus) {
         return { error: "Already checked in" };
     }
 
-    const checkedInAt = new Date().toLocaleString();
+    const checkedInAt = new Date().toISOString();
+    const prettyDate = new Date().toLocaleString();
+
+    // 2. Update Google Sheets
     const result = await markRegistrationAttendance(spreadsheetId, registrationId, {
-        checkedInAt,
+        checkedInAt: prettyDate,
         memberAttendance: String(attendanceStatus || "").trim(),
         status: "ATTENDED",
     });
@@ -217,8 +249,28 @@ export async function markAttendanceAction(ticketId, attendanceStatus) {
         return { error: result.error || "Failed to update attendance" };
     }
 
+    // 3. Update Supabase
+    try {
+        const supabase = createAdminClient();
+        await supabase
+            .from('registrations')
+            .update({
+                checked_in_at: checkedInAt,
+                member_attendance: String(attendanceStatus || "").trim(),
+                status: 'ATTENDED'
+            })
+            .eq('registration_id', registrationId);
+    } catch (err) {
+        console.error("Supabase attendance update failed:", err);
+    }
+
     revalidatePath(`/admin/ticket/${registrationId}`);
     revalidatePath(`/coordinator/ticket/${registrationId}`);
+    revalidatePath('/admin');
+    revalidatePath('/coordinator/dashboard');
+    revalidatePath('/coordinator/participants');
+    revalidatePath('/coordinator', 'layout');
+    revalidatePath('/');
     revalidateTag('registrations');
     return { success: true };
 }

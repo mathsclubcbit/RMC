@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/server";
 import { LogOut, QrCode, Edit3, Users } from "lucide-react";
 import { cookies } from "next/headers";
+import { unstable_noStore as noStore } from "next/cache";
 import { jwtVerify } from "jose";
 
 import { getAllRegistrations } from "@/lib/google";
@@ -35,6 +36,7 @@ async function verifyCoordinatorToken() {
 }
 
 async function getCoordinatorEventAndStats() {
+    noStore();
     const coordinator = await verifyCoordinatorToken();
     if (!coordinator) {
         return null;
@@ -53,35 +55,44 @@ async function getCoordinatorEventAndStats() {
 
     if (error || !event) return null;
 
-    // Fetch Stats using Google Sheets (Source of Truth)
-    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+    // Fetch Stats using Supabase (Real-time Source)
     let stats = {
-        enabled: false,
+        enabled: true,
         totalRegistrations: 0,
         totalCheckedIn: 0,
         totalRevenue: 0,
+        registrationsLast24h: 0,
+        checkedInLast24h: 0,
         eventBreakdown: []
     };
 
-    if (spreadsheetId) {
-        try {
-            const allRegs = await getAllRegistrations(spreadsheetId);
-            const eventRegs = allRegs.filter(r => String(r.eventId || "").trim() === String(eventId).trim());
+    try {
+        // More efficient: Use Supabase to get counts and sums
+        const { data: regs, error: statsError } = await admin
+            .from("registrations")
+            .select("amount, checked_in_at, created_at")
+            .eq("event_id", eventId);
 
-            const totalRegistrations = eventRegs.length;
-            const isCheckedIn = (r) => String(r.checkedInAt || "").trim().length > 0 || String(r.status || "").toUpperCase() === "ATTENDED";
-            const totalCheckedIn = eventRegs.filter(isCheckedIn).length;
+        if (statsError) throw statsError;
 
-            const safeAmount = (r) => { const n = Number(r.amount); return Number.isFinite(n) ? n : 0; };
-            const totalRevenue = eventRegs.reduce((sum, r) => sum + safeAmount(r), 0);
+        if (regs) {
+            const now = new Date();
+            const oneDayAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+
+            const totalRegistrations = regs.length;
+            const totalCheckedIn = regs.filter(r => r.checked_in_at).length;
+            const totalRevenue = regs.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+
+            const regs24h = regs.filter(r => new Date(r.created_at) > oneDayAgo).length;
+            const checkedIn24h = regs.filter(r => r.checked_in_at && new Date(r.checked_in_at) > oneDayAgo).length;
 
             stats = {
                 enabled: true,
                 totalRegistrations,
                 totalCheckedIn,
                 totalRevenue,
-                registrationsLast24h: 0,
-                checkedInLast24h: 0,
+                registrationsLast24h: regs24h,
+                checkedInLast24h: checkedIn24h,
                 eventBreakdown: [{
                     eventName: event.title,
                     eventId: event.id,
@@ -90,9 +101,10 @@ async function getCoordinatorEventAndStats() {
                     revenue: totalRevenue
                 }]
             };
-        } catch (e) {
-            console.error("Failed to fetch sheet stats for ID:", spreadsheetId, e);
         }
+    } catch (e) {
+        console.error("Failed to fetch Supabase stats for event:", eventId, e);
+        stats.enabled = false;
     }
 
     return {

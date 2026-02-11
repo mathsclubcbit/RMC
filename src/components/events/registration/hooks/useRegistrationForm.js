@@ -18,6 +18,7 @@ export function useRegistrationForm() {
     const [screenshot, setScreenshot] = useState(null);
     const [pptFile, setPptFile] = useState(null);
     const [abstract, setAbstract] = useState('');
+    const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
 
     const updateField = useCallback((field, value) => {
@@ -36,6 +37,7 @@ export function useRegistrationForm() {
         setScreenshot(null);
         setPptFile(null);
         setAbstract('');
+        setSelectedTimeSlot('');
         setErrorMessage('');
     }, []);
 
@@ -49,6 +51,8 @@ export function useRegistrationForm() {
         setPptFile,
         abstract,
         setAbstract,
+        selectedTimeSlot,
+        setSelectedTimeSlot,
         errorMessage,
         setErrorMessage,
         resetForm

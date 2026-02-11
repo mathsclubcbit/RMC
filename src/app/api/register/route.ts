@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidateTag } from 'next/cache';
+import { revalidateTag, revalidatePath } from 'next/cache';
 import { randomInt } from 'crypto';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { uploadToSupabaseStorage } from '@/lib/supabase/storage';
 import { createAdminClient } from '@/lib/supabase/server';
-import { withRateLimit } from '@/lib/rate-limiter';
 // We import Google logic dynamically or keep it for backup
-import { checkDuplicateUTR as checkDuplicateUTRSheet, appendRowToSheet } from '@/lib/google';
+import { appendRowToSheet } from '@/lib/google';
 
 // Type definitions matching our needs
 type PricingTier = {
@@ -21,6 +20,8 @@ type EventPayload = {
     registrationFee?: unknown;
     variablePricingEnabled?: unknown;
     pricingTiers?: unknown;
+    timeSlotsEnabled?: unknown;
+    timeSlots?: unknown;
 };
 
 const generateTicketCode = () => String(randomInt(0, 1_000_000)).padStart(6, '0');
@@ -44,6 +45,7 @@ export async function POST(req: NextRequest) {
 
         const abstract = formData.get('abstract') as string | null;
         const pptFile = formData.get('ppt') as File | null;
+        const selectedTimeSlot = formData.get('selectedTimeSlot') as string | null;
 
         // --- 1. Validation ---
         if (!eventId || !eventName || !name || !email || !phone || !rollNo || !department || !utrId || !screenshot) {
@@ -180,6 +182,43 @@ export async function POST(req: NextRequest) {
             console.warn('Event fetch failed, using client values:', err);
         }
 
+        // --- Time Slot Capacity Check ---
+        if (selectedTimeSlot && selectedTimeSlot.trim()) {
+            // Find the slot config from event payload to get maxTeams
+            try {
+                const { data: eventRow2 } = await supabase
+                    .from('events')
+                    .select('payload')
+                    .eq('id', String(eventId))
+                    .single();
+
+                if (eventRow2?.payload) {
+                    const payload2 = eventRow2.payload as EventPayload;
+                    const slots = Array.isArray(payload2.timeSlots) ? payload2.timeSlots : [];
+                    const matchedSlot = (slots as any[]).find((s: any) => s?.name === selectedTimeSlot.trim());
+                    const maxTeams = matchedSlot ? Number(matchedSlot.maxTeams) : 0;
+
+                    if (maxTeams > 0) {
+                        // Count existing registrations for this slot
+                        const { count } = await supabase
+                            .from('registrations')
+                            .select('id', { count: 'exact', head: true })
+                            .eq('event_id', String(eventId))
+                            .eq('time_slot', selectedTimeSlot.trim());
+
+                        if (count !== null && count >= maxTeams) {
+                            return NextResponse.json(
+                                { error: 'SLOT_FULL', message: 'This time slot is full. Please select a different slot.' },
+                                { status: 409 }
+                            );
+                        }
+                    }
+                }
+            } catch (slotErr) {
+                console.warn('Slot capacity check failed, proceeding:', slotErr);
+            }
+        }
+
         // --- 4. Duplicate Check (Supabase) ---
         // We check Supabase for duplicates as primary source of truth.
         const { data: existingUTR } = await supabase
@@ -231,6 +270,7 @@ export async function POST(req: NextRequest) {
             screenshot_url: screenshotUrl,
             abstract: abstract || null,
             ppt_url: pptUrl || null,
+            time_slot: selectedTimeSlot?.trim() || null,
             status: 'PENDING'
         });
 
@@ -264,11 +304,16 @@ export async function POST(req: NextRequest) {
                     teamMembersStr || '',
                     normalizedUTR,
                     String(expectedAmount),
-                    'PENDING',
-                    screenshotUrl, // Cloudinary URL replacing Drive Link
-                    abstractLink,  // Column N: Abstract (File URL for Ideathon, Text/Empty for others)
-                    pptLink,       // Column O: PPT (File URL for Hackathon, Empty for Ideathon)
-                    '', '', eventId, '', '' // Extra columns
+                    'PENDING',                      // Index 11 (L): Status
+                    screenshotUrl,                  // Index 12 (M): Screenshot
+                    abstractLink,                   // Index 13 (N): Abstract
+                    pptLink,                        // Index 14 (O): PPT
+                    '',                             // Index 15 (P): Checked In At (EMPTY FOR NEW)
+                    '',                             // Index 16 (Q): Member Attendance (EMPTY FOR NEW)
+                    eventId,                        // Index 17 (R): Event ID
+                    '',                             // Index 18 (S): Drive File ID
+                    '',                             // Index 19 (T): Drive Download URL
+                    selectedTimeSlot?.trim() || ''  // Index 20 (U): Time Slot
                 ];
 
                 await appendRowToSheet(sheetId, rowData);
@@ -297,7 +342,12 @@ export async function POST(req: NextRequest) {
             phone
         }).catch(e => console.error('Email failed:', e));
 
-        // @ts-ignore
+        revalidatePath('/admin');
+        revalidatePath('/coordinator/dashboard');
+        revalidatePath('/coordinator/participants');
+        revalidatePath('/coordinator', 'layout');
+        revalidatePath('/');
+        // @ts-expect-error - typing issue in this environment
         revalidateTag('registrations');
 
         return NextResponse.json({
@@ -307,8 +357,9 @@ export async function POST(req: NextRequest) {
             driveViewUrl: screenshotUrl // Compat with frontend
         }, { status: 201 });
 
-    } catch (error: any) {
-        console.error('Registration Error:', error);
-        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    } catch (error: unknown) {
+        const err = error as Error;
+        console.error('Registration Error:', err);
+        return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
     }
 }

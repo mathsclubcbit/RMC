@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -26,7 +26,8 @@ import {
     PersonalInfoStep,
     TeamStep,
     SubmissionStep,
-    PaymentStep
+    PaymentStep,
+    TimeSlotStep
 } from './steps';
 
 // Local imports - utils
@@ -34,7 +35,8 @@ import {
     validatePersonalInfo,
     validateTeamMembers,
     validateSubmission,
-    validatePayment
+    validatePayment,
+    validateTimeSlot
 } from './utils/validation';
 
 /**
@@ -50,6 +52,8 @@ export default function RegistrationClient({ eventId }) {
         isIdeathon,
         teamConstraints,
         requiresTeamStep,
+        hasTimeSlots,
+        timeSlots,
         qrImageSrc,
         computeAmountForTeamSize,
         hasPricingTierForTeamSize
@@ -75,9 +79,14 @@ export default function RegistrationClient({ eventId }) {
         setPptFile,
         abstract,
         setAbstract,
+        selectedTimeSlot,
+        setSelectedTimeSlot,
         errorMessage,
         setErrorMessage
     } = useRegistrationForm();
+
+    // Slot counts for capacity display
+    const [slotCounts, setSlotCounts] = useState({});
 
     // Step navigation state
     const [currentStep, setCurrentStep] = useState(1);
@@ -98,6 +107,48 @@ export default function RegistrationClient({ eventId }) {
     const [isSuccess, setIsSuccess] = useState(false);
     const [registrationId, setRegistrationId] = useState(null);
     const [qrCodeUrl, setQrCodeUrl] = useState(null);
+
+    // Fetch slot counts when event has time slots
+    useEffect(() => {
+        if (hasTimeSlots && eventId) {
+            fetch(`/api/events/${eventId}/slot-counts`)
+                .then(r => r.ok ? r.json() : { slotCounts: {} })
+                .then(data => setSlotCounts(data.slotCounts || {}))
+                .catch(() => setSlotCounts({}));
+        }
+    }, [hasTimeSlots, eventId]);
+
+    /**
+     * Step type mapping — maps a numeric step to its semantic meaning
+     * based on event features (hasTimeSlots, isHackathonOrIdeathon, requiresTeamStep).
+     *
+     * Flow WITHOUT time slots (current):
+     *   General:  1=Personal, 2=Team, 3=Payment
+     *   H/I:     1=Personal, 2=Team, 3=Submission, 4=Payment
+     *
+     * Flow WITH time slots:
+     *   General:  1=Personal, 2=TimeSlot, 3=Team, 4=Payment
+     *   H/I:     1=Personal, 2=TimeSlot, 3=Team, 4=Submission, 5=Payment
+     */
+    const getStepType = useCallback((step) => {
+        if (hasTimeSlots) {
+            if (isHackathonOrIdeathon) {
+                return ['personal', 'timeslot', 'team', 'submission', 'payment'][step - 1] || null;
+            }
+            return ['personal', 'timeslot', 'team', 'payment'][step - 1] || null;
+        }
+        if (isHackathonOrIdeathon) {
+            return ['personal', 'team', 'submission', 'payment'][step - 1] || null;
+        }
+        return ['personal', 'team', 'payment'][step - 1] || null;
+    }, [hasTimeSlots, isHackathonOrIdeathon]);
+
+    const totalSteps = useMemo(() => {
+        let steps = 3; // personal + team + payment
+        if (hasTimeSlots) steps += 1;
+        if (isHackathonOrIdeathon) steps += 1;
+        return steps;
+    }, [hasTimeSlots, isHackathonOrIdeathon]);
 
     // Event Highlights Banner - Shows key info upfront
     const renderEventHighlights = () => {
@@ -172,81 +223,70 @@ export default function RegistrationClient({ eventId }) {
     // Validation
     const validateStep = useCallback((step) => {
         setErrorMessage('');
+        const stepType = getStepType(step);
 
-        if (step === 1) {
+        if (stepType === 'personal') {
             const error = validatePersonalInfo(formData);
-            if (error) {
-                setErrorMessage(error);
-                return false;
-            }
+            if (error) { setErrorMessage(error); return false; }
             return true;
         }
 
-        if (step === 2) {
+        if (stepType === 'timeslot') {
+            const error = validateTimeSlot(selectedTimeSlot);
+            if (error) { setErrorMessage(error); return false; }
+            return true;
+        }
+
+        if (stepType === 'team') {
             const error = validateTeamMembers(teamMembers, teamConstraints, currentTeamSize);
-            if (error) {
-                setErrorMessage(error);
-                return false;
-            }
+            if (error) { setErrorMessage(error); return false; }
             return true;
         }
 
-        if (step === 3) {
-            if (isHackathonOrIdeathon) {
-                const error = validateSubmission(abstract, pptFile, isIdeathon);
-                if (error) {
-                    setErrorMessage(error);
-                    return false;
-                }
-                return true;
-            } else {
-                const error = validatePayment(formData.utrId, screenshot, event, currentTeamSize, hasPricingTierForTeamSize);
-                if (error) {
-                    setErrorMessage(error);
-                    return false;
-                }
-                return true;
-            }
+        if (stepType === 'submission') {
+            const error = validateSubmission(abstract, pptFile, isIdeathon);
+            if (error) { setErrorMessage(error); return false; }
+            return true;
         }
 
-        if (step === 4) {
+        if (stepType === 'payment') {
             const error = validatePayment(formData.utrId, screenshot, event, currentTeamSize, hasPricingTierForTeamSize);
-            if (error) {
-                setErrorMessage(error);
-                return false;
-            }
+            if (error) { setErrorMessage(error); return false; }
             return true;
         }
 
         return true;
-    }, [formData, teamMembers, teamConstraints, currentTeamSize, isHackathonOrIdeathon, abstract, pptFile, screenshot, event, hasPricingTierForTeamSize, setErrorMessage]);
+    }, [formData, teamMembers, teamConstraints, currentTeamSize, isHackathonOrIdeathon, abstract, pptFile, screenshot, event, hasPricingTierForTeamSize, setErrorMessage, getStepType, selectedTimeSlot]);
 
-    // Navigation
+    // Navigation — skip team step if not required
     const nextStep = useCallback(() => {
         if (validateStep(currentStep)) {
             setErrorMessage('');
-            if (currentStep === 1 && !requiresTeamStep) {
-                setCurrentStep(3);
-            } else {
-                setCurrentStep(prev => prev + 1);
+            // If current step is right before the team step and team is not required, skip it
+            let nextStepNum = currentStep + 1;
+            const nextType = getStepType(nextStepNum);
+            if (nextType === 'team' && !requiresTeamStep) {
+                nextStepNum += 1;
             }
+            setCurrentStep(nextStepNum);
         }
-    }, [currentStep, validateStep, requiresTeamStep, setErrorMessage]);
+    }, [currentStep, validateStep, requiresTeamStep, setErrorMessage, getStepType]);
 
     const prevStep = useCallback(() => {
         setErrorMessage('');
-        if (currentStep === 3 && !requiresTeamStep) {
-            setCurrentStep(1);
-        } else {
-            setCurrentStep(prev => prev - 1);
+        let prevStepNum = currentStep - 1;
+        const prevType = getStepType(prevStepNum);
+        if (prevType === 'team' && !requiresTeamStep) {
+            prevStepNum -= 1;
         }
-    }, [currentStep, requiresTeamStep, setErrorMessage]);
+        setCurrentStep(prevStepNum);
+    }, [currentStep, requiresTeamStep, setErrorMessage, getStepType]);
 
     // Form submission
     const handleSubmit = useCallback(async (e) => {
         e?.preventDefault();
 
-        const lastStep = isHackathonOrIdeathon ? 4 : 3;
+        const lastStep = totalSteps;
         if (!validateStep(lastStep)) return;
 
         setIsSubmitting(true);
@@ -280,6 +320,10 @@ export default function RegistrationClient({ eventId }) {
                 }
             }
 
+            if (hasTimeSlots && selectedTimeSlot) {
+                fd.append('selectedTimeSlot', selectedTimeSlot);
+            }
+
             const res = await fetch('/api/register', { method: 'POST', body: fd });
             const data = await res.json();
 
@@ -288,6 +332,8 @@ export default function RegistrationClient({ eventId }) {
                     setErrorMessage('This UTR/Transaction ID has already been used. Please check your payment details.');
                 } else if (data.error === 'TEAM_SIZE_MISMATCH') {
                     setErrorMessage('Team size mismatch. Please refresh and try again.');
+                } else if (data.error === 'SLOT_FULL') {
+                    setErrorMessage('This time slot is now full. Please go back and select a different slot.');
                 } else if (data.error === 'PRICE_NOT_CONFIGURED') {
                     setErrorMessage(`No price configured for team size ${data.teamSize}. Please contact support.`);
                 } else {
@@ -305,7 +351,7 @@ export default function RegistrationClient({ eventId }) {
         } finally {
             setIsSubmitting(false);
         }
-    }, [eventId, event, formData, teamMembers, screenshot, pptFile, abstract, amountToPay, currentTeamSize, isHackathonOrIdeathon, validateStep, setErrorMessage]);
+    }, [eventId, event, formData, teamMembers, screenshot, pptFile, abstract, amountToPay, currentTeamSize, isHackathonOrIdeathon, validateStep, setErrorMessage, totalSteps, hasTimeSlots, selectedTimeSlot]);
 
     // Loading state
     if (isLoading) {
@@ -325,9 +371,11 @@ export default function RegistrationClient({ eventId }) {
         );
     }
 
-    // Render step content
+    // Render step content based on step type
     const renderStepContent = () => {
-        if (currentStep === 1) {
+        const stepType = getStepType(currentStep);
+
+        if (stepType === 'personal') {
             return (
                 <PersonalInfoStep
                     formData={formData}
@@ -336,7 +384,18 @@ export default function RegistrationClient({ eventId }) {
             );
         }
 
-        if (currentStep === 2) {
+        if (stepType === 'timeslot') {
+            return (
+                <TimeSlotStep
+                    timeSlots={timeSlots}
+                    slotCounts={slotCounts}
+                    selectedTimeSlot={selectedTimeSlot}
+                    onSelect={setSelectedTimeSlot}
+                />
+            );
+        }
+
+        if (stepType === 'team') {
             return (
                 <TeamStep
                     formData={formData}
@@ -353,36 +412,21 @@ export default function RegistrationClient({ eventId }) {
             );
         }
 
-        if (currentStep === 3) {
-            if (isHackathonOrIdeathon) {
-                return (
-                    <SubmissionStep
-                        abstract={abstract}
-                        setAbstract={setAbstract}
-                        pptFile={pptFile}
-                        onPptChange={setPptFile}
-                        samplePptUrl={event?.samplePpt}
-                        sampleAbstractUrl={event?.sampleAbstract}
-                        isIdeathon={isIdeathon}
-                    />
-                );
-            }
+        if (stepType === 'submission') {
             return (
-                <PaymentStep
-                    utrId={formData.utrId}
-                    onUtrChange={(value) => setFormData(prev => ({ ...prev, utrId: value }))}
-                    screenshot={screenshot}
-                    onScreenshotChange={setScreenshot}
-                    amountToPay={amountToPay}
-                    currentTeamSize={currentTeamSize}
-                    variablePricingEnabled={event?.variablePricingEnabled}
-                    hasPricingTierForCurrentTeamSize={hasPricingTierForCurrentTeamSize}
-                    qrImageSrc={qrImageSrc}
+                <SubmissionStep
+                    abstract={abstract}
+                    setAbstract={setAbstract}
+                    pptFile={pptFile}
+                    onPptChange={setPptFile}
+                    samplePptUrl={event?.samplePpt}
+                    sampleAbstractUrl={event?.sampleAbstract}
+                    isIdeathon={isIdeathon}
                 />
             );
         }
 
-        if (currentStep === 4) {
+        if (stepType === 'payment') {
             return (
                 <PaymentStep
                     utrId={formData.utrId}
@@ -629,6 +673,7 @@ export default function RegistrationClient({ eventId }) {
                                                 currentStep={currentStep}
                                                 isHackathonOrIdeathon={isHackathonOrIdeathon}
                                                 requiresTeamStep={requiresTeamStep}
+                                                hasTimeSlots={hasTimeSlots}
                                             />
 
                                             <AnimatePresence mode="wait">
@@ -674,7 +719,7 @@ export default function RegistrationClient({ eventId }) {
                                             </button>
                                         )}
 
-                                        {currentStep < (isHackathonOrIdeathon ? 4 : 3) ? (
+                                        {currentStep < totalSteps ? (
                                             <button
                                                 onClick={nextStep}
                                                 className="flex-1 py-4 rounded-xl bg-gradient-to-r from-teal to-emerald-500 text-black font-bold uppercase tracking-widest text-xs hover:shadow-[0_0_30px_rgba(45,212,191,0.3)] transition-all flex items-center justify-center gap-2 group active:scale-[0.98]"

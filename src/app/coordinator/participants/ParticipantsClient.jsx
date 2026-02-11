@@ -13,7 +13,8 @@ import {
     Eye,
     RefreshCw,
     Loader2,
-    AlertCircle
+    AlertCircle,
+    Clock
 } from "lucide-react";
 
 export default function ParticipantsClient({ event }) {
@@ -180,11 +181,12 @@ export default function ParticipantsClient({ event }) {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-white/5 bg-white/[0.02] text-[10px] font-mono text-white/40 uppercase tracking-widest">
-                                <th className="px-6 py-4 font-medium">Participant</th>
-                                <th className="px-6 py-4 font-medium">Ticket ID</th>
-                                <th className="px-6 py-4 font-medium">Details</th>
-                                <th className="px-6 py-4 font-medium">Status</th>
-                                <th className="px-6 py-4 font-medium text-right">Actions</th>
+                                <th className="px-6 py-4 font-medium uppercase tracking-widest leading-none">Participant</th>
+                                <th className="px-6 py-4 font-medium uppercase tracking-widest leading-none">Ticket ID</th>
+                                <th className="px-6 py-4 font-medium uppercase tracking-widest leading-none">Slot</th>
+                                <th className="px-6 py-4 font-medium uppercase tracking-widest leading-none">Details</th>
+                                <th className="px-6 py-4 font-medium uppercase tracking-widest leading-none">Status</th>
+                                <th className="px-6 py-4 font-medium text-right uppercase tracking-widest leading-none">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -212,6 +214,16 @@ export default function ParticipantsClient({ event }) {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
+                                            {p.timeSlot ? (
+                                                <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[10px] font-mono text-blue-400">
+                                                    <Clock className="w-3 h-3" />
+                                                    {p.timeSlot}
+                                                </div>
+                                            ) : (
+                                                <span className="text-[10px] text-white/20 font-mono">—</span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4">
                                             <div className="space-y-0.5">
                                                 <div className="text-[10px] text-white/30 uppercase tracking-wider">{p.department}</div>
                                                 <div className="text-xs text-white/60">{p.rollNo}</div>
@@ -235,7 +247,7 @@ export default function ParticipantsClient({ event }) {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-20 text-center">
+                                    <td colSpan="6" className="px-6 py-20 text-center">
                                         <div className="flex flex-col items-center gap-2 opacity-20">
                                             <AlertCircle className="w-10 h-10" />
                                             <div className="text-sm font-medium">No registrations found</div>
@@ -269,6 +281,15 @@ export default function ParticipantsClient({ event }) {
                                         <DetailItem label="Phone Number" value={selectedParticipant.phone || "N/A"} />
                                         <DetailItem label="Roll Number" value={selectedParticipant.rollNo} />
                                         <DetailItem label="Department" value={selectedParticipant.department} />
+                                        {selectedParticipant.timeSlot && (
+                                            <div className="pt-2">
+                                                <div className="text-[10px] uppercase tracking-widest text-blue-400/50 mb-1">Selected Slot</div>
+                                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs font-mono text-blue-400">
+                                                    <Clock className="w-3.5 h-3.5" />
+                                                    {selectedParticipant.timeSlot}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </section>
 

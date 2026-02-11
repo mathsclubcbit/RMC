@@ -62,6 +62,14 @@ export function useEventData(eventId) {
 
     const requiresTeamStep = teamConstraints.maxTeamSize > 1;
 
+    const hasTimeSlots = useMemo(() => {
+        return Boolean(event?.timeSlotsEnabled && Array.isArray(event?.timeSlots) && event.timeSlots.length > 0);
+    }, [event]);
+
+    const timeSlots = useMemo(() => {
+        return Array.isArray(event?.timeSlots) ? event.timeSlots : [];
+    }, [event]);
+
     const qrImageSrc = useMemo(() => {
         return event?.qrCode || event?.qr || event?.qrImage || '/qr-placeholder.png';
     }, [event]);
@@ -104,6 +112,8 @@ export function useEventData(eventId) {
         isIdeathon,
         teamConstraints,
         requiresTeamStep,
+        hasTimeSlots,
+        timeSlots,
         qrImageSrc,
         computeAmountForTeamSize,
         hasPricingTierForTeamSize

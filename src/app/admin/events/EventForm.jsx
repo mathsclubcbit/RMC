@@ -14,7 +14,8 @@ import {
     Lock,
     CheckCircle2,
     Plus,
-    X
+    X,
+    Clock
 } from "lucide-react";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
@@ -204,6 +205,91 @@ function ContactsBuilder({ contacts, onChange }) {
     );
 }
 
+function TimeSlotsBuilder({ timeSlots, onChange }) {
+    const addSlot = () => onChange([...timeSlots, { name: "", date: "", startTime: "", endTime: "", maxTeams: "" }]);
+    const removeSlot = (idx) => onChange(timeSlots.filter((_, i) => i !== idx));
+    const updateSlot = (idx, field, value) => {
+        const updated = [...timeSlots];
+        updated[idx] = { ...updated[idx], [field]: value };
+        onChange(updated);
+    };
+
+    return (
+        <div className="space-y-4">
+            {timeSlots.map((slot, idx) => (
+                <div key={idx} className="p-4 rounded-xl bg-black/20 border border-white/10 space-y-3">
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-semibold text-cyan-400 flex items-center gap-2">
+                            <Clock className="w-3.5 h-3.5" />
+                            Slot {idx + 1}
+                        </h4>
+                        <button
+                            type="button"
+                            onClick={() => removeSlot(idx)}
+                            className="p-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                    <input
+                        value={slot.name || ""}
+                        onChange={(e) => updateSlot(idx, "name", e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg bg-black/40 border border-white/10 outline-none focus:border-cyan-400/50"
+                        placeholder="Theme / Topic Name (e.g., Machine Learning)"
+                    />
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                            <label className="text-[10px] uppercase text-white/40 font-mono mb-1 block">Date</label>
+                            <input
+                                type="date"
+                                value={slot.date || ""}
+                                onChange={(e) => updateSlot(idx, "date", e.target.value)}
+                                className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 outline-none focus:border-cyan-400/50 [color-scheme:dark] text-sm"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] uppercase text-white/40 font-mono mb-1 block">Start</label>
+                            <input
+                                type="time"
+                                value={slot.startTime || ""}
+                                onChange={(e) => updateSlot(idx, "startTime", e.target.value)}
+                                className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 outline-none focus:border-cyan-400/50 [color-scheme:dark] text-sm"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] uppercase text-white/40 font-mono mb-1 block">End</label>
+                            <input
+                                type="time"
+                                value={slot.endTime || ""}
+                                onChange={(e) => updateSlot(idx, "endTime", e.target.value)}
+                                className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 outline-none focus:border-cyan-400/50 [color-scheme:dark] text-sm"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] uppercase text-white/40 font-mono mb-1 block">Max Teams</label>
+                            <input
+                                type="number"
+                                min="1"
+                                value={slot.maxTeams || ""}
+                                onChange={(e) => updateSlot(idx, "maxTeams", e.target.value)}
+                                className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 outline-none focus:border-cyan-400/50 text-sm"
+                                placeholder="10"
+                            />
+                        </div>
+                    </div>
+                </div>
+            ))}
+            <button
+                type="button"
+                onClick={addSlot}
+                className="w-full px-4 py-3 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 flex items-center justify-center gap-2"
+            >
+                <Plus className="w-4 h-4" /> Add Time Slot
+            </button>
+        </div>
+    );
+}
+
 // --- Default State ---
 const defaultEvent = {
     id: "",
@@ -236,6 +322,9 @@ const defaultEvent = {
     endDate: "",
     startTime: "",
     endTime: "",
+    // Time Slots
+    timeSlotsEnabled: false,
+    timeSlots: [],
     // Fallback Redirect
     useExternalRegistration: false,
     externalRegistrationUrl: "",
@@ -291,6 +380,18 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
         stringFields.forEach(key => {
             if (base[key] === undefined || base[key] === null) base[key] = "";
         });
+
+        // Ensure arrays default properly (old events may not have these fields)
+        if (!Array.isArray(base.timeSlots)) base.timeSlots = [];
+        if (!Array.isArray(base.pricingTiers)) base.pricingTiers = [];
+        if (!Array.isArray(base.themes)) base.themes = [];
+        if (!Array.isArray(base.stages)) base.stages = [];
+        if (!Array.isArray(base.rules)) base.rules = [];
+        if (!Array.isArray(base.contactOrganizers)) base.contactOrganizers = [];
+
+        // Ensure booleans default properly
+        if (base.timeSlotsEnabled === undefined) base.timeSlotsEnabled = false;
+        if (base.variablePricingEnabled === undefined) base.variablePricingEnabled = false;
 
         // Don't populate password field when editing - it might contain a bcrypt hash
         if (mode === "edit") {
@@ -525,7 +626,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
         // Step 2: Time & Place
         if (currentStep === 2) {
             return (
-                <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                <div className="space-y-6 pb-8 animate-in slide-in-from-right-4 duration-300">
                     <Field label="Description">
                         <textarea
                             rows={5}
@@ -558,6 +659,47 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                                 />
                             </div>
                         </Field>
+                    </div>
+
+                    {/* Time Slots Section */}
+                    <div className="p-6 rounded-2xl bg-cyan-500/5 border border-cyan-500/20 space-y-4">
+                        <div className="flex items-center justify-between border-b border-cyan-500/10 pb-4">
+                            <h3 className="text-lg font-semibold text-cyan-400 flex items-center gap-2">
+                                <Clock className="w-5 h-4" />
+                                Time Slots Configuration
+                            </h3>
+                            {event.timeSlotsEnabled && (
+                                <span className="text-[10px] bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded-full uppercase font-bold">Enabled</span>
+                            )}
+                        </div>
+
+                        <p className="text-sm text-white/60">
+                            Enable this if participants should choose a specific time/theme slot during registration.
+                        </p>
+
+                        <label className="flex items-center gap-3 text-sm text-white/90 font-medium cursor-pointer p-3 rounded-xl bg-black/40 border border-white/5 hover:border-cyan-400/30 transition-all">
+                            <input
+                                type="checkbox"
+                                checked={!!event.timeSlotsEnabled}
+                                onChange={(e) => setField("timeSlotsEnabled", e.target.checked)}
+                                className="w-4 h-4 accent-cyan-400"
+                            />
+                            <span className="flex items-center gap-2">
+                                Enable time slots for this event
+                            </span>
+                        </label>
+
+                        {event.timeSlotsEnabled && (
+                            <div className="animate-in slide-in-from-top-2 duration-300">
+                                <p className="text-xs text-white/40 mb-3 italic">
+                                    Each slot can have a theme name and a maximum team capacity.
+                                </p>
+                                <TimeSlotsBuilder
+                                    timeSlots={event.timeSlots || []}
+                                    onChange={(slots) => setField("timeSlots", slots)}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
@@ -612,6 +754,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                             </div>
                         )}
                     </div>
+
                 </div>
             );
         }
