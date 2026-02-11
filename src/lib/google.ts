@@ -92,7 +92,23 @@ const matchesRegistrationId = (storedId: string, wantedId: string): boolean => {
  * Authenticate using Service Account from Environment Variable
  */
 const getAuthClient = async (): Promise<any> => { // eslint-disable-line @typescript-eslint/no-explicit-any
-    // 1. Try OAuth 2.0 (User Account - Free 15GB Quota)
+    // 1. Prefer Service Account (Serverside / API)
+    if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+        try {
+            const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+            const auth = new google.auth.GoogleAuth({
+                credentials,
+                scopes: SCOPES,
+            });
+            const client = await auth.getClient();
+            return client;
+        } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+            // If Service Account fails, we might want to fall back or just throw
+            console.warn(`[Google Auth] Service Account failed: ${error.message}. Trying OAuth as fallback...`);
+        }
+    }
+
+    // 2. Try OAuth 2.0 (User Account - Free 15GB Quota)
     if (process.env.GOOGLE_REFRESH_TOKEN && process.env.GOOGLE_CLIENT_ID) {
         try {
             const oauth2Client = new google.auth.OAuth2(
@@ -111,32 +127,15 @@ const getAuthClient = async (): Promise<any> => { // eslint-disable-line @typesc
 
             return oauth2Client;
         } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-            console.error('[Google Auth] OAuth refresh token error:', error.message);
-            // If OAuth fails, try service account fallback
-            if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
-                console.warn('[Google Auth] OAuth failed, falling back to service account');
-            } else {
-                throw new Error(`Google OAuth token is invalid or expired. Please regenerate the refresh token. Error: ${error.message}`);
+            // Only log error if Service Account was NOT attempted/available
+            if (!process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+                console.error('[Google Auth] OAuth refresh token error:', error.message);
+                throw new Error(`Google OAuth token is invalid or expired. Error: ${error.message}`);
             }
         }
     }
 
-    // 2. Fallback to Service Account (0GB Quota unless billed)
-    if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
-        try {
-            const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
-            const auth = new google.auth.GoogleAuth({
-                credentials,
-                scopes: SCOPES,
-            });
-            const client = await auth.getClient();
-            return client;
-        } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-            throw new Error(`Google Service Account authentication failed: ${error.message}`);
-        }
-    }
-
-    throw new Error('Missing Google Credentials: Set GOOGLE_REFRESH_TOKEN (User) or GOOGLE_SERVICE_ACCOUNT_JSON (Service Account)');
+    throw new Error('Missing Google Credentials: Set GOOGLE_SERVICE_ACCOUNT_JSON (Service Account) or GOOGLE_REFRESH_TOKEN (User)');
 };
 
 /**

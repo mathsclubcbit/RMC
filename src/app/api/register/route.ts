@@ -1,19 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { randomInt } from 'crypto';
-import { uploadToDrive, checkDuplicateRegistrationId, checkDuplicateUTR, appendRowToSheet, getOrCreateFolder } from '@/lib/google';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 import { createAdminClient } from '@/lib/supabase/server';
 import { withRateLimit } from '@/lib/rate-limiter';
+// We import Google logic dynamically or keep it for backup
+import { checkDuplicateUTR as checkDuplicateUTRSheet, appendRowToSheet } from '@/lib/google';
 
+// Type definitions matching our needs
 type PricingTier = {
     teamSize?: unknown;
     price?: unknown;
-};
-
-type DriveFile = {
-    id?: string | null;
-    webViewLink?: string | null;
-    webContentLink?: string | null;
 };
 
 type EventPayload = {
@@ -41,14 +38,13 @@ export async function POST(req: NextRequest) {
         const utrId = formData.get('utrId') as string;
         const amountFromClient = formData.get('amount') as string;
         const screenshot = formData.get('screenshot') as File;
-        const teamMembersStr = formData.get('teamMembers') as string | null; // Optional team members
+        const teamMembersStr = formData.get('teamMembers') as string | null;
         const teamSizeStr = formData.get('teamSize') as string | null;
 
         const abstract = formData.get('abstract') as string | null;
-
         const pptFile = formData.get('ppt') as File | null;
 
-        // 1. Validation
+        // --- 1. Validation ---
         if (!eventId || !eventName || !name || !email || !phone || !rollNo || !department || !utrId || !screenshot) {
             return NextResponse.json({ error: 'Missing required fields or file.' }, { status: 400 });
         }
@@ -69,22 +65,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Screenshot file size too large. Max 3MB.' }, { status: 400 });
         }
 
-        // Validate Screenshot File Type
         const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
         if (!validTypes.includes(screenshot.type)) {
             return NextResponse.json({ error: 'Invalid screenshot file type. Only JPEG, PNG, and PDF allowed.' }, { status: 400 });
         }
 
         const normalizedUTR = utrId.trim().toUpperCase();
-        const spreadsheetId = process.env.GOOGLE_SHEET_ID;
-        const driveFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
-        if (!spreadsheetId || !driveFolderId) {
-            console.error('Missing env configuration');
-            return NextResponse.json({ error: 'Server misconfiguration.' }, { status: 500 });
-        }
-
-        // 1b. Determine team size and compute expected amount from event config.
+        // --- 2. Team Parsing & Validation ---
         let teamMembers: Array<{ name?: string; email?: string; rollNo?: string; phone?: string }> = [];
         if (teamMembersStr) {
             try {
@@ -95,14 +83,11 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Validate team member emails
+        // Validate team emails
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         for (let i = 0; i < teamMembers.length; i++) {
-            const member = teamMembers[i];
-            if (member.email && !emailRegex.test(member.email)) {
-                return NextResponse.json({
-                    error: `Invalid email for team member ${i + 1}.`
-                }, { status: 400 });
+            if (teamMembers[i].email && !emailRegex.test(teamMembers[i].email as string)) {
+                return NextResponse.json({ error: `Invalid email for team member ${i + 1}.` }, { status: 400 });
             }
         }
 
@@ -114,7 +99,10 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Default fallback: accept client amount (legacy behavior) if we cannot load event.
+        // --- 3. Supabase Setup & Event Config Check ---
+        const supabase = createAdminClient();
+
+        // Fetch event config to validate amounts
         const parseAmount = (value: unknown) => {
             if (value == null) return 0;
             if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -126,13 +114,11 @@ export async function POST(req: NextRequest) {
 
         let expectedAmount = parseAmount(amountFromClient);
         let isHackathonOrIdeathon = false;
-        // Event details for email (will be populated from Supabase if available)
         let eventDate = 'To be announced';
         let eventTime = '';
         let eventVenue = 'CBIT Campus';
 
         try {
-            const supabase = createAdminClient();
             const { data: eventRow, error: eventError } = await supabase
                 .from('events')
                 .select('payload, event_type, category')
@@ -140,247 +126,164 @@ export async function POST(req: NextRequest) {
                 .single();
 
             if (!eventError && eventRow) {
-                // Check if event is Hackathon or Ideathon
                 const row = eventRow as { payload: EventPayload; event_type?: string; eventType?: string; category?: string };
+                // Determine type
                 const eType = row.event_type || row.eventType || '';
                 const eCat = row.category || '';
-                isHackathonOrIdeathon =
-                    eType === 'Hackathon' || eType === 'Ideathon' ||
-                    eCat === 'Hackathon' || eCat === 'Ideathon';
+                isHackathonOrIdeathon = eType === 'Hackathon' || eType === 'Ideathon' || eCat === 'Hackathon' || eCat === 'Ideathon';
 
                 const payload = row.payload as EventPayload & {
-                    date?: string;
-                    time?: string;
-                    location?: string;
-                    venue?: string;
-                    startDate?: string;
-                    startTime?: string;
-                    endTime?: string;
+                    date?: string; startDate?: string;
+                    time?: string; startTime?: string; endTime?: string;
+                    location?: string; venue?: string;
                 };
 
-                // Extract event date/time/venue from payload
+                // Extract details for email
                 if (payload) {
                     // Date
                     const rawDate = payload.date || payload.startDate || '';
-                    if (rawDate) {
-                        try {
-                            const dateObj = new Date(rawDate);
-                            if (!isNaN(dateObj.getTime())) {
-                                eventDate = dateObj.toLocaleDateString('en-IN', {
-                                    weekday: 'long',
-                                    day: 'numeric',
-                                    month: 'long',
-                                    year: 'numeric'
-                                });
-                            } else {
-                                eventDate = rawDate;
-                            }
-                        } catch {
-                            eventDate = rawDate;
-                        }
-                    }
+                    if (rawDate) eventDate = rawDate;
 
                     // Time
-                    const rawTime = payload.time || '';
-                    if (rawTime) {
-                        eventTime = rawTime;
-                    } else if (payload.startTime) {
-                        eventTime = payload.endTime
-                            ? `${payload.startTime} - ${payload.endTime}`
-                            : payload.startTime;
-                    }
+                    if (payload.time) eventTime = payload.time;
+                    else if (payload.startTime) eventTime = payload.endTime ? `${payload.startTime} - ${payload.endTime}` : payload.startTime;
 
                     // Venue
-                    const rawVenue = payload.location || payload.venue || '';
-                    if (rawVenue) {
-                        eventVenue = rawVenue;
-                    }
+                    if (payload.location || payload.venue) eventVenue = payload.location || payload.venue || eventVenue;
                 }
 
-                // If Hackathon/Ideathon, validate PPT
+                // PPT Validation
                 if (isHackathonOrIdeathon) {
                     if (!pptFile) {
-                        return NextResponse.json({ error: 'Presentation file (PPT/PDF) is required for this event.' }, { status: 400 });
+                        return NextResponse.json({ error: 'Presentation file (PPT/PDF) is required.' }, { status: 400 });
                     }
-                    if (pptFile.size > 10 * 1024 * 1024) { // 10MB limit for PPT
-                        return NextResponse.json({ error: 'Presentation file size too large. Max 10MB.' }, { status: 400 });
-                    }
-
-                    const pptName = pptFile.name.toLowerCase();
-                    const validExtensions = ['.pdf', '.ppt', '.pptx'];
-                    const hasValidExt = validExtensions.some(ext => pptName.endsWith(ext));
-
-                    if (!hasValidExt) {
-                        return NextResponse.json({ error: 'Invalid presentation file type. Only PPT, PPTX, and PDF allowed.' }, { status: 400 });
+                    if (pptFile.size > 10 * 1024 * 1024) {
+                        return NextResponse.json({ error: 'PPT size too large. Max 10MB.' }, { status: 400 });
                     }
                 }
 
-                if (payload) {
-                    const legacyTeamSize = Number(payload?.teamSize);
-                    const minTeamSize = Number(payload?.minTeamSize);
-                    const maxTeamSize = Number(payload?.maxTeamSize);
-
-                    const resolvedMin = Number.isFinite(minTeamSize) && minTeamSize > 0
-                        ? minTeamSize
-                        : (Number.isFinite(legacyTeamSize) && legacyTeamSize > 0 ? legacyTeamSize : 1);
-
-                    const resolvedMax = Number.isFinite(maxTeamSize) && maxTeamSize > 0
-                        ? maxTeamSize
-                        : (Number.isFinite(legacyTeamSize) && legacyTeamSize > 0 ? legacyTeamSize : resolvedMin);
-
-                    if (computedTeamSize < resolvedMin) {
-                        return NextResponse.json({ error: 'TEAM_SIZE_TOO_SMALL', minTeamSize: resolvedMin }, { status: 400 });
-                    }
-                    if (computedTeamSize > resolvedMax) {
-                        return NextResponse.json({ error: 'TEAM_SIZE_TOO_LARGE', maxTeamSize: resolvedMax }, { status: 400 });
-                    }
-
-                    if (Boolean(payload?.variablePricingEnabled)) {
-                        const tiersRaw = Array.isArray(payload?.pricingTiers) ? (payload.pricingTiers as unknown[]) : [];
-                        const tiers: PricingTier[] = tiersRaw.filter((t) => typeof t === 'object' && t !== null) as PricingTier[];
-                        const tier = tiers.find((t) => Number(t?.teamSize) === computedTeamSize);
-                        const price = parseAmount(tier?.price);
-                        if (!Number.isFinite(price) || price < 0) {
-                            return NextResponse.json({ error: 'PRICE_NOT_CONFIGURED', teamSize: computedTeamSize }, { status: 400 });
-                        }
-                        expectedAmount = price;
-                    } else {
-                        const fee = parseAmount(payload?.registrationFee);
-                        expectedAmount = Number.isFinite(fee) && fee >= 0 ? fee : 0;
-                    }
+                // Price Validation
+                if (payload && Boolean(payload?.variablePricingEnabled)) {
+                    const tiersRaw = Array.isArray(payload?.pricingTiers) ? (payload.pricingTiers as unknown[]) : [];
+                    const tiers: PricingTier[] = (tiersRaw.filter((t: any) => t !== null && typeof t === 'object') as unknown) as PricingTier[];
+                    const tier = tiers.find((t) => Number(t?.teamSize) === computedTeamSize);
+                    const price = parseAmount(tier?.price);
+                    if (Number.isFinite(price) && price >= 0) expectedAmount = price;
+                } else if (payload) {
+                    const fee = parseAmount(payload?.registrationFee);
+                    if (Number.isFinite(fee) && fee >= 0) expectedAmount = fee;
                 }
             }
         } catch (err) {
-            // Keep fallback behavior, but log for diagnostics.
-            console.warn('Could not compute expected amount from Supabase event payload:', err);
+            console.warn('Event fetch failed, using client values:', err);
         }
 
-        if (!Number.isFinite(expectedAmount) || expectedAmount < 0) {
-            return NextResponse.json({ error: 'INVALID_AMOUNT' }, { status: 400 });
-        }
+        // --- 4. Duplicate Check (Supabase) ---
+        // We check Supabase for duplicates as primary source of truth.
+        const { data: existingUTR } = await supabase
+            .from('registrations')
+            .select('id')
+            .eq('utr_id', normalizedUTR)
+            .single();
 
-        if (process.env.NODE_ENV !== 'production') {
-            console.info('Register target sheet', {
-                spreadsheetUrl: `https://docs.google.com/spreadsheets/d/${spreadsheetId}`,
-                tab: process.env.GOOGLE_SHEET_TAB || 'Sheet1',
-                driveFolderId,
-            });
-        }
-
-        // 2. Duplicate Check (with rate limiting)
-        const isDuplicate = await withRateLimit(() => checkDuplicateUTR(spreadsheetId, normalizedUTR));
-        if (isDuplicate) {
+        if (existingUTR) {
             return NextResponse.json({ error: 'UTR_ALREADY_USED', message: 'This UTR ID has already been submitted.' }, { status: 409 });
         }
 
-        // 3. Upload Screenshot (with rate limiting)
-        // Get specific event folder inside the main Drive folder
-        const eventFolderId = await withRateLimit(() => getOrCreateFolder(eventName, driveFolderId));
-
-        // 3. OPTIMIZED: Parallelize file uploads (screenshot + PPT if applicable)
-        const buffer = Buffer.from(await screenshot.arrayBuffer());
-        const fileExtension = screenshot.name.split('.').pop() || 'png';
-        const fileName = `${eventId}_${name}_${normalizedUTR}.${fileExtension}`;
-
-        const uploadPromises: Promise<DriveFile>[] = [
-            withRateLimit(() => uploadToDrive(buffer, screenshot.type, fileName, eventFolderId))
+        // --- 5. File Uploads (Cloudinary) ---
+        // Parallelize uploads
+        const uploadPromises = [
+            uploadToCloudinary(screenshot).then(url => ({ type: 'screenshot', url }))
         ];
 
-        // Add PPT upload to parallel batch if applicable
         if (isHackathonOrIdeathon && pptFile) {
-            const pptBuffer = Buffer.from(await pptFile.arrayBuffer());
-            const pptExt = pptFile.name.split('.').pop() || 'pptx';
-            const pptName = `${eventId}_${name}_PPT.${pptExt}`;
             uploadPromises.push(
-                withRateLimit(() => uploadToDrive(pptBuffer, pptFile.type, pptName, eventFolderId))
+                uploadToCloudinary(pptFile).then(url => ({ type: 'ppt', url }))
             );
         }
 
-        // Execute uploads in parallel
         const uploadResults = await Promise.all(uploadPromises);
-        const driveFile = uploadResults[0];
-        const pptDriveFile = uploadResults.length > 1 ? uploadResults[1] : null;
+        const screenshotUrl = uploadResults.find(r => r.type === 'screenshot')?.url || '';
+        const pptUrl = uploadResults.find(r => r.type === 'ppt')?.url || '';
 
-        // 4. OPTIMIZED: Parallelize sheet validation and ticket ID generation
-        const { ensureRegistrationSheet } = await import('@/lib/google');
-        await withRateLimit(() => ensureRegistrationSheet(spreadsheetId));
-
-        // Generate a 6-digit ticket code (stored as Registration ID) and ensure it is unique.
+        // --- 6. Generate Ticket Code ---
         let registrationId = '';
-        for (let attempt = 0; attempt < 10; attempt++) {
-            const candidate = generateTicketCode();
-            const exists = await withRateLimit(() => checkDuplicateRegistrationId(spreadsheetId, candidate));
+        for (let i = 0; i < 5; i++) {
+            const code = generateTicketCode();
+            const { data: exists } = await supabase.from('registrations').select('id').eq('registration_id', code).single();
             if (!exists) {
-                registrationId = candidate;
+                registrationId = code;
                 break;
             }
         }
-        if (!registrationId) {
-            return NextResponse.json({ error: 'Failed to generate ticket code. Please retry.' }, { status: 500 });
+        if (!registrationId) throw new Error('Failed to generate unique ticket code');
+
+        // --- 7. Save to Supabase (Primary) ---
+        const { error: insertError } = await supabase.from('registrations').insert({
+            event_id: eventId,
+            event_name: eventName,
+            registration_id: registrationId,
+            name,
+            email,
+            phone,
+            roll_no: rollNo,
+            department,
+            team_members: teamMembers,
+            team_size: computedTeamSize,
+            amount: expectedAmount,
+            utr_id: normalizedUTR,
+            screenshot_url: screenshotUrl,
+            abstract: abstract || null,
+            ppt_url: pptUrl || null,
+            status: 'PENDING'
+        });
+
+        if (insertError) {
+            console.error('Supabase insert error:', insertError);
+            throw new Error('Database insertion failed');
         }
-        const timestamp = new Date().toISOString();
-        const status = 'PENDING';
 
-        /*
-            New Optimized Column Structure (A-T):
-            A: Timestamp
-            B: Ticket Code
-            C: Event Name
-            D: Name
-            E: Email
-            F: Phone
-            G: Roll No
-            H: Department
-            I: Team Members (JSON)
-            J: UTR ID
-            K: Amount
-            L: Status
-            M: Screenshot Link
-            N: Abstract
-            O: PPT Link
-            P: Check-In Time
-            Q: Member Attendance
-            R: Event ID
-            S: File ID
-            T: Download Link
-        */
-        const rowData = [
-            timestamp,              // A
-            registrationId,         // B
-            eventName,              // C
-            name,                   // D
-            email,                  // E
-            phone,                  // F
-            rollNo,                 // G
-            department,             // H
-            teamMembersStr || '',   // I
-            normalizedUTR,          // J
-            String(expectedAmount), // K
-            status,                 // L
-            driveFile.webViewLink || '', // M
-            abstract || '',         // N
-            pptDriveFile?.webViewLink || '', // O
-            '',                     // P (Check-In)
-            '',                     // Q (Member Attendance)
-            eventId,                // R
-            driveFile.id || '',     // S
-            driveFile.webContentLink || '' // T
-        ];
+        // --- 8. Append to Google Sheets (Backup / Mirror) ---
+        // Non-blocking, try-catch
+        // --- 8. Append to Google Sheets (Backup / Mirror) ---
+        // We await this to ensure execution in serverless environments, but we catch errors so it doesn't fail the request.
+        try {
+            const sheetId = process.env.GOOGLE_SHEET_ID;
+            if (sheetId) {
+                const timestamp = new Date().toISOString();
+                // Columns: A:Timestamp, B:Ticket, C:Event, D:Name, E:Email, F:Phone, G:Roll, H:Dept, I:Team, J:UTR, K:Amt, L:Status, M:Screenshot, N:Abstract, O:PPT
+                const rowData = [
+                    timestamp,
+                    registrationId,
+                    eventName,
+                    name,
+                    email,
+                    phone,
+                    rollNo,
+                    department,
+                    teamMembersStr || '',
+                    normalizedUTR,
+                    String(expectedAmount),
+                    'PENDING',
+                    screenshotUrl, // Cloudinary URL replacing Drive Link
+                    abstract || '',
+                    pptUrl,       // Cloudinary URL replacing PPT Drive Link
+                    '', '', eventId, '', '' // Extra columns
+                ];
 
-        await withRateLimit(() => appendRowToSheet(spreadsheetId, rowData));
-        // @ts-ignore - revalidateTag typing issue in this env
-        revalidateTag('registrations');
+                await appendRowToSheet(sheetId, rowData);
+            }
+        } catch (sheetErr) {
+            console.warn('Google Sheet append failed (backup only):', sheetErr);
+            // Do not fail the request
+        }
 
-        // 5. Generate QR Code and Send Ticket Email
-
-        // Generate QR code
+        // --- 9. Email & QR ---
         const { generateQRCode } = await import('@/lib/qrcode');
         const qrCode = await generateQRCode(registrationId);
 
-        // Import event details for email (already populated from Supabase above)
-
-        // Send QR ticket email (non-blocking)
         const { sendTicketEmail } = await import('@/lib/email');
+        // Non-blocking email
         sendTicketEmail({
             toEmail: email,
             participantName: name,
@@ -392,18 +295,20 @@ export async function POST(req: NextRequest) {
             department,
             rollNo,
             phone
-        }).catch(err => console.error('Email send failed:', err));
+        }).catch(e => console.error('Email failed:', e));
+
+        // @ts-ignore
+        revalidateTag('registrations');
 
         return NextResponse.json({
             message: 'Registration successful',
             registrationId,
-            qrCode, // QR code as data URL
-            driveViewUrl: driveFile.webViewLink
+            qrCode,
+            driveViewUrl: screenshotUrl // Compat with frontend
         }, { status: 201 });
 
-    } catch (error: unknown) {
+    } catch (error: any) {
         console.error('Registration Error:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Internal Server Error';
-        return NextResponse.json({ error: errorMessage }, { status: 500 });
+        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
     }
 }

@@ -597,15 +597,17 @@ export default function RegistrationClient({ eventId }) {
                             <div className="flex-1 min-h-0 px-6 md:px-12 pb-6 md:pb-8 md:overflow-y-auto custom-scrollbar" data-lenis-prevent>
                                 {/* Mobile Details Tab Content */}
                                 <div className={`space-y-8 pb-32 md:hidden ${mobileTab === 'details' ? 'block' : 'hidden'}`}>
-                                    <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden border border-white/10 shadow-lg mb-6">
-                                        <Image
-                                            src={event.posterMobile || event.img}
-                                            alt={event.title}
-                                            fill
-                                            className="object-cover"
-                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                        />
-                                    </div>
+                                    {(event.posterMobile || event.img) && (
+                                        <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden border border-white/10 shadow-lg mb-6">
+                                            <Image
+                                                src={event.posterMobile || event.img}
+                                                alt={event.title}
+                                                fill
+                                                className="object-cover"
+                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                            />
+                                        </div>
+                                    )}
                                     <EventDetailsContent
                                         event={event}
                                         isHackathonOrIdeathon={isHackathonOrIdeathon}
