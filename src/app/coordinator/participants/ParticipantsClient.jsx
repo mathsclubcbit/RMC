@@ -291,7 +291,12 @@ export default function ParticipantsClient({ event }) {
                                     <div className="space-y-3">
                                         <DetailItem label="Team Members" value={selectedParticipant.teamMembers || "Solo"} />
                                         {selectedParticipant.abstract && (
-                                            <DetailItem label="Abstract" value={selectedParticipant.abstract} />
+                                            <div className="space-y-1">
+                                                <div className="text-xs text-white/40">Abstract File</div>
+                                                <a href={selectedParticipant.abstract} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-2">
+                                                    View Abstract <ExternalLink className="w-3 h-3" />
+                                                </a>
+                                            </div>
                                         )}
                                         {selectedParticipant.pptLink && (
                                             <div className="space-y-1">
