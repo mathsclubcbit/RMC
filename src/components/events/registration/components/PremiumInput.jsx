@@ -1,18 +1,11 @@
 'use client';
 
 import { memo } from 'react';
+import { cn } from '@/lib/utils';
 
 /**
  * PremiumInput - Standardized input component for Registration
- * @param {{
- *   label?: string,
- *   error?: string,
- *   variant?: 'default' | 'minimal' | 'centered',
- *   as?: 'input' | 'textarea',
- *   containerClassName?: string,
- *   className?: string,
- *   ...props
- * }} props
+ * Noir Edition
  */
 function PremiumInput({
     label,
@@ -25,37 +18,41 @@ function PremiumInput({
 }) {
     const Component = as;
 
-    const baseStyles = "w-full outline-none transition-all duration-300 placeholder-white/20 font-sans disabled:opacity-50 disabled:cursor-not-allowed";
+    const baseStyles = "w-full outline-none transition-all duration-300 placeholder-zinc-700 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed";
 
     const variants = {
-        default: "bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] hover:border-white/20",
-        minimal: "bg-transparent border-b border-white/10 py-2 text-white focus:border-teal/50 px-1 hover:border-white/30",
-        centered: "bg-white/[0.03] border border-white/10 rounded-xl px-5 py-4 text-white text-center tracking-widest text-lg uppercase focus:border-teal/50 focus:bg-white/[0.05] focus:shadow-[0_0_20px_rgba(45,212,191,0.1)] font-mono"
+        default: "bg-black border border-white/20 px-5 py-4 text-white focus:border-white focus:ring-1 focus:ring-white/10 hover:border-white/40 transition-all rounded-none",
+        minimal: "bg-transparent border-b border-zinc-800 py-3 text-white focus:border-white px-0 hover:border-zinc-600 transition-all font-sans text-sm",
+        centered: "bg-black border border-white/20 px-5 py-4 text-white text-center tracking-[0.2em] text-lg font-bold focus:border-white font-mono rounded-none"
     };
 
     return (
         <div className={`space-y-2 ${containerClassName}`}>
             {label && (
-                <label className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-mono ml-1 block">
-                    {label}
-                </label>
+                <div className="flex items-center gap-2">
+                    <div className="w-1 h-1 bg-white/40 rounded-full" />
+                    <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-500 group-hover:text-white transition-colors">
+                        {label}
+                    </label>
+                </div>
             )}
-            <div className="relative group">
+            <div className="relative group/input">
                 <Component
+                    className={cn(baseStyles, variants[variant] || variants.default, error && "border-red-900/80 text-red-200", className)}
                     {...props}
-                    className={`${baseStyles} ${variants[variant] || variants.default} ${className} ${error ? '!border-red-500/50 !text-red-200' : ''}`}
                 />
-
-                {variant === 'minimal' && (
-                    <div className="absolute bottom-0 left-0 w-full h-[1px] bg-teal/50 scale-x-0 group-hover:scale-x-0 peer-focus:scale-x-100 transition-transform origin-left" />
+                
+                {/* Noir Style Corner Accents */}
+                <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-white/0 group-hover/input:border-white/50 transition-all pointer-events-none" />
+                <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-white/0 group-hover/input:border-white/50 transition-all pointer-events-none" />
+                
+                {/* Error Message */}
+                {error && (
+                   <p className="absolute right-0 -bottom-5 text-[9px] text-red-400 font-mono tracking-wider uppercase border-l border-red-500 pl-2">
+                       ERR: {error}
+                   </p>
                 )}
             </div>
-            {error && (
-                <p className="text-xs text-red-400 font-mono ml-1 animate-pulse flex items-center gap-1">
-                    <span className="w-1 h-1 bg-red-400 rounded-full inline-block" />
-                    {error}
-                </p>
-            )}
         </div>
     );
 }

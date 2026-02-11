@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
-    optimizeCss: true,
+    optimizeCss: false,
     cssChunking: 'strict',
   },
   images: {

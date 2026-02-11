@@ -20,29 +20,38 @@ function TeamMemberCard({ member, index, onChange, onRemove, canRemove }) {
     };
 
     return (
-        <div className="bg-white/[0.02] border border-white/10 rounded-xl p-4 relative group hover:bg-white/[0.04] transition-colors">
-            <div className="flex items-start gap-3 mb-1">
-                <div className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center text-white/50 font-mono text-xs shrink-0 mt-3 shadow-inner">
-                    {index + 2}
+        <div className="relative group/card p-6 border border-zinc-900 bg-black/40 hover:bg-zinc-900/20 hover:border-zinc-800 transition-all duration-300">
+            <div className="flex items-start gap-4 md:gap-6">
+                <div className="w-8 pt-4 shrink-0 text-right">
+                    <span className="font-mono text-xs text-zinc-600 block">
+                        {(index + 2).toString().padStart(2, '0')}
+                    </span>
                 </div>
-                <div className="flex-1 space-y-1">
-                    <PremiumInput
-                        variant="minimal"
-                        placeholder="Teammate Name"
-                        value={member.name}
-                        onChange={e => handleChange('name', e.target.value)}
-                    />
-                    <PremiumInput
-                        variant="minimal"
-                        type="email"
-                        placeholder="Email Address"
-                        value={member.email}
-                        onChange={e => handleChange('email', e.target.value)}
-                    />
+                
+                <div className="flex-1 min-w-0 space-y-5">
+                    <div className="grid md:grid-cols-2 gap-4">
+                        <PremiumInput
+                            variant="minimal"
+                            label="Name"
+                            placeholder="Full Name"
+                            value={member.name}
+                            onChange={e => handleChange('name', e.target.value)}
+                        />
+                        <PremiumInput
+                            variant="minimal"
+                            label="Email"
+                            type="email"
+                            placeholder="email@college.edu"
+                            value={member.email}
+                            onChange={e => handleChange('email', e.target.value)}
+                        />
+                    </div>
+                    
                     <div className="grid grid-cols-2 gap-4">
                         <PremiumInput
                             variant="minimal"
-                            placeholder="Roll No"
+                            label="Roll No"
+                            placeholder="1234567890"
                             value={member.rollNo}
                             onChange={e => {
                                 const value = e.target.value.replace(/\D/g, '').slice(0, 12);
@@ -50,28 +59,28 @@ function TeamMemberCard({ member, index, onChange, onRemove, canRemove }) {
                             }}
                             maxLength={12}
                             inputMode="numeric"
-                            className="font-mono text-sm"
                         />
                         <PremiumInput
                             variant="minimal"
+                            label="Phone"
                             type="tel"
-                            placeholder="Phone"
+                            placeholder="9999999999"
                             value={member.phone}
                             onChange={e => handleChange('phone', e.target.value)}
-                            className="font-mono text-sm"
                         />
                     </div>
                 </div>
+
+                {canRemove && (
+                    <button
+                        type="button"
+                        onClick={() => onRemove(index)}
+                        className="absolute top-0 right-0 p-4 opacity-0 group-hover/card:opacity-100 transition-opacity text-zinc-600 hover:text-red-400"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                )}
             </div>
-            {canRemove && (
-                <button
-                    type="button"
-                    onClick={() => onRemove(index)}
-                    className="absolute top-2 right-2 p-2 text-white/20 hover:text-red-400 hover:bg-red-400/10 rounded-full transition-all"
-                >
-                    <X className="w-4 h-4" />
-                </button>
-            )}
         </div>
     );
 }

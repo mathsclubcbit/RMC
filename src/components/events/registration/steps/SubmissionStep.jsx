@@ -2,7 +2,7 @@
 
 import { memo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, FileText, Upload, CheckCircle, X } from 'lucide-react';
+import { FileText, Upload, CheckCircle, X, Info } from 'lucide-react';
 import { PremiumInput } from '../components';
 
 /**
@@ -38,33 +38,33 @@ function SubmissionStep({ abstract, setAbstract, pptFile, onPptChange, samplePpt
         <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4 }}
-            className="space-y-6"
+            className="space-y-8"
         >
-            <div className="bg-teal/5 border border-teal/20 rounded-xl p-4 sm:p-6 mb-6">
-                <h4 className="flex items-center gap-2 text-teal font-bold uppercase tracking-wider text-xs mb-3">
-                    <Sparkles className="w-4 h-4" /> Submission Requirements
-                </h4>
-                <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
-                    {isIdeathon
-                        ? "Please provide a brief abstract of your project and upload the document. This helps us evaluate your idea before the event."
-                        : "Please provide a brief abstract of your idea and upload your presentation. This helps us evaluate your project before the event."
-                    }
-                </p>
+            {/* Info Box */}
+            <div className="bg-zinc-900/50 border border-zinc-800 p-6 flex gap-4">
+                <Info className="w-5 h-5 text-zinc-400 shrink-0" />
+                <div className="space-y-1">
+                    <h4 className="text-sm font-medium text-zinc-200">Submission Requirements</h4>
+                    <p className="text-xs text-zinc-500 max-w-md leading-relaxed">
+                        {isIdeathon
+                            ? "Please provide a structured abstract and document upload for preliminary protocol evaluation."
+                            : "Initialize abstract data and presentation upload to complete your project dossier."
+                        }
+                    </p>
+                </div>
             </div>
 
-
-            <div className="space-y-4 pt-4 border-t border-white/10">
-                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-2 sm:mt-0">
+            <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row gap-4">
                     {isIdeathon && sampleAbstractUrl && (
                         <a
                             href={sampleAbstractUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/40 text-[10px] uppercase tracking-wider text-purple-300 transition-all group w-full sm:w-auto"
+                            className="flex-1 py-3 px-4 border border-zinc-800 hover:bg-zinc-900 text-xs text-zinc-400 hover:text-white transition-colors flex items-center justify-center gap-2 uppercase tracking-wide"
                         >
-                            <FileText className="w-3 h-3 group-hover:scale-110 transition-transform" />
-                            <span>📄 Abstract Format</span>
+                            <FileText className="w-4 h-4" />
+                            <span>Abstract Reference</span>
                         </a>
                     )}
                     {samplePptUrl && (
@@ -72,15 +72,16 @@ function SubmissionStep({ abstract, setAbstract, pptFile, onPptChange, samplePpt
                             href={samplePptUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-teal/10 border border-teal/20 hover:bg-teal/20 hover:border-teal/40 text-[10px] uppercase tracking-wider text-teal transition-all group w-full sm:w-auto"
+                            className="flex-1 py-3 px-4 border border-zinc-800 hover:bg-zinc-900 text-xs text-zinc-400 hover:text-white transition-colors flex items-center justify-center gap-2 uppercase tracking-wide"
                         >
-                            <FileText className="w-3 h-3 group-hover:scale-110 transition-transform" />
-                            <span>📊 PPT Template</span>
+                            <FileText className="w-4 h-4" />
+                            <span>Format Specification</span>
                         </a>
                     )}
                 </div>
 
-                <div className="relative group">
+                {/* Upload Zone */}
+                <div className="relative">
                     <input
                         type="file"
                         ref={pptInputRef}
@@ -88,50 +89,41 @@ function SubmissionStep({ abstract, setAbstract, pptFile, onPptChange, samplePpt
                         className="hidden"
                         accept=".ppt,.pptx,.pdf,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
                     />
-                    <button
-                        type="button"
-                        onClick={() => pptInputRef.current?.click()}
-                        className={`w-full py-10 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all duration-500 relative overflow-hidden group/btn ${pptFile
-                            ? 'border-teal bg-teal/5'
-                            : 'border-white/10 hover:border-teal/30 hover:bg-white/[0.03]'
-                            }`}
-                    >
-                        {/* Glow Effect */}
-                        <div className="absolute inset-0 bg-gradient-to-tr from-teal/0 via-teal/0 to-teal/5 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500" />
 
-                        {pptFile ? (
-                            <div className="relative z-10 flex flex-col items-center animate-in fade-in zoom-in duration-300">
-                                <div className="w-12 h-12 rounded-full bg-teal/10 flex items-center justify-center mb-3 shadow-[0_0_15px_rgba(45,212,191,0.2)]">
-                                    <CheckCircle className="w-6 h-6 text-teal" />
+                    {pptFile ? (
+                        <div className="w-full p-6 border border-zinc-700 bg-zinc-900/40 flex items-center justify-between group">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 bg-white text-black flex items-center justify-center">
+                                    <CheckCircle className="w-5 h-5" />
                                 </div>
-                                <span className="text-teal text-sm font-bold font-mono px-4 text-center truncate w-full max-w-[250px]">
-                                    {pptFile.name}
-                                </span>
-                                <span className="text-[10px] text-teal/50 mt-1 uppercase tracking-widest">
-                                    Ready for Submission
-                                </span>
-                            </div>
-                        ) : (
-                            <div className="relative z-10 flex flex-col items-center">
-                                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover/btn:scale-110 group-hover/btn:bg-teal/10 transition-all duration-300">
-                                    <Upload className="w-6 h-6 text-white/30 group-hover/btn:text-teal transition-colors" />
+                                <div>
+                                    <div className="text-sm text-white font-medium">{pptFile.name}</div>
+                                    <div className="text-xs text-zinc-500 uppercase tracking-wider mt-0.5">Ready for upload</div>
                                 </div>
-                                <span className="text-white/60 text-sm font-medium group-hover/btn:text-white transition-colors">
-                                    {isIdeathon ? "Upload Abstract" : "Upload Presentation"}
-                                </span>
-                                <span className="text-[10px] text-white/30 mt-1 font-mono">
-                                    {isIdeathon ? "PDF / DOCX / PDF • Max 10MB" : "PPT / PPTX / PDF • Max 10MB"}
-                                </span>
                             </div>
-                        )}
-                    </button>
-                    {pptFile && (
+                            <button
+                                type="button"
+                                onClick={clearPpt}
+                                className="p-2 text-zinc-500 hover:text-red-400 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                    ) : (
                         <button
                             type="button"
-                            onClick={clearPpt}
-                            className="absolute top-3 right-3 p-1.5 rounded-full bg-black/40 text-white/30 hover:text-red-400 hover:bg-black/60 transition-colors backdrop-blur-sm border border-white/5"
+                            onClick={() => pptInputRef.current?.click()}
+                            className="w-full py-12 border-2 border-dashed border-zinc-800 hover:border-zinc-600 hover:bg-zinc-900/30 transition-all flex flex-col items-center justify-center gap-3 group"
                         >
-                            <X className="w-3 h-3" />
+                            <div className="p-3 bg-zinc-900 rounded-full group-hover:bg-zinc-800 transition-colors">
+                                <Upload className="w-5 h-5 text-zinc-400" />
+                            </div>
+                            <span className="text-sm text-zinc-300 font-medium">
+                                {isIdeathon ? "Upload Abstract" : "Upload Presentation"}
+                            </span>
+                            <span className="text-[10px] text-zinc-600 uppercase tracking-widest">
+                                {isIdeathon ? "PDF / DOCX • MAX 10MB" : "PPTX / PDF • MAX 10MB"}
+                            </span>
                         </button>
                     )}
                 </div>

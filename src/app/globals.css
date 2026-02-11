@@ -77,7 +77,7 @@
   --color-lime: var(--rmc-lime);
   --color-coral: var(--rmc-coral);
   --color-orange: var(--rmc-orange);
-  
+
   /* Force Hex for compatibility */
   --color-white: #ffffff;
   --color-black: #000000;
@@ -434,4 +434,81 @@ textarea:focus {
 
 .hover-glow-pulse:hover {
   animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* REBUILD TRIGGER: 2026-02-11T22:16:36 */
+/* ===== Luxury Tech Overhaul (Math Noir) ===== */
+
+/* Noise/Grain Texture Overlay */
+.grain-overlay {
+  @apply absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Glass Luxury - Beveled & Textured */
+.glass-luxury {
+  @apply bg-[#0f111a]/80 backdrop-blur-3xl border border-white/10 shadow-[inset_0_1px_1px_#ffffff0d];
+}
+
+/* Scanning Light Sweep Animation */
+@keyframes scanning-sweep {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 0.1;
+  }
+
+  50% {
+    opacity: 0.2;
+  }
+
+  80% {
+    opacity: 0.1;
+  }
+
+  100% {
+    transform: translateY(400%);
+    opacity: 0;
+  }
+}
+
+.scan-line {
+  @apply absolute top-0 left-0 w-full h-[100px] bg-gradient-to-b from-transparent via-teal/[0.08] to-transparent pointer-events-none;
+  animation: scanning-sweep 8s ease-in-out infinite;
+}
+
+/* Cyber Accents (L-Brackets) */
+.bracket-tl,
+.bracket-tr,
+.bracket-bl,
+.bracket-br {
+  @apply absolute w-4 h-4 border-teal/20 pointer-events-none transition-all duration-700;
+}
+
+.bracket-tl {
+  @apply top-4 left-4 border-t border-l rounded-tl-sm;
+}
+
+.bracket-tr {
+  @apply top-4 right-4 border-t border-r rounded-tr-sm;
+}
+
+.bracket-bl {
+  @apply bottom-4 left-4 border-b border-l rounded-bl-sm;
+}
+
+.bracket-br {
+  @apply bottom-4 right-4 border-b border-r rounded-br-sm;
+}
+
+/* Luxury Typography */
+.text-luxury {
+  @apply font-serif italic tracking-tight text-white;
+}
+
+.label-luxury {
+  @apply font-mono text-[9px] uppercase tracking-[0.4em] font-black text-teal/40;
 }

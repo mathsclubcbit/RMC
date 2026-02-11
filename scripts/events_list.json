@@ -5,7 +5,7 @@
     "date": "2026-02-17",
     "payload": {
       "id": "ml5koefnjtkjs3",
-      "img": "https://zuczhjbmspuijwaypdjd.supabase.co/storage/v1/object/public/event-images/events/ml5koefnjtkjs3/img-1770065432357.png",
+      "img": "https://zuczhjbmspuijwaypdjd.supabase.co/storage/v1/object/public/event-images/events/ml5koefnjtkjs3/img-1770660493590.jpg",
       "date": "2026-02-17",
       "rules": [
         "All submissions must be original",
@@ -35,7 +35,7 @@
           "judgingCriteria": ""
         }
       ],
-      "status": "Coming Soon",
+      "status": "Registration Open",
       "themes": [
         "Mathematics for Social Good",
         "Mathematical Models for Women Safety",
@@ -51,16 +51,16 @@
       ],
       "category": "Competition",
       "isOneDay": true,
-      "location": "M Block Soft Skills Lab",
+      "location": "M Block Soft Skills Lab 3",
       "password": "$2b$12$Ry3z3wkOTEPgkzHgjIFn3em543i3D0C7JBLX.PhuMH6P/hC4DD6zK",
       "createdAt": "2026-02-02T19:38:21.927777+00:00",
       "eventType": "Ideathon",
-      "samplePpt": "https://zuczhjbmspuijwaypdjd.supabase.co/storage/v1/object/public/event-images/events/ml5koefnjtkjs3/samplePpt-1770139677374.pdf",
+      "samplePpt": "https://zuczhjbmspuijwaypdjd.supabase.co/storage/v1/object/public/event-images/events/ml5koefnjtkjs3/samplePpt-1770663476921.pdf",
       "startDate": "2026-02-17",
-      "updatedAt": "2026-02-04T09:00:21.614828+00:00",
+      "updatedAt": "2026-02-11T12:24:05.075496+00:00",
       "venueType": "Offline",
       "created_at": "2026-02-02T19:38:21.927777+00:00",
-      "regEndDate": "2026-02-12",
+      "regEndDate": "2026-02-13",
       "description": "About Mathematics Ideathon 2026\n\nMathematics Ideathon 2026, organized by the Ramanujan Maths Club, is an innovation-driven competition focused on deep mathematical thinking, structured problem-solving, and research-oriented ideation.\n\nThe ideathon provides a platform for students to explore how mathematical logic, models, proofs, algorithms, and formulations can be applied to solve real-world, societal, and technological problems.\n\nParticipants are expected to clearly demonstrate the mathematical foundation of their ideas while ensuring practical relevance and clarity of thought. The event follows a two-stage evaluation process, culminating in offline presentations before an expert jury.",
       "eligibility": "●Open to UG and PG students\n● Participation can be individual or team-based\n● Maximum team size: 4 members\n● Only one idea per team",
       "maxTeamSize": 4,
@@ -68,25 +68,27 @@
       "participants": 0,
       "pricingTiers": [
         {
-          "price": 250,
+          "price": 200,
           "teamSize": 1
         },
         {
-          "price": 400,
+          "price": 300,
           "teamSize": 2
         },
         {
-          "price": 600,
+          "price": 400,
           "teamSize": 3
         },
         {
-          "price": 800,
+          "price": 500,
           "teamSize": 4
         }
       ],
       "regStartDate": "2026-02-01",
       "whatsappLink": "https://chat.whatsapp.com/KlIyuKlmRol53o1RappvMK?mode=gi_t",
+      "posterDesktop": "https://zuczhjbmspuijwaypdjd.supabase.co/storage/v1/object/public/event-images/events/ml5koefnjtkjs3/posterDesktop-1770660494762.jpg",
       "passwordHashed": true,
+      "sampleAbstract": "https://zuczhjbmspuijwaypdjd.supabase.co/storage/v1/object/public/event-images/events/ml5koefnjtkjs3/sampleAbstract-1770663478772.pdf",
       "successMessage": "You're In!",
       "registrationFee": "100",
       "contactOrganizers": [
@@ -102,6 +104,67 @@
       "interactiveSessions": "An interactive mathematics and logic games session will be conducted after the final presentations, aimed at engaging participants in a fun and intellectually stimulating environment.",
       "submissionGuidelines": "●\tIdeas must be original and innovative\n●\tPartial or full implementation is acceptable\n●\tMathematical logic, proofs, models, or formulations must be clearly explained\n●\tIdeas should demonstrate real-world applicability\n●\tSubmissions must be completed before the deadline\n",
       "variablePricingEnabled": true,
+      "externalRegistrationUrl": "https://forms.gle/Zjd8vJJ7Lxv7NVyi9",
+      "useExternalRegistration": false
+    }
+  },
+  {
+    "id": "mkwoh9qlgu6nu8",
+    "title": "MATH HEIST",
+    "date": "2026-02-17",
+    "payload": {
+      "id": "mkwoh9qlgu6nu8",
+      "img": "https://zuczhjbmspuijwaypdjd.supabase.co/storage/v1/object/public/event-images/events/mkwoh9qlgu6nu8/img-1770734900797.png",
+      "date": "2026-02-17",
+      "time": "09:00 - 04:00",
+      "year": "2025-26",
+      "rules": [],
+      "title": "MATH HEIST",
+      "prizes": {
+        "winner": "",
+        "runnerUp": "",
+        "participation": ""
+      },
+      "stages": [],
+      "status": "Registration Open",
+      "themes": [],
+      "endDate": "2026-02-18",
+      "endTime": "04:00",
+      "category": "Competition",
+      "isOneDay": false,
+      "location": "K-Block ICS LAB",
+      "password": "$2b$12$Dj5f19JP.EvzAJTefnOsM.svxEM7oQIBmrNZDA/EOTYULiLuaw7L.",
+      "teamSize": 4,
+      "createdAt": "2026-01-27T14:14:51.797408+00:00",
+      "eventType": "Competition",
+      "startDate": "2026-02-17",
+      "startTime": "09:00",
+      "updatedAt": "2026-02-11T12:24:25.290207+00:00",
+      "venueType": "Offline",
+      "created_at": "2026-01-27T14:14:51.797408+00:00",
+      "regEndDate": "2026-02-17",
+      "description": "Math Heist is an exciting multi-level math event designed to test logic, strategy, and decision-making skills. Participants progress through investigative challenges, strategic bidding rounds, and final risk-based decisions. The event combines basic mathematics with teamwork, critical thinking, and problem-solving. It aims to make mathematics engaging, competitive, and enjoyable for all participants. Overall, Math Heist creates a dynamic platform to learn, compete, and have fun with math.",
+      "maxTeamSize": 3,
+      "minTeamSize": 2,
+      "participants": 0,
+      "pricingTiers": [
+        {
+          "price": 100,
+          "teamSize": 2
+        },
+        {
+          "price": 120,
+          "teamSize": 3
+        }
+      ],
+      "regStartDate": "2026-01-26",
+      "whatsappLink": "https://chat.whatsapp.com/Bttkut46GAOLp5EoOC5s35?mode=gi_t",
+      "passwordHashed": true,
+      "successMessage": "You're In!",
+      "registrationFee": "120",
+      "contactOrganizers": [],
+      "variablePricingEnabled": true,
+      "externalRegistrationUrl": "https://forms.gle/bEkoDrW8QJBoq5jy7",
       "useExternalRegistration": false
     }
   },
@@ -111,6 +174,7 @@
     "date": "2026-02-17",
     "payload": {
       "id": "mldrqf47hh7o4n",
+      "img": "https://zuczhjbmspuijwaypdjd.supabase.co/storage/v1/object/public/event-images/events/mldrqf47hh7o4n/img-1770575661930.png",
       "date": "2026-02-17",
       "rules": [],
       "title": "MATH HUNT",
@@ -122,43 +186,78 @@
       "stages": [],
       "status": "Registration Open",
       "themes": [],
+      "endDate": "2026-02-18",
       "category": "Competition",
-      "isOneDay": true,
+      "isOneDay": false,
+      "location": "K-Block",
       "password": "$2b$12$89JEiKZZmdbpfW6dvv9NwemeT460zF2gTpjGBM8knH4EGoEaE2lk6",
+      "createdAt": "2026-02-08T13:18:01.888517+00:00",
       "eventType": "Competition",
       "startDate": "2026-02-17",
+      "timeSlots": [
+        {
+          "date": "2026-02-17",
+          "name": "Anime",
+          "endTime": "11:00",
+          "maxTeams": "30",
+          "startTime": "10:00"
+        },
+        {
+          "date": "2026-02-17",
+          "name": "Harry Potter",
+          "endTime": "03:00",
+          "maxTeams": "30",
+          "startTime": "01:30"
+        },
+        {
+          "date": "2026-02-18",
+          "name": "Stranger things ",
+          "endTime": "11:00",
+          "maxTeams": "30",
+          "startTime": "10:00"
+        },
+        {
+          "date": "2026-02-18",
+          "name": "Wednesday",
+          "endTime": "03:00",
+          "maxTeams": "30",
+          "startTime": "01:30"
+        }
+      ],
+      "updatedAt": "2026-02-11T16:04:31.830073+00:00",
       "venueType": "Offline",
       "created_at": "2026-02-08T13:18:01.888517+00:00",
+      "regEndDate": "2026-02-16",
+      "description": "Welcome to the thrilling campus-based competition \"MATH HUNT\" \norganised by RAMANUJAN MATHS CLUB where numbers leads the way !!\nTeam up, Solve mathematical clues and race across locations to unlock the next challenge!\nThis event promises brain-teasing fun and thrilling competition for all MATH ENTHUSIASTS!\nSo, Grab your partner and join the Smartest hunt of SUDHEE-2026!",
+      "maxTeamSize": 2,
+      "minTeamSize": 2,
       "participants": 0,
       "pricingTiers": [
         {
-          "price": 200,
-          "teamSize": 1
-        },
-        {
-          "price": 300,
+          "price": 100,
           "teamSize": 2
-        },
-        {
-          "price": 300,
-          "teamSize": 3
         }
       ],
+      "regStartDate": "2026-02-11",
+      "whatsappLink": "https://chat.whatsapp.com/EUbRhHotVIoG1buesQ9KFg?mode=gi_t",
       "passwordHashed": true,
-      "successMessage": "You're In!",
+      "successMessage": "Thank you for registering for Math Hunt 2K26 by Ramanujan Maths Club! You're officially in for an exciting campus adventure filled with clues ,logic and fun! Join the Whatsapp Group:",
+      "registrationFee": "100/- Rupees",
+      "timeSlotsEnabled": true,
       "contactOrganizers": [],
       "variablePricingEnabled": true,
-      "externalRegistrationUrl": "https://www.cbit.ac.in/",
+      "externalRegistrationUrl": "https://forms.gle/TDuQSnA2T2LtXU1g9",
       "useExternalRegistration": false
     }
   },
   {
     "id": "mldrrkpx7hb21j",
     "title": "MATCH THE MATH",
-    "date": "2026-02-07",
+    "date": "2026-02-17",
     "payload": {
       "id": "mldrrkpx7hb21j",
-      "date": "2026-02-07",
+      "img": "https://zuczhjbmspuijwaypdjd.supabase.co/storage/v1/object/public/event-images/events/mldrrkpx7hb21j/img-1770575765461.png",
+      "date": "2026-02-17",
       "rules": [],
       "title": "MATCH THE MATH",
       "prizes": {
@@ -169,55 +268,40 @@
       "stages": [],
       "status": "Registration Open",
       "themes": [],
+      "endDate": "2026-02-18",
       "category": "Competition",
-      "isOneDay": true,
+      "isOneDay": false,
+      "location": "Power Control & Generator Room",
       "password": "$2b$12$OkRcA4ca7jGZsXdnV.mmg.8zU3S/Xx.UTB7gcTk9VlIlMyfMhKP36",
       "createdAt": "2026-02-08T13:18:55.882723+00:00",
       "eventType": "Competition",
-      "startDate": "2026-02-07",
-      "updatedAt": "2026-02-08T13:18:55.882723+00:00",
+      "startDate": "2026-02-17",
+      "updatedAt": "2026-02-11T11:44:05.073399+00:00",
       "venueType": "Offline",
+      "created_at": "2026-02-08T13:18:55.882723+00:00",
+      "regEndDate": "2026-02-18",
+      "description": "🧠 MATCH THE MATH — Game Concept\nMatch the Math is a fast-paced, team-based brain challenge that tests how quickly and accurately you can think under pressure. This is not about memorizing formulas — it’s about pattern recognition, logical reasoning, and sharp memory, all within a limited time.\nThe game is designed to push your problem-solving instincts through three progressively intense rounds, where speed and clarity of thought matter just as much as correctness.\n\n🔢 Series Sync\nParticipants begin by identifying hidden patterns within numerical sequences. Each question challenges you to recognize relationships, predict the next value, and make quick decisions without overthinking.\nFocus: Logical thinking & pattern recognition\n\n➕ Equation Craft\nIn this round, teams must form correct equations using given numbers and operators. It’s a test of analytical ability where precision and speed decide how far you progress.\nFocus: Logical construction & accuracy under time pressure\n\n🧠 Math Memory\nThe final round challenges your recall skills. Teams must remember and match mathematical concepts, values, or results within a limited time window, demanding both focus and mental agility.\nFocus: Memory, concentration & quick recall",
+      "maxTeamSize": 3,
+      "minTeamSize": 2,
       "participants": 0,
-      "pricingTiers": [],
+      "pricingTiers": [
+        {
+          "price": 100,
+          "teamSize": 2
+        },
+        {
+          "price": 120,
+          "teamSize": 3
+        }
+      ],
+      "regStartDate": "2026-02-10",
+      "whatsappLink": "https://chat.whatsapp.com/F8yJ6AacIh9BLZeOiMjYfD?mode=gi_t",
       "passwordHashed": true,
       "successMessage": "You're In!",
       "contactOrganizers": [],
-      "variablePricingEnabled": false,
-      "useExternalRegistration": false
-    }
-  },
-  {
-    "id": "mkwoh9qlgu6nu8",
-    "title": "MATH HEIST",
-    "date": "2026-02-17",
-    "payload": {
-      "id": "mkwoh9qlgu6nu8",
-      "img": "https://zuczhjbmspuijwaypdjd.supabase.co/storage/v1/object/public/event-images/events/mkwoh9qlgu6nu8/img-1769523291894.png",
-      "date": "2026-02-17",
-      "time": "09:00 - 04:00",
-      "year": "2025-26",
-      "title": "MATH HEIST",
-      "status": "Registration Open",
-      "endTime": "04:00",
-      "category": "Competition",
-      "isOneDay": true,
-      "location": "Seminar Hall",
-      "password": "$2b$12$ly2aBRxPT.Eu691V/CUuhuugJZkCr3D4KTmgETFzRgoejPDhWYIVK",
-      "teamSize": 4,
-      "createdAt": "2026-01-27T14:14:51.797408+00:00",
-      "startDate": "2026-02-17",
-      "startTime": "09:00",
-      "updatedAt": "2026-01-31T06:08:55.640987+00:00",
-      "regEndDate": "2026-02-17",
-      "description": "it is an adventorous event based on money heist series mixed with maths",
-      "maxTeamSize": 4,
-      "minTeamSize": 1,
-      "participants": 0,
-      "pricingTiers": [],
-      "regStartDate": "2026-01-26",
-      "passwordHashed": true,
-      "registrationFee": "120",
-      "variablePricingEnabled": false
+      "variablePricingEnabled": true,
+      "externalRegistrationUrl": "https://forms.gle/VrqKHb3iwstytUum9",
+      "useExternalRegistration": true
     }
   }
 ]

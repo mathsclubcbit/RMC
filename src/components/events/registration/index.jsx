@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CheckCircle, Sparkles, FileText, Users, Shield, Info } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, MapPin, Calendar, Clock, Banknote } from 'lucide-react';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
 // Local imports - hooks
@@ -150,64 +150,7 @@ export default function RegistrationClient({ eventId }) {
         return steps;
     }, [hasTimeSlots, isHackathonOrIdeathon]);
 
-    // Event Highlights Banner - Shows key info upfront
-    const renderEventHighlights = () => {
-        if (!isHackathonOrIdeathon) return null;
-
-        return (
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-                {/* Event Type Badge */}
-                {isIdeathon && (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[10px] font-bold uppercase tracking-wider">
-                        <Sparkles className="w-3 h-3" />
-                        Abstract Required
-                    </span>
-                )}
-                {isHackathonOrIdeathon && !isIdeathon && (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-wider">
-                        <FileText className="w-3 h-3" />
-                        PPT Required
-                    </span>
-                )}
-
-                {/* Team Size Badge */}
-                {teamConstraints.maxTeamSize > 1 && (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70 text-[10px] font-mono uppercase tracking-wider">
-                        <Users className="w-3 h-3" />
-                        {teamConstraints.minTeamSize === teamConstraints.maxTeamSize
-                            ? `Team of ${teamConstraints.minTeamSize}`
-                            : `${teamConstraints.minTeamSize}-${teamConstraints.maxTeamSize} Members`}
-                    </span>
-                )}
-
-                {/* Sample Abstract Download (for Ideathon) */}
-                {isIdeathon && event?.sampleAbstract && (
-                    <a
-                        href={event.sampleAbstract}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[10px] font-bold uppercase tracking-wider hover:bg-purple-500/20 transition-colors"
-                    >
-                        <FileText className="w-3 h-3" />
-                        📄 Sample Abstract (PDF/DOC)
-                    </a>
-                )}
-
-                {/* Sample PPT Download */}
-                {event?.samplePpt && (
-                    <a
-                        href={event.samplePpt}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-teal/10 border border-teal/30 text-teal text-[10px] font-bold uppercase tracking-wider hover:bg-teal/20 transition-colors"
-                    >
-                        <FileText className="w-3 h-3" />
-                        📊 Sample PPT (Presentation)
-                    </a>
-                )}
-            </div>
-        );
-    };
+    // Event Highlights Banner - Removed in favor of new Info Grid
 
     // Computed values
     const amountToPay = useMemo(() =>
@@ -446,14 +389,7 @@ export default function RegistrationClient({ eventId }) {
     };
 
     return (
-        <div className="min-h-screen bg-[#020617] font-sans selection:bg-teal/30 selection:text-teal relative overflow-x-hidden" data-lenis-prevent>
-            {/* Background Effects */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(45,212,191,0.05),transparent_50%)]" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(139,92,246,0.03),transparent_50%)]" />
-                {/* Noise texture removed for performance */}
-            </div>
-
+        <div className="min-h-screen bg-black font-sans text-white selection:bg-white/20">
             {/* Poster Modal */}
             <AnimatePresence>
                 {showPoster && (
@@ -477,270 +413,226 @@ export default function RegistrationClient({ eventId }) {
             {/* Navbar */}
             <Link
                 href="/events"
-                className="fixed top-4 left-4 z-50 flex items-center gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 text-white/60 hover:text-white hover:border-teal/50 transition-all md:absolute md:top-8 md:left-8 group"
+                className="fixed top-6 left-6 z-50 flex items-center gap-3 px-4 py-2 bg-zinc-900/80 backdrop-blur-sm hover:bg-zinc-800 border border-white/5 rounded-full transition-all group"
             >
-                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                <span className="text-[10px] font-mono uppercase tracking-widest">Events</span>
+                <ArrowLeft className="w-4 h-4 text-zinc-400 group-hover:-translate-x-1 transition-transform" />
+                <span className="text-xs font-medium text-zinc-300 group-hover:text-white">BACK</span>
             </Link>
 
-            {/* Main Layout Container */}
-            <div className="md:flex md:items-center md:justify-center md:min-h-screen md:p-6 z-10 relative">
-                {/* Responsive Card Wrapper */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                    className="w-full min-h-screen md:min-h-0 md:w-[95vw] md:max-w-7xl md:rounded-3xl md:border md:border-white/10 md:bg-[#0f111a]/95 md:backdrop-blur-xl md:shadow-2xl md:overflow-hidden flex flex-col md:max-h-[90vh]"
-                >
-                    {/* Desktop: Side-by-side layout */}
-                    <div className="flex-1 flex flex-col md:flex-row min-h-0">
-                        {/* Left Panel - Event Details (Desktop Only) */}
-                        <div className="hidden md:flex flex-col w-[40%] lg:w-[45%] bg-[#080a12] border-r border-white/10 overflow-hidden relative group">
-                            {/* Poster Section - REMOVED for cleaner look per user request */}
-
-                            {/* Event Info */}
-                            <div className="flex-1 overflow-y-auto p-6 lg:p-8 custom-scrollbar">
-                                <h1 className="text-2xl lg:text-3xl font-serif font-bold text-white mb-2 tracking-wide">{event.title}</h1>
-
-                                {/* Event Highlights Banner */}
-                                {renderEventHighlights()}
-
-                                <p className="text-white/60 text-xs font-mono uppercase tracking-widest mb-6 flex items-center gap-2 mt-4">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-teal shadow-[0_0_10px_rgba(45,212,191,0.8)]" />
-                                    {event.date} • {event.eventType}
-                                </p>
-
-                                {/* Submission Requirements Callout (for Hackathon/Ideathon) */}
-                                {isHackathonOrIdeathon && (
-                                    <div className="mb-8 bg-gradient-to-r from-purple-500/10 to-teal/5 rounded-xl p-5 border border-purple-500/20">
-                                        <h4 className="flex items-center gap-2 text-purple-300 font-bold mb-3 uppercase tracking-wider text-xs">
-                                            <Sparkles className="w-4 h-4" />
-                                            Submission Requirements
-                                        </h4>
-                                        <p className="text-white/60 text-sm leading-relaxed mb-3">
-                                            {isIdeathon
-                                                ? "Submit your abstract document outlining your innovative idea. Judges will evaluate creativity, feasibility, and impact."
-                                                : "Submit a presentation (PPT/PDF) showcasing your project concept, tech stack, and implementation approach."
-                                            }
-                                        </p>
-                                        <div className="flex flex-col sm:flex-row gap-3 mt-4">
-                                            {event?.sampleAbstract && isIdeathon && (
-                                                <a
-                                                    href={event.sampleAbstract}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-bold uppercase tracking-wider hover:bg-purple-500/30 transition-colors w-full sm:w-auto"
-                                                >
-                                                    <FileText className="w-4 h-4" />
-                                                    📄 Abstract Format (PDF/DOC)
-                                                </a>
-                                            )}
-                                            {event?.samplePpt && (
-                                                <a
-                                                    href={event.samplePpt}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-teal/20 border border-teal/30 text-teal text-xs font-bold uppercase tracking-wider hover:bg-teal/30 transition-colors w-full sm:w-auto"
-                                                >
-                                                    <FileText className="w-4 h-4" />
-                                                    📊 PPT Template
-                                                </a>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Inline Rules Preview */}
-                                {event.rules?.length > 0 && (
-                                    <div className="mb-8 bg-white/5 rounded-xl p-5 border border-white/10">
-                                        <h4 className="flex items-center gap-2 text-teal font-bold mb-3 uppercase tracking-wider text-xs">
-                                            <Shield className="w-4 h-4" />
-                                            Key Rules
-                                        </h4>
-                                        <ul className="space-y-2">
-                                            {event.rules.slice(0, 3).map((rule, i) => (
-                                                <li key={i} className="flex gap-2 text-sm text-white/70">
-                                                    <span className="text-teal mt-1.5 w-1.5 h-1.5 rounded-full bg-teal shrink-0" />
-                                                    <span className="leading-relaxed">{rule}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                        {event.rules.length > 3 && (
-                                            <button
-                                                onClick={() => setShowDetails(true)}
-                                                className="mt-3 text-teal/70 hover:text-teal text-xs font-mono transition-colors"
-                                            >
-                                                + {event.rules.length - 3} more rules →
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-
-                                <div className="mb-8 border-t border-white/10 pt-6">
-                                    <button
-                                        onClick={() => setShowDetails(true)}
-                                        className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors flex items-center justify-center gap-2 group"
-                                    >
-                                        <Info className="w-4 h-4" />
-                                        <span className="uppercase tracking-widest text-xs font-bold">View All Details</span>
-                                    </button>
-
-                                    <button
-                                        onClick={() => setShowPoster(true)}
-                                        className="w-full mt-3 py-2 text-white/40 hover:text-white transition-colors text-[10px] uppercase tracking-widest font-mono flex items-center justify-center gap-2"
-                                    >
-                                        <FileText className="w-3 h-3" />
-                                        View Poster
-                                    </button>
+            {/* Main Layout */}
+            <div className="min-h-screen md:flex">
+                {/* Left Panel - Event Info (Desktop) */}
+                <div className="hidden md:flex flex-col w-[40%] xl:w-[35%] bg-zinc-950 border-r border-white/5 relative">
+                    <div className="flex-1 overflow-y-auto p-12 custom-scrollbar">
+                        {/* Poster */}
+                        {(event.posterMobile || event.img) && (
+                            <div className="relative aspect-video w-full rounded-sm overflow-hidden mb-12 border border-white/10 group cursor-pointer" onClick={() => setShowPoster(true)}>
+                                <Image
+                                    src={event.posterMobile || event.img}
+                                    alt={event.title}
+                                    fill
+                                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                />
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <span className="text-xs font-mono uppercase tracking-widest text-white">View Poster</span>
                                 </div>
+                            </div>
+                        )}
 
-                                {/* EventDetailsContent removed from inline view per user request. 
-                                    Access via "View All Details" button which opens modal. */}
+                        {/* Title & Metadata */}
+                        <div className="mb-12">
+                            <h1 className="text-4xl lg:text-5xl font-bold text-white mb-6 tracking-tight">{event.title}</h1>
+                            <div className="flex flex-wrap gap-3">
+                                {event?.category && (
+                                    <span className="px-3 py-1 bg-white/5 border border-white/5 rounded-full text-[10px] font-mono text-zinc-400 uppercase tracking-widest">
+                                        {event.category}
+                                    </span>
+                                )}
+                                {event?.venueType && (
+                                    <span className="px-3 py-1 bg-white/5 border border-white/5 rounded-full text-[10px] font-mono text-zinc-400 uppercase tracking-widest">
+                                        {event.venueType}
+                                    </span>
+                                )}
                             </div>
                         </div>
 
-                        {/* Right Panel - Registration Form */}
-                        <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
-                            {/* Mobile Header */}
-                            <div className="pt-16 pb-4 px-6 md:pt-8 md:px-12 flex-shrink-0 md:hidden">
-                                <h2 className="text-2xl md:text-3xl font-serif font-bold text-white mb-1 tracking-wide">{event.title}</h2>
-                                <p className="text-white/60 text-xs font-mono uppercase tracking-widest mb-3">{event.date}</p>
-                                {/* Event Highlights (Mobile) */}
-                                {renderEventHighlights()}
+                        {/* Info Grid */}
+                        <div className="grid grid-cols-2 gap-4 mb-12">
+                            <MetricWrapper icon={Calendar} label="Date" value={event.date} />
+                            <MetricWrapper icon={Clock} label="Type" value={event.eventType} />
+                            <MetricWrapper icon={MapPin} label="Location" value={event.location || "Online"} />
+                            <MetricWrapper icon={Banknote} label="Fee" value={amountToPay === 0 ? "Free" : `₹${amountToPay}`} />
+                        </div>
+
+                        {/* About */}
+                        <div className="mb-12">
+                            <h3 className="text-sm font-bold text-zinc-200 uppercase tracking-widest mb-4">About Event</h3>
+                            <p className="text-sm text-zinc-400 leading-relaxed">
+                                {event.description || "No description available."}
+                            </p>
+                        </div>
+
+                        {/* Rules */}
+                        {event.rules?.length > 0 && (
+                            <div className="mb-12">
+                                <h3 className="text-sm font-bold text-zinc-200 uppercase tracking-widest mb-4">Guidelines</h3>
+                                <ul className="space-y-3">
+                                    {event.rules.slice(0, 3).map((rule, i) => (
+                                        <li key={i} className="flex gap-3 text-sm text-zinc-400">
+                                            <span className="w-1 h-1 rounded-full bg-zinc-600 mt-2 shrink-0" />
+                                            {rule}
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
+                        )}
 
-                            {/* Desktop Header spacer */}
-                            <div className="hidden md:block h-8 flex-shrink-0" />
-
-                            {/* Mobile Tabs */}
-                            <div className="px-6 border-b border-white/10 md:hidden mb-4">
-                                <div className="flex relative">
-                                    <button
-                                        onClick={() => setMobileTab('register')}
-                                        className={`flex-1 pb-3 text-xs font-bold uppercase tracking-widest transition-all z-10 ${mobileTab === 'register' ? 'text-teal' : 'text-white/40 hover:text-white'}`}
-                                    >
-                                        Register
-                                    </button>
-                                    <button
-                                        onClick={() => setMobileTab('details')}
-                                        className={`flex-1 pb-3 text-xs font-bold uppercase tracking-widest transition-all z-10 ${mobileTab === 'details' ? 'text-teal' : 'text-white/40 hover:text-white'}`}
-                                    >
-                                        Event Intel
-                                    </button>
-
-                                    {/* Animated Tab Indicator */}
-                                    <motion.div
-                                        className="absolute bottom-0 h-[2px] bg-teal shadow-[0_0_10px_rgba(45,212,191,0.5)] w-1/2"
-                                        animate={{ x: mobileTab === 'register' ? '0%' : '100%' }}
-                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Content Area */}
-                            <div className="flex-1 min-h-0 px-6 md:px-12 pb-6 md:pb-8 md:overflow-y-auto custom-scrollbar" data-lenis-prevent>
-                                {/* Mobile Details Tab Content */}
-                                <div className={`space-y-8 pb-32 md:hidden ${mobileTab === 'details' ? 'block' : 'hidden'}`}>
-                                    {(event.posterMobile || event.img) && (
-                                        <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden border border-white/10 shadow-lg mb-6">
-                                            <Image
-                                                src={event.posterMobile || event.img}
-                                                alt={event.title}
-                                                fill
-                                                className="object-cover"
-                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                            />
-                                        </div>
+                        {/* Footer Links */}
+                        <div className="mt-auto pt-8 border-t border-white/5 flex gap-6">
+                            <button onClick={() => setShowDetails(true)} className="text-xs text-zinc-500 hover:text-white hover:underline uppercase tracking-widest transition-colors font-mono">
+                                View Full Details
+                            </button>
+                            {isHackathonOrIdeathon && (
+                                <div className="flex gap-4 ml-auto">
+                                    {event?.sampleAbstract && isIdeathon && (
+                                        <MetricActionLink href={event.sampleAbstract} label="Abstract" />
                                     )}
-                                    <EventDetailsContent
-                                        event={event}
-                                        isHackathonOrIdeathon={isHackathonOrIdeathon}
-                                        isIdeathon={isIdeathon}
-                                    />
+                                    {event?.samplePpt && (
+                                        <MetricActionLink href={event.samplePpt} label="PPT Template" />
+                                    )}
                                 </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
 
-                                {/* Registration Content */}
-                                <div className={`h-full flex flex-col pb-32 md:pb-0 ${mobileTab === 'details' ? 'hidden md:flex' : 'flex'}`}>
-                                    {isSuccess ? (
-                                        <SuccessView
-                                            event={event}
-                                            registrationId={registrationId}
-                                            qrCodeUrl={qrCodeUrl}
-                                        />
-                                    ) : (
-                                        <>
+                {/* Right Panel - Form (Mobile & Desktop) */}
+                <div className="flex-1 flex flex-col h-screen md:h-auto overflow-hidden bg-black relative">
+                    {/* Mobile Header */}
+                    <div className="md:hidden pt-20 pb-6 px-6 border-b border-white/5 shrink-0">
+                        <h2 className="text-2xl font-bold text-white mb-2">{event.title}</h2>
+                        <div className="flex items-center gap-3 text-xs text-zinc-500 font-mono">
+                            <span>{event.date}</span>
+                            <span>•</span>
+                            <span>{event.eventType}</span>
+                        </div>
+                    </div>
+
+                    {/* Mobile Tabs */}
+                    <div className="md:hidden flex border-b border-white/5">
+                        <button
+                            onClick={() => setMobileTab('register')}
+                            className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-colors ${mobileTab === 'register' ? 'bg-white/5 text-white' : 'text-zinc-600'}`}
+                        >
+                            Register
+                        </button>
+                        <button
+                            onClick={() => setMobileTab('details')}
+                            className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-colors ${mobileTab === 'details' ? 'bg-white/5 text-white' : 'text-zinc-600'}`}
+                        >
+                            Details
+                        </button>
+                    </div>
+
+                    {/* Content Area */}
+                    <div className="flex-1 overflow-y-auto custom-scrollbar" data-lenis-prevent>
+                        <div className="p-6 md:p-12 lg:p-24 max-w-4xl mx-auto w-full">
+                            
+                            {/* Mobile Details Tab */}
+                            <div className={`space-y-8 pb-32 md:hidden ${mobileTab === 'details' ? 'block' : 'hidden'}`}>
+                                <EventDetailsContent event={event} isHackathonOrIdeathon={isHackathonOrIdeathon} isIdeathon={isIdeathon}/>
+                            </div>
+
+                            {/* Registration Form */}
+                            <div className={`flex flex-col pb-32 md:pb-0 ${mobileTab === 'details' ? 'hidden md:flex' : 'flex'}`}>
+                                {isSuccess ? (
+                                    <SuccessView event={event} registrationId={registrationId} qrCodeUrl={qrCodeUrl} />
+                                ) : (
+                                    <>
+                                        {/* Stepper */}
+                                        <div className="mb-12">
                                             <RegistrationStepper
                                                 currentStep={currentStep}
                                                 isHackathonOrIdeathon={isHackathonOrIdeathon}
                                                 requiresTeamStep={requiresTeamStep}
                                                 hasTimeSlots={hasTimeSlots}
                                             />
+                                        </div>
 
-                                            <AnimatePresence mode="wait">
-                                                {errorMessage && (
-                                                    <motion.div
-                                                        initial={{ opacity: 0, height: 0 }}
-                                                        animate={{ opacity: 1, height: 'auto' }}
-                                                        exit={{ opacity: 0, height: 0 }}
-                                                        className="mb-6 bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex gap-3 text-red-300 text-sm items-start overflow-hidden"
-                                                    >
-                                                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full mt-1.5 shrink-0 animate-pulse" />
-                                                        {errorMessage}
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-
-                                            <form onSubmit={e => e.preventDefault()} className="flex-1 relative">
+                                        {/* Error Message */}
+                                        <AnimatePresence mode="wait">
+                                            {errorMessage && (
                                                 <motion.div
-                                                    key={currentStep}
-                                                    initial={{ opacity: 0, x: 10 }}
-                                                    animate={{ opacity: 1, x: 0 }}
-                                                    exit={{ opacity: 0, x: -10 }}
-                                                    transition={{ duration: 0.3 }}
+                                                    initial={{ opacity: 0, y: -10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -10 }}
+                                                    className="mb-8 p-4 bg-red-950/20 border-l-2 border-red-500 text-red-200 text-sm"
                                                 >
-                                                    {renderStepContent()}
+                                                    <span className="font-mono text-red-500 font-bold mr-2">ERROR:</span>
+                                                    {errorMessage}
                                                 </motion.div>
-                                            </form>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
+                                            )}
+                                        </AnimatePresence>
 
-                            {/* Footer Actions */}
-                            {!isSuccess && mobileTab === 'register' && (
-                                <div className="fixed bottom-0 left-0 right-0 z-50 p-6 bg-[#020617]/90 backdrop-blur-lg border-t border-white/10 md:relative md:flex-shrink-0 md:p-6 md:pt-4 md:bg-transparent md:backdrop-blur-none md:border-t-0 md:border-t md:border-white/5">
-                                    <div className="max-w-md mx-auto flex items-center gap-4">
-                                        {currentStep > 1 && (
-                                            <button
-                                                onClick={prevStep}
-                                                className="px-5 py-4 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/30 transition-all active:scale-95"
+                                        {/* Dynamic Form Step */}
+                                        <form onSubmit={e => e.preventDefault()}>
+                                            <motion.div
+                                                key={currentStep}
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ duration: 0.4, ease: "circOut" }}
                                             >
-                                                <ArrowLeft className="w-5 h-5" />
-                                            </button>
-                                        )}
+                                                {renderStepContent()}
+                                            </motion.div>
+                                        </form>
 
-                                        {currentStep < totalSteps ? (
+                                        {/* Desktop Footer Actions (Inline) */}
+                                        <div className="hidden md:flex items-center gap-4 mt-12 pt-8 border-t border-white/5">
+                                            {currentStep > 1 && (
+                                                <button
+                                                    onClick={prevStep}
+                                                    className="px-6 py-3 rounded-sm border border-white/10 text-zinc-400 hover:text-white hover:border-white/30 transition-all text-sm font-medium"
+                                                >
+                                                    Back
+                                                </button>
+                                            )}
                                             <button
-                                                onClick={nextStep}
-                                                className="flex-1 py-4 rounded-xl bg-gradient-to-r from-teal to-emerald-500 text-black font-bold uppercase tracking-widest text-xs hover:shadow-[0_0_30px_rgba(45,212,191,0.3)] transition-all flex items-center justify-center gap-2 group active:scale-[0.98]"
-                                            >
-                                                Continue <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                            </button>
-                                        ) : (
-                                            <button
-                                                onClick={handleSubmit}
+                                                onClick={currentStep < totalSteps ? nextStep : handleSubmit}
                                                 disabled={isSubmitting}
-                                                className="flex-1 py-4 rounded-xl bg-gradient-to-r from-teal to-emerald-500 text-black font-bold uppercase tracking-widest text-xs hover:shadow-[0_0_30px_rgba(45,212,191,0.3)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+                                                className="flex-1 px-6 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                {isSubmitting ? 'Processing...' : 'Complete Registration'} <CheckCircle className="w-4 h-4" />
+                                                {isSubmitting ? 'Processing...' : (currentStep < totalSteps ? 'Continue' : 'Submit Registration')}
                                             </button>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </motion.div>
+
+                    {/* Mobile Footer Actions (Fixed) */}
+                    {!isSuccess && mobileTab === 'register' && (
+                        <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-black border-t border-white/10 z-20">
+                            <div className="flex gap-3">
+                                {currentStep > 1 && (
+                                    <button
+                                        onClick={prevStep}
+                                        className="px-4 py-3 bg-zinc-900 text-white rounded-sm"
+                                    >
+                                        <ArrowLeft className="w-5 h-5" />
+                                    </button>
+                                )}
+                                <button
+                                    onClick={currentStep < totalSteps ? nextStep : handleSubmit}
+                                    disabled={isSubmitting}
+                                    className="flex-1 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs rounded-sm"
+                                >
+                                    {isSubmitting ? 'Processing...' : (currentStep < totalSteps ? 'Continue' : 'Submit')}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <ConfirmationModal
@@ -750,8 +642,39 @@ export default function RegistrationClient({ eventId }) {
                 title={modal.title}
                 message={modal.message}
                 type={modal.type}
-                confirmText="Understand"
+                confirmText="Close"
             />
         </div>
+    );
+}
+
+/**
+ * Helper component for information metrics - Simple version
+ */
+function MetricWrapper({ icon: Icon, label, value }) {
+    return (
+        <div className="p-4 bg-zinc-900/50 border border-white/5 rounded-sm">
+            <div className="flex items-center gap-3 mb-2">
+                <Icon className="w-4 h-4 text-zinc-500" />
+                <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-mono">{label}</span>
+            </div>
+             <p className="text-sm font-medium text-zinc-200">{value}</p>
+        </div>
+    );
+}
+
+/**
+ * Helper component for simple links
+ */
+function MetricActionLink({ href, label }) {
+    return (
+        <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-zinc-400 hover:text-white border-b border-zinc-700 hover:border-white pb-0.5 transition-colors"
+        >
+            {label}
+        </a>
     );
 }

@@ -36,75 +36,96 @@ function TeamStep({
         <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4 }}
-            className="space-y-6"
+            className="space-y-8"
         >
-            {/* Team Status Banner */}
-            <div className={`p-4 rounded-xl border flex items-center justify-between ${hasPricingTierForCurrentTeamSize
-                    ? 'bg-teal/5 border-teal/20'
-                    : 'bg-red-500/5 border-red-500/20'
-                }`}>
-                <div className="flex items-center gap-3">
-                    <div className={`bg-black/30 w-10 h-10 rounded-lg flex items-center justify-center font-bold font-mono text-lg border ${hasPricingTierForCurrentTeamSize ? 'text-teal border-teal/30' : 'text-red-400 border-red-500/30'
-                        }`}>
-                        {currentTeamSize}
-                    </div>
-                    <div>
-                        <div className="text-[10px] uppercase tracking-widest text-white/50 mb-0.5">Team Size</div>
-                        <div className="text-white text-xs font-medium">
-                            {teamConstraints.minTeamSize === teamConstraints.maxTeamSize
-                                ? `Required: ${teamConstraints.minTeamSize}`
-                                : `Min: ${teamConstraints.minTeamSize} • Max: ${teamConstraints.maxTeamSize}`
-                            }
+            {/* Status Bar */}
+            <div className={`
+                p-4 border-l-2
+                ${hasPricingTierForCurrentTeamSize
+                    ? 'border-zinc-100 bg-zinc-900/50'
+                    : 'border-red-500 bg-red-500/5'
+                }
+            `}>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-6">
+                        <div>
+                            <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium mb-1">
+                                Current Size
+                            </div>
+                            <div className={`text-2xl font-mono
+                                ${hasPricingTierForCurrentTeamSize ? 'text-white' : 'text-red-500'}
+                            `}>
+                                {currentTeamSize.toString().padStart(2, '0')}
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                {/* Dynamic Price Display */}
-                {variablePricingEnabled && (
-                    <div className="text-right">
-                        <div className="text-[10px] uppercase tracking-widest text-white/50 mb-0.5">Price</div>
-                        <div className={`font-mono font-bold ${hasPricingTierForCurrentTeamSize ? 'text-teal' : 'text-red-400'}`}>
-                            {hasPricingTierForCurrentTeamSize ? `₹${amountToPay}` : 'N/A'}
+                        <div className="h-8 w-px bg-zinc-800" />
+
+                        <div>
+                            <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium mb-1">
+                                Required
+                            </div>
+                            <div className="text-sm text-zinc-300 font-mono">
+                                {teamConstraints.minTeamSize === teamConstraints.maxTeamSize
+                                    ? teamConstraints.minTeamSize
+                                    : `${teamConstraints.minTeamSize}-${teamConstraints.maxTeamSize}`
+                                }
+                            </div>
                         </div>
                     </div>
-                )}
+
+                    {variablePricingEnabled && (
+                        <div className="text-right">
+                            <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium mb-1">
+                                Fee
+                            </div>
+                            <div className={`font-mono text-lg
+                                ${hasPricingTierForCurrentTeamSize ? 'text-white' : 'text-zinc-600'}
+                            `}>
+                                {hasPricingTierForCurrentTeamSize ? `₹${amountToPay}` : '---'}
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* Team Leader Card (Read Only) */}
-            <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 relative overflow-hidden ring-1 ring-teal/30 shadow-[0_0_20px_rgba(45,212,191,0.1)]">
-                <div className="absolute top-0 right-0 p-3 opacity-10">
-                    <Shield className="w-12 h-12 rotate-12" />
-                </div>
-                <div className="flex items-start gap-4 relative z-10">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal to-emerald-600 flex items-center justify-center text-black font-bold shadow-lg shrink-0">
-                        1
+            {/* Team Leader */}
+            <div className="group relative bg-zinc-900/30 border border-zinc-800 p-6 transition-all hover:bg-zinc-900/50 hover:border-zinc-700">
+                <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                        <div className="inline-flex items-center gap-2 mb-2">
+                             <div className="w-1.5 h-1.5 bg-zinc-100" />
+                             <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-medium">Team Leader</span>
+                        </div>
+                        <div className="text-xl text-white font-medium">
+                            {formData.name || "Unknown"}
+                        </div>
+                        <div className="text-sm text-zinc-500 font-mono">
+                            {formData.email}
+                        </div>
                     </div>
-                    <div>
-                        <div className="text-[10px] font-mono uppercase tracking-widest text-teal mb-1">Team Leader</div>
-                        <div className="text-white font-serif text-lg leading-none mb-1">{formData.name || "Your Name"}</div>
-                        <div className="text-white/40 text-xs">{formData.email || "your.email@example.com"}</div>
+                    <div className="p-3 bg-zinc-950 border border-zinc-800 text-zinc-400">
+                         <Shield className="w-5 h-5" />
                     </div>
                 </div>
             </div>
 
             {/* Teammates List */}
-            <div className="space-y-3">
+            <div className="space-y-4">
                 <AnimatePresence mode="popLayout">
                     {teamMembers.map((member, idx) => (
                         <motion.div
                             key={idx}
-                            initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, height: 0, marginBottom: 0 }}
-                            transition={{ duration: 0.2 }}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                         >
                             <TeamMemberCard
                                 member={member}
                                 index={idx}
                                 onChange={onUpdateTeammate}
                                 onRemove={onRemoveTeammate}
-                                canRemove={teamMembers.length >= teamConstraints.minTeamSize} // Fix: Logic check
+                                canRemove={teamMembers.length >= teamConstraints.minTeamSize}
                             />
                         </motion.div>
                     ))}
@@ -112,20 +133,20 @@ function TeamStep({
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-3 pt-2">
+            <div className="flex items-center gap-4">
                 <button
                     type="button"
                     onClick={onAddTeammate}
                     disabled={currentTeamSize >= teamConstraints.maxTeamSize}
-                    className="flex-1 py-3 px-4 rounded-xl border border-dashed border-white/20 hover:border-teal/50 hover:bg-teal/5 text-white/60 hover:text-teal transition-all text-xs font-mono uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                    className="flex-1 py-4 px-6 bg-white text-black text-sm font-medium tracking-wide hover:bg-zinc-200 disabled:opacity-20 disabled:cursor-not-allowed transition-colors uppercase flex items-center justify-center gap-2"
                 >
-                    <UserPlus className="w-4 h-4" /> Add Teammate
+                    <UserPlus className="w-4 h-4" /> Add Member
                 </button>
                 {teamMembers.length > 0 && currentTeamSize > teamConstraints.minTeamSize && (
                     <button
                         type="button"
                         onClick={() => onRemoveTeammate(teamMembers.length - 1)}
-                        className="p-3 rounded-xl border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 text-white/40 hover:text-red-400 transition-all"
+                        className="py-4 px-6 border border-zinc-800 text-zinc-400 hover:text-red-400 hover:border-red-900/30 transition-colors"
                     >
                         <UserMinus className="w-4 h-4" />
                     </button>
