@@ -285,6 +285,13 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
     // When editing, exclude the password field (it's hashed and shouldn't be displayed)
     const [event, setEvent] = useState(() => {
         const base = { ...defaultEvent, ...(initialEvent || {}) };
+
+        // Ensure explicit empty strings for nullable fields to preventing uncontrolled inputs
+        const stringFields = ['img', 'posterDesktop', 'samplePpt', 'sampleAbstract', 'externalRegistrationUrl'];
+        stringFields.forEach(key => {
+            if (base[key] === undefined || base[key] === null) base[key] = "";
+        });
+
         // Don't populate password field when editing - it might contain a bcrypt hash
         if (mode === "edit") {
             delete base.password;
@@ -830,13 +837,13 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                         <Field label="Event Card Image" hint="Square image for lists.">
                             <div className="flex flex-col gap-3">
-                                <input value={event.img || ""} onChange={(e) => setField("img", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/img.jpg" />
+                                <input value={event.img ?? ""} onChange={(e) => setField("img", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/img.jpg" />
                                 <input type="file" accept="image/*" onChange={(e) => setImgFile(e.target.files?.[0])} className="text-sm text-white/60 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-white/10 file:text-white hover:file:bg-white/20" />
                             </div>
                         </Field>
                         <Field label="Desktop Poster" hint="Large banner.">
                             <div className="flex flex-col gap-3">
-                                <input value={event.posterDesktop || ""} onChange={(e) => setField("posterDesktop", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/poster-d.jpg" />
+                                <input value={event.posterDesktop ?? ""} onChange={(e) => setField("posterDesktop", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/poster-d.jpg" />
                                 <input type="file" accept="image/*" onChange={(e) => setPosterDesktopFile(e.target.files?.[0])} className="text-sm text-white/60" />
                             </div>
                         </Field>
@@ -853,19 +860,19 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                         <Field label="Event Card Image" hint="Square image for lists.">
                             <div className="flex flex-col gap-3">
-                                <input value={event.img || ""} onChange={(e) => setField("img", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/img.jpg" />
+                                <input value={event.img ?? ""} onChange={(e) => setField("img", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/img.jpg" />
                                 <input type="file" accept="image/*" onChange={(e) => setImgFile(e.target.files?.[0])} className="text-sm text-white/60 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-white/10 file:text-white hover:file:bg-white/20" />
                             </div>
                         </Field>
                         <Field label="Desktop Poster" hint="Large banner.">
                             <div className="flex flex-col gap-3">
-                                <input value={event.posterDesktop || ""} onChange={(e) => setField("posterDesktop", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/poster-d.jpg" />
+                                <input value={event.posterDesktop ?? ""} onChange={(e) => setField("posterDesktop", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/poster-d.jpg" />
                                 <input type="file" accept="image/*" onChange={(e) => setPosterDesktopFile(e.target.files?.[0])} className="text-sm text-white/60" />
                             </div>
                         </Field>
                         <Field label="Sample Presentation" hint="PPT/PDF format template for participants.">
                             <div className="flex flex-col gap-3">
-                                <input value={event.samplePpt || ""} onChange={(e) => setField("samplePpt", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/sample.pptx" />
+                                <input value={event.samplePpt ?? ""} onChange={(e) => setField("samplePpt", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/sample.pptx" />
                                 <input
                                     type="file"
                                     accept=".ppt,.pptx,.pdf"
@@ -876,7 +883,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                         </Field>
                         <Field label="Sample Abstract" hint="Abstract format/template for participants (especially for Ideathon).">
                             <div className="flex flex-col gap-3">
-                                <input value={event.sampleAbstract || ""} onChange={(e) => setField("sampleAbstract", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/sample-abstract.pdf" />
+                                <input value={event.sampleAbstract ?? ""} onChange={(e) => setField("sampleAbstract", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/sample-abstract.pdf" />
                                 <input
                                     type="file"
                                     accept=".pdf,.doc,.docx"

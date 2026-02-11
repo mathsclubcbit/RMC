@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { randomInt } from 'crypto';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { uploadToSupabaseStorage } from '@/lib/supabase/storage';
 import { createAdminClient } from '@/lib/supabase/server';
 import { withRateLimit } from '@/lib/rate-limiter';
 // We import Google logic dynamically or keep it for backup
@@ -114,6 +115,7 @@ export async function POST(req: NextRequest) {
 
         let expectedAmount = parseAmount(amountFromClient);
         let isHackathonOrIdeathon = false;
+        let isIdeathon = false;
         let eventDate = 'To be announced';
         let eventTime = '';
         let eventVenue = 'CBIT Campus';
@@ -121,22 +123,22 @@ export async function POST(req: NextRequest) {
         try {
             const { data: eventRow, error: eventError } = await supabase
                 .from('events')
-                .select('payload, event_type, category')
+                .select('payload')
                 .eq('id', String(eventId))
                 .single();
 
             if (!eventError && eventRow) {
-                const row = eventRow as { payload: EventPayload; event_type?: string; eventType?: string; category?: string };
-                // Determine type
-                const eType = row.event_type || row.eventType || '';
-                const eCat = row.category || '';
-                isHackathonOrIdeathon = eType === 'Hackathon' || eType === 'Ideathon' || eCat === 'Hackathon' || eCat === 'Ideathon';
-
-                const payload = row.payload as EventPayload & {
+                const payload = eventRow.payload as EventPayload & {
+                    eventType?: string; category?: string;
                     date?: string; startDate?: string;
                     time?: string; startTime?: string; endTime?: string;
                     location?: string; venue?: string;
                 };
+                // Determine type from payload (eventType is stored inside payload JSONB)
+                const eType = payload?.eventType || '';
+                const eCat = payload?.category || '';
+                isHackathonOrIdeathon = eType === 'Hackathon' || eType === 'Ideathon' || eCat === 'Hackathon' || eCat === 'Ideathon';
+                isIdeathon = eType === 'Ideathon' || eCat === 'Ideathon';
 
                 // Extract details for email
                 if (payload) {
@@ -190,21 +192,15 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'UTR_ALREADY_USED', message: 'This UTR ID has already been submitted.' }, { status: 409 });
         }
 
-        // --- 5. File Uploads (Cloudinary) ---
-        // Parallelize uploads
-        const uploadPromises = [
-            uploadToCloudinary(screenshot).then(url => ({ type: 'screenshot', url }))
-        ];
+        // --- 5. File Uploads ---
+        // Screenshot -> Cloudinary (image), PPT/Abstract -> Supabase Storage (document)
+        const screenshotUrl = await uploadToCloudinary(screenshot);
 
+        let pptUrl = '';
         if (isHackathonOrIdeathon && pptFile) {
-            uploadPromises.push(
-                uploadToCloudinary(pptFile).then(url => ({ type: 'ppt', url }))
-            );
+            const folder = isIdeathon ? 'abstracts' : 'presentations';
+            pptUrl = await uploadToSupabaseStorage(pptFile, folder);
         }
-
-        const uploadResults = await Promise.all(uploadPromises);
-        const screenshotUrl = uploadResults.find(r => r.type === 'screenshot')?.url || '';
-        const pptUrl = uploadResults.find(r => r.type === 'ppt')?.url || '';
 
         // --- 6. Generate Ticket Code ---
         let registrationId = '';
@@ -251,7 +247,11 @@ export async function POST(req: NextRequest) {
             const sheetId = process.env.GOOGLE_SHEET_ID;
             if (sheetId) {
                 const timestamp = new Date().toISOString();
-                // Columns: A:Timestamp, B:Ticket, C:Event, D:Name, E:Email, F:Phone, G:Roll, H:Dept, I:Team, J:UTR, K:Amt, L:Status, M:Screenshot, N:Abstract, O:PPT
+                // For Ideathon, the uploaded file is the Abstract. For Hackathon, it's the PPT.
+                // We map pptUrl to the correct column based on this.
+                const abstractLink = isIdeathon ? pptUrl : (abstract || '');
+                const pptLink = isIdeathon ? '' : pptUrl;
+
                 const rowData = [
                     timestamp,
                     registrationId,
@@ -266,8 +266,8 @@ export async function POST(req: NextRequest) {
                     String(expectedAmount),
                     'PENDING',
                     screenshotUrl, // Cloudinary URL replacing Drive Link
-                    abstract || '',
-                    pptUrl,       // Cloudinary URL replacing PPT Drive Link
+                    abstractLink,  // Column N: Abstract (File URL for Ideathon, Text/Empty for others)
+                    pptLink,       // Column O: PPT (File URL for Hackathon, Empty for Ideathon)
                     '', '', eventId, '', '' // Extra columns
                 ];
 

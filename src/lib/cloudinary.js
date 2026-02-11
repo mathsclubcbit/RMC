@@ -6,12 +6,18 @@ export const uploadToCloudinary = async (file) => {
         throw new Error("Missing Cloudinary Configuration. Please check .env.local for NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET.");
     }
 
+    // Determine resource type based on file MIME type
+    // PDFs, PPTs, and documents must use 'raw' to be downloadable/viewable
+    const mimeType = file.type || '';
+    const isImage = mimeType.startsWith('image/');
+    const resourceType = isImage ? 'image' : 'raw';
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", uploadPreset);
 
     try {
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
             method: "POST",
             body: formData,
         });
