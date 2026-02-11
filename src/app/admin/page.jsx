@@ -2,25 +2,28 @@ import Link from "next/link";
 import { Image as ImageIcon, ArrowUpRight, Users } from "lucide-react";
 import { isAdminAuthenticated } from "./actions";
 import { redirect } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/server";
 import AdminDashboardClient from "./AdminDashboardClient";
 import CoordinatorCredentialsManager from "./CoordinatorCredentialsManager";
-import { getAllRegistrations } from "@/lib/google";
 import { unstable_cache } from 'next/cache';
 
 const getDashboardStats = unstable_cache(
     async () => {
-        const spreadsheetId = process.env.GOOGLE_SHEET_ID;
-        if (!spreadsheetId) return { enabled: false };
-
         try {
-            const regs = await getAllRegistrations(spreadsheetId);
+            const supabase = createAdminClient();
+
+            // Get all registrations
+            const { data: regs, error } = await supabase
+                .from('registrations')
+                .select('amount, status, created_at, checked_in_at, event_id, event_name');
+
+            if (error) {
+                console.error("Stats fetch error:", error);
+                throw error;
+            }
+
             const now = Date.now();
             const last24hMs = 24 * 60 * 60 * 1000;
-
-            const toTime = (value) => {
-                const t = Date.parse(String(value || ""));
-                return Number.isFinite(t) ? t : null;
-            };
 
             const safeAmount = (value) => {
                 const n = Number(value);
@@ -28,26 +31,32 @@ const getDashboardStats = unstable_cache(
             };
 
             const isCheckedIn = (r) =>
-                String(r?.checkedInAt || "").trim().length > 0 || String(r?.status || "").toUpperCase() === "ATTENDED";
+                (r.checked_in_at && String(r.checked_in_at).trim().length > 0) ||
+                String(r.status || "").toUpperCase() === "ATTENDED";
+
+            const toTime = (dateStr) => {
+                const t = Date.parse(dateStr);
+                return Number.isFinite(t) ? t : null;
+            };
 
             const totalRegistrations = regs.length;
             const totalCheckedIn = regs.filter(isCheckedIn).length;
-            const totalRevenue = regs.reduce((sum, r) => sum + safeAmount(r?.amount), 0);
+            const totalRevenue = regs.reduce((sum, r) => sum + safeAmount(r.amount), 0);
 
             const registrationsLast24h = regs.filter((r) => {
-                const t = toTime(r.timestamp);
+                const t = toTime(r.created_at);
                 return t != null && now - t <= last24hMs;
             }).length;
 
             const checkedInLast24h = regs.filter((r) => {
-                const t = toTime(r.checkedInAt);
+                const t = toTime(r.checked_in_at);
                 return t != null && now - t <= last24hMs;
             }).length;
 
             const byEvent = new Map();
             for (const r of regs) {
-                const eventId = String(r?.eventId || "").trim();
-                const eventName = String(r?.eventName || "").trim();
+                const eventId = String(r.event_id || "").trim();
+                const eventName = String(r.event_name || "").trim();
                 const key = (eventId || "_") + "::" + (eventName || "Unknown Event");
 
                 if (!byEvent.has(key)) {
@@ -63,7 +72,7 @@ const getDashboardStats = unstable_cache(
                 const agg = byEvent.get(key);
                 agg.registrations += 1;
                 if (isCheckedIn(r)) agg.checkedIn += 1;
-                agg.revenue += safeAmount(r?.amount);
+                agg.revenue += safeAmount(r.amount);
             }
 
             const eventBreakdown = Array.from(byEvent.values())
@@ -81,14 +90,15 @@ const getDashboardStats = unstable_cache(
                 totalRevenue,
                 eventBreakdown,
             };
-        } catch {
+        } catch (e) {
+            console.error("Dashboard stats error:", e);
             return { enabled: false };
         }
     },
-    ['admin-dashboard-stats'],
+    ['admin-dashboard-stats-supabase'],
     {
         revalidate: 60, // 1 minute
-        tags: ['admin', 'registrations']
+        tags: ['registrations', 'admin']
     }
 );
 
@@ -133,7 +143,7 @@ export default async function AdminDashboardPage() {
                             <div>
                                 <h3 className="text-sm font-semibold text-amber-200">Live Statistics Offline</h3>
                                 <p className="text-xs text-amber-200/60 mt-0.5">
-                                    System could not connect to the database. Check <code>GOOGLE_SHEET_ID</code> or credentials.
+                                    System could not connect to the database. Check <code>NEXT_PUBLIC_SUPABASE_URL</code> or service role key.
                                 </p>
                             </div>
                         </div>
