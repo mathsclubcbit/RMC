@@ -27,6 +27,7 @@ interface TicketEmailData {
     department?: string;
     rollNo?: string;
     phone?: string;
+    timeSlot?: string;
 }
 
 /**
@@ -110,6 +111,13 @@ const generateTicketEmailHTML = (data: TicketEmailData, qrCodeDataUrl: string): 
                                                                 <span style="color: #ffffff; font-size: 18px;">${data.eventName}</span>
                                                             </td>
                                                         </tr>
+                                                        ${data.timeSlot ? `
+                                                        <tr>
+                                                            <td style="padding-bottom: 20px;">
+                                                                <span style="color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Selected Slot</span><br>
+                                                                <span style="color: #2dd4bf; font-size: 16px;">${data.timeSlot}</span>
+                                                            </td>
+                                                        </tr>` : ''}
                                                         <tr>
                                                             <td width="50%" style="padding-bottom: 20px;">
                                                                 <span style="color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Date & Time</span><br>

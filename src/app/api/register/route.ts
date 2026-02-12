@@ -121,13 +121,16 @@ export async function POST(req: NextRequest) {
         let eventDate = 'To be announced';
         let eventTime = '';
         let eventVenue = 'CBIT Campus';
+        let eventRow: { payload: any } | null = null;
 
         try {
-            const { data: eventRow, error: eventError } = await supabase
+            const { data: eventData, error: eventError } = await supabase
                 .from('events')
                 .select('payload')
                 .eq('id', String(eventId))
                 .single();
+
+            eventRow = eventData;
 
             if (!eventError && eventRow) {
                 const payload = eventRow.payload as EventPayload & {
@@ -182,40 +185,105 @@ export async function POST(req: NextRequest) {
             console.warn('Event fetch failed, using client values:', err);
         }
 
-        // --- Time Slot Capacity Check ---
+        // --- Time Slot Capacity Check & Email Detail Override ---
+        console.log("Debug: Checking Time Slot Logic", { selectedTimeSlot });
         if (selectedTimeSlot && selectedTimeSlot.trim()) {
-            // Find the slot config from event payload to get maxTeams
+            // Find the slot config from event payload to get details
             try {
-                const { data: eventRow2 } = await supabase
-                    .from('events')
-                    .select('payload')
-                    .eq('id', String(eventId))
-                    .single();
+                // Use the already successfully fetched eventRow if possible, or fetch again if needed.
+                // Re-using 'eventRow' variable from above scope (lines ~126)
+                let payloadForSlots = null;
 
-                if (eventRow2?.payload) {
-                    const payload2 = eventRow2.payload as EventPayload;
-                    const slots = Array.isArray(payload2.timeSlots) ? payload2.timeSlots : [];
-                    const matchedSlot = (slots as any[]).find((s: any) => s?.name === selectedTimeSlot.trim());
-                    const maxTeams = matchedSlot ? Number(matchedSlot.maxTeams) : 0;
+                if (eventRow && eventRow.payload) {
+                    payloadForSlots = eventRow.payload;
+                } else {
+                    // Fallback fetch if the first one failed (unlikely if we are here)
+                    const { data: eventRow2 } = await supabase
+                        .from('events')
+                        .select('payload')
+                        .eq('id', String(eventId))
+                        .single();
+                    payloadForSlots = eventRow2?.payload;
+                }
 
-                    if (maxTeams > 0) {
-                        // Count existing registrations for this slot
-                        const { count } = await supabase
-                            .from('registrations')
-                            .select('id', { count: 'exact', head: true })
-                            .eq('event_id', String(eventId))
-                            .eq('time_slot', selectedTimeSlot.trim());
+                if (payloadForSlots) {
+                    const payload2 = payloadForSlots as EventPayload & { timeSlotsEnabled?: boolean };
+                    console.log("Debug: Payload TimeSlotsEnabled:", payload2.timeSlotsEnabled);
 
-                        if (count !== null && count >= maxTeams) {
-                            return NextResponse.json(
-                                { error: 'SLOT_FULL', message: 'This time slot is full. Please select a different slot.' },
-                                { status: 409 }
-                            );
+                    // Check if time slots are actually enabled for this event
+                    if (payload2.timeSlotsEnabled) {
+                        const slots = Array.isArray(payload2.timeSlots) ? payload2.timeSlots : [];
+                        const cleanSlotName = selectedTimeSlot.trim();
+                        const matchedSlot = (slots as any[]).find((s: any) => s?.name === cleanSlotName);
+
+                        console.log("Debug: Matched Slot Full Object:", matchedSlot);
+
+                        if (matchedSlot) {
+                            const maxTeams = Number(matchedSlot.maxTeams) || 0;
+
+                            // 1. Capacity Check
+                            if (maxTeams > 0) {
+                                // Count existing registrations for this slot
+                                const { count } = await supabase
+                                    .from('registrations')
+                                    .select('id', { count: 'exact', head: true })
+                                    .eq('event_id', String(eventId))
+                                    .eq('time_slot', cleanSlotName);
+
+                                if (count !== null && count >= maxTeams) {
+                                    return NextResponse.json(
+                                        { error: 'SLOT_FULL', message: 'This time slot is full. Please select a different slot.' },
+                                        { status: 409 }
+                                    );
+                                }
+                            }
+
+                            // 2. Override Event Date & Time for Email
+                            // Format Date: "Mon, 12 Feb 2026" (or similar readable format)
+                            if (matchedSlot.date) {
+                                console.log("Debug: Found Slot Date:", matchedSlot.date);
+                                try {
+                                    const d = new Date(matchedSlot.date);
+                                    // defined format: Weekday, Day Month Year
+                                    eventDate = d.toLocaleDateString('en-IN', {
+                                        weekday: 'short',
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric'
+                                    });
+                                    console.log("Debug: Formatted Slot Date:", eventDate);
+                                } catch (e) {
+                                    console.warn("Error formatting slot date:", e);
+                                    eventDate = matchedSlot.date; // Fallback to raw string
+                                }
+                            } else {
+                                console.log("Debug: matchedSlot.date is MISSING or empty");
+                            }
+
+                            // Format Time: "10:00 AM - 12:00 PM"
+                            if (matchedSlot.startTime) {
+                                const formatTime = (timeStr: string) => {
+                                    try {
+                                        const [h, m] = timeStr.split(':');
+                                        const hour = parseInt(h, 10);
+                                        const ampm = hour >= 12 ? 'PM' : 'AM';
+                                        const h12 = hour % 12 || 12;
+                                        return `${h12}:${m} ${ampm}`;
+                                    } catch {
+                                        return timeStr;
+                                    }
+                                };
+
+                                const start = formatTime(matchedSlot.startTime);
+                                const end = matchedSlot.endTime ? formatTime(matchedSlot.endTime) : '';
+                                eventTime = end ? `${start} - ${end}` : start;
+                            }
+                            console.log("Debug: Overriding Email Details", { eventDate, eventTime });
                         }
                     }
                 }
             } catch (slotErr) {
-                console.warn('Slot capacity check failed, proceeding:', slotErr);
+                console.warn('Slot check failed, proceeding:', slotErr);
             }
         }
 
@@ -328,6 +396,9 @@ export async function POST(req: NextRequest) {
         const qrCode = await generateQRCode(registrationId);
 
         const { sendTicketEmail } = await import('@/lib/email');
+
+        console.log("Debug: FINAL EMAIL PARAMS", { eventDate, eventTime, timeSlot: selectedTimeSlot?.trim() });
+
         // Non-blocking email
         sendTicketEmail({
             toEmail: email,
@@ -339,7 +410,8 @@ export async function POST(req: NextRequest) {
             registrationId,
             department,
             rollNo,
-            phone
+            phone,
+            timeSlot: selectedTimeSlot?.trim() || undefined
         }).catch(e => console.error('Email failed:', e));
 
         revalidatePath('/admin');
