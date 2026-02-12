@@ -1,8 +1,0 @@
-
-D:\RMC\main\src\lib\google.ts
-  621:18  warning  'error' is defined but never used                                                                                    @typescript-eslint/no-unused-vars
-  640:5   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
-  686:5   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
-
-✖ 3 problems (2 errors, 1 warning)
-

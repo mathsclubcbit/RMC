@@ -27,6 +27,43 @@ export default function ParticipantsClient({ event }) {
     const [statusFilter, setStatusFilter] = useState("all");
     const [selectedParticipant, setSelectedParticipant] = useState(null);
 
+    // Safe render utility to prevent Error #31
+    const safe = (val) => {
+        if (val === null || val === undefined) return "";
+        if (typeof val === 'string' || typeof val === 'number') return val;
+        try {
+            return JSON.stringify(val);
+        } catch {
+            return "[Object]";
+        }
+    };
+
+    const formatTeamMembers = (tm) => {
+        if (!tm) return "Solo";
+        let members = tm;
+        if (typeof tm === 'string' && (tm.startsWith('[') || tm.startsWith('{'))) {
+            try { members = JSON.parse(tm); } catch { members = tm; }
+        }
+        if (Array.isArray(members)) {
+            if (members.length === 0) return "Solo";
+            return members.map(m => {
+                if (!m) return "";
+                if (typeof m === 'string') return m;
+                const n = m.name || m.fullName || m.memberName;
+                const r = m.rollNo || m.roll || m.rollNumber;
+                if (n && r) return `${n} (${r})`;
+                return n || r || "Member";
+            }).filter(Boolean).join(", ");
+        }
+        if (typeof members === 'object') {
+            const n = members.name || members.fullName || "";
+            const r = members.rollNo || members.roll || "";
+            if (n || r) return n + (r ? ` (${r})` : "");
+            return JSON.stringify(members);
+        }
+        return String(members);
+    };
+
     const fetchParticipants = async (showRefresh = false) => {
         if (showRefresh) setIsRefreshing(true);
         try {
@@ -48,33 +85,29 @@ export default function ParticipantsClient({ event }) {
         fetchParticipants();
     }, []);
 
-    // Filtering logic
     const filteredParticipants = useMemo(() => {
         return participants.filter(p => {
-            const matchesSearch =
-                p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                p.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                p.registrationId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                p.rollNo?.toLowerCase().includes(searchQuery.toLowerCase());
+            const n = String(p.name || "").toLowerCase();
+            const e = String(p.email || "").toLowerCase();
+            const rId = String(p.registrationId || "").toLowerCase();
+            const rNo = String(p.rollNo || "").toLowerCase();
+            const s = searchQuery.toLowerCase();
 
-            const matchesStatus =
-                statusFilter === "all" ||
-                p.status?.toUpperCase() === statusFilter.toUpperCase();
-
+            const matchesSearch = n.includes(s) || e.includes(s) || rId.includes(s) || rNo.includes(s);
+            const matchesStatus = statusFilter === "all" || String(p.status || "").toUpperCase() === statusFilter.toUpperCase();
             return matchesSearch && matchesStatus;
         });
     }, [participants, searchQuery, statusFilter]);
 
-    // Statistics
     const stats = useMemo(() => {
         const total = filteredParticipants.length;
-        const confirmed = filteredParticipants.filter(p => ["CONFIRMED", "SUCCESS", "ATTENDED"].includes(p.status?.toUpperCase())).length;
-        const pending = filteredParticipants.filter(p => p.status?.toUpperCase() === "PENDING").length;
+        const confirmed = filteredParticipants.filter(p => ["CONFIRMED", "SUCCESS", "ATTENDED"].includes(String(p.status || "").toUpperCase())).length;
+        const pending = filteredParticipants.filter(p => String(p.status || "").toUpperCase() === "PENDING").length;
         return { total, confirmed, pending };
     }, [filteredParticipants]);
 
     const getStatusStyles = (status) => {
-        const s = status?.toUpperCase();
+        const s = String(status || "").toUpperCase();
         if (s === "ATTENDED" || s === "SUCCESS" || s === "CONFIRMED")
             return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
         if (s === "PENDING")
@@ -97,7 +130,7 @@ export default function ParticipantsClient({ event }) {
                 <AlertCircle className="w-12 h-12 text-red-500/50" />
                 <div className="space-y-1">
                     <h3 className="text-lg font-bold">Data Access Interrupted</h3>
-                    <p className="text-sm text-white/40 max-w-xs mx-auto">{error}</p>
+                    <p className="text-sm text-white/40 max-w-xs mx-auto">{safe(error)}</p>
                 </div>
                 <button
                     onClick={() => { setIsLoading(true); fetchParticipants(); }}
@@ -111,7 +144,6 @@ export default function ParticipantsClient({ event }) {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
-            {/* Header Area */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
                     <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-mono text-white/70 backdrop-blur-md mb-4">
@@ -123,7 +155,7 @@ export default function ParticipantsClient({ event }) {
                         <span className="text-blue-400">.</span>
                     </h1>
                     <p className="text-white/50 text-sm mt-1 max-w-md">
-                        Managing registrations for <span className="text-white font-semibold">{event.title}</span>
+                        Managing registrations for <span className="text-white font-semibold">{safe(event?.title)}</span>
                     </p>
                 </div>
 
@@ -147,7 +179,6 @@ export default function ParticipantsClient({ event }) {
                 </div>
             </div>
 
-            {/* Controls */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                 <div className="md:col-span-8 relative group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-blue-400 transition-colors" />
@@ -175,7 +206,6 @@ export default function ParticipantsClient({ event }) {
                 </div>
             </div>
 
-            {/* Table Area */}
             <div className="rounded-3xl border border-white/10 bg-white/[0.02] overflow-hidden">
                 <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse">
@@ -192,17 +222,17 @@ export default function ParticipantsClient({ event }) {
                         <tbody className="divide-y divide-white/5">
                             {filteredParticipants.length > 0 ? (
                                 filteredParticipants.map((p) => (
-                                    <tr key={p.registrationId} className="group hover:bg-white/[0.03] transition-colors">
+                                    <tr key={safe(p.registrationId)} className="group hover:bg-white/[0.03] transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 group-hover:text-blue-400 group-hover:border-blue-500/20 transition-all">
                                                     <User className="w-5 h-5" />
                                                 </div>
                                                 <div>
-                                                    <div className="text-sm font-semibold text-white/90 group-hover:text-white">{p.name}</div>
+                                                    <div className="text-sm font-semibold text-white/90 group-hover:text-white">{safe(p.name)}</div>
                                                     <div className="text-xs text-white/40 flex items-center gap-1">
                                                         <Mail className="w-3 h-3" />
-                                                        {p.email}
+                                                        {safe(p.email)}
                                                     </div>
                                                 </div>
                                             </div>
@@ -210,14 +240,14 @@ export default function ParticipantsClient({ event }) {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-1.5 font-mono text-xs text-blue-400/80">
                                                 <Hash className="w-3 h-3" />
-                                                {p.registrationId}
+                                                {safe(p.registrationId)}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             {p.timeSlot ? (
                                                 <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[10px] font-mono text-blue-400">
                                                     <Clock className="w-3 h-3" />
-                                                    {p.timeSlot}
+                                                    {safe(p.timeSlot)}
                                                 </div>
                                             ) : (
                                                 <span className="text-[10px] text-white/20 font-mono">—</span>
@@ -225,13 +255,13 @@ export default function ParticipantsClient({ event }) {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="space-y-0.5">
-                                                <div className="text-[10px] text-white/30 uppercase tracking-wider">{p.department}</div>
-                                                <div className="text-xs text-white/60">{p.rollNo}</div>
+                                                <div className="text-[10px] text-white/30 uppercase tracking-wider">{safe(p.department)}</div>
+                                                <div className="text-xs text-white/60">{safe(p.rollNo)}</div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getStatusStyles(p.status)}`}>
-                                                {p.status}
+                                                {safe(p.status)}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
@@ -260,7 +290,6 @@ export default function ParticipantsClient({ event }) {
                 </div>
             </div>
 
-            {/* Detail Modal */}
             {selectedParticipant && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setSelectedParticipant(null)} />
@@ -276,17 +305,17 @@ export default function ParticipantsClient({ event }) {
                                 <section>
                                     <div className="text-[10px] uppercase tracking-widest text-white/30 mb-2">Basic Information</div>
                                     <div className="space-y-3">
-                                        <DetailItem label="Full Name" value={selectedParticipant.name} />
-                                        <DetailItem label="Email Address" value={selectedParticipant.email} />
-                                        <DetailItem label="Phone Number" value={selectedParticipant.phone || "N/A"} />
-                                        <DetailItem label="Roll Number" value={selectedParticipant.rollNo} />
-                                        <DetailItem label="Department" value={selectedParticipant.department} />
+                                        <DetailItem label="Full Name" value={safe(selectedParticipant.name)} />
+                                        <DetailItem label="Email Address" value={safe(selectedParticipant.email)} />
+                                        <DetailItem label="Phone Number" value={safe(selectedParticipant.phone || "N/A")} />
+                                        <DetailItem label="Roll Number" value={safe(selectedParticipant.rollNo)} />
+                                        <DetailItem label="Department" value={safe(selectedParticipant.department)} />
                                         {selectedParticipant.timeSlot && (
                                             <div className="pt-2">
                                                 <div className="text-[10px] uppercase tracking-widest text-blue-400/50 mb-1">Selected Slot</div>
                                                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs font-mono text-blue-400">
                                                     <Clock className="w-3.5 h-3.5" />
-                                                    {selectedParticipant.timeSlot}
+                                                    {safe(selectedParticipant.timeSlot)}
                                                 </div>
                                             </div>
                                         )}
@@ -296,11 +325,11 @@ export default function ParticipantsClient({ event }) {
                                 <section>
                                     <div className="text-[10px] uppercase tracking-widest text-white/30 mb-2">Event Record</div>
                                     <div className="space-y-3">
-                                        <DetailItem label="Ticket Code" value={selectedParticipant.registrationId} isMono />
-                                        <DetailItem label="Status" value={selectedParticipant.status} />
-                                        <DetailItem label="Registered On" value={selectedParticipant.timestamp} />
+                                        <DetailItem label="Ticket Code" value={safe(selectedParticipant.registrationId)} isMono />
+                                        <DetailItem label="Status" value={safe(selectedParticipant.status)} />
+                                        <DetailItem label="Registered On" value={safe(selectedParticipant.timestamp)} />
                                         {selectedParticipant.checkedInAt && (
-                                            <DetailItem label="Checked In At" value={selectedParticipant.checkedInAt} />
+                                            <DetailItem label="Checked In At" value={safe(selectedParticipant.checkedInAt)} />
                                         )}
                                     </div>
                                 </section>
@@ -310,11 +339,14 @@ export default function ParticipantsClient({ event }) {
                                 <section>
                                     <div className="text-[10px] uppercase tracking-widest text-white/30 mb-2">Technical/Team Info</div>
                                     <div className="space-y-3">
-                                        <DetailItem label="Team Members" value={selectedParticipant.teamMembers || "Solo"} />
+                                        <DetailItem
+                                            label="Team Members"
+                                            value={formatTeamMembers(selectedParticipant.teamMembers)}
+                                        />
                                         {selectedParticipant.abstract && (
                                             <div className="space-y-1">
                                                 <div className="text-xs text-white/40">Abstract File</div>
-                                                <a href={selectedParticipant.abstract} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-2">
+                                                <a href={String(selectedParticipant.abstract)} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-2">
                                                     View Abstract <ExternalLink className="w-3 h-3" />
                                                 </a>
                                             </div>
@@ -322,7 +354,7 @@ export default function ParticipantsClient({ event }) {
                                         {selectedParticipant.pptLink && (
                                             <div className="space-y-1">
                                                 <div className="text-xs text-white/40">Presentation Link</div>
-                                                <a href={selectedParticipant.pptLink} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-2">
+                                                <a href={String(selectedParticipant.pptLink)} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-2">
                                                     Open PPT <ExternalLink className="w-3 h-3" />
                                                 </a>
                                             </div>
@@ -333,14 +365,14 @@ export default function ParticipantsClient({ event }) {
                                 <section>
                                     <div className="text-[10px] uppercase tracking-widest text-white/30 mb-2">Payment Verification</div>
                                     <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 space-y-3">
-                                        <DetailItem label="UTR ID" value={selectedParticipant.utrId} isMono />
+                                        <DetailItem label="UTR ID" value={safe(selectedParticipant.utrId)} isMono />
                                         <div className="flex items-center justify-between">
                                             <span className="text-xs text-white/40">Amount Paid</span>
-                                            <span className="text-sm font-mono text-emerald-400 underline decoration-emerald-500/30 underline-offset-4">₹{selectedParticipant.amount}</span>
+                                            <span className="text-sm font-mono text-emerald-400 underline decoration-emerald-500/30 underline-offset-4">₹{safe(selectedParticipant.amount)}</span>
                                         </div>
                                         {selectedParticipant.driveViewUrl && (
                                             <a
-                                                href={selectedParticipant.driveViewUrl}
+                                                href={String(selectedParticipant.driveViewUrl)}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="mt-4 block w-full py-2.5 px-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider text-center hover:bg-blue-500/20 transition-all flex items-center justify-center gap-2"
@@ -361,11 +393,23 @@ export default function ParticipantsClient({ event }) {
 }
 
 function DetailItem({ label, value, isMono }) {
+    const renderValue = () => {
+        if (value === null || value === undefined || value === "") return "Not provided";
+        if (typeof value === 'object') {
+            try {
+                return JSON.stringify(value);
+            } catch {
+                return "[Complex Data]";
+            }
+        }
+        return String(value);
+    };
+
     return (
         <div className="space-y-1">
             <div className="text-xs text-white/40">{label}</div>
-            <div className={`text-sm ${isMono ? 'font-mono text-blue-300' : 'text-white/80'}`}>
-                {value || "Not provided"}
+            <div className={`text-sm ${isMono ? 'font-mono text-blue-300' : 'text-white/80'} break-words`}>
+                {renderValue()}
             </div>
         </div>
     );
