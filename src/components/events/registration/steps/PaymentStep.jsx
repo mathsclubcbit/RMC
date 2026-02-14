@@ -83,13 +83,13 @@ function PaymentStep({
             {/* Payment Details Form */}
             <div className="space-y-8 pt-8 border-t border-zinc-900">
                 <PremiumInput
-                    label="UTR / Transaction ID"
+                    label="UTR ID"
                     placeholder="xxxxxxxxxxxx"
                     value={utrId}
                     onChange={(e) => onUtrChange(e.target.value)}
                     variant="default"
                     className="font-mono tracking-widest text-lg"
-                    maxLength={12}
+                    maxLength={15}
                 />
 
                 <div className="space-y-3">
