@@ -136,9 +136,28 @@ export async function POST(req: NextRequest) {
                 const payload = eventRow.payload as EventPayload & {
                     eventType?: string; category?: string;
                     date?: string; startDate?: string;
+                    endDate?: string;
+                    regEndDate?: string;
                     time?: string; startTime?: string; endTime?: string;
                     location?: string; venue?: string;
                 };
+
+                // ── Registration deadline guard ──────────────────────────────
+                // Reject the registration server-side if the event date (or regEndDate)
+                // has already passed. This is the last line of defence against UI bypasses.
+                const deadlineStr = payload?.regEndDate || payload?.endDate || payload?.date || payload?.startDate;
+                if (deadlineStr) {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    if (new Date(deadlineStr) < today) {
+                        return NextResponse.json(
+                            { error: 'REGISTRATION_CLOSED', message: 'Registration for this event has ended.' },
+                            { status: 400 }
+                        );
+                    }
+                }
+                // ─────────────────────────────────────────────────────────────
+
                 // Determine type from payload (eventType is stored inside payload JSONB)
                 const eType = payload?.eventType || '';
                 const eCat = payload?.category || '';

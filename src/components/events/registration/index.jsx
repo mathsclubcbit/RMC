@@ -4,8 +4,9 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CheckCircle, MapPin, Calendar, Clock, Banknote } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, MapPin, Calendar, Clock, Banknote, Lock, CalendarX } from 'lucide-react';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import { isEventRegistrationClosed } from '@/lib/utils';
 
 // Local imports - hooks
 import { useEventData } from './hooks/useEventData';
@@ -312,6 +313,13 @@ export default function RegistrationClient({ eventId }) {
                 Event Data Not Found
             </div>
         );
+    }
+
+    // ── Past-event gate ──────────────────────────────────────────────────────
+    // If the event's registration deadline (or event date) has already passed,
+    // block the form entirely and show an informational ended-state screen.
+    if (isEventRegistrationClosed(event)) {
+        return <EventEndedView event={event} />;
     }
 
     // Render step content based on step type
@@ -676,5 +684,94 @@ function MetricActionLink({ href, label }) {
         >
             {label}
         </a>
+    );
+}
+
+/**
+ * EventEndedView — Full-page gate shown when a past event's registration page
+ * is visited directly. Preserves event context while making it clear that
+ * registration is no longer available.
+ */
+function EventEndedView({ event }) {
+    return (
+        <div className="min-h-screen bg-black font-sans text-white flex flex-col">
+            {/* Back nav */}
+            <Link
+                href="/events"
+                className="fixed top-6 left-6 z-50 flex items-center gap-3 px-4 py-2 bg-zinc-900/80 backdrop-blur-sm hover:bg-zinc-800 border border-white/5 rounded-full transition-all group"
+            >
+                <ArrowLeft className="w-4 h-4 text-zinc-400 group-hover:-translate-x-1 transition-transform" />
+                <span className="text-xs font-medium text-zinc-300 group-hover:text-white">BACK</span>
+            </Link>
+
+            <div className="flex-1 flex items-center justify-center px-4 py-24">
+                <motion.div
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, ease: 'easeOut' }}
+                    className="w-full max-w-lg text-center"
+                >
+                    {/* Icon */}
+                    <div className="flex justify-center mb-8">
+                        <div className="w-20 h-20 rounded-full bg-zinc-900 border border-white/5 flex items-center justify-center">
+                            <CalendarX className="w-9 h-9 text-zinc-500" />
+                        </div>
+                    </div>
+
+                    {/* Event poster thumbnail (if available) */}
+                    {(event.posterMobile || event.posterDesktop || event.img) && (
+                        <div className="relative w-32 h-32 rounded-2xl overflow-hidden mx-auto mb-8 border border-white/10 opacity-50">
+                            <Image
+                                src={event.posterMobile || event.posterDesktop || event.img}
+                                alt={event.title}
+                                fill
+                                className="object-cover grayscale"
+                            />
+                        </div>
+                    )}
+
+                    {/* Category badge */}
+                    {(event.eventType || event.category) && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 mb-5 rounded-full border border-white/10 text-[10px] font-mono uppercase tracking-widest text-zinc-500 bg-zinc-900/50">
+                            <Lock className="w-2.5 h-2.5" />
+                            {event.eventType || event.category}
+                        </span>
+                    )}
+
+                    {/* Title */}
+                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-3 leading-tight tracking-tight">
+                        {event.title}
+                    </h1>
+
+                    {/* Date */}
+                    {event.date && (
+                        <p className="flex items-center justify-center gap-2 text-sm font-mono text-zinc-500 mb-8">
+                            <Calendar className="w-4 h-4" />
+                            {event.date}
+                        </p>
+                    )}
+
+                    {/* Divider */}
+                    <div className="w-16 h-px bg-white/10 mx-auto mb-8" />
+
+                    {/* Message */}
+                    <p className="text-zinc-400 text-base leading-relaxed mb-2">
+                        This event has already concluded.
+                    </p>
+                    <p className="text-zinc-600 text-sm mb-10">
+                        Registration is now closed.
+                    </p>
+
+                    {/* CTA */}
+                    <Link
+                        href="/events"
+                        className="inline-flex items-center gap-2 px-8 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs rounded-sm hover:bg-zinc-200 transition-colors"
+                    >
+                        Browse Other Events
+                        <ArrowRight className="w-4 h-4" />
+                    </Link>
+                </motion.div>
+            </div>
+        </div>
     );
 }

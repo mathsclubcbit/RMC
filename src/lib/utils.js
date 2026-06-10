@@ -131,6 +131,33 @@ export function isPastDate(date) {
 }
 
 /**
+ * Returns true when an event's registration window has closed.
+ * 
+ * Priority order for the deadline:
+ *   1. `regEndDate` — explicit registration cutoff (tightest)
+ *   2. `endDate`    — last day of a multi-day event
+ *   3. `date`       — single-day / start date (fallback)
+ *
+ * Uses date-only comparison (midnight) so events happening *today* are still open.
+ *
+ * @param {{ date?: string, endDate?: string, regEndDate?: string } | null | undefined} event
+ * @returns {boolean}
+ *
+ * @example
+ * isEventRegistrationClosed({ date: '2024-01-01' })                       // true  (past)
+ * isEventRegistrationClosed({ date: '2024-01-17', endDate: '2024-01-18'}) // true  (multi-day, both past)
+ * isEventRegistrationClosed({ date: '2099-12-31' })                       // false (future)
+ */
+export function isEventRegistrationClosed(event) {
+    if (!event) return false;
+    const deadline = event.regEndDate || event.endDate || event.date;
+    if (!deadline) return false;               // unknown date → treat as open
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);               // strip time — compare dates only
+    return new Date(deadline) < today;
+}
+
+/**
  * Check if a date is today
  * @param {string | Date} date 
  * @returns {boolean}
