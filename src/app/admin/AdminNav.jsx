@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Calendar, QrCode, Home, LogOut, Image as ImageIcon, Users, Bell, Mail, ChevronRight, Link2 } from "lucide-react";
+import { LayoutDashboard, Calendar, QrCode, Home, LogOut, Image as ImageIcon, Users, Bell, Mail, ChevronRight, Link2, UserPlus } from "lucide-react";
 import { adminLogoutAction } from "./actions";
 import { useLoading } from "@/context/LoadingContext";
 
@@ -14,8 +14,10 @@ const navItems = [
     { href: "/admin/announcements", label: "Notify", icon: Bell },
     { href: "/admin/newsletter", label: "Email", icon: Mail },
     { href: "/admin/hub", label: "Hub", icon: Link2 },
+    { href: "/admin/recruitment", label: "Recruit", icon: UserPlus },
     { href: "/admin/scan", label: "Scan", icon: QrCode },
 ];
+
 
 export default function AdminNav() {
     const pathname = usePathname();
@@ -35,7 +37,7 @@ export default function AdminNav() {
 
                     <div className="flex items-center gap-2">
                         {navItems.map((item) => {
-                            const isActive = pathname === item.href || (item.label === "Events" && pathname.startsWith("/admin/events")) || (item.label === "Scan" && pathname.startsWith("/admin/ticket"));
+                            const isActive = pathname === item.href || (item.label === "Events" && pathname.startsWith("/admin/events")) || (item.label === "Scan" && pathname.startsWith("/admin/ticket")) || (item.label === "Recruit" && pathname.startsWith("/admin/recruitment"));
                             const Icon = item.icon;
                             return (
                                 <Link
@@ -94,7 +96,7 @@ export default function AdminNav() {
                     </Link>
 
                     {navItems.map((item) => {
-                        const isActive = pathname === item.href || (item.label === "Events" && pathname.startsWith("/admin/events")) || (item.label === "Scan" && pathname.startsWith("/admin/ticket"));
+                        const isActive = pathname === item.href || (item.label === "Events" && pathname.startsWith("/admin/events")) || (item.label === "Scan" && pathname.startsWith("/admin/ticket")) || (item.label === "Recruit" && pathname.startsWith("/admin/recruitment"));
                         const Icon = item.icon;
                         return (
                             <Link
