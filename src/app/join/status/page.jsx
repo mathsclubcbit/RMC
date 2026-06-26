@@ -134,8 +134,8 @@ export default function JoinStatusPage() {
     return (
         <div className="relative min-h-screen">
             <PageHeader
-                title="SIGNAL TRACE"
-                subtitle="Enter your email to track the status of your membership application."
+                title="APPLICATION STATUS"
+                subtitle="Enter the email you applied with to check the status of your membership application."
             />
 
             <section className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
@@ -147,9 +147,9 @@ export default function JoinStatusPage() {
                             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-teal to-transparent opacity-50" />
 
                             <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-teal/50 mb-2">
-                                Initiate Trace
+                                ∫ Status Lookup
                             </p>
-                            <h2 className="font-serif text-2xl text-white mb-8">Application Status</h2>
+                            <h2 className="font-serif text-2xl text-white mb-8">Check Your Application</h2>
 
                             <form onSubmit={handleSearch} className="space-y-4">
                                 <div>
@@ -157,7 +157,7 @@ export default function JoinStatusPage() {
                                         htmlFor="status-email"
                                         className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-teal/80 mb-3"
                                     >
-                                        <Mail className="w-3 h-3" /> Comms Channel
+                                        <Mail className="w-3 h-3" /> Email Address
                                     </label>
                                     <input
                                         id="status-email"
@@ -185,9 +185,9 @@ export default function JoinStatusPage() {
                                                hover:shadow-[0_0_30px_rgba(58,188,179,0.4)] disabled:opacity-50"
                                 >
                                     {loading ? (
-                                        <><Loader2 className="w-4 h-4 animate-spin" /> Tracing...</>
+                                        <><Loader2 className="w-4 h-4 animate-spin" /> Searching...</>
                                     ) : (
-                                        <><Search className="w-4 h-4" /> Trace Signal</>
+                                        <><Search className="w-4 h-4" /> Check Status</>
                                     )}
                                 </button>
                             </form>

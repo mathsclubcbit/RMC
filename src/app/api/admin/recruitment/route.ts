@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
         const page = Math.max(1, Number(searchParams.get('page') ?? 1));
         const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit') ?? 20)));
         const status = searchParams.get('status') ?? 'ALL';
+        const team = searchParams.get('team') ?? 'ALL';
         const branch = searchParams.get('branch') ?? '';
         const year = searchParams.get('year') ?? '';
         const search = searchParams.get('search')?.trim() ?? '';
@@ -37,6 +38,9 @@ export async function GET(req: NextRequest) {
 
         if (status !== 'ALL') {
             query = query.eq('status', status);
+        }
+        if (team !== 'ALL') {
+            query = query.eq('team', team);
         }
         if (branch) {
             query = query.eq('branch', branch);

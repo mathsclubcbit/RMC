@@ -41,10 +41,26 @@ async function getRecruitmentConfig() {
 }
 
 const benefits = [
-    { icon: "🎯", title: "Priority Access", description: "First vector to workshops and competitions" },
-    { icon: "🏆", title: "Competitive Edge", description: "Represent CBIT in inter-college math events" },
-    { icon: "📚", title: "Classified Data", description: "Access exclusive study materials and problem sets" },
-    { icon: "🤝", title: "The Network", description: "Connect with like-minded math enthusiasts" },
+    {
+        symbol: "∑",
+        title: "Workshops & Talks",
+        description: "Attend hands-on sessions on topics ranging from number theory to competitive math — run by seniors and invited speakers.",
+    },
+    {
+        symbol: "π",
+        title: "Competitions",
+        description: "Represent CBIT at inter-college math olympiads, puzzle hunts, and problem-solving contests throughout the year.",
+    },
+    {
+        symbol: "∞",
+        title: "Study Resources",
+        description: "Get access to curated problem sets, past paper archives, and member-only notes shared across the club.",
+    },
+    {
+        symbol: "∂",
+        title: "A Real Community",
+        description: "Work alongside people who genuinely enjoy mathematics — collaborate, discuss, and grow together.",
+    },
 ];
 
 export default async function JoinPage() {
@@ -53,33 +69,50 @@ export default async function JoinPage() {
     return (
         <div className="relative min-h-screen">
             <PageHeader
-                title="INITIATION"
+                title="JOIN RMC"
                 subtitle={
                     isOpen
-                        ? "Recruitment is open. Submit your application to join the collective."
+                        ? "Recruitment is open. Fill in the form below to apply for membership."
                         : "Recruitment is currently closed. Check back soon."
                 }
             />
 
             {/* Benefits */}
             <section className="py-10 px-4 sm:px-6 lg:px-8 relative z-10">
-                <div className="max-w-7xl mx-auto">
-                    <SectionDivider type="axiom" text="Member Privileges" />
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
+                <div className="max-w-6xl mx-auto">
+                    <SectionDivider type="axiom" text="What you get" />
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-16">
                         {benefits.map((benefit, index) => (
                             <SpotlightCard
                                 key={index}
-                                className="bg-white/5 border border-white/10 p-6 rounded-2xl text-center group hover:bg-white/10 transition-colors"
+                                className="relative bg-white/[0.03] border border-white/8 p-6 rounded-2xl group
+                                           hover:bg-white/[0.07] hover:border-teal/20
+                                           hover:shadow-[0_0_32px_rgba(58,188,179,0.06)]
+                                           transition-all duration-300 flex flex-col gap-4"
                             >
-                                <div className="text-4xl mb-4 grayscale group-hover:grayscale-0 transition-all">
-                                    {benefit.icon}
+                                {/* Math symbol */}
+                                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10
+                                                group-hover:border-teal/30 group-hover:bg-teal/5
+                                                flex items-center justify-center transition-all duration-300">
+                                    <span className="text-2xl font-serif text-white/30 group-hover:text-teal/70
+                                                     transition-colors duration-300 select-none">
+                                        {benefit.symbol}
+                                    </span>
                                 </div>
-                                <h3 className="font-[family-name:var(--font-cinzel)] font-bold text-lg text-white mb-2">
-                                    {benefit.title}
-                                </h3>
-                                <p className="text-white/50 text-xs font-mono uppercase tracking-widest">
-                                    {benefit.description}
-                                </p>
+
+                                <div>
+                                    <h3 className="font-[family-name:var(--font-cinzel)] font-semibold text-sm text-white mb-2 tracking-wide">
+                                        {benefit.title}
+                                    </h3>
+                                    <p className="text-white/40 text-xs leading-relaxed font-sans group-hover:text-white/60 transition-colors duration-300">
+                                        {benefit.description}
+                                    </p>
+                                </div>
+
+                                {/* Bottom teal accent — reveals on hover */}
+                                <div className="absolute bottom-0 left-6 right-6 h-[1px]
+                                                bg-gradient-to-r from-transparent via-teal/40 to-transparent
+                                                opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                             </SpotlightCard>
                         ))}
                     </div>
@@ -87,10 +120,10 @@ export default async function JoinPage() {
             </section>
 
             {/* Form Section */}
-            <section className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
+            <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="max-w-3xl mx-auto">
                     <div className="relative p-1 rounded-[2.5rem] bg-gradient-to-b from-white/10 to-transparent">
-                        <div className="bg-[#020617] rounded-[2.4rem] p-8 md:p-12 border border-white/5 shadow-2xl relative overflow-hidden">
+                        <div className="bg-[#020617] rounded-[2.4rem] p-5 sm:p-8 md:p-12 border border-white/5 shadow-2xl relative">
                             {/* Top accent line */}
                             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-teal to-transparent opacity-50" />
 

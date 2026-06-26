@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { sendRecruitmentConfirmation } from '@/lib/email';
+import { appendRecruitmentRowToSheet } from '@/lib/google';
 
 type FieldSchema = {
     id: string;
@@ -27,11 +28,12 @@ export async function POST(req: NextRequest) {
             rollNumber,
             branch,
             year,
+            team,
             extraFields = {},
         } = body;
 
         // --- 1. Validate core fields ---
-        if (!name?.trim() || !email?.trim() || !phone?.trim() || !rollNumber?.trim() || !branch?.trim() || !year?.trim()) {
+        if (!name?.trim() || !email?.trim() || !phone?.trim() || !rollNumber?.trim() || !branch?.trim() || !year?.trim() || !team?.trim()) {
             return NextResponse.json({ error: 'All core fields are required.' }, { status: 400 });
         }
 
@@ -144,6 +146,7 @@ export async function POST(req: NextRequest) {
                 phone: phone.trim(),
                 branch: branch.trim(),
                 year: year.trim(),
+                team: team.trim(),
                 extra_fields: extraFields,
                 academic_year: academicYear,
                 status: 'PENDING',
@@ -176,6 +179,24 @@ export async function POST(req: NextRequest) {
                 applicationId: inserted.id,
             }).catch((e) => console.error('[recruitment/apply] Admin alert failed:', e));
         }
+
+        // --- 8. Send to Google Sheets (non-blocking) ---
+        const sheetId = process.env.RECRUITMENT_GOOGLE_SHEET_ID || '1mpNl9ofBlr94LxBOjyrqQ84EbiHLMEav91iH89DmALM';
+        const rowData = [
+            new Date().toISOString(),
+            inserted.id,
+            name.trim(),
+            email.trim().toLowerCase(),
+            phone.trim(),
+            rollNumber.trim(),
+            branch.trim(),
+            year.trim(),
+            team.trim(),
+            'PENDING',
+            academicYear,
+            JSON.stringify(extraFields)
+        ];
+        appendRecruitmentRowToSheet(sheetId, rowData, 'Recruitment').catch(e => console.error('[recruitment/apply] Sheets sync failed:', e));
 
         return NextResponse.json(
             { success: true, applicationId: inserted.id },

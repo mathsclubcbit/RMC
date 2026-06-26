@@ -47,7 +47,6 @@ function SectionCard({ children, className = "" }) {
 
 // ─── Application Drawer ───────────────────────────────────────────────────────
 function ApplicationDrawer({ app, onClose, onDecision }) {
-    const [note, setNote] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [err, setErr] = useState("");
 
@@ -58,11 +57,11 @@ function ApplicationDrawer({ app, onClose, onDecision }) {
             const res = await fetch("/api/admin/recruitment", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id: app.id, status, reviewNote: note }),
+                body: JSON.stringify({ id: app.id, status }),
             });
             const data = await res.json();
             if (!res.ok) { setErr(data.error || "Failed"); return; }
-            onDecision(app.id, status, note);
+            onDecision(app.id, status);
             onClose();
         } catch { setErr("Network error."); }
         finally { setSubmitting(false); }
@@ -76,6 +75,7 @@ function ApplicationDrawer({ app, onClose, onDecision }) {
         { label: "Roll No.", value: app.roll_number },
         { label: "Branch", value: app.branch },
         { label: "Year", value: `Year ${app.year}` },
+        { label: "Team", value: app.team },
         { label: "Applied", value: formatDate(app.applied_at) },
         { label: "Academic Year", value: app.academic_year },
     ];
@@ -135,21 +135,10 @@ function ApplicationDrawer({ app, onClose, onDecision }) {
                     </div>
                 )}
 
-                {/* Review note */}
+                {/* Actions */}
                 {app.status === "PENDING" && (
                     <div className="px-6 pb-4">
-                        <label className="block text-[10px] font-mono uppercase tracking-widest text-white/30 mb-2">
-                            Note (optional — visible to applicant)
-                        </label>
-                        <textarea
-                            value={note}
-                            onChange={(e) => setNote(e.target.value)}
-                            rows={3}
-                            placeholder="Add a note to the applicant..."
-                            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm
-                                       placeholder-white/20 focus:outline-none focus:border-indigo-500/50 resize-none"
-                        />
-                        {err && <p className="text-xs text-red-400 mt-1">{err}</p>}
+                        {err && <p className="text-xs text-red-400 mt-1 mb-3">{err}</p>}
 
                         <div className="flex gap-3 mt-4">
                             <button
@@ -181,9 +170,6 @@ function ApplicationDrawer({ app, onClose, onDecision }) {
                             <p className="text-xs font-mono">
                                 {app.status === "APPROVED" ? "✅ Application approved." : "❌ Application rejected."}
                             </p>
-                            {app.review_note && (
-                                <p className="text-xs mt-2 opacity-70 italic">"{app.review_note}"</p>
-                            )}
                         </div>
                     </div>
                 )}
@@ -198,19 +184,20 @@ function ApplicationsTab() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
+    const [teamFilter, setTeamFilter] = useState("ALL");
     const [selected, setSelected] = useState(null);
     const [page, setPage] = useState(1);
 
     const fetchApps = useCallback(async () => {
         setLoading(true);
         try {
-            const params = new URLSearchParams({ page, limit: 20, status: statusFilter, search });
+            const params = new URLSearchParams({ page, limit: 20, status: statusFilter, team: teamFilter, search });
             const res = await fetch(`/api/admin/recruitment?${params}`);
             const json = await res.json();
             setData(json);
         } catch { console.error("Failed to fetch applications"); }
         finally { setLoading(false); }
-    }, [page, statusFilter, search]);
+    }, [page, statusFilter, teamFilter, search]);
 
     useEffect(() => { fetchApps(); }, [fetchApps]);
 
@@ -268,6 +255,18 @@ function ApplicationsTab() {
                         <option key={s} value={s} className="bg-black">{s}</option>
                     ))}
                 </select>
+                <select
+                    value={teamFilter}
+                    onChange={(e) => { setTeamFilter(e.target.value); setPage(1); }}
+                    className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm
+                               focus:outline-none focus:border-indigo-500/50 appearance-none"
+                >
+                    <option value="ALL" className="bg-black">All Teams</option>
+                    <option value="WebDev" className="bg-black">Web Dev</option>
+                    <option value="Content & Media" className="bg-black">Content & Media</option>
+                    <option value="PR" className="bg-black">PR</option>
+                    <option value="Events" className="bg-black">Events</option>
+                </select>
                 <button onClick={fetchApps} className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition">
                     <RefreshCw className="w-4 h-4" />
                 </button>
@@ -286,7 +285,7 @@ function ApplicationsTab() {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-white/5">
-                                    {["Name", "Email", "Roll No.", "Branch", "Year", "Status", "Applied", ""].map((h) => (
+                                    {["Name", "Email", "Roll No.", "Branch", "Year", "Team", "Status", "Applied", ""].map((h) => (
                                         <th key={h} className="px-4 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-white/30">
                                             {h}
                                         </th>
@@ -305,6 +304,7 @@ function ApplicationsTab() {
                                         <td className="px-4 py-3 font-mono text-white/50 text-xs">{app.roll_number}</td>
                                         <td className="px-4 py-3 text-white/50">{app.branch}</td>
                                         <td className="px-4 py-3 text-white/50">Y{app.year}</td>
+                                        <td className="px-4 py-3 font-medium text-teal/80">{app.team}</td>
                                         <td className="px-4 py-3">
                                             <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-mono border ${statBadge(app.status)}`}>
                                                 {app.status}

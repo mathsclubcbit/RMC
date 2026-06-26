@@ -584,13 +584,13 @@ export const sendRecruitmentDecision = async (data: RecruitmentDecisionData): Pr
     const year = new Date().getFullYear();
 
     const statusColor = isApproved ? '#3ABCB3' : '#E36951';
-    const statusLabel = isApproved ? 'ACCESS GRANTED' : 'ACCESS DENIED';
+    const statusLabel = isApproved ? 'APPLICATION SELECTED' : 'UPDATE ON APPLICATION';
     const heading = isApproved
-        ? `Welcome to the Collective, ${data.name}.`
-        : `Thank you for applying, ${data.name}.`;
+        ? `Welcome to the Club, ${data.name}!`
+        : `Thank you for your interest, ${data.name}.`;
     const body = isApproved
-        ? 'Your application has been approved. You are now an official member of the Ramanujan Math Club at CBIT. We look forward to your contributions.'
-        : 'After careful review, your application was not selected for this recruitment cycle. We encourage you to reapply in the next cycle.';
+        ? 'Congratulations! Your application stood out, and we are thrilled to welcome you as an official member of the Ramanujan Math Club at CBIT. We cannot wait to see the incredible ideas you will bring to the team.'
+        : 'Thank you so much for taking the time to apply. We had a remarkably talented pool of applicants this year, and unfortunately, we are unable to offer you a spot at this time. Please do not be discouraged—we deeply appreciate your enthusiasm for math and encourage you to keep exploring, learning, and applying in our future cycles!';
 
     const html = `
 <!DOCTYPE html>
@@ -620,11 +620,6 @@ export const sendRecruitmentDecision = async (data: RecruitmentDecisionData): Pr
                     </div>
                     <h2 style="margin:0;color:#fff;font-size:22px;font-weight:400;">${heading}</h2>
                     <p style="margin:12px 0 0;color:#71717a;font-size:14px;line-height:1.7;">${body}</p>
-                    ${data.note ? `
-                    <div style="margin-top:24px;padding:16px 20px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);border-radius:8px;text-align:left;">
-                        <p style="margin:0;color:#52525b;font-size:11px;text-transform:uppercase;letter-spacing:2px;">Note from the Council</p>
-                        <p style="margin:8px 0 0;color:#a1a1aa;font-size:14px;font-style:italic;">"${data.note}"</p>
-                    </div>` : ''}
                 </td></tr>
 
                 <tr><td style="padding:30px 40px;text-align:center;border-top:1px solid rgba(58,188,179,0.1);background:#000;">
@@ -638,10 +633,10 @@ export const sendRecruitmentDecision = async (data: RecruitmentDecisionData): Pr
 </body>
 </html>`;
 
-    const subjectEmoji = isApproved ? '🟢' : '🔴';
+    const subjectEmoji = isApproved ? '🎉' : '📬';
     const subjectText = isApproved
-        ? `[RMC] Welcome to the Club — Application Approved`
-        : `[RMC] Application Update`;
+        ? `[RMC] Welcome to the Club — Application Approved!`
+        : `[RMC] Update on your Application`;
 
     try {
         await transporter.sendMail({

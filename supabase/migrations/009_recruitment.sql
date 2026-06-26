@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.recruitment_applications (
     phone TEXT NOT NULL,
     branch TEXT NOT NULL,
     year TEXT NOT NULL,
+    team TEXT NOT NULL,
 
     -- Dynamic field responses (mirrors the form schema stored in settings)
     extra_fields JSONB DEFAULT '{}'::jsonb,
