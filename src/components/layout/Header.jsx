@@ -11,6 +11,7 @@ const navLinks = [
     { href: "/events", label: "Events" },
     { href: "/team", label: "Team" },
     { href: "/gallery", label: "Gallery" },
+    { href: "/join", label: "Join" },
 ];
 
 export default function Header() {
