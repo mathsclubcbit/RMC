@@ -159,18 +159,18 @@ export async function POST(req: NextRequest) {
             throw new Error('Failed to save application.');
         }
 
-        // --- 6. Send confirmation email (non-blocking) ---
-        sendRecruitmentConfirmation({
+        // --- 6. Send confirmation email (awaited to ensure delivery) ---
+        await sendRecruitmentConfirmation({
             toEmail: email.trim(),
             name: name.trim(),
             applicationId: inserted.id,
         }).catch((e) => console.error('[recruitment/apply] Email failed:', e));
 
-        // --- 7. Alert admin (non-blocking) ---
+        // --- 7. Alert admin (awaited to ensure delivery) ---
         const adminEmail = process.env.EMAIL_USER;
         if (adminEmail) {
             const { sendRecruitmentAdminAlert } = await import('@/lib/email');
-            sendRecruitmentAdminAlert({
+            await sendRecruitmentAdminAlert({
                 name: name.trim(),
                 email: email.trim(),
                 rollNumber: rollNumber.trim(),
@@ -180,7 +180,7 @@ export async function POST(req: NextRequest) {
             }).catch((e) => console.error('[recruitment/apply] Admin alert failed:', e));
         }
 
-        // --- 8. Send to Google Sheets (non-blocking) ---
+        // --- 8. Send to Google Sheets (awaited to ensure delivery) ---
         const sheetId = process.env.RECRUITMENT_GOOGLE_SHEET_ID || '1mpNl9ofBlr94LxBOjyrqQ84EbiHLMEav91iH89DmALM';
         const rowData = [
             new Date().toISOString(),
@@ -196,7 +196,7 @@ export async function POST(req: NextRequest) {
             academicYear,
             JSON.stringify(extraFields)
         ];
-        appendRecruitmentRowToSheet(sheetId, rowData, 'Recruitment').catch(e => console.error('[recruitment/apply] Sheets sync failed:', e));
+        await appendRecruitmentRowToSheet(sheetId, rowData, 'Recruitment').catch(e => console.error('[recruitment/apply] Sheets sync failed:', e));
 
         return NextResponse.json(
             { success: true, applicationId: inserted.id },

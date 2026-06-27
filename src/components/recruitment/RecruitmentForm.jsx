@@ -18,8 +18,8 @@ const TEAMS = [
         symbol: "∑",
     },
     {
-        value: "Content & Media",
-        label: "Content & Media",
+        value: "Content",
+        label: "Content",
         description: "Design, write and create visual content",
         icon: FileText,
         symbol: "π",
@@ -38,18 +38,25 @@ const TEAMS = [
         icon: CalendarDays,
         symbol: "∫",
     },
+    {
+        value: "Visual Media",
+        label: "Visual Media",
+        description: "Plan and execute club events & workshops",
+        icon: CalendarDays,
+        symbol: "∫",
+    },
 ];
 
 // ─── Branch & Year Options ────────────────────────────────────────────────────
 const BRANCHES = [
-    { value: "CSE",   label: "Computer Science & Engineering" },
-    { value: "ECE",   label: "Electronics & Communication" },
-    { value: "EEE",   label: "Electrical & Electronics" },
-    { value: "IT",    label: "Information Technology" },
-    { value: "MECH",  label: "Mechanical Engineering" },
+    { value: "CSE", label: "Computer Science & Engineering" },
+    { value: "ECE", label: "Electronics & Communication" },
+    { value: "EEE", label: "Electrical & Electronics" },
+    { value: "IT", label: "Information Technology" },
+    { value: "MECH", label: "Mechanical Engineering" },
     { value: "CIVIL", label: "Civil Engineering" },
     { value: "AI-ML", label: "AI & Machine Learning" },
-    { value: "AIDS",  label: "AI & Data Science" },
+    { value: "AIDS", label: "AI & Data Science" },
 ];
 
 const YEARS = [
@@ -70,23 +77,36 @@ const labelCls =
 
 // ─── Team Card Picker ─────────────────────────────────────────────────────────
 function TeamPicker({ value, onChange, error }) {
+    // value is an array of team values e.g. ["WebDev", "PR"]
+    const toggleTeam = (teamValue) => {
+        if (value.includes(teamValue)) {
+            // Remove it
+            onChange(value.filter((v) => v !== teamValue));
+        } else {
+            // Add it to the end
+            onChange([...value, teamValue]);
+        }
+    };
+
     return (
         <div>
             <p className={labelCls}>
-                <Megaphone className="w-3 h-3" /> Team Preference
+                <Megaphone className="w-3 h-3" /> Team Preferences (Ranked)
                 <span className="text-coral/70">*</span>
             </p>
 
-            {/* 2-col on mobile, 4-col on sm+ */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {TEAMS.map((team) => {
                     const Icon = team.icon;
-                    const isSelected = value === team.value;
+                    const rankIndex = value.indexOf(team.value);
+                    const isSelected = rankIndex !== -1;
+                    const rank = rankIndex + 1; // 1-based rank
+
                     return (
                         <button
                             key={team.value}
                             type="button"
-                            onClick={() => onChange(team.value)}
+                            onClick={() => toggleTeam(team.value)}
                             className={
                                 "relative flex flex-col items-center gap-2 p-4 rounded-xl border " +
                                 "transition-all duration-200 text-center group " +
@@ -135,20 +155,35 @@ function TeamPicker({ value, onChange, error }) {
                                 {team.description}
                             </p>
 
-                            {/* Selected checkmark */}
+                            {/* Rank badge */}
                             {isSelected && (
                                 <motion.div
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
-                                    className="absolute top-1.5 left-1.5 w-4 h-4 rounded-full bg-teal flex items-center justify-center"
+                                    className="absolute top-1.5 left-1.5 w-5 h-5 rounded-md bg-teal flex items-center justify-center shadow-lg"
                                 >
-                                    <Check className="w-2.5 h-2.5 text-black" />
+                                    <span className="text-[10px] font-bold text-black font-mono">{rank}</span>
                                 </motion.div>
                             )}
                         </button>
                     );
                 })}
             </div>
+
+            {value.length > 0 && (
+                <div className="mt-4 p-3 rounded-lg border border-teal/20 bg-teal/5 flex items-center justify-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-mono text-teal/70 uppercase tracking-widest mr-1">Your Priority:</span>
+                    {value.map((v, idx) => {
+                        const teamLabel = TEAMS.find(t => t.value === v)?.label;
+                        return (
+                            <span key={v} className="text-xs font-serif text-white/90 flex items-center gap-1.5">
+                                {idx > 0 && <span className="text-teal/40">→</span>}
+                                <span className="text-teal font-mono font-bold">{idx + 1}.</span> {teamLabel}
+                            </span>
+                        );
+                    })}
+                </div>
+            )}
 
             {error && <p className="mt-2 text-xs text-coral/80 font-mono">{error}</p>}
         </div>
@@ -436,7 +471,7 @@ function ConfirmationCard({ name, applicationId }) {
 export default function RecruitmentForm({ schema, academicYear }) {
     // team is stored in extraFields on submit — no DB migration needed
     const [core, setCore] = useState({ name: "", email: "", phone: "", rollNumber: "", branch: "", year: "" });
-    const [team, setTeam] = useState("");
+    const [team, setTeam] = useState([]);
     const [extra, setExtra] = useState({});
     const [errors, setErrors] = useState({});
 
@@ -470,7 +505,7 @@ export default function RecruitmentForm({ schema, academicYear }) {
             else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(core.email)) errs.email = "Invalid email address.";
             if (!core.phone.trim()) errs.phone = "Phone number is required.";
             else if (!/^[0-9]{10}$/.test(core.phone.replace(/\s/g, ""))) errs.phone = "Must be exactly 10 digits.";
-            if (!team) errs.team = "Please choose a team.";
+            if (team.length === 0) errs.team = "Please select at least one team preference.";
         }
         if (s === STEP_ACADEMIC) {
             if (!core.rollNumber.trim()) errs.rollNumber = "Roll number is required.";
@@ -509,7 +544,7 @@ export default function RecruitmentForm({ schema, academicYear }) {
                     rollNumber: core.rollNumber.trim(),
                     branch: core.branch,
                     year: core.year,
-                    team,
+                    team: team.map((t, idx) => `${idx + 1}. ${TEAMS.find(x => x.value === t)?.label || t}`).join(" | "),
                     extraFields: extra,
                 }),
             });
@@ -702,13 +737,13 @@ export default function RecruitmentForm({ schema, academicYear }) {
 
                             <div className="border border-white/10 rounded-xl divide-y divide-white/5 overflow-hidden">
                                 {[
-                                    { label: "Full Name",     value: core.name },
+                                    { label: "Full Name", value: core.name },
                                     { label: "Email Address", value: core.email },
-                                    { label: "Phone Number",  value: core.phone },
-                                    { label: "Roll Number",   value: core.rollNumber },
-                                    { label: "Branch",        value: BRANCHES.find((b) => b.value === core.branch)?.label || core.branch },
+                                    { label: "Phone Number", value: core.phone },
+                                    { label: "Roll Number", value: core.rollNumber },
+                                    { label: "Branch", value: BRANCHES.find((b) => b.value === core.branch)?.label || core.branch },
                                     { label: "Year of Study", value: YEARS.find((y) => y.value === core.year)?.label || core.year },
-                                    { label: "Team",          value: team || "—" },
+                                    { label: "Team Preferences", value: team.length > 0 ? team.map((t, idx) => `${idx + 1}. ${TEAMS.find(x => x.value === t)?.label || t}`).join(" → ") : "—" },
                                     ...schema.map((f) => {
                                         const val = extra[f.id];
                                         return { label: f.label, value: Array.isArray(val) ? val.join(", ") : String(val || "—") };

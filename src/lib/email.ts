@@ -1,6 +1,51 @@
 import nodemailer from 'nodemailer';
 import { generateStyledQRCode } from './qrcode';
 
+export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
+    const year = new Date().getFullYear();
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.rmccbit.in';
+    const logoUrl = `${siteUrl}/full%20logo.png`;
+    
+    return `
+        <!-- Footer -->
+        <tr>
+            <td style="padding: 30px 40px; text-align: center; border-top: 1px solid rgba(45, 212, 191, 0.1); background: #000000;">
+                
+                <!-- Social Links -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto 25px;">
+                    <tr>
+                        <td style="padding: 0 15px;">
+                            <a href="${siteUrl}" target="_blank" style="text-decoration: none; display: inline-block;">
+                                <img src="${logoUrl}" alt="RMC Website" width="28" height="28" style="display: block; width: 28px; height: 28px; object-fit: contain;" />
+                            </a>
+                        </td>
+                        <td style="padding: 0 15px;">
+                            <a href="https://linkedin.com/company/rmc-cbit" target="_blank" style="text-decoration: none; display: inline-block;">
+                                <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="28" height="28" style="display: block; width: 28px; height: 28px;" />
+                            </a>
+                        </td>
+                        <td style="padding: 0 15px;">
+                            <a href="https://instagram.com/rmc_cbit" target="_blank" style="text-decoration: none; display: inline-block;">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/1024px-Instagram_icon.png" alt="Instagram" width="28" height="28" style="display: block; width: 28px; height: 28px;" />
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+
+                <p style="margin: 0; color: #52525b; font-size: 12px; letter-spacing: 1px;">
+                    CALCULATING... SUCCESS.
+                </p>
+                <p style="margin: 10px 0 0; color: #3f3f46; font-size: 11px;">
+                    Ramanujan Mathematical Club &copy; ${year} | CBIT
+                </p>
+                <p style="margin: 15px 0 0; color: ${themeColor}; font-size: 14px; text-decoration: none;">
+                    &nabla; &Delta; &Pi; &Phi;
+                </p>
+            </td>
+        </tr>
+    `;
+};
+
 /**
  * Configure the SMTP Transporter
  * Using Gmail as an example
@@ -157,22 +202,7 @@ const generateTicketEmailHTML = (data: TicketEmailData, qrCodeDataUrl: string): 
                             </table>
                         </td>
                     </tr>
-
-                    <!-- Footer -->
-                    <tr>
-                        <td style="padding: 40px; text-align: center; border-top: 1px solid rgba(45, 212, 191, 0.1); background: #000000;">
-                            <p style="margin: 0; color: #52525b; font-size: 12px; letter-spacing: 1px;">
-                                CALCULATING... SUCCESS.
-                            </p>
-                            <p style="margin: 10px 0 0; color: #3f3f46; font-size: 11px;">
-                                Ramanujan Mathematical Club &copy; ${new Date().getFullYear()}
-                            </p>
-                            <p style="margin: 15px 0 0; color: #2dd4bf; font-size: 14px; text-decoration: none;">
-                                ∇ &Delta; &Pi; &Phi;
-                            </p>
-                        </td>
-                    </tr>
-
+                    ${getEmailFooter()}
                 </table>
             </td>
         </tr>
@@ -282,13 +312,7 @@ export const sendVerificationEmail = async (
                             </p>
                         </td>
                     </tr>
-                    <tr>
-                        <td style="padding: 30px; text-align: center; border-top: 1px solid rgba(45, 212, 191, 0.1);">
-                            <p style="margin: 0; color: #3f3f46; font-size: 11px;">
-                                Ramanujan Mathematical Club &copy; 2026
-                            </p>
-                        </td>
-                    </tr>
+                    ${getEmailFooter()}
                 </table>
             </td>
         </tr>
@@ -354,6 +378,7 @@ export const sendRecruitmentAdminAlert = async (data: RecruitmentAdminAlertData)
             Review in Admin Panel →
           </a>
         </td></tr>
+        ${getEmailFooter('#6366f1')}
       </table>
     </td></tr>
   </table>
@@ -431,6 +456,7 @@ export const sendWelcomeEmail = async (toEmail: string, name: string = "Member")
                             </p>
                         </td>
                     </tr>
+                    ${getEmailFooter()}
                 </table>
             </td>
         </tr>
@@ -539,11 +565,7 @@ export const sendRecruitmentConfirmation = async (data: RecruitmentConfirmationD
                     </table>
                 </td></tr>
 
-                <!-- Footer -->
-                <tr><td style="padding:30px 40px;text-align:center;border-top:1px solid rgba(58,188,179,0.1);background:#000;">
-                    <p style="margin:0;color:#3f3f46;font-size:11px;">Ramanujan Mathematical Club &copy; ${year} | CBIT</p>
-                    <p style="margin:10px 0 0;color:#3ABCB3;font-size:13px;">∇ Δ Π Φ</p>
-                </td></tr>
+                ${getEmailFooter('#3ABCB3')}
 
             </table>
         </td></tr>
@@ -652,4 +674,133 @@ export const sendRecruitmentDecision = async (data: RecruitmentDecisionData): Pr
     }
 };
 
+// ==========================================
+// Recruitment Workflow Phase 2 Emails
+// ==========================================
 
+export const sendTaskEmail = async (data: {
+    toEmail: string;
+    name: string;
+    applicationId: string;
+    teamName: string;
+}) => {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return false;
+
+    const taskLink = `https://rmccbit.in/join/task/${data.applicationId}`;
+    const year = new Date().getFullYear();
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;font-family:'Cormorant Garamond',serif;background:#000;color:#fff;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#000;">
+        <tr><td style="padding:60px 20px;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600"
+                style="margin:0 auto;border:1px solid rgba(58,188,179,0.15);background:#050505;border-radius:4px;">
+                <tr><td style="padding:24px 0 0;text-align:center;color:rgba(58,188,179,0.3);font-size:22px;letter-spacing:14px;">∑ ∫ π</td></tr>
+                <tr><td style="padding:24px 40px;text-align:center;">
+                    <h1 style="margin:0;color:#3ABCB3;font-size:30px;font-weight:300;letter-spacing:4px;text-transform:uppercase;">
+                        RMC <span style="font-weight:600;">Recruitment</span>
+                    </h1>
+                    <div style="width:60px;height:1px;background:#3ABCB3;margin:16px auto;"></div>
+                </td></tr>
+                <tr><td style="padding:10px 40px 30px;text-align:center;">
+                    <h2 style="margin:0;color:#fff;font-size:22px;font-weight:400;">Your Task Assignment: ${data.teamName}</h2>
+                    <p style="margin:16px 0 0;color:#71717a;font-size:15px;line-height:1.7;">
+                        Dear ${data.name},<br><br>
+                        Congratulations on making it to the next phase of the recruitment process for the <strong>${data.teamName}</strong> team. 
+                        Please click the button below to view and submit your task assignment.
+                    </p>
+                    <a href="${taskLink}" style="display:inline-block;margin-top:30px;padding:12px 30px;background:#3ABCB3;color:#000;text-decoration:none;font-family:monospace;font-weight:bold;text-transform:uppercase;letter-spacing:2px;border-radius:4px;">View & Submit Task</a>
+                </td></tr>
+                <tr><td style="padding:30px 40px;text-align:center;border-top:1px solid rgba(58,188,179,0.1);background:#000;">
+                    <p style="margin:0;color:#3f3f46;font-size:11px;">Ramanujan Mathematical Club &copy; ${year} | CBIT</p>
+                    <p style="margin:10px 0 0;color:#3ABCB3;font-size:13px;">∇ Δ Π Φ</p>
+                </td></tr>
+            </table>
+        </td></tr>
+    </table>
+</body>
+</html>`;
+
+    try {
+        await transporter.sendMail({
+            from: `"RMC Recruitment" <${process.env.EMAIL_USER}>`,
+            to: data.toEmail,
+            subject: `[RMC] Task Assignment: ${data.teamName}`,
+            html,
+            replyTo: process.env.EMAIL_USER,
+        });
+        return true;
+    } catch (err) {
+        console.error('sendTaskEmail error:', err);
+        return false;
+    }
+};
+
+export const sendInterviewEmail = async (data: {
+    toEmail: string;
+    name: string;
+    teamName: string;
+    meetLink: string;
+    meetTime: string;
+}) => {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return false;
+
+    const dateStr = new Date(data.meetTime).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'full', timeStyle: 'short' });
+    const year = new Date().getFullYear();
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;font-family:'Cormorant Garamond',serif;background:#000;color:#fff;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#000;">
+        <tr><td style="padding:60px 20px;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600"
+                style="margin:0 auto;border:1px solid rgba(58,188,179,0.15);background:#050505;border-radius:4px;">
+                <tr><td style="padding:24px 0 0;text-align:center;color:rgba(58,188,179,0.3);font-size:22px;letter-spacing:14px;">∑ ∫ π</td></tr>
+                <tr><td style="padding:24px 40px;text-align:center;">
+                    <h1 style="margin:0;color:#3ABCB3;font-size:30px;font-weight:300;letter-spacing:4px;text-transform:uppercase;">
+                        RMC <span style="font-weight:600;">Recruitment</span>
+                    </h1>
+                    <div style="width:60px;height:1px;background:#3ABCB3;margin:16px auto;"></div>
+                </td></tr>
+                <tr><td style="padding:10px 40px 30px;text-align:center;">
+                    <h2 style="margin:0;color:#fff;font-size:22px;font-weight:400;">Interview Scheduled: ${data.teamName}</h2>
+                    <p style="margin:16px 0 0;color:#71717a;font-size:15px;line-height:1.7;">
+                        Dear ${data.name},<br><br>
+                        Your interview for the <strong>${data.teamName}</strong> team has been scheduled.<br>
+                        <strong>Time:</strong> ${dateStr} IST
+                    </p>
+                    <a href="${data.meetLink}" style="display:inline-block;margin-top:30px;padding:12px 30px;background:#3ABCB3;color:#000;text-decoration:none;font-family:monospace;font-weight:bold;text-transform:uppercase;letter-spacing:2px;border-radius:4px;">Join Google Meet</a>
+                </td></tr>
+                <tr><td style="padding:30px 40px;text-align:center;border-top:1px solid rgba(58,188,179,0.1);background:#000;">
+                    <p style="margin:0;color:#3f3f46;font-size:11px;">Ramanujan Mathematical Club &copy; ${year} | CBIT</p>
+                    <p style="margin:10px 0 0;color:#3ABCB3;font-size:13px;">∇ Δ Π Φ</p>
+                </td></tr>
+            </table>
+        </td></tr>
+    </table>
+</body>
+</html>`;
+
+    try {
+        await transporter.sendMail({
+            from: `"RMC Recruitment" <${process.env.EMAIL_USER}>`,
+            to: data.toEmail,
+            subject: `[RMC] Interview Scheduled: ${data.teamName}`,
+            html,
+            replyTo: process.env.EMAIL_USER,
+        });
+        return true;
+    } catch (err) {
+        console.error('sendInterviewEmail error:', err);
+        return false;
+    }
+};
