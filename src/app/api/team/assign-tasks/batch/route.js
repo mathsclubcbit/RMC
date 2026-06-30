@@ -40,12 +40,21 @@ export async function POST(request) {
             return NextResponse.json({ error: 'No task URLs configured for this team' }, { status: 400 });
         }
 
+        const teamLabels = {
+            "WebDev": "Web Dev",
+            "Content": "Content",
+            "PR": "PR",
+            "Events": "Events",
+            "Visual Media": "Visual Media"
+        };
+        const searchLabel = teamLabels[teamName] || teamName;
+
         // 2. Fetch all requested applicants (to ensure they belong to this team and are PENDING)
         const { data: applicants, error: fetchErr } = await supabase
             .from('recruitment_applications')
-            .select('id, name, email, task_status')
+            .select('id, name, email, task_status, team, task_responses')
             .in('id', applicant_ids)
-            .ilike('team', `%${teamName}%`);
+            .ilike('team', `%${searchLabel}%`);
 
         if (fetchErr) throw fetchErr;
 
@@ -57,9 +66,13 @@ export async function POST(request) {
 
         // Process sequentially
         for (const applicant of applicants) {
-            if (applicant.task_status !== 'PENDING' && applicant.task_status !== null) {
+            const currentResponses = applicant.task_responses || {};
+            const teamTracking = currentResponses.team_tracking || {};
+            const currentTeamStatus = teamTracking[teamName]?.status;
+
+            if (currentTeamStatus === 'SENT' || currentTeamStatus === 'SUBMITTED' || currentTeamStatus === 'EVALUATED') {
                 results.failed.push(applicant.id);
-                results.errors.push(`Applicant ${applicant.id} task_status is ${applicant.task_status}`);
+                results.errors.push(`Applicant ${applicant.id} task already processed for this team.`);
                 continue;
             }
 
@@ -75,12 +88,32 @@ export async function POST(request) {
 
                 if (assignErr) throw assignErr;
 
+                const normalize = (s) => s.replace(/[^a-z0-9]/gi, '').toLowerCase();
+                const matchTeam = normalize(teamName);
+                
+                let priority = 1;
+                const teamStr = applicant.team || "";
+                const parts = teamStr.split('|').map(s => s.trim());
+                for (let i = 0; i < parts.length; i++) {
+                    if (normalize(parts[i]).includes(matchTeam)) {
+                        priority = i + 1;
+                        break;
+                    }
+                }
+
+                if (priority > 2) {
+                    results.failed.push(applicant.id);
+                    results.errors.push(`Applicant ${applicant.id} is priority ${priority}. Tasks can only be sent to priority 1 and 2.`);
+                    continue;
+                }
+
                 // Send email
                 const emailSent = await sendTaskEmail({
                     toEmail: applicant.email,
                     name: applicant.name,
                     applicationId: applicant.id,
-                    teamName: teamName
+                    teamName: teamName,
+                    priority: priority
                 });
 
                 if (!emailSent) {
@@ -88,9 +121,18 @@ export async function POST(request) {
                 }
 
                 // If email successful, mark as SENT
+                teamTracking[teamName] = { status: 'SENT', assignedUrl };
+                const updatedResponses = {
+                    ...currentResponses,
+                    team_tracking: teamTracking
+                };
+
                 const { error: updateErr } = await supabase
                     .from('recruitment_applications')
-                    .update({ task_status: 'SENT' })
+                    .update({ 
+                        task_status: 'SENT',
+                        task_responses: updatedResponses
+                    })
                     .eq('id', applicant.id);
 
                 if (updateErr) throw updateErr;

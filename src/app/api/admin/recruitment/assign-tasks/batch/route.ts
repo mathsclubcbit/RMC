@@ -71,11 +71,32 @@ export async function POST(req: NextRequest) {
 
                 if (emailSent) {
                     // Update DB ONLY if email succeeds
+                    // Need to fetch current responses to preserve other teams' data
+                    const { data: currentApp } = await supabase
+                        .from('recruitment_applications')
+                        .select('task_responses')
+                        .eq('id', applicant.id)
+                        .single();
+                        
+                    const currentResponses = currentApp?.task_responses || {};
+                    const teamTracking = currentResponses.team_tracking || {};
+                    
+                    teamTracking[team_name] = { 
+                        status: 'SENT', 
+                        assignedUrl: randomTaskUrl 
+                    };
+                    
+                    const updatedResponses = {
+                        ...currentResponses,
+                        team_tracking: teamTracking
+                    };
+
                     const { error: updateErr } = await supabase
                         .from('recruitment_applications')
                         .update({
                             task_status: 'SENT',
-                            task_file_url: randomTaskUrl
+                            task_file_url: randomTaskUrl,
+                            task_responses: updatedResponses
                         })
                         .eq('id', applicant.id);
 

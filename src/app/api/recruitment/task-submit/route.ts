@@ -5,6 +5,7 @@ export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
+        const teamName = searchParams.get('team');
 
         if (!id) {
             return NextResponse.json({ error: 'Application ID is required' }, { status: 400 });
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
         // Securely fetch only the data the applicant needs
         const { data: app, error } = await supabase
             .from('recruitment_applications')
-            .select('name, team, task_status, task_file_url')
+            .select('name, team, task_status, task_file_url, task_responses')
             .eq('id', id)
             .single();
 
@@ -23,7 +24,20 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Application not found or invalid ID' }, { status: 404 });
         }
 
-        return NextResponse.json({ application: app });
+        let teamTaskUrl = null;
+        if (teamName) {
+            const { data: teamTask } = await supabase
+                .from('recruitment_team_tasks')
+                .select('*')
+                .eq('team_name', teamName)
+                .single();
+            
+            if (teamTask) {
+                teamTaskUrl = teamTask.task_1_url || teamTask.task_2_url || teamTask.task_3_url;
+            }
+        }
+
+        return NextResponse.json({ application: app, teamTaskUrl });
     } catch (err: unknown) {
         const e = err as Error;
         console.error('[recruitment/task-submit GET] Error:', e);
@@ -34,9 +48,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { applicationId, why_join, why_team, drive_link } = body;
+        const { applicationId, why_join, why_team, drive_link, teamName } = body;
 
-        if (!applicationId || !why_join || !why_team || !drive_link) {
+        if (!applicationId || !why_join || !why_team || !drive_link || !teamName) {
             return NextResponse.json({ error: 'All fields are required.' }, { status: 400 });
         }
 
@@ -45,7 +59,7 @@ export async function POST(req: NextRequest) {
         // Check if application exists and is in the correct state
         const { data: app, error: fetchErr } = await supabase
             .from('recruitment_applications')
-            .select('status, task_status')
+            .select('status, task_status, task_responses')
             .eq('id', applicationId)
             .single();
 
@@ -53,15 +67,31 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Application not found.' }, { status: 404 });
         }
 
-        if (app.task_status !== 'SENT') {
-            return NextResponse.json({ error: 'Task already submitted or not assigned yet.' }, { status: 400 });
+        const currentResponses = app.task_responses || {};
+        const teamTracking = currentResponses.team_tracking || {};
+        
+        if (teamTracking[teamName]?.status !== 'SENT') {
+            return NextResponse.json({ error: 'Task for this team not assigned or already submitted.' }, { status: 400 });
         }
+
+        teamTracking[teamName] = {
+            ...teamTracking[teamName],
+            status: 'SUBMITTED',
+            why_join,
+            why_team,
+            drive_link
+        };
+
+        const updatedResponses = {
+            ...currentResponses,
+            team_tracking: teamTracking
+        };
 
         // Update with task responses
         const { error: updateErr } = await supabase
             .from('recruitment_applications')
             .update({
-                task_responses: { why_join, why_team, drive_link },
+                task_responses: updatedResponses,
                 task_status: 'SUBMITTED',
                 updated_at: new Date().toISOString()
             })

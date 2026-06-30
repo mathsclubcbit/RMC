@@ -3,14 +3,18 @@
 import { useState, use, useEffect } from "react";
 import { Loader2, CheckCircle2, FileText, UploadCloud, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import SpotlightCard from "@/components/ui/SpotlightCard";
 
 export default function TaskSubmissionPage({ params }) {
     const { id } = use(params);
+    const searchParams = useSearchParams();
+    const teamName = searchParams.get('team') || 'Unknown Team';
     
     const [loading, setLoading] = useState(true);
     const [app, setApp] = useState(null);
     const [error, setError] = useState("");
+    const [teamTaskUrl, setTeamTaskUrl] = useState(null);
     
     // Form state
     const [whyJoin, setWhyJoin] = useState("");
@@ -24,10 +28,15 @@ export default function TaskSubmissionPage({ params }) {
         
         const fetchTaskInfo = async () => {
             try {
-                const res = await fetch(`/api/recruitment/task-submit?id=${id}`);
+                let url = `/api/recruitment/task-submit?id=${id}`;
+                if (teamName && teamName !== 'Unknown Team') {
+                    url += `&team=${encodeURIComponent(teamName)}`;
+                }
+                const res = await fetch(url);
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error || "Failed to load task.");
                 setApp(data.application);
+                setTeamTaskUrl(data.teamTaskUrl);
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -51,7 +60,8 @@ export default function TaskSubmissionPage({ params }) {
                     applicationId: id,
                     why_join: whyJoin,
                     why_team: whyTeam,
-                    drive_link: driveLink
+                    drive_link: driveLink,
+                    teamName
                 })
             });
             
@@ -86,7 +96,10 @@ export default function TaskSubmissionPage({ params }) {
         );
     }
 
-    if (submitted || app?.task_status === 'SUBMITTED') {
+    // Check if the specific team task is submitted
+    const isTeamSubmitted = app?.task_responses?.team_tracking?.[teamName]?.status === 'SUBMITTED' || app?.task_responses?.team_tracking?.[teamName]?.status === 'EVALUATED';
+
+    if (submitted || isTeamSubmitted) {
         return (
             <div className="min-h-screen bg-[#060606] flex items-center justify-center p-4">
                 <SpotlightCard className="max-w-md w-full p-8 text-center border-white/10 bg-black/40">
@@ -121,7 +134,7 @@ export default function TaskSubmissionPage({ params }) {
                         <p className="text-teal text-[10px] font-mono tracking-widest uppercase mb-2">Phase 2</p>
                         <h1 className="text-4xl md:text-5xl font-black font-serif">Task Assignment</h1>
                         <p className="mt-4 text-white/50 text-sm leading-relaxed">
-                            Hello <strong className="text-white">{app?.name}</strong>. You have been assigned a task for the <strong className="text-teal">{app?.team}</strong> team. Please review the requirements carefully and submit your work through a Google Drive link.
+                            Hello <strong className="text-white">{app?.name}</strong>. You have been assigned a task for {teamName === 'Unknown Team' ? 'your selected' : <><strong className="text-teal">{teamName}</strong></>} team. Please review the requirements carefully and submit your work through a Google Drive link.
                         </p>
                     </div>
 
@@ -131,7 +144,7 @@ export default function TaskSubmissionPage({ params }) {
                         <p className="text-sm text-white/50 mb-6">View your assigned task instructions below.</p>
                         
                         <a 
-                            href={app?.task_file_url} 
+                            href={app?.task_responses?.team_tracking?.[teamName]?.assignedUrl || app?.task_file_url || teamTaskUrl || "#"} 
                             target="_blank" 
                             rel="noreferrer"
                             className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-bold font-mono text-xs uppercase tracking-widest rounded-xl hover:bg-teal hover:shadow-[0_0_20px_rgba(58,188,179,0.3)] transition-all"
@@ -169,7 +182,7 @@ export default function TaskSubmissionPage({ params }) {
 
                             <div>
                                 <label className="flex justify-between items-end text-[10px] font-mono uppercase tracking-widest text-white/40 mb-2">
-                                    <span>Why did you choose the {app?.team || "selected"} team?</span>
+                                    <span>Why did you choose {teamName === 'Unknown Team' ? 'this' : `the ${teamName}`} team?</span>
                                     <span className={whyTeam.length > 500 ? "text-coral" : ""}>{whyTeam.length}/500</span>
                                 </label>
                                 <textarea
