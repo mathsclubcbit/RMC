@@ -126,6 +126,28 @@ export async function middleware(request) {
         }
 
         // ==========================================
+        // TEAM SESSION PROTECTION
+        // ==========================================
+        if (request.nextUrl.pathname.startsWith('/team/login') || request.nextUrl.pathname.startsWith('/team/dashboard')) {
+            const isLoginPage = request.nextUrl.pathname === '/team/login';
+            const token = request.cookies.get('team_token')?.value;
+            const payload = token ? await verifyJwt(token) : null;
+            const isLoggedIn = payload?.type === 'team';
+
+            if (!isLoginPage && !isLoggedIn) {
+                const url = request.nextUrl.clone();
+                url.pathname = '/team/login';
+                return NextResponse.redirect(url);
+            }
+
+            if (isLoginPage && isLoggedIn) {
+                const url = request.nextUrl.clone();
+                url.pathname = '/team/dashboard';
+                return NextResponse.redirect(url);
+            }
+        }
+
+        // ==========================================
         // NETWORK AUTH PROTECTION
         // ==========================================
         if (request.nextUrl.pathname.startsWith('/network')) {
@@ -167,5 +189,6 @@ export const config = {
         '/admin/:path*',
         '/coordinator/:path*',
         '/network/:path*',
+        '/team/:path*',
     ],
 };

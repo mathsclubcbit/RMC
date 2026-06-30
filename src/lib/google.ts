@@ -405,6 +405,76 @@ export const appendRowToSheet = async (
     }
 };
 
+/**
+ * Ensure the Recruitment Sheet exists and has the correct headers.
+ */
+export const ensureRecruitmentSheet = async (spreadsheetId: string, sheetName: string = 'Recruitment') => {
+    const authClient = await getAuthClient();
+    const sheets = google.sheets({ version: 'v4', auth: authClient });
+
+    try {
+        const response = await sheets.spreadsheets.get({ spreadsheetId });
+        const sheetExists = response.data.sheets?.some(s => s.properties?.title === sheetName);
+
+        if (!sheetExists) {
+            await sheets.spreadsheets.batchUpdate({
+                spreadsheetId,
+                requestBody: {
+                    requests: [{
+                        addSheet: {
+                            properties: {
+                                title: sheetName,
+                                gridProperties: { rowCount: 1000, columnCount: 15 }
+                            }
+                        }
+                    }]
+                }
+            });
+        }
+
+        const headers = [
+            'Timestamp', 'Application ID', 'Name', 'Email', 'Phone', 'Roll No', 'Branch',
+            'Year', 'Team', 'Status', 'Academic Year', 'Extra Fields JSON'
+        ];
+
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `${sheetName}!A1:L1`,
+            valueInputOption: 'USER_ENTERED',
+            requestBody: { values: [headers] }
+        });
+    } catch (error) {
+        console.error('Error ensuring recruitment sheet:', error);
+    }
+};
+
+/**
+ * Append a recruitment application row to the Google Sheet
+ */
+export const appendRecruitmentRowToSheet = async (
+    spreadsheetId: string,
+    rowData: string[],
+    sheetName: string = 'Recruitment'
+) => {
+    const authClient = await getAuthClient();
+    const sheets = google.sheets({ version: 'v4', auth: authClient });
+
+    try {
+        await ensureRecruitmentSheet(spreadsheetId, sheetName);
+        await sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: `${sheetName}!A1`,
+            insertDataOption: 'INSERT_ROWS',
+            valueInputOption: 'USER_ENTERED',
+            requestBody: {
+                values: [rowData],
+            },
+        });
+    } catch (error: any) {
+        console.error('Recruitment sheets append failed', error.message);
+    }
+};
+
 export interface RegistrationData {
     timestamp: string;
     registrationId: string;
