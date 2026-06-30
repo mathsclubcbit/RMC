@@ -128,7 +128,7 @@ export async function middleware(request) {
         // ==========================================
         // TEAM SESSION PROTECTION
         // ==========================================
-        if (request.nextUrl.pathname.startsWith('/team')) {
+        if (request.nextUrl.pathname.startsWith('/team/login') || request.nextUrl.pathname.startsWith('/team/dashboard')) {
             const isLoginPage = request.nextUrl.pathname === '/team/login';
             const token = request.cookies.get('team_token')?.value;
             const payload = token ? await verifyJwt(token) : null;

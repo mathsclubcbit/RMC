@@ -5,7 +5,7 @@ export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
     const year = new Date().getFullYear();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.rmccbit.in';
     const logoUrl = `${siteUrl}/full%20logo.png`;
-    
+
     return `
         <!-- Footer -->
         <tr>
@@ -20,12 +20,12 @@ export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
                             </a>
                         </td>
                         <td style="padding: 0 15px;">
-                            <a href="https://linkedin.com/company/rmc-cbit" target="_blank" style="text-decoration: none; display: inline-block;">
+                            <a href="https://www.linkedin.com/company/ramanujan-maths-club/" target="_blank" style="text-decoration: none; display: inline-block;">
                                 <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="28" height="28" style="display: block; width: 28px; height: 28px;" />
                             </a>
                         </td>
                         <td style="padding: 0 15px;">
-                            <a href="https://instagram.com/rmc_cbit" target="_blank" style="text-decoration: none; display: inline-block;">
+                            <a href="https://instagram.com/rmc.cbit" target="_blank" style="text-decoration: none; display: inline-block;">
                                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/1024px-Instagram_icon.png" alt="Instagram" width="28" height="28" style="display: block; width: 28px; height: 28px;" />
                             </a>
                         </td>
@@ -644,10 +644,7 @@ export const sendRecruitmentDecision = async (data: RecruitmentDecisionData): Pr
                     <p style="margin:12px 0 0;color:#71717a;font-size:14px;line-height:1.7;">${body}</p>
                 </td></tr>
 
-                <tr><td style="padding:30px 40px;text-align:center;border-top:1px solid rgba(58,188,179,0.1);background:#000;">
-                    <p style="margin:0;color:#3f3f46;font-size:11px;">Ramanujan Mathematical Club &copy; ${year} | CBIT</p>
-                    <p style="margin:10px 0 0;color:#3ABCB3;font-size:13px;">∇ Δ Π Φ</p>
-                </td></tr>
+                                ${getEmailFooter('#3ABCB3')}
 
             </table>
         </td></tr>
@@ -716,10 +713,7 @@ export const sendTaskEmail = async (data: {
                     </p>
                     <a href="${taskLink}" style="display:inline-block;margin-top:30px;padding:12px 30px;background:#3ABCB3;color:#000;text-decoration:none;font-family:monospace;font-weight:bold;text-transform:uppercase;letter-spacing:2px;border-radius:4px;">View & Submit Task</a>
                 </td></tr>
-                <tr><td style="padding:30px 40px;text-align:center;border-top:1px solid rgba(58,188,179,0.1);background:#000;">
-                    <p style="margin:0;color:#3f3f46;font-size:11px;">Ramanujan Mathematical Club &copy; ${year} | CBIT</p>
-                    <p style="margin:10px 0 0;color:#3ABCB3;font-size:13px;">∇ Δ Π Φ</p>
-                </td></tr>
+                                ${getEmailFooter('#3ABCB3')}
             </table>
         </td></tr>
     </table>
@@ -780,10 +774,7 @@ export const sendInterviewEmail = async (data: {
                     </p>
                     <a href="${data.meetLink}" style="display:inline-block;margin-top:30px;padding:12px 30px;background:#3ABCB3;color:#000;text-decoration:none;font-family:monospace;font-weight:bold;text-transform:uppercase;letter-spacing:2px;border-radius:4px;">Join Google Meet</a>
                 </td></tr>
-                <tr><td style="padding:30px 40px;text-align:center;border-top:1px solid rgba(58,188,179,0.1);background:#000;">
-                    <p style="margin:0;color:#3f3f46;font-size:11px;">Ramanujan Mathematical Club &copy; ${year} | CBIT</p>
-                    <p style="margin:10px 0 0;color:#3ABCB3;font-size:13px;">∇ Δ Π Φ</p>
-                </td></tr>
+                                ${getEmailFooter('#3ABCB3')}
             </table>
         </td></tr>
     </table>

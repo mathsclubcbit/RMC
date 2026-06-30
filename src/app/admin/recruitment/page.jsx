@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
     Users, Settings, LayoutList, Search, Check, X, ChevronRight,
     Plus, Trash2, GripVertical, ArrowUp, ArrowDown, ToggleLeft, ToggleRight,
-    Loader2, RefreshCw, ChevronDown, Eye, Filter
+    Loader2, RefreshCw, ChevronDown, Eye, Filter, ListTodo, Upload, Send
 } from "lucide-react";
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
@@ -131,6 +131,37 @@ function ApplicationDrawer({ app, onClose, onDecision }) {
                                     </p>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Task Responses */}
+                {app.task_responses && (
+                    <div className="px-6 pb-4">
+                        <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 mb-3">Task Submission</p>
+                        <div className="rounded-2xl border border-white/10 overflow-hidden divide-y divide-white/5 bg-white/[0.02]">
+                            <div className="px-4 py-3">
+                                <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 mb-1">Why do you want to join RMC?</p>
+                                <p className="text-sm font-serif text-white/70 whitespace-pre-wrap">
+                                    {app.task_responses.why_join || "—"}
+                                </p>
+                            </div>
+                            <div className="px-4 py-3">
+                                <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 mb-1">Why this team?</p>
+                                <p className="text-sm font-serif text-white/70 whitespace-pre-wrap">
+                                    {app.task_responses.why_team || "—"}
+                                </p>
+                            </div>
+                            <div className="px-4 py-3">
+                                <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 mb-1">Drive Link</p>
+                                {app.task_responses.drive_link ? (
+                                    <a href={app.task_responses.drive_link} target="_blank" rel="noreferrer" className="text-sm text-teal hover:underline break-all">
+                                        {app.task_responses.drive_link}
+                                    </a>
+                                ) : (
+                                    <p className="text-sm font-serif text-white/70">—</p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
@@ -736,9 +767,7 @@ function SettingsTab() {
             </button>
         </div>
     );
-}
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
+}// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function RecruitmentAdminPage() {
     const [activeTab, setActiveTab] = useState("applications");
 

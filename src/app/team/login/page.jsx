@@ -42,9 +42,10 @@ export default function TeamLogin() {
     };
 
     return (
-        <div className="max-w-md w-full mx-auto">
-            <div className="text-center mb-10">
-                <h1 className="text-3xl sm:text-4xl font-serif text-white mb-3 tracking-tight">Team Portal</h1>
+        <div className="flex-1 flex flex-col relative z-10 pt-24 sm:pt-32 px-4 pb-12 sm:pb-24 w-full">
+            <div className="max-w-md w-full mx-auto">
+                <div className="text-center mb-10">
+                    <h1 className="text-3xl sm:text-4xl font-serif text-white mb-3 tracking-tight">Team Portal</h1>
                 <p className="text-white/50 text-sm font-mono uppercase tracking-widest">Authorized Heads Only</p>
             </div>
 
@@ -100,6 +101,7 @@ export default function TeamLogin() {
                     </button>
                 </form>
             </SpotlightCard>
+            </div>
         </div>
     );
 }

@@ -37,15 +37,17 @@ export default async function TeamDashboardPage() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto w-full">
-            <div className="mb-8 border-b border-white/10 pb-6">
+        <div className="flex-1 flex flex-col relative z-10 pt-24 sm:pt-32 px-4 pb-12 sm:pb-24 w-full">
+            <div className="max-w-7xl mx-auto w-full">
+                <div className="mb-8 border-b border-white/10 pb-6">
                 <h1 className="text-3xl font-serif text-white mb-2">Team {teamName}</h1>
                 <p className="text-white/50 text-sm font-mono uppercase tracking-widest">
                     Applicant Management Dashboard
                 </p>
             </div>
             
-            <TeamDashboardClient initialApplicants={applicants || []} teamName={teamName} />
+                <TeamDashboardClient initialApplicants={applicants || []} teamName={teamName} />
+            </div>
         </div>
     );
 }
