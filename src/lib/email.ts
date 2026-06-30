@@ -18,7 +18,7 @@ export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
                         If you haven't joined yet, please join our official WhatsApp group for updates.
                     </p>
                     <a href="${whatsappLink}" target="_blank" style="display: inline-block; padding: 12px 24px; background: #ffffff; color: #25D366; text-decoration: none; font-family: sans-serif; font-weight: bold; border-radius: 4px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/512px-WhatsApp.svg.png" width="18" height="18" alt="WhatsApp" style="display: inline-block; vertical-align: middle; margin-right: 6px; margin-top: -2px;" />
+                        <img src="https://static.cdnlogo.com/logos/w/29/whatsapp-icon.svg" width="18" height="18" alt="WhatsApp" style="display: inline-block; vertical-align: middle; margin-right: 6px; margin-top: -2px;" />
                         Join WhatsApp Group
                     </a>
                 </div>
