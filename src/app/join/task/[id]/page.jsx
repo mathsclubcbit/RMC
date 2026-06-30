@@ -14,6 +14,7 @@ export default function TaskSubmissionPage({ params }) {
     const [loading, setLoading] = useState(true);
     const [app, setApp] = useState(null);
     const [error, setError] = useState("");
+    const [teamTaskUrl, setTeamTaskUrl] = useState(null);
     
     // Form state
     const [whyJoin, setWhyJoin] = useState("");
@@ -27,10 +28,15 @@ export default function TaskSubmissionPage({ params }) {
         
         const fetchTaskInfo = async () => {
             try {
-                const res = await fetch(`/api/recruitment/task-submit?id=${id}`);
+                let url = `/api/recruitment/task-submit?id=${id}`;
+                if (teamName && teamName !== 'Unknown Team') {
+                    url += `&team=${encodeURIComponent(teamName)}`;
+                }
+                const res = await fetch(url);
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error || "Failed to load task.");
                 setApp(data.application);
+                setTeamTaskUrl(data.teamTaskUrl);
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -138,7 +144,7 @@ export default function TaskSubmissionPage({ params }) {
                         <p className="text-sm text-white/50 mb-6">View your assigned task instructions below.</p>
                         
                         <a 
-                            href={app?.task_responses?.team_tracking?.[teamName]?.assignedUrl || app?.task_file_url || "#"} 
+                            href={app?.task_responses?.team_tracking?.[teamName]?.assignedUrl || app?.task_file_url || teamTaskUrl || "#"} 
                             target="_blank" 
                             rel="noreferrer"
                             className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-bold font-mono text-xs uppercase tracking-widest rounded-xl hover:bg-teal hover:shadow-[0_0_20px_rgba(58,188,179,0.3)] transition-all"

@@ -350,7 +350,7 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
                             onClick={() => setPriorityFilter(p)}
                             className={`flex-1 md:flex-none px-4 py-1.5 text-xs font-mono rounded-md transition-colors ${priorityFilter === p ? 'bg-teal text-black font-bold' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
                         >
-                            {p === "ALL" ? "All Priorities" : `Priority ${p}`}
+                            {p === "ALL" ? "All (Pri 1 & 2)" : `Priority ${p}`}
                         </button>
                     ))}
                 </div>
@@ -401,16 +401,34 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
                                     </td>
                                     <td className="px-6 py-4">
                                         {(() => {
-                                            const teamStatus = app.task_responses?.team_tracking?.[teamName]?.status || 'PENDING';
+                                            const teamTracking = app.task_responses?.team_tracking?.[teamName];
+                                            const teamStatus = teamTracking?.status || 'PENDING';
+                                            const assignedUrl = teamTracking?.assignedUrl;
+                                            
+                                            let taskName = "";
+                                            if (assignedUrl) {
+                                                if (assignedUrl === tasks[0]) taskName = "Task 1";
+                                                else if (assignedUrl === tasks[1]) taskName = "Task 2";
+                                                else if (assignedUrl === tasks[2]) taskName = "Task 3";
+                                            }
+
                                             if (teamStatus === 'PENDING') return <span className="px-2 py-1 bg-white/5 rounded text-[10px] text-white/50 font-mono">Pending</span>;
-                                            if (teamStatus === 'SENT') return <span className="px-2 py-1 bg-yellow-500/10 text-yellow-500 rounded text-[10px] font-mono">Sent</span>;
+                                            if (teamStatus === 'SENT') return (
+                                                <div className="flex flex-col gap-1 items-start">
+                                                    <span className="px-2 py-1 bg-yellow-500/10 text-yellow-500 rounded text-[10px] font-mono inline-block">Sent</span>
+                                                    {taskName && <span className="text-[9px] font-mono text-white/40 tracking-wider">({taskName})</span>}
+                                                </div>
+                                            );
                                             if (teamStatus === 'SUBMITTED') return (
-                                                <button 
-                                                    onClick={() => setSubmissionModal({ open: true, app })}
-                                                    className="flex items-center gap-1.5 px-2 py-1 bg-teal/10 text-teal rounded text-[10px] font-mono hover:bg-teal/20 transition-colors"
-                                                >
-                                                    <FileText className="w-3 h-3" /> View Submission
-                                                </button>
+                                                <div className="flex flex-col gap-1 items-start">
+                                                    <button 
+                                                        onClick={() => setSubmissionModal({ open: true, app })}
+                                                        className="flex items-center gap-1.5 px-2 py-1 bg-teal/10 text-teal rounded text-[10px] font-mono hover:bg-teal/20 transition-colors"
+                                                    >
+                                                        <FileText className="w-3 h-3" /> View Submission
+                                                    </button>
+                                                    {taskName && <span className="text-[9px] font-mono text-white/40 tracking-wider">({taskName})</span>}
+                                                </div>
                                             );
                                             return <span className="px-2 py-1 bg-white/5 rounded text-[10px] text-white/50 font-mono">{teamStatus}</span>;
                                         })()}

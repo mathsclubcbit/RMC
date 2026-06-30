@@ -63,10 +63,29 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
         }
 
+        // Fetch the team's task URLs
+        const { data: teamTask, error: taskErr } = await supabase
+            .from('recruitment_team_tasks')
+            .select('*')
+            .eq('team_name', teamName)
+            .single();
+
+        if (taskErr || !teamTask) {
+            return NextResponse.json({ error: 'No task URLs configured for this team' }, { status: 400 });
+        }
+
+        const taskUrls = [teamTask.task_1_url, teamTask.task_2_url, teamTask.task_3_url].filter(Boolean);
+        if (taskUrls.length === 0) {
+            return NextResponse.json({ error: 'No task URLs configured for this team' }, { status: 400 });
+        }
+
+        // Randomly assign one of the available task URLs
+        const assignedUrl = taskUrls[Math.floor(Math.random() * taskUrls.length)];
+
         // Update status and tracking
         const currentResponses = applicant.task_responses || {};
         const teamTracking = currentResponses.team_tracking || {};
-        teamTracking[teamName] = { status: 'SENT' };
+        teamTracking[teamName] = { status: 'SENT', assignedUrl };
         
         const updatedResponses = {
             ...currentResponses,
@@ -77,6 +96,7 @@ export async function POST(request) {
             .from('recruitment_applications')
             .update({ 
                 task_status: 'SENT',
+                task_file_url: assignedUrl,
                 task_responses: updatedResponses 
             })
             .eq('id', applicationId);

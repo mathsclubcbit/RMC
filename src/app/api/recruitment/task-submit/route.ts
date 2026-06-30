@@ -5,6 +5,7 @@ export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
+        const teamName = searchParams.get('team');
 
         if (!id) {
             return NextResponse.json({ error: 'Application ID is required' }, { status: 400 });
@@ -23,7 +24,20 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Application not found or invalid ID' }, { status: 404 });
         }
 
-        return NextResponse.json({ application: app });
+        let teamTaskUrl = null;
+        if (teamName) {
+            const { data: teamTask } = await supabase
+                .from('recruitment_team_tasks')
+                .select('*')
+                .eq('team_name', teamName)
+                .single();
+            
+            if (teamTask) {
+                teamTaskUrl = teamTask.task_1_url || teamTask.task_2_url || teamTask.task_3_url;
+            }
+        }
+
+        return NextResponse.json({ application: app, teamTaskUrl });
     } catch (err: unknown) {
         const e = err as Error;
         console.error('[recruitment/task-submit GET] Error:', e);

@@ -5,12 +5,25 @@ export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
     const year = new Date().getFullYear();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.rmccbit.in';
     const logoUrl = `${siteUrl}/full%20logo.png`;
+    const whatsappLink = process.env.NEXT_PUBLIC_WHATSAPP_GROUP_LINK;
 
     return `
         <!-- Footer -->
         <tr>
             <td style="padding: 30px 40px; text-align: center; border-top: 1px solid rgba(45, 212, 191, 0.1); background: #000000;">
                 
+                ${whatsappLink ? `
+                <div style="margin: 0 auto 30px; padding: 20px; border: 1px dashed rgba(255,255,255,0.15); border-radius: 8px; background: rgba(255,255,255,0.02); max-width: 400px;">
+                    <p style="margin: 0 0 15px; color: #a1a1aa; font-size: 13px; font-family: monospace;">
+                        If you haven't joined yet, please join our official WhatsApp group for updates.
+                    </p>
+                    <a href="${whatsappLink}" target="_blank" style="display: inline-block; padding: 12px 24px; background: #ffffff; color: #25D366; text-decoration: none; font-family: sans-serif; font-weight: bold; border-radius: 4px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/512px-WhatsApp.svg.png" width="18" height="18" alt="WhatsApp" style="display: inline-block; vertical-align: middle; margin-right: 6px; margin-top: -2px;" />
+                        Join WhatsApp Group
+                    </a>
+                </div>
+                ` : ''}
+
                 <!-- Social Links -->
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto 25px;">
                     <tr>
@@ -26,7 +39,7 @@ export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
                         </td>
                         <td style="padding: 0 15px;">
                             <a href="https://instagram.com/rmc.cbit" target="_blank" style="text-decoration: none; display: inline-block;">
-                                <img src="https://cdn-icons-png.flaticon.com/512/1384/1384031.png" alt="Instagram" width="28" height="28" style="display: block; width: 28px; height: 28px;" />
+                                <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" width="28" height="28" style="display: block; width: 28px; height: 28px;" />
                             </a>
                         </td>
                     </tr>
