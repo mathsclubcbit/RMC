@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Lock, Loader2, Users, ChevronDown } from "lucide-react";
 import SpotlightCard from "@/components/ui/SpotlightCard";
 
-const TEAMS = ["WebDev", "Content", "PR", "Events"]; // Content & Media -> Content for env key
+const TEAMS = ["WebDev", "Content", "PR", "Events", "Visual Media"]; // Content & Media -> Content for env key
 
 export default function TeamLogin() {
     const [team, setTeam] = useState(TEAMS[0]);

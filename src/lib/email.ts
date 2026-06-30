@@ -26,7 +26,7 @@ export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
                         </td>
                         <td style="padding: 0 15px;">
                             <a href="https://instagram.com/rmc.cbit" target="_blank" style="text-decoration: none; display: inline-block;">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/1024px-Instagram_icon.png" alt="Instagram" width="28" height="28" style="display: block; width: 28px; height: 28px;" />
+                                <img src="https://cdn-icons-png.flaticon.com/512/1384/1384031.png" alt="Instagram" width="28" height="28" style="display: block; width: 28px; height: 28px;" />
                             </a>
                         </td>
                     </tr>

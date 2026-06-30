@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     ChevronRight, ChevronLeft, ChevronDown, Check,
     User, Mail, Phone, Hash, BookOpen, GraduationCap, Loader2,
-    Code2, FileText, Megaphone, CalendarDays,
+    Code2, FileText, Megaphone, CalendarDays, Camera
 } from "lucide-react";
 
 // ─── Teams ────────────────────────────────────────────────────────────────────
@@ -41,9 +41,9 @@ const TEAMS = [
     {
         value: "Visual Media",
         label: "Visual Media",
-        description: "Plan and execute club events & workshops",
-        icon: CalendarDays,
-        symbol: "∫",
+        description: "Capture and create visual experiences",
+        icon: Camera,
+        symbol: "Δ",
     },
 ];
 
