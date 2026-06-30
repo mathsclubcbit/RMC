@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { verifyJwt } from "@/middleware"; // wait, verifyJwt is in middleware.js, maybe it's not exported. Actually, let's use src/lib/jwt.js
 import { verifyToken } from "@/lib/jwt";
 import { createAdminClient } from "@/lib/supabase/server";
 import TeamDashboardClient from "./TeamDashboardClient";
@@ -25,12 +24,22 @@ export default async function TeamDashboardPage() {
 
     const teamName = payload.team;
 
+    // Map token teamName to label for database querying
+    const teamLabels = {
+        "WebDev": "Web Dev",
+        "Content": "Content",
+        "PR": "PR",
+        "Events": "Events",
+        "Visual Media": "Visual Media"
+    };
+    const searchLabel = teamLabels[teamName] || teamName;
+
     // Fetch applicants who selected this team
     const supabase = createAdminClient();
     const { data: applicants, error } = await supabase
         .from("recruitment_applications")
         .select("*")
-        .ilike("team", `%${teamName}%`)
+        .ilike("team", `%${searchLabel}%`)
         .order("applied_at", { ascending: false });
 
     if (error) {

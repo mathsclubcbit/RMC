@@ -680,10 +680,11 @@ export const sendTaskEmail = async (data: {
     name: string;
     applicationId: string;
     teamName: string;
+    priority?: string | number;
 }) => {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return false;
 
-    const taskLink = `https://rmccbit.in/join/task/${data.applicationId}`;
+    const taskLink = `https://rmccbit.in/join/task/${data.applicationId}?team=${encodeURIComponent(data.teamName)}`;
     const year = new Date().getFullYear();
 
     const html = `<!DOCTYPE html>
@@ -709,6 +710,7 @@ export const sendTaskEmail = async (data: {
                     <p style="margin:16px 0 0;color:#71717a;font-size:15px;line-height:1.7;">
                         Dear ${data.name},<br><br>
                         Congratulations on making it to the next phase of the recruitment process for the <strong>${data.teamName}</strong> team. 
+                        We noticed you selected this team as your <strong>Priority ${data.priority || '1'}</strong> choice!<br><br>
                         Please click the button below to view and submit your task assignment.
                     </p>
                     <a href="${taskLink}" style="display:inline-block;margin-top:30px;padding:12px 30px;background:#3ABCB3;color:#000;text-decoration:none;font-family:monospace;font-weight:bold;text-transform:uppercase;letter-spacing:2px;border-radius:4px;">View & Submit Task</a>
@@ -724,7 +726,7 @@ export const sendTaskEmail = async (data: {
         await transporter.sendMail({
             from: `"RMC Recruitment" <${process.env.EMAIL_USER}>`,
             to: data.toEmail,
-            subject: `[RMC] Task Assignment: ${data.teamName}`,
+            subject: `${data.teamName} Task`,
             html,
             replyTo: process.env.EMAIL_USER,
         });

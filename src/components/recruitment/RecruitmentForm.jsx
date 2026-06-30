@@ -50,13 +50,16 @@ const TEAMS = [
 // ─── Branch & Year Options ────────────────────────────────────────────────────
 const BRANCHES = [
     { value: "CSE", label: "Computer Science & Engineering" },
-    { value: "ECE", label: "Electronics & Communication" },
-    { value: "EEE", label: "Electrical & Electronics" },
+    { value: "CSM", label: "AI & Machine Learning" },
+    { value: "AIDS", label: "AI & Data Science" },
     { value: "IT", label: "Information Technology" },
+    { value: "CIC", label: "Cyber Security & IOT" },
+    { value: "ECE", label: "Electronics & Communication" },
+    { value: "EVL", label: "Electronics & VLSI" },
+    { value: "EEE", label: "Electrical & Electronics" },
     { value: "MECH", label: "Mechanical Engineering" },
     { value: "CIVIL", label: "Civil Engineering" },
-    { value: "AI-ML", label: "AI & Machine Learning" },
-    { value: "AIDS", label: "AI & Data Science" },
+
 ];
 
 const YEARS = [

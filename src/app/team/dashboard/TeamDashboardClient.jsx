@@ -8,6 +8,7 @@ import SpotlightCard from "@/components/ui/SpotlightCard";
 export default function TeamDashboardClient({ initialApplicants, teamName }) {
     const [applicants, setApplicants] = useState(initialApplicants);
     const [search, setSearch] = useState("");
+    const [priorityFilter, setPriorityFilter] = useState("ALL"); // ALL, 1, 2
     const [loadingAction, setLoadingAction] = useState(null); // stores applicationId
     
     // Modal state for Interview Scheduling
@@ -75,7 +76,12 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
         
         try {
             const pendingIds = applicants
-                .filter(a => a.task_status === "PENDING" || !a.task_status)
+                .filter(a => {
+                    const status = a.task_responses?.team_tracking?.[teamName]?.status;
+                    const p = getPriority(a.team);
+                    const isEligibleStatus = status === undefined || status === 'PENDING';
+                    return isEligibleStatus && (p === 1 || p === 2);
+                })
                 .map(a => a.id);
 
             if (pendingIds.length === 0) {
@@ -114,9 +120,21 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
                 
                 // Update local state for success
                 if (batchData.results?.successful) {
-                    setApplicants(prev => prev.map(a => 
-                        batchData.results.successful.includes(a.id) ? { ...a, task_status: 'SENT' } : a
-                    ));
+                    setApplicants(prev => prev.map(a => {
+                        if (batchData.results.successful.includes(a.id)) {
+                            return {
+                                ...a,
+                                task_responses: {
+                                    ...(a.task_responses || {}),
+                                    team_tracking: {
+                                        ...((a.task_responses || {}).team_tracking || {}),
+                                        [teamName]: { status: 'SENT' }
+                                    }
+                                }
+                            };
+                        }
+                        return a;
+                    }));
                 }
             }
             
@@ -132,11 +150,32 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
         setSendingBatch(false);
     };
 
-    const filtered = applicants.filter(a => 
+    const normalize = (s) => s.replace(/[^a-z0-9]/gi, '').toLowerCase();
+    const matchTeam = normalize(teamName);
+    const getPriority = (teamStr) => {
+        if (!teamStr) return 99;
+        const parts = teamStr.split('|').map(s => s.trim());
+        for (let i = 0; i < parts.length; i++) {
+            if (normalize(parts[i]).includes(matchTeam)) return i + 1;
+        }
+        return 99;
+    };
+
+    let filtered = applicants.filter(a => 
         a.name.toLowerCase().includes(search.toLowerCase()) || 
         a.email.toLowerCase().includes(search.toLowerCase()) ||
         a.roll_number.includes(search)
     );
+
+    if (priorityFilter !== "ALL") {
+        const targetPriority = parseInt(priorityFilter, 10);
+        filtered = filtered.filter(a => getPriority(a.team) === targetPriority);
+    } else {
+        filtered = filtered.filter(a => {
+            const p = getPriority(a.team);
+            return p === 1 || p === 2;
+        });
+    }
 
     const handleSendTask = async (applicant) => {
         if (!confirm(`Send task assignment to ${applicant.name}?`)) return;
@@ -149,17 +188,24 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
                 body: JSON.stringify({ applicationId: applicant.id, teamName })
             });
             const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to send task");
             
-            if (res.ok) {
-                setApplicants(prev => prev.map(a => 
-                    a.id === applicant.id ? { ...a, task_status: 'SENT' } : a
-                ));
-                alert("Task sent successfully!");
-            } else {
-                alert(data.error || "Failed to send task");
-            }
-        } catch (e) {
-            alert("Error sending task.");
+            setApplicants(prev => prev.map(a => 
+                a.id === applicant.id ? { 
+                    ...a, 
+                    task_responses: {
+                        ...(a.task_responses || {}),
+                        team_tracking: {
+                            ...((a.task_responses || {}).team_tracking || {}),
+                            [teamName]: { status: 'SENT' }
+                        }
+                    }
+                } : a
+            ));
+            
+            alert("Task sent successfully!");
+        } catch (err) {
+            alert(err.message);
         } finally {
             setLoadingAction(null);
         }
@@ -295,16 +341,30 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
                 </div>
             </div>
 
-            {/* Search Bar */}
-            <div className="relative max-w-md">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                <input 
-                    type="text" 
-                    placeholder="Search by name, email, or roll..." 
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm focus:border-teal/50 outline-none text-white"
-                />
+            {/* Filter and Search */}
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-6">
+                <div className="flex bg-white/5 rounded-lg p-1 border border-white/10 w-full md:w-auto">
+                    {["ALL", "1", "2"].map(p => (
+                        <button
+                            key={p}
+                            onClick={() => setPriorityFilter(p)}
+                            className={`flex-1 md:flex-none px-4 py-1.5 text-xs font-mono rounded-md transition-colors ${priorityFilter === p ? 'bg-teal text-black font-bold' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                        >
+                            {p === "ALL" ? "All Priorities" : `Priority ${p}`}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="relative w-full max-w-md">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                    <input 
+                        type="text" 
+                        placeholder="Search by name, email, or roll..." 
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm focus:border-teal/50 outline-none text-white transition-colors"
+                    />
+                </div>
             </div>
 
             {/* Table */}
@@ -340,16 +400,20 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        {app.task_status === 'PENDING' && <span className="px-2 py-1 bg-white/5 rounded text-[10px] text-white/50 font-mono">Pending</span>}
-                                        {app.task_status === 'SENT' && <span className="px-2 py-1 bg-yellow-500/10 text-yellow-500 rounded text-[10px] font-mono">Sent</span>}
-                                        {app.task_status === 'SUBMITTED' && (
-                                            <button 
-                                                onClick={() => setSubmissionModal({ open: true, app })}
-                                                className="flex items-center gap-1.5 px-2 py-1 bg-teal/10 text-teal rounded text-[10px] font-mono hover:bg-teal/20 transition-colors"
-                                            >
-                                                <FileText className="w-3 h-3" /> View Submission
-                                            </button>
-                                        )}
+                                        {(() => {
+                                            const teamStatus = app.task_responses?.team_tracking?.[teamName]?.status || 'PENDING';
+                                            if (teamStatus === 'PENDING') return <span className="px-2 py-1 bg-white/5 rounded text-[10px] text-white/50 font-mono">Pending</span>;
+                                            if (teamStatus === 'SENT') return <span className="px-2 py-1 bg-yellow-500/10 text-yellow-500 rounded text-[10px] font-mono">Sent</span>;
+                                            if (teamStatus === 'SUBMITTED') return (
+                                                <button 
+                                                    onClick={() => setSubmissionModal({ open: true, app })}
+                                                    className="flex items-center gap-1.5 px-2 py-1 bg-teal/10 text-teal rounded text-[10px] font-mono hover:bg-teal/20 transition-colors"
+                                                >
+                                                    <FileText className="w-3 h-3" /> View Submission
+                                                </button>
+                                            );
+                                            return <span className="px-2 py-1 bg-white/5 rounded text-[10px] text-white/50 font-mono">{teamStatus}</span>;
+                                        })()}
                                     </td>
                                     <td className="px-6 py-4">
                                         {app.interview_status === 'SCHEDULED' ? (
@@ -366,7 +430,7 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
                                     <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
                                         <button 
                                             onClick={() => handleSendTask(app)}
-                                            disabled={loadingAction === app.id || app.task_status !== 'PENDING'}
+                                            disabled={loadingAction === app.id || (app.task_responses?.team_tracking?.[teamName]?.status && app.task_responses?.team_tracking?.[teamName]?.status !== 'PENDING')}
                                             className="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-white/10 text-[10px] font-mono uppercase rounded text-white/70 disabled:opacity-30 inline-flex items-center gap-1 transition-colors"
                                         >
                                             {loadingAction === app.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}

@@ -25,7 +25,7 @@ export async function POST(request) {
         // Get applicant details
         const { data: applicant, error: fetchErr } = await supabase
             .from('recruitment_applications')
-            .select('email, name')
+            .select('email, name, team, task_responses')
             .eq('id', applicationId)
             .single();
 
@@ -33,22 +33,52 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Applicant not found' }, { status: 404 });
         }
 
+        const normalize = (s) => s.replace(/[^a-z0-9]/gi, '').toLowerCase();
+        const matchTeam = normalize(teamName);
+
+        let priority = 1;
+        const teamStr = applicant.team || "";
+        const parts = teamStr.split('|').map(s => s.trim());
+        for (let i = 0; i < parts.length; i++) {
+            if (normalize(parts[i]).includes(matchTeam)) {
+                priority = i + 1;
+                break;
+            }
+        }
+
+        if (priority > 2) {
+            return NextResponse.json({ error: 'Tasks can only be sent to applicants who selected this team as Priority 1 or 2.' }, { status: 400 });
+        }
+
         // Send email
         const emailSent = await sendTaskEmail({
             toEmail: applicant.email,
             name: applicant.name,
             applicationId,
-            teamName
+            teamName,
+            priority
         });
 
         if (!emailSent) {
             return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
         }
 
-        // Update status
+        // Update status and tracking
+        const currentResponses = applicant.task_responses || {};
+        const teamTracking = currentResponses.team_tracking || {};
+        teamTracking[teamName] = { status: 'SENT' };
+        
+        const updatedResponses = {
+            ...currentResponses,
+            team_tracking: teamTracking
+        };
+
         const { error: updateErr } = await supabase
             .from('recruitment_applications')
-            .update({ task_status: 'SENT' })
+            .update({ 
+                task_status: 'SENT',
+                task_responses: updatedResponses 
+            })
             .eq('id', applicationId);
 
         if (updateErr) {
