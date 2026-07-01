@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { sendWelcomeEmail } from '@/lib/email';
+import { queueWelcomeEmail } from '@/lib/email-queue';
 import { NextResponse } from 'next/server';
 
 const supabase = createClient(
@@ -40,8 +40,8 @@ export async function POST(request) {
             return NextResponse.json({ error: "Failed to subscribe" }, { status: 500 });
         }
 
-        // 3. Send Welcome Email (Non-blocking usually, but await here for simplicity in V1)
-        await sendWelcomeEmail(email, name);
+        // 3. Queue Welcome Email
+        await queueWelcomeEmail(email, name);
 
         return NextResponse.json({ success: true, message: "Welcome to the Inner Circle" });
 
