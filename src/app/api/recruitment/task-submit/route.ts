@@ -24,6 +24,16 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Application not found or invalid ID' }, { status: 404 });
         }
 
+        // Strict Validation: Ensure the requested team task was actually assigned to this applicant
+        if (teamName && teamName !== 'Unknown Team') {
+            const teamTracking = app.task_responses?.team_tracking || {};
+            const teamStatus = teamTracking[teamName]?.status;
+            
+            if (!teamStatus || !['SENT', 'SUBMITTED', 'EVALUATED'].includes(teamStatus)) {
+                return NextResponse.json({ error: 'Task not assigned for this team or invalid team name.' }, { status: 403 });
+            }
+        }
+
         let teamTaskUrl = null;
         if (teamName) {
             const { data: teamTask } = await supabase
@@ -48,10 +58,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { applicationId, why_join, why_team, drive_link, teamName } = body;
+        const { applicationId, why_join, why_team, why_select_you, other_clubs, previous_work, dynamic_answers, drive_link, teamName } = body;
 
-        if (!applicationId || !why_join || !why_team || !drive_link || !teamName) {
-            return NextResponse.json({ error: 'All fields are required.' }, { status: 400 });
+        if (!applicationId || !why_join || !why_team || !why_select_you || !other_clubs || !previous_work || !drive_link || !teamName) {
+            return NextResponse.json({ error: 'All mandatory fields are required.' }, { status: 400 });
         }
 
         const supabase = createAdminClient();
@@ -79,6 +89,10 @@ export async function POST(req: NextRequest) {
             status: 'SUBMITTED',
             why_join,
             why_team,
+            why_select_you,
+            other_clubs,
+            previous_work,
+            dynamic_answers,
             drive_link
         };
 

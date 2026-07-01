@@ -559,6 +559,34 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
                                     </div>
                                 </div>
                                 <div>
+                                    <h4 className="text-[10px] font-mono uppercase tracking-widest text-white/40 mb-2">Why should we select you?</h4>
+                                    <div className="p-4 bg-white/5 border border-white/10 rounded-xl whitespace-pre-wrap">
+                                        {submissionModal.app?.task_responses?.team_tracking?.[teamName]?.why_select_you || "N/A"}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 className="text-[10px] font-mono uppercase tracking-widest text-white/40 mb-2">Other Clubs</h4>
+                                    <div className="p-4 bg-white/5 border border-white/10 rounded-xl whitespace-pre-wrap">
+                                        {submissionModal.app?.task_responses?.team_tracking?.[teamName]?.other_clubs || "N/A"}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 className="text-[10px] font-mono uppercase tracking-widest text-white/40 mb-2">Previous Work</h4>
+                                    <div className="p-4 bg-white/5 border border-white/10 rounded-xl whitespace-pre-wrap">
+                                        {submissionModal.app?.task_responses?.team_tracking?.[teamName]?.previous_work || "N/A"}
+                                    </div>
+                                </div>
+                                {submissionModal.app?.task_responses?.team_tracking?.[teamName]?.dynamic_answers && 
+                                    Object.entries(submissionModal.app.task_responses.team_tracking[teamName].dynamic_answers).map(([key, val]) => (
+                                        <div key={key}>
+                                            <h4 className="text-[10px] font-mono uppercase tracking-widest text-white/40 mb-2">{key.replace(/_/g, ' ')}</h4>
+                                            <div className="p-4 bg-white/5 border border-white/10 rounded-xl whitespace-pre-wrap">
+                                                {val || "N/A"}
+                                            </div>
+                                        </div>
+                                    ))
+                                }
+                                <div>
                                     <h4 className="text-[10px] font-mono uppercase tracking-widest text-white/40 mb-2">Drive Link</h4>
                                     <a href={submissionModal.app?.task_responses?.team_tracking?.[teamName]?.drive_link || submissionModal.app?.task_responses?.drive_link} target="_blank" rel="noreferrer" className="inline-block p-4 bg-teal/10 border border-teal/20 text-teal rounded-xl break-all hover:bg-teal/20 transition-colors">
                                         {submissionModal.app?.task_responses?.team_tracking?.[teamName]?.drive_link || submissionModal.app?.task_responses?.drive_link || "N/A"}
