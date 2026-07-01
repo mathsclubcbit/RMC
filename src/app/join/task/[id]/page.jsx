@@ -106,12 +106,19 @@ export default function TaskSubmissionPage({ params }) {
         };
 
         fetchTaskInfo();
-    }, [id]);
+    }, [id, teamName]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
         setError("");
+
+        // Validate Google Drive link
+        if (!driveLink.startsWith('https://drive.google.com/')) {
+            setError('Please provide a valid Google Drive link (must start with https://drive.google.com/). Make sure sharing is set to "Anyone with the link can view".');
+            setSubmitting(false);
+            return;
+        }
 
         // Clean up ghost answers for hidden conditional fields
         const normalizedTeam = (teamName || "").replace(/\s+/g, "").toLowerCase();

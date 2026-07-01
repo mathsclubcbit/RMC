@@ -115,7 +115,7 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
                     errors.push(...batchData.results.errors);
                 }
                 
-                processed += chunk.length;
+                processed += batchData.results?.successful?.length ?? chunk.length;
                 setSendProgress(p => ({ ...p, current: processed, errors }));
                 
                 // Update local state for success
@@ -203,7 +203,11 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
                 } : a
             ));
             
-            alert("Task sent successfully!");
+            if (data.warning) {
+                alert(`⚠️ ${data.warning}`);
+            } else {
+                alert("Task sent successfully!");
+            }
         } catch (err) {
             alert(err.message);
         } finally {
@@ -410,6 +414,7 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
                                                 if (assignedUrl === tasks[0]) taskName = "Task 1";
                                                 else if (assignedUrl === tasks[1]) taskName = "Task 2";
                                                 else if (assignedUrl === tasks[2]) taskName = "Task 3";
+                                                else taskName = "Assigned"; // tasks state not loaded yet
                                             }
 
                                             if (teamStatus === 'PENDING') return <span className="px-2 py-1 bg-white/5 rounded text-[10px] text-white/50 font-mono">Pending</span>;

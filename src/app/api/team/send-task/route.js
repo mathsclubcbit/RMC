@@ -33,6 +33,12 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Applicant not found' }, { status: 404 });
         }
 
+        // Idempotency guard: don't send again if already sent or submitted
+        const existingStatus = applicant.task_responses?.team_tracking?.[teamName]?.status;
+        if (existingStatus === 'SENT' || existingStatus === 'SUBMITTED' || existingStatus === 'EVALUATED') {
+            return NextResponse.json({ error: 'Task has already been sent to this applicant for this team.' }, { status: 409 });
+        }
+
         const normalize = (s) => s.replace(/[^a-z0-9]/gi, '').toLowerCase();
         const matchTeam = normalize(teamName);
 
@@ -48,19 +54,6 @@ export async function POST(request) {
 
         if (priority > 2) {
             return NextResponse.json({ error: 'Tasks can only be sent to applicants who selected this team as Priority 1 or 2.' }, { status: 400 });
-        }
-
-        // Send email
-        const emailSent = await sendTaskEmail({
-            toEmail: applicant.email,
-            name: applicant.name,
-            applicationId,
-            teamName,
-            priority
-        });
-
-        if (!emailSent) {
-            return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
         }
 
         // Fetch the team's task URLs
@@ -82,7 +75,9 @@ export async function POST(request) {
         // Randomly assign one of the available task URLs
         const assignedUrl = taskUrls[Math.floor(Math.random() * taskUrls.length)];
 
-        // Update status and tracking
+        // --- FIX #1: Update DB FIRST before sending email ---
+        // If email fails after DB update, the team head can resend manually.
+        // If we emailed first and DB failed, the applicant would be permanently locked out.
         const currentResponses = applicant.task_responses || {};
         const teamTracking = currentResponses.team_tracking || {};
         teamTracking[teamName] = { status: 'SENT', assignedUrl };
@@ -103,7 +98,23 @@ export async function POST(request) {
 
         if (updateErr) {
             console.error('Update task_status error:', updateErr);
-            return NextResponse.json({ error: 'Email sent but failed to update status in DB' }, { status: 500 });
+            return NextResponse.json({ error: 'Failed to update status in DB. No email sent.' }, { status: 500 });
+        }
+
+        // Send email after DB is successfully updated
+        const emailSent = await sendTaskEmail({
+            toEmail: applicant.email,
+            name: applicant.name,
+            applicationId,
+            teamName,
+            priority
+        });
+
+        if (!emailSent) {
+            // DB is updated, so the applicant can still access the page.
+            // Log this for manual follow-up but don't fail the request.
+            console.error(`[send-task] Email failed for ${applicant.email} (${applicationId}). DB updated successfully.`);
+            return NextResponse.json({ success: true, warning: 'Task assigned but email failed to send. Please contact the applicant manually.' });
         }
 
         return NextResponse.json({ success: true });
