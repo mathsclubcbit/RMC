@@ -1,7 +1,8 @@
 import nodemailer from 'nodemailer';
 import { generateStyledQRCode } from './qrcode';
 
-export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
+
+export const getRecruitmentEmailFooter = (themeColor: string = '#2dd4bf') => {
     const year = new Date().getFullYear();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.rmccbit.in';
     const logoUrl = `${siteUrl}/full%20logo.png`;
@@ -18,7 +19,6 @@ export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
                         If you haven't joined yet, please join our official WhatsApp group for updates.
                     </p>
                     <a href="${whatsappLink}" target="_blank" style="display: inline-block; padding: 12px 24px; background: #ffffff; color: #25D366; text-decoration: none; font-family: sans-serif; font-weight: bold; border-radius: 4px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
-                        <img src="https://static.cdnlogo.com/logos/w/29/whatsapp-icon.svg" width="18" height="18" alt="WhatsApp" style="display: inline-block; vertical-align: middle; margin-right: 6px; margin-top: -2px;" />
                         Join WhatsApp Group
                     </a>
                 </div>
@@ -28,18 +28,63 @@ export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto 25px;">
                     <tr>
                         <td style="padding: 0 15px;">
-                            <a href="${siteUrl}" target="_blank" style="text-decoration: none; display: inline-block;">
-                                <img src="${logoUrl}" alt="RMC Website" width="28" height="28" style="display: block; width: 28px; height: 28px; object-fit: contain;" />
+                            <a href="${siteUrl}" target="_blank" style="text-decoration: none; color: #a1a1aa; font-family: monospace; font-size: 14px;">
+                                Website
                             </a>
                         </td>
                         <td style="padding: 0 15px;">
-                            <a href="https://www.linkedin.com/company/ramanujan-maths-club/" target="_blank" style="text-decoration: none; display: inline-block;">
-                                <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="28" height="28" style="display: block; width: 28px; height: 28px;" />
+                            <a href="https://www.linkedin.com/company/ramanujan-maths-club/" target="_blank" style="text-decoration: none; color: #a1a1aa; font-family: monospace; font-size: 14px;">
+                                LinkedIn
                             </a>
                         </td>
                         <td style="padding: 0 15px;">
-                            <a href="https://instagram.com/rmc.cbit" target="_blank" style="text-decoration: none; display: inline-block;">
-                                <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" width="28" height="28" style="display: block; width: 28px; height: 28px;" />
+                            <a href="https://instagram.com/rmc.cbit" target="_blank" style="text-decoration: none; color: #a1a1aa; font-family: monospace; font-size: 14px;">
+                                Instagram
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+
+                <p style="margin: 0; color: #52525b; font-size: 12px; letter-spacing: 1px;">
+                    CALCULATING... SUCCESS.
+                </p>
+                <p style="margin: 10px 0 0; color: #3f3f46; font-size: 11px;">
+                    Ramanujan Mathematical Club &copy; ${year} | CBIT
+                </p>
+                <p style="margin: 15px 0 0; color: ${themeColor}; font-size: 14px; text-decoration: none;">
+                    &nabla; &Delta; &Pi; &Phi;
+                </p>
+            </td>
+        </tr>
+    `;
+};
+export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
+    const year = new Date().getFullYear();
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.rmccbit.in';
+    const logoUrl = `${siteUrl}/full%20logo.png`;
+    const whatsappLink = process.env.NEXT_PUBLIC_WHATSAPP_GROUP_LINK;
+
+    return `
+        <!-- Footer -->
+        <tr>
+            <td style="padding: 30px 40px; text-align: center; border-top: 1px solid rgba(45, 212, 191, 0.1); background: #000000;">
+                
+                <!-- Social Links -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto 25px;">
+                    <tr>
+                        <td style="padding: 0 15px;">
+                            <a href="${siteUrl}" target="_blank" style="text-decoration: none; color: #a1a1aa; font-family: monospace; font-size: 14px;">
+                                Website
+                            </a>
+                        </td>
+                        <td style="padding: 0 15px;">
+                            <a href="https://www.linkedin.com/company/ramanujan-maths-club/" target="_blank" style="text-decoration: none; color: #a1a1aa; font-family: monospace; font-size: 14px;">
+                                LinkedIn
+                            </a>
+                        </td>
+                        <td style="padding: 0 15px;">
+                            <a href="https://instagram.com/rmc.cbit" target="_blank" style="text-decoration: none; color: #a1a1aa; font-family: monospace; font-size: 14px;">
+                                Instagram
                             </a>
                         </td>
                     </tr>
@@ -99,9 +144,7 @@ const generateTicketEmailHTML = (data: TicketEmailData, qrCodeDataUrl: string): 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&display=swap');
-    </style>
+
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Cormorant Garamond', serif; background-color: #000000; color: #ffffff;">
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #000000;">
@@ -250,7 +293,8 @@ export const sendTicketEmail = async (data: TicketEmailData): Promise<boolean> =
         const mailOptions = {
             from: `"RMC Events" <${process.env.EMAIL_USER}>`,
             to: data.toEmail,
-            subject: `🎫 [SECRET SEQUENCE] Your Entrance for ${data.eventName}`,
+            subject: `[SECRET SEQUENCE] Your Entrance for ${data.eventName}`,
+            text: `Your Registration is Confirmed, ${data.participantName}!\n\nEvent: ${data.eventName}\nDate: ${data.eventDate}\nTime: ${data.eventTime}\nVenue: ${data.eventVenue}\nAccess Code: ${data.registrationId}\n\nPresent this code at the gate for entry.`,
             html: htmlContent,
             attachments: [
                 {
@@ -288,15 +332,14 @@ export const sendVerificationEmail = async (
         from: `"RMC Events" <${process.env.EMAIL_USER}>`,
         to: toEmail,
         subject: `Verification Pending: ${eventName}`,
+        text: `Greetings, ${name}. Your request to join ${eventName} has been logged.\nRegistration ID: ${registrationId}\nStatus: PENDING VERIFICATION\n\nOur team is currently verifying your details.`,
         html: `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&display=swap');
-    </style>
+
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Cormorant Garamond', serif; background-color: #000000; color: #ffffff;">
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #000000;">
@@ -391,7 +434,7 @@ export const sendRecruitmentAdminAlert = async (data: RecruitmentAdminAlertData)
             Review in Admin Panel →
           </a>
         </td></tr>
-        ${getEmailFooter('#6366f1')}
+        ${getRecruitmentEmailFooter('#6366f1')}
       </table>
     </td></tr>
   </table>
@@ -403,6 +446,7 @@ export const sendRecruitmentAdminAlert = async (data: RecruitmentAdminAlertData)
             from: `"RMC System" <${process.env.EMAIL_USER}>`,
             to: process.env.EMAIL_USER,
             subject: `[RMC] New Membership Application — ${data.name} (#${shortId})`,
+            text: `New Recruitment Submission\nName: ${data.name}\nEmail: ${data.email}\nRoll No: ${data.rollNumber}\nBranch: ${data.branch}\nYear: ${data.year}\nApplication ID: #${shortId}`,
             html,
         });
         return true;
@@ -429,15 +473,14 @@ export const sendWelcomeEmail = async (toEmail: string, name: string = "Member")
         from: `"RMC Updates" <${process.env.EMAIL_USER}>`,
         to: toEmail,
         subject: `Welcome to Ramanujan Math Club Updates`,
+        text: `Welcome to the community, ${name}.\n\nYou have successfully subscribed to the Ramanujan Math Club newsletter. You will now receive updates regarding upcoming events, challenges, and club activities.\n\nThank you for joining us.`,
         html: `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&display=swap');
-    </style>
+
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Cormorant Garamond', serif; background-color: #000000; color: #ffffff;">
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #000000;">
@@ -514,9 +557,7 @@ export const sendRecruitmentConfirmation = async (data: RecruitmentConfirmationD
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&display=swap');
-    </style>
+
 </head>
 <body style="margin:0;padding:0;font-family:'Cormorant Garamond',serif;background:#000;color:#fff;">
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#000;">
@@ -578,7 +619,7 @@ export const sendRecruitmentConfirmation = async (data: RecruitmentConfirmationD
                     </table>
                 </td></tr>
 
-                ${getEmailFooter('#3ABCB3')}
+                ${getRecruitmentEmailFooter('#3ABCB3')}
 
             </table>
         </td></tr>
@@ -591,6 +632,7 @@ export const sendRecruitmentConfirmation = async (data: RecruitmentConfirmationD
             from: `"RMC Recruitment" <${process.env.EMAIL_USER}>`,
             to: data.toEmail,
             subject: `[RMC] Application Received — Your Journey Begins`,
+            text: `Transmission received, ${data.name}.\n\nYour application to join the Ramanujan Math Club has been logged.\nApplication Reference: ${data.applicationId.toUpperCase().slice(0, 8)}\nStatus: PENDING REVIEW\n\nThe council will review your submission and you will be notified of the decision.`,
             html,
         });
         return true;
@@ -657,7 +699,7 @@ export const sendRecruitmentDecision = async (data: RecruitmentDecisionData): Pr
                     <p style="margin:12px 0 0;color:#71717a;font-size:14px;line-height:1.7;">${body}</p>
                 </td></tr>
 
-                                ${getEmailFooter('#3ABCB3')}
+                                ${getRecruitmentEmailFooter('#3ABCB3')}
 
             </table>
         </td></tr>
@@ -674,7 +716,8 @@ export const sendRecruitmentDecision = async (data: RecruitmentDecisionData): Pr
         await transporter.sendMail({
             from: `"RMC Recruitment" <${process.env.EMAIL_USER}>`,
             to: data.toEmail,
-            subject: `${subjectEmoji} ${subjectText}`,
+            subject: subjectText,
+            text: `${heading}\n\n${body}`,
             html,
         });
         return true;
@@ -728,7 +771,7 @@ export const sendTaskEmail = async (data: {
                     </p>
                     <a href="${taskLink}" style="display:inline-block;margin-top:30px;padding:12px 30px;background:#3ABCB3;color:#000;text-decoration:none;font-family:monospace;font-weight:bold;text-transform:uppercase;letter-spacing:2px;border-radius:4px;">View & Submit Task</a>
                 </td></tr>
-                                ${getEmailFooter('#3ABCB3')}
+                                ${getRecruitmentEmailFooter('#3ABCB3')}
             </table>
         </td></tr>
     </table>
@@ -739,7 +782,8 @@ export const sendTaskEmail = async (data: {
         await transporter.sendMail({
             from: `"RMC Recruitment" <${process.env.EMAIL_USER}>`,
             to: data.toEmail,
-            subject: `${data.teamName} Task`,
+            subject: `[RMC] Task Assignment: ${data.teamName}`,
+            text: `Your Task Assignment: ${data.teamName}\n\nDear ${data.name},\nCongratulations on making it to the next phase of the recruitment process for the ${data.teamName} team.\nPlease view and submit your task assignment here: ${taskLink}`,
             html,
             replyTo: process.env.EMAIL_USER,
         });
@@ -789,7 +833,7 @@ export const sendInterviewEmail = async (data: {
                     </p>
                     <a href="${data.meetLink}" style="display:inline-block;margin-top:30px;padding:12px 30px;background:#3ABCB3;color:#000;text-decoration:none;font-family:monospace;font-weight:bold;text-transform:uppercase;letter-spacing:2px;border-radius:4px;">Join Google Meet</a>
                 </td></tr>
-                                ${getEmailFooter('#3ABCB3')}
+                                ${getRecruitmentEmailFooter('#3ABCB3')}
             </table>
         </td></tr>
     </table>
@@ -801,6 +845,7 @@ export const sendInterviewEmail = async (data: {
             from: `"RMC Recruitment" <${process.env.EMAIL_USER}>`,
             to: data.toEmail,
             subject: `[RMC] Interview Scheduled: ${data.teamName}`,
+            text: `Interview Scheduled: ${data.teamName}\n\nDear ${data.name},\nYour interview for the ${data.teamName} team has been scheduled.\nTime: ${dateStr} IST\nJoin Google Meet: ${data.meetLink}`,
             html,
             replyTo: process.env.EMAIL_USER,
         });

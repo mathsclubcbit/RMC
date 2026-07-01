@@ -6,26 +6,87 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import SpotlightCard from "@/components/ui/SpotlightCard";
 
+const TEAM_SPECIFIC_QUESTIONS = {
+    "Web Dev": [
+        { id: "github", question: "Enter your github link(optional)", type: "text", placeholder: "https://github.com/", required: false },
+        { id: "fav_framework", question: "What is your favorite web framework?", type: "text", placeholder: "e.g. Next.js, React...", required: true }
+    ],
+    "Content": [
+        { id: "portfolio", question: "Link to your writing/design portfolio (optional)", type: "text", placeholder: "https://...", required: false }
+    ],
+    "PR": [
+        { id: "campaign_idea", question: "Describe a PR campaign idea for RMC", type: "textarea", placeholder: "Briefly explain your idea...", required: true }
+    ],
+    "Events": [
+        { id: "event_experience", question: "Have you organized any events before? Describe briefly.", type: "textarea", placeholder: "Your experience...", required: true }
+    ],
+    "Visual Media": [
+        {
+            id: "vm_interest",
+            question: "Select your primary interest:",
+            type: "radio",
+            options: ["Video Editing", "Design", "Both"],
+            required: true
+        },
+        {
+            id: "vm_interest_why",
+            question: "Why are you interested in this role?*",
+            type: "text",
+            placeholder: "Your answer...",
+            required: true
+        },
+        {
+            id: "vm_interest_experience",
+            question: "Do you have any prior experience related to this role?*",
+            type: "text",
+            placeholder: "Your answer...",
+            required: true
+        },
+        {
+            id: "vm_interest_skills",
+            question: "What skills or software are you familiar with?*",
+            type: "text",
+            placeholder: "Your answer...",
+            required: true
+        },
+        {
+            id: "vm_interest_previous_work",
+            question: "Any previous work you would like to share.(drive link only)(optional)",
+            type: "text",
+            placeholder: "https://drive.google.com/...",
+            required: false
+        }
+
+    ]
+    // Fallback in case "Web Development" is used instead of "Web Dev"
+
+};
+
 export default function TaskSubmissionPage({ params }) {
     const { id } = use(params);
     const searchParams = useSearchParams();
     const teamName = searchParams.get('team') || 'Unknown Team';
-    
+
     const [loading, setLoading] = useState(true);
     const [app, setApp] = useState(null);
     const [error, setError] = useState("");
     const [teamTaskUrl, setTeamTaskUrl] = useState(null);
-    
+
     // Form state
     const [whyJoin, setWhyJoin] = useState("");
     const [whyTeam, setWhyTeam] = useState("");
+    const [whySelectYou, setWhySelectYou] = useState("");
+    const [otherClubs, setOtherClubs] = useState("");
+    const [previousWork, setPreviousWork] = useState("");
+    const [dynamicAnswers, setDynamicAnswers] = useState({});
+
     const [driveLink, setDriveLink] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
 
     useEffect(() => {
         if (!id) return;
-        
+
         const fetchTaskInfo = async () => {
             try {
                 let url = `/api/recruitment/task-submit?id=${id}`;
@@ -52,6 +113,26 @@ export default function TaskSubmissionPage({ params }) {
         setSubmitting(true);
         setError("");
 
+        // Clean up ghost answers for hidden conditional fields
+        const normalizedTeam = (teamName || "").replace(/\s+/g, "").toLowerCase();
+        const teamKey = Object.keys(TEAM_SPECIFIC_QUESTIONS).find(
+            k => k.replace(/\s+/g, "").toLowerCase() === normalizedTeam
+        );
+        const questions = teamKey ? TEAM_SPECIFIC_QUESTIONS[teamKey] : [];
+        const cleanedAnswers = { ...dynamicAnswers };
+
+        questions.forEach(q => {
+            if (q.dependsOn) {
+                const depVal = dynamicAnswers[q.dependsOn.field];
+                const shouldShow = Array.isArray(q.dependsOn.values)
+                    ? q.dependsOn.values.includes(depVal)
+                    : q.dependsOn.value === depVal;
+                if (!shouldShow) {
+                    delete cleanedAnswers[q.id];
+                }
+            }
+        });
+
         try {
             const res = await fetch("/api/recruitment/task-submit", {
                 method: "POST",
@@ -60,11 +141,15 @@ export default function TaskSubmissionPage({ params }) {
                     applicationId: id,
                     why_join: whyJoin,
                     why_team: whyTeam,
+                    why_select_you: whySelectYou,
+                    other_clubs: otherClubs,
+                    previous_work: previousWork,
+                    dynamic_answers: cleanedAnswers,
                     drive_link: driveLink,
                     teamName
                 })
             });
-            
+
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
             setSubmitted(true);
@@ -127,7 +212,7 @@ export default function TaskSubmissionPage({ params }) {
             </div>
 
             <div className="relative z-10 max-w-5xl mx-auto px-4 py-12 md:py-24 grid md:grid-cols-2 gap-12 items-start">
-                
+
                 {/* Left side: Task Details */}
                 <div className="space-y-6 md:sticky top-24">
                     <div>
@@ -142,10 +227,10 @@ export default function TaskSubmissionPage({ params }) {
                         <FileText className="w-8 h-8 text-white/30 mb-4" />
                         <h3 className="font-bold text-lg mb-2">Your Task PDF</h3>
                         <p className="text-sm text-white/50 mb-6">View your assigned task instructions below.</p>
-                        
-                        <a 
-                            href={app?.task_responses?.team_tracking?.[teamName]?.assignedUrl || app?.task_file_url || teamTaskUrl || "#"} 
-                            target="_blank" 
+
+                        <a
+                            href={app?.task_responses?.team_tracking?.[teamName]?.assignedUrl || app?.task_file_url || teamTaskUrl || "#"}
+                            target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-bold font-mono text-xs uppercase tracking-widest rounded-xl hover:bg-teal hover:shadow-[0_0_20px_rgba(58,188,179,0.3)] transition-all"
                         >
@@ -157,7 +242,7 @@ export default function TaskSubmissionPage({ params }) {
                 {/* Right side: Submission Form */}
                 <SpotlightCard className="p-6 md:p-8 border-white/10 bg-black/60 shadow-2xl relative overflow-hidden">
                     <form onSubmit={handleSubmit}>
-                        
+
                         <div className="mb-8 border-b border-white/10 pb-6">
                             <h2 className="text-2xl font-serif mb-2 text-teal">Submit Your Work</h2>
                             <p className="text-xs text-white/40 font-mono">All fields are mandatory.</p>
@@ -195,6 +280,137 @@ export default function TaskSubmissionPage({ params }) {
                                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-teal/50 resize-none transition-colors"
                                 />
                             </div>
+
+                            <div>
+                                <label className="flex justify-between items-end text-[10px] font-mono uppercase tracking-widest text-white/40 mb-2">
+                                    <span>Why should we select you?</span>
+                                    <span className={whySelectYou.length > 500 ? "text-coral" : ""}>{whySelectYou.length}/500</span>
+                                </label>
+                                <textarea
+                                    required
+                                    maxLength={500}
+                                    rows={3}
+                                    value={whySelectYou}
+                                    onChange={e => setWhySelectYou(e.target.value)}
+                                    placeholder="Tell us what makes you a great fit..."
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-teal/50 resize-none transition-colors"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="flex justify-between items-end text-[10px] font-mono uppercase tracking-widest text-white/40 mb-2">
+                                    <span>Are you part of any other clubs? If yes, mention club name and role.</span>
+                                </label>
+                                <textarea
+                                    required
+                                    maxLength={300}
+                                    rows={2}
+                                    value={otherClubs}
+                                    onChange={e => setOtherClubs(e.target.value)}
+                                    placeholder="e.g. Yes, GDSC - Core Member / No"
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-teal/50 resize-none transition-colors"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="flex justify-between items-end text-[10px] font-mono uppercase tracking-widest text-white/40 mb-2">
+                                    <span>Have you previously worked with this club?</span>
+                                </label>
+                                <div className="flex gap-4">
+                                    <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="previous_work"
+                                            value="Yes, as a Volunteer"
+                                            checked={previousWork === "Yes, as a Volunteer"}
+                                            onChange={e => setPreviousWork(e.target.value)}
+                                            required
+                                            className="text-teal focus:ring-teal bg-white/5 border-white/10"
+                                        />
+                                        Yes, as a Volunteer
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="previous_work"
+                                            value="No, I'm New"
+                                            checked={previousWork === "No, I'm New"}
+                                            onChange={e => setPreviousWork(e.target.value)}
+                                            required
+                                            className="text-teal focus:ring-teal bg-white/5 border-white/10"
+                                        />
+                                        No, I'm New
+                                    </label>
+                                </div>
+                            </div>
+
+                            {(() => {
+                                const normalizedTeam = (teamName || "").replace(/\s+/g, "").toLowerCase();
+                                const teamKey = Object.keys(TEAM_SPECIFIC_QUESTIONS).find(
+                                    k => k.replace(/\s+/g, "").toLowerCase() === normalizedTeam
+                                );
+                                const questions = teamKey ? TEAM_SPECIFIC_QUESTIONS[teamKey] : null;
+
+                                if (!questions) return null;
+
+                                return questions.map((q) => {
+                                    if (q.dependsOn) {
+                                        const depVal = dynamicAnswers[q.dependsOn.field];
+                                        const shouldShow = Array.isArray(q.dependsOn.values)
+                                            ? q.dependsOn.values.includes(depVal)
+                                            : q.dependsOn.value === depVal;
+                                        if (!shouldShow) return null;
+                                    }
+
+                                    return (
+                                        <div key={q.id}>
+                                            <label className="flex justify-between items-end text-[10px] font-mono uppercase tracking-widest text-white/40 mb-2">
+                                                <span>{q.question}</span>
+                                            </label>
+
+                                            {q.type === 'radio' ? (
+                                                <div className="space-y-3">
+                                                    {(q.options || []).map((opt) => (
+                                                        <label key={opt} className="flex items-center gap-3 cursor-pointer group/item">
+                                                            <div className="relative flex-shrink-0">
+                                                                <input
+                                                                    type="radio"
+                                                                    name={q.id}
+                                                                    className="peer sr-only"
+                                                                    checked={dynamicAnswers[q.id] === opt}
+                                                                    onChange={() => setDynamicAnswers(prev => ({ ...prev, [q.id]: opt }))}
+                                                                    required={q.required !== false}
+                                                                />
+                                                                <div className="w-4 h-4 rounded-full border border-white/20 peer-checked:border-teal peer-checked:bg-teal/20 transition-all" />
+                                                                {dynamicAnswers[q.id] === opt && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-teal" />}
+                                                            </div>
+                                                            <span className="text-white/60 text-sm font-serif group-hover/item:text-white transition-colors">{opt}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            ) : q.type === 'text' ? (
+                                                <input
+                                                    type="text"
+                                                    required={q.required !== false}
+                                                    value={dynamicAnswers[q.id] || ""}
+                                                    onChange={e => setDynamicAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                                                    placeholder={q.placeholder || "Your answer..."}
+                                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-teal/50 transition-colors"
+                                                />
+                                            ) : (
+                                                <textarea
+                                                    required={q.required !== false}
+                                                    rows={2}
+                                                    value={dynamicAnswers[q.id] || ""}
+                                                    onChange={e => setDynamicAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                                                    placeholder={q.placeholder || "Your answer..."}
+                                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-teal/50 resize-none transition-colors"
+                                                />
+                                            )}
+                                        </div>
+                                    );
+                                });
+                            })()}
 
                             <div>
                                 <label className="block text-[10px] font-mono uppercase tracking-widest text-white/40 mb-2 flex items-center gap-2">

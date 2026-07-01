@@ -116,6 +116,9 @@ export async function POST(req: NextRequest) {
                 results.errors.push(`Exception for ${applicant.email}: ${err.message}`);
                 console.error(`[batch-assign] Error processing ${applicant.email}:`, err);
             }
+            
+            // 2-second delay to prevent triggering Gmail's bulk sending spam filters
+            await new Promise(resolve => setTimeout(resolve, 2000));
         }
 
         return NextResponse.json({

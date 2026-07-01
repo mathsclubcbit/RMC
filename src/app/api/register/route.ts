@@ -414,12 +414,12 @@ export async function POST(req: NextRequest) {
         const { generateQRCode } = await import('@/lib/qrcode');
         const qrCode = await generateQRCode(registrationId);
 
-        const { sendTicketEmail } = await import('@/lib/email');
+        const { queueTicketEmail } = await import('@/lib/email-queue');
 
         console.log("Debug: FINAL EMAIL PARAMS", { eventDate, eventTime, timeSlot: selectedTimeSlot?.trim() });
 
-        // Non-blocking email
-        sendTicketEmail({
+        // Await the database insert to ensure Vercel doesn't kill the lambda prematurely
+        await queueTicketEmail({
             toEmail: email,
             participantName: name,
             eventName: eventName,
@@ -431,7 +431,7 @@ export async function POST(req: NextRequest) {
             rollNo,
             phone,
             timeSlot: selectedTimeSlot?.trim() || undefined
-        }).catch(e => console.error('Email failed:', e));
+        }).catch(e => console.error('Email queue failed:', e));
 
         revalidatePath('/admin');
         revalidatePath('/coordinator/dashboard');
