@@ -11,6 +11,11 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Application ID is required' }, { status: 400 });
         }
 
+        // teamName is required — without it we can't validate access or serve the right task URL
+        if (!teamName || teamName === 'Unknown Team') {
+            return NextResponse.json({ error: 'Team name is required. Please use the link sent to your email.' }, { status: 400 });
+        }
+
         const supabase = createAdminClient();
 
         // Securely fetch only the data the applicant needs
@@ -75,6 +80,11 @@ export async function POST(req: NextRequest) {
 
         if (fetchErr || !app) {
             return NextResponse.json({ error: 'Application not found.' }, { status: 404 });
+        }
+
+        // Block rejected applicants from submitting
+        if (app.status === 'REJECTED') {
+            return NextResponse.json({ error: 'Your application has been closed. You are no longer eligible to submit tasks.' }, { status: 403 });
         }
 
         const currentResponses = app.task_responses || {};
