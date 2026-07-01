@@ -1,7 +1,8 @@
 import nodemailer from 'nodemailer';
 import { generateStyledQRCode } from './qrcode';
 
-export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
+
+export const getRecruitmentEmailFooter = (themeColor: string = '#2dd4bf') => {
     const year = new Date().getFullYear();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.rmccbit.in';
     const logoUrl = `${siteUrl}/full%20logo.png`;
@@ -18,12 +19,57 @@ export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
                         If you haven't joined yet, please join our official WhatsApp group for updates.
                     </p>
                     <a href="${whatsappLink}" target="_blank" style="display: inline-block; padding: 12px 24px; background: #ffffff; color: #25D366; text-decoration: none; font-family: sans-serif; font-weight: bold; border-radius: 4px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/512px-WhatsApp.svg.png" width="18" height="18" alt="WhatsApp" style="display: inline-block; vertical-align: middle; margin-right: 6px; margin-top: -2px;" />
+                        <img src="https://cdn-icons-png.flaticon.com/512/3670/3670051.png" width="18" height="18" alt="WhatsApp" style="display: inline-block; vertical-align: middle; margin-right: 6px; margin-top: -2px;" />
                         Join WhatsApp Group
                     </a>
                 </div>
                 ` : ''}
 
+                <!-- Social Links -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto 25px;">
+                    <tr>
+                        <td style="padding: 0 15px;">
+                            <a href="${siteUrl}" target="_blank" style="text-decoration: none; display: inline-block;">
+                                <img src="${logoUrl}" alt="RMC Website" width="28" height="28" style="display: block; width: 28px; height: 28px; object-fit: contain;" />
+                            </a>
+                        </td>
+                        <td style="padding: 0 15px;">
+                            <a href="https://www.linkedin.com/company/ramanujan-maths-club/" target="_blank" style="text-decoration: none; display: inline-block;">
+                                <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="28" height="28" style="display: block; width: 28px; height: 28px;" />
+                            </a>
+                        </td>
+                        <td style="padding: 0 15px;">
+                            <a href="https://instagram.com/rmc.cbit" target="_blank" style="text-decoration: none; display: inline-block;">
+                                <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" width="28" height="28" style="display: block; width: 28px; height: 28px;" />
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+
+                <p style="margin: 0; color: #52525b; font-size: 12px; letter-spacing: 1px;">
+                    CALCULATING... SUCCESS.
+                </p>
+                <p style="margin: 10px 0 0; color: #3f3f46; font-size: 11px;">
+                    Ramanujan Mathematical Club &copy; ${year} | CBIT
+                </p>
+                <p style="margin: 15px 0 0; color: ${themeColor}; font-size: 14px; text-decoration: none;">
+                    &nabla; &Delta; &Pi; &Phi;
+                </p>
+            </td>
+        </tr>
+    `;
+};
+export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
+    const year = new Date().getFullYear();
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.rmccbit.in';
+    const logoUrl = `${siteUrl}/full%20logo.png`;
+    const whatsappLink = process.env.NEXT_PUBLIC_WHATSAPP_GROUP_LINK;
+
+    return `
+        <!-- Footer -->
+        <tr>
+            <td style="padding: 30px 40px; text-align: center; border-top: 1px solid rgba(45, 212, 191, 0.1); background: #000000;">
+                
                 <!-- Social Links -->
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto 25px;">
                     <tr>
@@ -391,7 +437,7 @@ export const sendRecruitmentAdminAlert = async (data: RecruitmentAdminAlertData)
             Review in Admin Panel →
           </a>
         </td></tr>
-        ${getEmailFooter('#6366f1')}
+        ${getRecruitmentEmailFooter('#6366f1')}
       </table>
     </td></tr>
   </table>
@@ -578,7 +624,7 @@ export const sendRecruitmentConfirmation = async (data: RecruitmentConfirmationD
                     </table>
                 </td></tr>
 
-                ${getEmailFooter('#3ABCB3')}
+                ${getRecruitmentEmailFooter('#3ABCB3')}
 
             </table>
         </td></tr>
@@ -657,7 +703,7 @@ export const sendRecruitmentDecision = async (data: RecruitmentDecisionData): Pr
                     <p style="margin:12px 0 0;color:#71717a;font-size:14px;line-height:1.7;">${body}</p>
                 </td></tr>
 
-                                ${getEmailFooter('#3ABCB3')}
+                                ${getRecruitmentEmailFooter('#3ABCB3')}
 
             </table>
         </td></tr>
@@ -728,7 +774,7 @@ export const sendTaskEmail = async (data: {
                     </p>
                     <a href="${taskLink}" style="display:inline-block;margin-top:30px;padding:12px 30px;background:#3ABCB3;color:#000;text-decoration:none;font-family:monospace;font-weight:bold;text-transform:uppercase;letter-spacing:2px;border-radius:4px;">View & Submit Task</a>
                 </td></tr>
-                                ${getEmailFooter('#3ABCB3')}
+                                ${getRecruitmentEmailFooter('#3ABCB3')}
             </table>
         </td></tr>
     </table>
@@ -789,7 +835,7 @@ export const sendInterviewEmail = async (data: {
                     </p>
                     <a href="${data.meetLink}" style="display:inline-block;margin-top:30px;padding:12px 30px;background:#3ABCB3;color:#000;text-decoration:none;font-family:monospace;font-weight:bold;text-transform:uppercase;letter-spacing:2px;border-radius:4px;">Join Google Meet</a>
                 </td></tr>
-                                ${getEmailFooter('#3ABCB3')}
+                                ${getRecruitmentEmailFooter('#3ABCB3')}
             </table>
         </td></tr>
     </table>
