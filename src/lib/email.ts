@@ -5,7 +5,6 @@ import { generateStyledQRCode } from './qrcode';
 export const getRecruitmentEmailFooter = (themeColor: string = '#2dd4bf') => {
     const year = new Date().getFullYear();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.rmccbit.in';
-    const logoUrl = `${siteUrl}/full%20logo.png`;
     const whatsappLink = process.env.NEXT_PUBLIC_WHATSAPP_GROUP_LINK;
 
     return `
@@ -61,8 +60,6 @@ export const getRecruitmentEmailFooter = (themeColor: string = '#2dd4bf') => {
 export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
     const year = new Date().getFullYear();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.rmccbit.in';
-    const logoUrl = `${siteUrl}/full%20logo.png`;
-    const whatsappLink = process.env.NEXT_PUBLIC_WHATSAPP_GROUP_LINK;
 
     return `
         <!-- Footer -->
@@ -544,8 +541,6 @@ export const sendRecruitmentConfirmation = async (data: RecruitmentConfirmationD
         return false;
     }
 
-    const year = new Date().getFullYear();
-
     const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -655,7 +650,6 @@ export const sendRecruitmentDecision = async (data: RecruitmentDecisionData): Pr
     }
 
     const isApproved = data.status === 'APPROVED';
-    const year = new Date().getFullYear();
 
     const statusColor = isApproved ? '#3ABCB3' : '#E36951';
     const statusLabel = isApproved ? 'APPLICATION SELECTED' : 'UPDATE ON APPLICATION';
@@ -706,7 +700,6 @@ export const sendRecruitmentDecision = async (data: RecruitmentDecisionData): Pr
 </body>
 </html>`;
 
-    const subjectEmoji = isApproved ? '🎉' : '📬';
     const subjectText = isApproved
         ? `[RMC] Welcome to the Club — Application Approved!`
         : `[RMC] Update on your Application`;
@@ -741,7 +734,6 @@ export const sendTaskEmail = async (data: {
     if (!process.env.RESEND_API_KEY) return false;
 
     const taskLink = `https://rmccbit.in/join/task/${data.applicationId}?team=${encodeURIComponent(data.teamName)}`;
-    const year = new Date().getFullYear();
 
     const html = `<!DOCTYPE html>
 <html>
@@ -815,7 +807,6 @@ export const sendInterviewEmail = async (data: {
     if (!process.env.RESEND_API_KEY) return false;
 
     const dateStr = new Date(data.meetTime).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'full', timeStyle: 'short' });
-    const year = new Date().getFullYear();
 
     const html = `<!DOCTYPE html>
 <html>
