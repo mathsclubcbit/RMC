@@ -782,14 +782,21 @@ export const sendTaskEmail = async (data: {
 </html>`;
 
     try {
-        await resend.emails.send({
+        const res = await resend.emails.send({
             from: EMAIL_FROM,
             to: data.toEmail,
             replyTo: REPLY_TO,
-            subject: `[RMC] Task Assignment: ${data.teamName}`,
+            subject: `[RMC] Task Assignment: ${data.teamName} - Action Required`,
+            headers: {
+                'X-Entity-Ref-ID': `${data.applicationId}-${data.teamName}`
+            },
             text: `Your Task Assignment: ${data.teamName}\n\nDear ${data.name},\nCongratulations on making it to the next phase of the recruitment process for the ${data.teamName} team.\nPlease view and submit your task assignment here: ${taskLink}`,
             html,
         });
+        if (res.error) {
+            console.error('Resend API Error:', res.error);
+            return false;
+        }
         return true;
     } catch (err) {
         console.error('sendTaskEmail error:', err);

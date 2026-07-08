@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -206,7 +206,7 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
             ));
             
             if (data.warning) {
-                alert(`⚠️ ${data.warning}`);
+                alert(`âš ï¸ ${data.warning}`);
             } else {
                 alert("Task sent successfully!");
             }
@@ -465,7 +465,7 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
                                                 </a>
                                             </div>
                                         ) : (
-                                            <span className="text-[10px] text-white/30 font-mono">—</span>
+                                            <span className="text-[10px] text-white/30 font-mono">â€”</span>
                                         )}
                                     </td>
                                     <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
@@ -623,3 +623,4 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
         </div>
     );
 }
+

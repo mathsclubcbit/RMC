@@ -121,7 +121,8 @@ export async function POST(request) {
 
                 if (updateErr) throw updateErr;
 
-                // Send email
+                // Send email with a small delay to avoid rate limits
+                await new Promise(resolve => setTimeout(resolve, 500));
                 const emailSent = await sendTaskEmail({
                     toEmail: applicant.email,
                     name: applicant.name,
