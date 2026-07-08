@@ -110,6 +110,8 @@ export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
 const resend = new Resend(process.env.RESEND_API_KEY);
 const EMAIL_FROM = process.env.EMAIL_FROM || 'RMC <noreply@rmccbit.in>';
 const REPLY_TO = process.env.EMAIL_REPLY_TO || 'mathsclub.cbit@gmail.com';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.rmccbit.in';
+const logoUrl = `${SITE_URL}/full%20logo.png`;
 
 /**
  * Ticket Email Data Interface
@@ -149,8 +151,8 @@ const generateTicketEmailHTML = (data: TicketEmailData, qrCodeDataUrl: string): 
                     
                     <!-- Top Symbol Decor -->
                     <tr>
-                        <td style="padding: 20px 0 0; text-align: center; color: rgba(45, 212, 191, 0.3); font-size: 24px; letter-spacing: 15px;">
-                            ∫ ∞ ∑
+                        <td style="padding: 30px 0 0; text-align: center;">
+                            <img src="${logoUrl}" alt="RMC Logo" style="height: 50px; width: auto; display: inline-block;" />
                         </td>
                     </tr>
 
@@ -329,6 +331,7 @@ export const sendVerificationEmail = async (
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; border: 1px solid rgba(45, 212, 191, 0.2); background: #050505; border-radius: 4px; box-shadow: 0 0 50px rgba(45, 212, 191, 0.05);">
                     <tr>
                         <td style="padding: 40px; text-align: center;">
+                            <img src="${logoUrl}" alt="RMC Logo" style="height: 50px; width: auto; display: inline-block; margin-bottom: 20px;" />
                             <h1 style="margin: 0; color: #2dd4bf; font-size: 32px; font-weight: 300; letter-spacing: 4px; text-transform: uppercase;">
                                 Verification <span style="font-weight: 600;">Initiated</span>
                             </h1>
@@ -474,6 +477,7 @@ export const sendWelcomeEmail = async (toEmail: string, name: string = "Member")
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; border: 1px solid rgba(45, 212, 191, 0.2); background: #050505; border-radius: 4px; box-shadow: 0 0 50px rgba(45, 212, 191, 0.05);">
                     <tr>
                         <td style="padding: 40px; text-align: center;">
+                             <img src="${logoUrl}" alt="RMC Logo" style="height: 50px; width: auto; display: inline-block; margin-bottom: 20px;" />
                              <p style="margin: 0; color: #52525b; font-size: 11px; text-transform: uppercase; letter-spacing: 3px;">RMC Updates</p>
                             <h1 style="margin: 20px 0 0; color: #2dd4bf; font-size: 32px; font-weight: 300; letter-spacing: 2px;">
                                 Subscription <span style="font-weight: 600;">Confirmed</span>
@@ -557,7 +561,9 @@ export const sendRecruitmentConfirmation = async (data: RecruitmentConfirmationD
                 style="margin:0 auto;border:1px solid rgba(58,188,179,0.2);background:#050505;border-radius:4px;box-shadow:0 0 50px rgba(58,188,179,0.08);">
 
                 <!-- Math symbols -->
-                <tr><td style="padding:24px 0 0;text-align:center;color:rgba(58,188,179,0.3);font-size:22px;letter-spacing:14px;">∑ ∫ π</td></tr>
+                <tr><td style="padding:30px 0 0;text-align:center;">
+                    <img src="${logoUrl}" alt="RMC Logo" style="height: 50px; width: auto; display: inline-block;" />
+                </td></tr>
 
                 <!-- Header -->
                 <tr><td style="padding:24px 40px;text-align:center;">
@@ -673,7 +679,9 @@ export const sendRecruitmentDecision = async (data: RecruitmentDecisionData): Pr
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600"
                 style="margin:0 auto;border:1px solid rgba(58,188,179,0.15);background:#050505;border-radius:4px;">
 
-                <tr><td style="padding:24px 0 0;text-align:center;color:rgba(58,188,179,0.3);font-size:22px;letter-spacing:14px;">∑ ∫ π</td></tr>
+                <tr><td style="padding:30px 0 0;text-align:center;">
+                    <img src="${logoUrl}" alt="RMC Logo" style="height: 50px; width: auto; display: inline-block;" />
+                </td></tr>
 
                 <tr><td style="padding:24px 40px;text-align:center;">
                     <h1 style="margin:0;color:#3ABCB3;font-size:34px;font-weight:300;letter-spacing:4px;text-transform:uppercase;">
@@ -746,7 +754,9 @@ export const sendTaskEmail = async (data: {
         <tr><td style="padding:60px 20px;">
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600"
                 style="margin:0 auto;border:1px solid rgba(58,188,179,0.15);background:#050505;border-radius:4px;">
-                <tr><td style="padding:24px 0 0;text-align:center;color:rgba(58,188,179,0.3);font-size:22px;letter-spacing:14px;">∑ ∫ π</td></tr>
+                <tr><td style="padding:30px 0 0;text-align:center;">
+                    <img src="${logoUrl}" alt="RMC Logo" style="height: 50px; width: auto; display: inline-block;" />
+                </td></tr>
                 <tr><td style="padding:24px 40px;text-align:center;">
                     <h1 style="margin:0;color:#3ABCB3;font-size:30px;font-weight:300;letter-spacing:4px;text-transform:uppercase;">
                         RMC <span style="font-weight:600;">Recruitment</span>
@@ -818,7 +828,9 @@ export const sendInterviewEmail = async (data: {
         <tr><td style="padding:60px 20px;">
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600"
                 style="margin:0 auto;border:1px solid rgba(58,188,179,0.15);background:#050505;border-radius:4px;">
-                <tr><td style="padding:24px 0 0;text-align:center;color:rgba(58,188,179,0.3);font-size:22px;letter-spacing:14px;">∑ ∫ π</td></tr>
+                <tr><td style="padding:30px 0 0;text-align:center;">
+                    <img src="${logoUrl}" alt="RMC Logo" style="height: 50px; width: auto; display: inline-block;" />
+                </td></tr>
                 <tr><td style="padding:24px 40px;text-align:center;">
                     <h1 style="margin:0;color:#3ABCB3;font-size:30px;font-weight:300;letter-spacing:4px;text-transform:uppercase;">
                         RMC <span style="font-weight:600;">Recruitment</span>
