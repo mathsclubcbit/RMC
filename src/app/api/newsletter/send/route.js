@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
 import DOMPurify from 'isomorphic-dompurify';
 import { isAdminAuthenticated } from '@/app/admin/actions';
@@ -14,13 +14,8 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
+const EMAIL_FROM = process.env.EMAIL_FROM || 'RMC <noreply@rmccbit.in>';
 
 export async function POST(request) {
     try {
@@ -64,7 +59,7 @@ export async function POST(request) {
                         <p style="margin:0; color:#52525b; font-size:11px; letter-spacing:1px;">
                             RAMANUJAN MATHS CLUB | CBIT
                         </p>
-                         <p style="margin:5px 0 0; color:#3f3f46; font-size:10px;">
+                        <p style="margin:5px 0 0; color:#3f3f46; font-size:10px;">
                             ${new Date().getFullYear()} &copy; All Rights Reserved
                         </p>
                     </div>
@@ -78,8 +73,8 @@ export async function POST(request) {
 
         // TEST MODE
         if (testEmail) {
-            await transporter.sendMail({
-                from: `"RMC Inner Circle" <${process.env.EMAIL_USER}>`,
+            await resend.emails.send({
+                from: EMAIL_FROM,
                 to: testEmail,
                 subject: `[TEST] ${subject}`,
                 html: htmlContent
@@ -96,14 +91,14 @@ export async function POST(request) {
         if (error) throw error;
         if (!subscribers?.length) return NextResponse.json({ message: "No active subscribers" });
 
+        // Resend supports up to 50 recipients per 'to' array call
         let successCount = 0;
         const BATCH_SIZE = 50;
         for (let i = 0; i < subscribers.length; i += BATCH_SIZE) {
             const batch = subscribers.slice(i, i + BATCH_SIZE).map(s => s.email);
-
-            await transporter.sendMail({
-                from: `"RMC Inner Circle" <${process.env.EMAIL_USER}>`,
-                bcc: batch,
+            await resend.emails.send({
+                from: EMAIL_FROM,
+                to: batch,
                 subject: subject,
                 html: htmlContent
             });

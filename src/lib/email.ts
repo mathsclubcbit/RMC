@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { generateStyledQRCode } from './qrcode';
 
 
@@ -105,16 +105,11 @@ export const getEmailFooter = (themeColor: string = '#2dd4bf') => {
 };
 
 /**
- * Configure the SMTP Transporter
- * Using Gmail as an example
+ * Resend Client
  */
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER, // Your Gmail address
-        pass: process.env.EMAIL_PASS, // Your App Password
-    },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
+const EMAIL_FROM = process.env.EMAIL_FROM || 'RMC <noreply@rmccbit.in>';
+const REPLY_TO = process.env.EMAIL_REPLY_TO || 'mathsclub.cbit@gmail.com';
 
 /**
  * Ticket Email Data Interface
@@ -272,40 +267,27 @@ const generateTicketEmailHTML = (data: TicketEmailData, qrCodeDataUrl: string): 
  * Send ticket email with QR code to participant
  */
 export const sendTicketEmail = async (data: TicketEmailData): Promise<boolean> => {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.warn("Skipping ticket email: EMAIL_USER or EMAIL_PASS not set.");
+    if (!process.env.RESEND_API_KEY) {
+        console.warn("Skipping ticket email: RESEND_API_KEY not set.");
         return false;
     }
 
     try {
-        // Generate QR code with cyan dark color for theme consistency
+        // For Resend, embed QR as base64 data URL directly in the img src
         const qrCodeDataUrl = await generateStyledQRCode(data.registrationId, {
-            darkColor: '#000000', // Still use black for best scan reliability, but the frame is cyan
+            darkColor: '#000000',
             lightColor: '#FFFFFF'
         });
 
-        // Convert data URL to buffer for attachment
-        const qrBase64 = qrCodeDataUrl.split(',')[1];
-        const qrBuffer = Buffer.from(qrBase64, 'base64');
+        const htmlContent = generateTicketEmailHTML(data, qrCodeDataUrl);
 
-        const htmlContent = generateTicketEmailHTML(data, 'cid:qrcode');
-
-        const mailOptions = {
-            from: `"RMC Events" <${process.env.EMAIL_USER}>`,
+        await resend.emails.send({
+            from: EMAIL_FROM,
             to: data.toEmail,
             subject: `[SECRET SEQUENCE] Your Entrance for ${data.eventName}`,
             text: `Your Registration is Confirmed, ${data.participantName}!\n\nEvent: ${data.eventName}\nDate: ${data.eventDate}\nTime: ${data.eventTime}\nVenue: ${data.eventVenue}\nAccess Code: ${data.registrationId}\n\nPresent this code at the gate for entry.`,
             html: htmlContent,
-            attachments: [
-                {
-                    filename: 'qrcode.png',
-                    content: qrBuffer,
-                    cid: 'qrcode' // Content-ID for embedding in HTML
-                }
-            ]
-        };
-
-        await transporter.sendMail(mailOptions);
+        });
 
         return true;
     } catch (error) {
@@ -323,13 +305,12 @@ export const sendVerificationEmail = async (
     eventName: string,
     registrationId: string
 ) => {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.warn("Skipping email: EMAIL_USER or EMAIL_PASS not set.");
+    if (!process.env.RESEND_API_KEY) {
+        console.warn("Skipping email: RESEND_API_KEY not set.");
         return;
     }
 
     const mailOptions = {
-        from: `"RMC Events" <${process.env.EMAIL_USER}>`,
         to: toEmail,
         subject: `Verification Pending: ${eventName}`,
         text: `Greetings, ${name}. Your request to join ${eventName} has been logged.\nRegistration ID: ${registrationId}\nStatus: PENDING VERIFICATION\n\nOur team is currently verifying your details.`,
@@ -379,10 +360,15 @@ export const sendVerificationEmail = async (
     };
 
     try {
-        await transporter.sendMail(mailOptions);
+        await resend.emails.send({
+            from: EMAIL_FROM,
+            to: toEmail,
+            subject: `Verification Pending: ${eventName}`,
+            text: `Greetings, ${name}. Your request to join ${eventName} has been logged.\nRegistration ID: ${registrationId}\nStatus: PENDING VERIFICATION\n\nOur team is currently verifying your details.`,
+            html: mailOptions.html as string,
+        });
     } catch (error) {
         console.error("Error sending email:", error);
-        // Don't throw error to prevent failing the entire registration if email fails
     }
 };
 
@@ -401,7 +387,7 @@ interface RecruitmentAdminAlertData {
  * Alert the admin when a new application is submitted
  */
 export const sendRecruitmentAdminAlert = async (data: RecruitmentAdminAlertData): Promise<boolean> => {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return false;
+    if (!process.env.RESEND_API_KEY) return false;
 
     const shortId = data.applicationId.slice(0, 8).toUpperCase();
     const adminUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://rmc.cbit.ac.in'}/admin/recruitment`;
@@ -442,9 +428,9 @@ export const sendRecruitmentAdminAlert = async (data: RecruitmentAdminAlertData)
 </html>`;
 
     try {
-        await transporter.sendMail({
-            from: `"RMC System" <${process.env.EMAIL_USER}>`,
-            to: process.env.EMAIL_USER,
+        await resend.emails.send({
+            from: EMAIL_FROM,
+            to: process.env.EMAIL_REPLY_TO || REPLY_TO,
             subject: `[RMC] New Membership Application — ${data.name} (#${shortId})`,
             text: `New Recruitment Submission\nName: ${data.name}\nEmail: ${data.email}\nRoll No: ${data.rollNumber}\nBranch: ${data.branch}\nYear: ${data.year}\nApplication ID: #${shortId}`,
             html,
@@ -464,13 +450,12 @@ export const sendRecruitmentAdminAlert = async (data: RecruitmentAdminAlertData)
  * Send Welcome Email to new Newsletter Subscriber
  */
 export const sendWelcomeEmail = async (toEmail: string, name: string = "Member") => {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.warn("Skipping welcome email: Credentials missing");
+    if (!process.env.RESEND_API_KEY) {
+        console.warn("Skipping welcome email: RESEND_API_KEY missing");
         return;
     }
 
     const mailOptions = {
-        from: `"RMC Updates" <${process.env.EMAIL_USER}>`,
         to: toEmail,
         subject: `Welcome to Ramanujan Math Club Updates`,
         text: `Welcome to the community, ${name}.\n\nYou have successfully subscribed to the Ramanujan Math Club newsletter. You will now receive updates regarding upcoming events, challenges, and club activities.\n\nThank you for joining us.`,
@@ -523,7 +508,13 @@ export const sendWelcomeEmail = async (toEmail: string, name: string = "Member")
     };
 
     try {
-        await transporter.sendMail(mailOptions);
+        await resend.emails.send({
+            from: EMAIL_FROM,
+            to: toEmail,
+            subject: `Welcome to Ramanujan Math Club Updates`,
+            text: `Welcome to the community, ${name}.\n\nYou have successfully subscribed to the Ramanujan Math Club newsletter. You will now receive updates regarding upcoming events, challenges, and club activities.\n\nThank you for joining us.`,
+            html: mailOptions.html as string,
+        });
         console.log(`Welcome email sent to ${toEmail}`);
     } catch (error) {
         console.error("Error sending welcome email:", error);
@@ -544,8 +535,8 @@ interface RecruitmentConfirmationData {
  * Sent to the applicant immediately after they submit their application.
  */
 export const sendRecruitmentConfirmation = async (data: RecruitmentConfirmationData): Promise<boolean> => {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.warn('Skipping recruitment confirmation email: credentials missing');
+    if (!process.env.RESEND_API_KEY) {
+        console.warn('Skipping recruitment confirmation email: RESEND_API_KEY missing');
         return false;
     }
 
@@ -628,8 +619,8 @@ export const sendRecruitmentConfirmation = async (data: RecruitmentConfirmationD
 </html>`;
 
     try {
-        await transporter.sendMail({
-            from: `"RMC Recruitment" <${process.env.EMAIL_USER}>`,
+        await resend.emails.send({
+            from: EMAIL_FROM,
             to: data.toEmail,
             subject: `[RMC] Application Received — Your Journey Begins`,
             text: `Transmission received, ${data.name}.\n\nYour application to join the Ramanujan Math Club has been logged.\nApplication Reference: ${data.applicationId.toUpperCase().slice(0, 8)}\nStatus: PENDING REVIEW\n\nThe council will review your submission and you will be notified of the decision.`,
@@ -652,8 +643,8 @@ interface RecruitmentDecisionData {
  * Sent to the applicant when their application is approved or rejected.
  */
 export const sendRecruitmentDecision = async (data: RecruitmentDecisionData): Promise<boolean> => {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.warn('Skipping recruitment decision email: credentials missing');
+    if (!process.env.RESEND_API_KEY) {
+        console.warn('Skipping recruitment decision email: RESEND_API_KEY missing');
         return false;
     }
 
@@ -713,8 +704,8 @@ export const sendRecruitmentDecision = async (data: RecruitmentDecisionData): Pr
         : `[RMC] Update on your Application`;
 
     try {
-        await transporter.sendMail({
-            from: `"RMC Recruitment" <${process.env.EMAIL_USER}>`,
+        await resend.emails.send({
+            from: EMAIL_FROM,
             to: data.toEmail,
             subject: subjectText,
             text: `${heading}\n\n${body}`,
@@ -739,7 +730,7 @@ export const sendTaskEmail = async (data: {
     priority?: string | number;
     deadline?: string;
 }) => {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return false;
+    if (!process.env.RESEND_API_KEY) return false;
 
     const taskLink = `https://rmccbit.in/join/task/${data.applicationId}?team=${encodeURIComponent(data.teamName)}`;
     const year = new Date().getFullYear();
@@ -789,13 +780,13 @@ export const sendTaskEmail = async (data: {
 </html>`;
 
     try {
-        await transporter.sendMail({
-            from: `"RMC Recruitment" <${process.env.EMAIL_USER}>`,
+        await resend.emails.send({
+            from: EMAIL_FROM,
             to: data.toEmail,
+            replyTo: REPLY_TO,
             subject: `[RMC] Task Assignment: ${data.teamName}`,
             text: `Your Task Assignment: ${data.teamName}\n\nDear ${data.name},\nCongratulations on making it to the next phase of the recruitment process for the ${data.teamName} team.\nPlease view and submit your task assignment here: ${taskLink}`,
             html,
-            replyTo: process.env.EMAIL_USER,
         });
         return true;
     } catch (err) {
@@ -811,7 +802,7 @@ export const sendInterviewEmail = async (data: {
     meetLink: string;
     meetTime: string;
 }) => {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return false;
+    if (!process.env.RESEND_API_KEY) return false;
 
     const dateStr = new Date(data.meetTime).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'full', timeStyle: 'short' });
     const year = new Date().getFullYear();
@@ -851,13 +842,13 @@ export const sendInterviewEmail = async (data: {
 </html>`;
 
     try {
-        await transporter.sendMail({
-            from: `"RMC Recruitment" <${process.env.EMAIL_USER}>`,
+        await resend.emails.send({
+            from: EMAIL_FROM,
             to: data.toEmail,
+            replyTo: REPLY_TO,
             subject: `[RMC] Interview Scheduled: ${data.teamName}`,
             text: `Interview Scheduled: ${data.teamName}\n\nDear ${data.name},\nYour interview for the ${data.teamName} team has been scheduled.\nTime: ${dateStr} IST\nJoin Google Meet: ${data.meetLink}`,
             html,
-            replyTo: process.env.EMAIL_USER,
         });
         return true;
     } catch (err) {

@@ -56,7 +56,7 @@ export async function GET(request: Request) {
                     .update({
                         status: sent ? 'SENT' : 'FAILED',
                         updated_at: new Date().toISOString(),
-                        error_message: sent ? null : 'Failed to send via nodemailer'
+                        error_message: sent ? null : 'Failed to send via Resend'
                     })
                     .eq('id', item.id);
                 
