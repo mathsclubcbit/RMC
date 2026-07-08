@@ -80,17 +80,9 @@ export async function POST(request) {
                 // Randomly assign one of the available task URLs
                 const assignedUrl = taskUrls[Math.floor(Math.random() * taskUrls.length)];
 
-                // Update DB with assigned URL
-                const { error: assignErr } = await supabase
-                    .from('recruitment_applications')
-                    .update({ task_file_url: assignedUrl })
-                    .eq('id', applicant.id);
-
-                if (assignErr) throw assignErr;
-
+                // Calculate applicant's priority for this team
                 const normalize = (s) => s.replace(/[^a-z0-9]/gi, '').toLowerCase();
                 const matchTeam = normalize(teamName);
-                
                 let priority = 1;
                 const teamStr = applicant.team || "";
                 const parts = teamStr.split('|').map(s => s.trim());
@@ -107,21 +99,12 @@ export async function POST(request) {
                     continue;
                 }
 
-                // Send email
-                const emailSent = await sendTaskEmail({
-                    toEmail: applicant.email,
-                    name: applicant.name,
-                    applicationId: applicant.id,
-                    teamName: teamName,
-                    priority: priority
-                });
+                // Calculate deadline
+                const deadlineDays = teamTask.deadline_days || 3;
+                const deadlineTimestamp = new Date(Date.now() + (deadlineDays * 24 * 60 * 60 * 1000)).toISOString();
 
-                if (!emailSent) {
-                    throw new Error("Email sending failed");
-                }
-
-                // If email successful, mark as SENT
-                teamTracking[teamName] = { status: 'SENT', assignedUrl };
+                // Update DB FIRST before sending email
+                teamTracking[teamName] = { status: 'SENT', assignedUrl, deadline: deadlineTimestamp };
                 const updatedResponses = {
                     ...currentResponses,
                     team_tracking: teamTracking
@@ -131,11 +114,28 @@ export async function POST(request) {
                     .from('recruitment_applications')
                     .update({ 
                         task_status: 'SENT',
+                        task_file_url: assignedUrl,
                         task_responses: updatedResponses
                     })
                     .eq('id', applicant.id);
 
                 if (updateErr) throw updateErr;
+
+                // Send email
+                const emailSent = await sendTaskEmail({
+                    toEmail: applicant.email,
+                    name: applicant.name,
+                    applicationId: applicant.id,
+                    teamName: teamName,
+                    priority: priority,
+                    deadline: deadlineTimestamp
+                });
+
+                if (!emailSent) {
+                    console.error(`[batch-assign] Email failed for ${applicant.email}. DB updated successfully.`);
+                    // Optionally push warning, but we consider it a success since DB is updated
+                    results.errors.push(`Applicant ${applicant.email}: Email failed to send, but task assigned in DB.`);
+                }
 
                 results.successful.push(applicant.id);
 

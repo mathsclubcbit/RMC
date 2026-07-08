@@ -43,7 +43,7 @@ export async function POST(request) {
 
         const teamName = payload.team;
         const body = await request.json();
-        const { task_1_url, task_2_url, task_3_url } = body;
+        const { task_1_url, task_2_url, task_3_url, deadline_days } = body;
 
         const supabase = createAdminClient();
 
@@ -54,6 +54,7 @@ export async function POST(request) {
                 task_1_url: task_1_url || null,
                 task_2_url: task_2_url || null,
                 task_3_url: task_3_url || null,
+                deadline_days: deadline_days !== undefined ? Number(deadline_days) : 3,
                 updated_at: new Date().toISOString(),
             }, { onConflict: 'team_name' })
             .select()

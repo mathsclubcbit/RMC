@@ -75,12 +75,16 @@ export async function POST(request) {
         // Randomly assign one of the available task URLs
         const assignedUrl = taskUrls[Math.floor(Math.random() * taskUrls.length)];
 
+        // Calculate deadline
+        const deadlineDays = teamTask.deadline_days || 3;
+        const deadlineTimestamp = new Date(Date.now() + (deadlineDays * 24 * 60 * 60 * 1000)).toISOString();
+
         // --- FIX #1: Update DB FIRST before sending email ---
         // If email fails after DB update, the team head can resend manually.
         // If we emailed first and DB failed, the applicant would be permanently locked out.
         const currentResponses = applicant.task_responses || {};
         const teamTracking = currentResponses.team_tracking || {};
-        teamTracking[teamName] = { status: 'SENT', assignedUrl };
+        teamTracking[teamName] = { status: 'SENT', assignedUrl, deadline: deadlineTimestamp };
         
         const updatedResponses = {
             ...currentResponses,
@@ -107,7 +111,8 @@ export async function POST(request) {
             name: applicant.name,
             applicationId,
             teamName,
-            priority
+            priority,
+            deadline: deadlineTimestamp
         });
 
         if (!emailSent) {

@@ -737,6 +737,7 @@ export const sendTaskEmail = async (data: {
     applicationId: string;
     teamName: string;
     priority?: string | number;
+    deadline?: string;
 }) => {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return false;
 
@@ -769,6 +770,15 @@ export const sendTaskEmail = async (data: {
                         We noticed you selected this team as your <strong>Priority ${data.priority || '1'}</strong> choice!<br><br>
                         Please click the button below to view and submit your task assignment.
                     </p>
+                    ${data.deadline ? `
+                    <div style="margin:24px 0 0;padding:16px;border-left:3px solid #E36951;background:rgba(227,105,81,0.1);text-align:left;">
+                        <p style="margin:0;color:#E36951;font-size:12px;text-transform:uppercase;letter-spacing:2px;font-weight:bold;">Deadline</p>
+                        <p style="margin:6px 0 0;color:#fff;font-size:15px;">
+                            ${new Date(data.deadline).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <p style="margin:6px 0 0;color:#a1a1aa;font-size:13px;">Submissions strictly close after this time.</p>
+                    </div>
+                    ` : ''}
                     <a href="${taskLink}" style="display:inline-block;margin-top:30px;padding:12px 30px;background:#3ABCB3;color:#000;text-decoration:none;font-family:monospace;font-weight:bold;text-transform:uppercase;letter-spacing:2px;border-radius:4px;">View & Submit Task</a>
                 </td></tr>
                                 ${getRecruitmentEmailFooter('#3ABCB3')}

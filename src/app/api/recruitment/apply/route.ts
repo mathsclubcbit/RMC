@@ -166,21 +166,8 @@ export async function POST(req: NextRequest) {
             applicationId: inserted.id,
         }).catch((e) => console.error('[recruitment/apply] Email failed:', e));
 
-        // --- 7. Alert admin (awaited to ensure delivery) ---
-        const adminEmail = process.env.EMAIL_USER;
-        if (adminEmail) {
-            const { sendRecruitmentAdminAlert } = await import('@/lib/email');
-            await sendRecruitmentAdminAlert({
-                name: name.trim(),
-                email: email.trim(),
-                rollNumber: rollNumber.trim(),
-                branch: branch.trim(),
-                year: year.trim(),
-                applicationId: inserted.id,
-            }).catch((e) => console.error('[recruitment/apply] Admin alert failed:', e));
-        }
 
-        // --- 8. Send to Google Sheets (awaited to ensure delivery) ---
+        // --- 7. Send to Google Sheets (awaited to ensure delivery) ---
         const sheetId = process.env.RECRUITMENT_GOOGLE_SHEET_ID || '1mpNl9ofBlr94LxBOjyrqQ84EbiHLMEav91iH89DmALM';
         const rowData = [
             new Date().toISOString(),

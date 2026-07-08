@@ -94,6 +94,12 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Task for this team not assigned or already submitted.' }, { status: 400 });
         }
 
+        // Strictly block submissions if deadline passed
+        const deadlineStr = teamTracking[teamName]?.deadline;
+        if (deadlineStr && new Date(deadlineStr) < new Date()) {
+            return NextResponse.json({ error: 'Deadline has passed. Submissions are no longer accepted.' }, { status: 403 });
+        }
+
         teamTracking[teamName] = {
             ...teamTracking[teamName],
             status: 'SUBMITTED',

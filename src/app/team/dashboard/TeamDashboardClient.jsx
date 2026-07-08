@@ -21,6 +21,7 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
 
     // Task management state
     const [tasks, setTasks] = useState(["", "", ""]);
+    const [deadlineDays, setDeadlineDays] = useState(3);
     const [loadingTasks, setLoadingTasks] = useState(false);
     const [savingTasks, setSavingTasks] = useState(false);
     const [saveTaskSuccess, setSaveTaskSuccess] = useState(false);
@@ -38,6 +39,7 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
             const data = await res.json();
             if (data.task) {
                 setTasks([data.task.task_1_url || "", data.task.task_2_url || "", data.task.task_3_url || ""]);
+                setDeadlineDays(data.task.deadline_days || 3);
             }
         } catch (e) {
             console.error(e);
@@ -56,7 +58,7 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
             const res = await fetch("/api/team/tasks", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ task_1_url: tasks[0], task_2_url: tasks[1], task_3_url: tasks[2] })
+                body: JSON.stringify({ task_1_url: tasks[0], task_2_url: tasks[1], task_3_url: tasks[2], deadline_days: deadlineDays })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
@@ -291,6 +293,22 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
                                 </div>
                             ))
                         )}
+                        
+                        {!loadingTasks && (
+                            <div>
+                                <label className="block text-[10px] font-mono uppercase tracking-widest text-white/30 mb-1.5">Task Deadline (Days)</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={deadlineDays}
+                                    onChange={(e) => setDeadlineDays(e.target.value)}
+                                    placeholder="e.g., 3"
+                                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-teal/50"
+                                />
+                                <p className="text-[10px] text-white/30 mt-1">Number of days the applicant has to complete the task.</p>
+                            </div>
+                        )}
+
                         {saveTaskError && <p className="text-xs text-coral">{saveTaskError}</p>}
                         <button onClick={handleSaveTasks} disabled={savingTasks} className="flex items-center gap-2 px-6 py-2.5 bg-white/10 text-white rounded-lg hover:bg-white/20 transition disabled:opacity-50 text-sm">
                             {savingTasks ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}

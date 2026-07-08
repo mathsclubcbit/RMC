@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, use, useEffect } from "react";
-import { Loader2, CheckCircle2, FileText, UploadCloud, ArrowRight } from "lucide-react";
+import { Loader2, CheckCircle2, FileText, UploadCloud, ArrowRight, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import SpotlightCard from "@/components/ui/SpotlightCard";
@@ -191,6 +191,28 @@ export default function TaskSubmissionPage({ params }) {
     // Check if the specific team task is submitted
     const isTeamSubmitted = app?.task_responses?.team_tracking?.[teamName]?.status === 'SUBMITTED' || app?.task_responses?.team_tracking?.[teamName]?.status === 'EVALUATED';
 
+    const deadlineStr = app?.task_responses?.team_tracking?.[teamName]?.deadline;
+    const isPastDeadline = deadlineStr ? new Date(deadlineStr) < new Date() : false;
+
+    if (isPastDeadline && !isTeamSubmitted && !submitted) {
+        return (
+            <div className="min-h-screen bg-[#060606] flex items-center justify-center p-4">
+                <SpotlightCard className="max-w-md w-full p-8 text-center border-coral/30 bg-black/40">
+                    <div className="mx-auto w-16 h-16 bg-coral/10 rounded-full flex items-center justify-center mb-6">
+                        <AlertCircle className="w-8 h-8 text-coral" />
+                    </div>
+                    <h1 className="text-2xl font-serif text-white mb-3">Deadline Passed</h1>
+                    <p className="text-sm text-white/60 mb-6">
+                        The deadline to submit your task for the {teamName === 'Unknown Team' ? 'selected' : teamName} team has passed. We are no longer accepting submissions.
+                    </p>
+                    <Link href="/" className="inline-block text-coral text-xs font-mono border border-coral/30 px-6 py-2 rounded-full hover:bg-coral hover:text-black transition">
+                        Return Home
+                    </Link>
+                </SpotlightCard>
+            </div>
+        );
+    }
+
     if (submitted || isTeamSubmitted) {
         return (
             <div className="min-h-screen bg-[#060606] flex items-center justify-center p-4">
@@ -252,6 +274,11 @@ export default function TaskSubmissionPage({ params }) {
 
                         <div className="mb-8 border-b border-white/10 pb-6">
                             <h2 className="text-2xl font-serif mb-2 text-teal">Submit Your Work</h2>
+                            {deadlineStr && (
+                                <p className="text-xs text-coral font-mono mb-2">
+                                    Deadline: {new Date(deadlineStr).toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                            )}
                             <p className="text-xs text-white/40 font-mono">All fields are mandatory.</p>
                         </div>
 
