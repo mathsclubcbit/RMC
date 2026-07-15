@@ -64,7 +64,8 @@ const benefits = [
 ];
 
 export default async function JoinPage() {
-    const { isOpen, schema, academicYear } = await getRecruitmentConfig();
+    const { schema, academicYear } = await getRecruitmentConfig();
+    const isOpen = false;
 
     return (
         <div className="relative min-h-screen">
