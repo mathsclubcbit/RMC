@@ -1,0 +1,434 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { Loader2, ArrowLeft, Clock, AlertTriangle, CheckCircle2, ChevronRight, ChevronLeft, Flag } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import confetti from "canvas-confetti";
+
+export default function ParticipantContestPlayClient({ eventId, contestId }) {
+    const router = useRouter();
+    const [loading, setLoading] = useState(true);
+    const [contest, setContest] = useState(null);
+    const [questions, setQuestions] = useState([]);
+    
+    // State machine: 'intro' -> 'playing' -> 'submitting' -> 'results' -> 'ended'
+    const [stage, setStage] = useState('intro');
+    const [submission, setSubmission] = useState(null);
+    const [results, setResults] = useState(null);
+
+    // Play state
+    const [timeRemaining, setTimeRemaining] = useState(null);
+    const [answers, setAnswers] = useState({});
+    const [currentQIndex, setCurrentQIndex] = useState(0);
+    const [tabSwitches, setTabSwitches] = useState(0);
+    
+    const timerRef = useRef(null);
+
+    useEffect(() => {
+        fetchContestInit();
+        return () => clearInterval(timerRef.current);
+    }, []);
+
+    // Tab visibility tracking
+    useEffect(() => {
+        if (stage === 'playing') {
+            const handleVisibilityChange = () => {
+                if (document.hidden) {
+                    setTabSwitches(prev => prev + 1);
+                    // Could also auto-submit on 3rd violation, etc.
+                }
+            };
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+        }
+    }, [stage]);
+
+    // Timer countdown
+    useEffect(() => {
+        if (stage === 'playing' && timeRemaining > 0) {
+            timerRef.current = setInterval(() => {
+                setTimeRemaining(prev => {
+                    if (prev <= 1) {
+                        clearInterval(timerRef.current);
+                        autoSubmit();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+            return () => clearInterval(timerRef.current);
+        }
+    }, [stage, timeRemaining]);
+
+    const fetchContestInit = async () => {
+        try {
+            const res = await fetch(`/api/placement-series/contests/${contestId}?eventId=${eventId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setContest(data.contest);
+                
+                if (data.submission) {
+                    if (data.submission.submitted_at) {
+                        // Already submitted
+                        setSubmission(data.submission);
+                        setStage(data.contest.results_published ? 'results' : 'ended');
+                        setQuestions(data.questions || []);
+                    } else {
+                        // Resuming... need to hit start endpoint to get questions and fresh timer
+                        startContest();
+                    }
+                }
+            } else {
+                router.push(`/placement-series/${eventId}/contests`);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const startContest = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/placement-series/contests/${contestId}/start`, { method: "POST" });
+            const data = await res.json();
+            
+            if (res.ok) {
+                setQuestions(data.questions);
+                setTimeRemaining(data.submission.timeRemainingSeconds);
+                setSubmission(data.submission);
+                setStage('playing');
+            } else {
+                alert(data.error || "Failed to start");
+                if (data.error === 'already_submitted') {
+                    fetchContestInit(); // refresh
+                }
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSelectOption = (questionId, optionIndex) => {
+        setAnswers(prev => ({
+            ...prev,
+            [questionId]: optionIndex
+        }));
+    };
+
+    const autoSubmit = () => {
+        // Use a ref to ensure we have latest answers if needed, 
+        // but react state inside setTimeout can be tricky. 
+        // We'll just trigger the submit flow.
+        submitContest(true);
+    };
+
+    const submitContest = async (isAuto = false) => {
+        if (!isAuto && !confirm("Are you sure you want to submit? You cannot change your answers after this.")) {
+            return;
+        }
+        
+        setStage('submitting');
+        clearInterval(timerRef.current);
+
+        try {
+            // Need to use current state of answers from the function scope, 
+            // setAnswers is async but we rely on current closure state.
+            const res = await fetch(`/api/placement-series/contests/${contestId}/submit`, {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ answers, tabSwitchCount: tabSwitches })
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                setResults(data);
+                setStage('ended'); // They have to wait for global results publish to see answers
+                
+                if (data.percentage >= 80) {
+                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+                }
+            } else {
+                alert(data.error || "Failed to submit");
+                setStage('playing');
+            }
+        } catch (error) {
+            console.error(error);
+            setStage('playing');
+        }
+    };
+
+    const formatTime = (seconds) => {
+        if (!seconds && seconds !== 0) return "00:00";
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    };
+
+    if (loading) return <div className="min-h-screen bg-black flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-teal-400" /></div>;
+    if (!contest) return null;
+
+    if (stage === 'intro') {
+        const now = Date.now();
+        const startsAt = new Date(contest.starts_at).getTime();
+        const endsAt = new Date(contest.ends_at).getTime();
+        const isUpcoming = now < startsAt;
+        const isEnded = now > endsAt;
+
+        return (
+            <div className="min-h-[100dvh] pt-24 pb-12 px-4 flex items-center justify-center bg-black text-white relative">
+                <div className="absolute inset-0 pointer-events-none opacity-20"><div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-500/10 blur-[120px] rounded-full" /></div>
+                
+                <div className="max-w-xl w-full bg-white/5 border border-white/10 rounded-3xl p-8 md:p-12 text-center relative z-10 backdrop-blur-xl">
+                    <h1 className="text-3xl font-bold mb-4">{contest.title}</h1>
+                    <div className="flex justify-center gap-6 text-white/60 text-sm mb-8">
+                        <div className="flex items-center gap-2"><Clock className="w-4 h-4" /> {contest.duration_minutes} mins</div>
+                        <div className="flex items-center gap-2"><span>{contest.total_questions} Questions</span></div>
+                    </div>
+                    
+                    <div className="bg-orange-500/10 border border-orange-500/30 text-orange-200 text-sm p-4 rounded-xl mb-8 text-left flex items-start gap-3">
+                        <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                        <p><strong>Anti-Cheat Active:</strong> Switching tabs or leaving the contest window will be recorded and may result in disqualification.</p>
+                    </div>
+
+                    {isUpcoming ? (
+                        <button disabled className="w-full py-4 rounded-xl bg-white/5 text-white/50 font-bold border border-white/10 cursor-not-allowed">
+                            Starts {new Date(startsAt).toLocaleString()}
+                        </button>
+                    ) : isEnded ? (
+                        <button disabled className="w-full py-4 rounded-xl bg-white/5 text-white/50 font-bold border border-white/10 cursor-not-allowed">
+                            Contest Ended
+                        </button>
+                    ) : (
+                        <button onClick={startContest} className="w-full bg-teal-500 hover:bg-teal-400 text-black py-4 rounded-xl font-extrabold text-lg transition-all transform hover:scale-[1.02] shadow-[0_0_20px_rgba(45,212,191,0.3)]">
+                            START CONTEST NOW
+                        </button>
+                    )}
+                    
+                    <div className="mt-6">
+                        <Link href={`/placement-series/${eventId}/contests`} className="text-sm text-white/40 hover:text-white transition-colors">
+                            ← Back to Contests
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (stage === 'playing' || stage === 'submitting') {
+        const currentQ = questions[currentQIndex];
+        const isLast = currentQIndex === questions.length - 1;
+
+        return (
+            <div className="min-h-[100dvh] bg-[#050505] text-white">
+                {/* Header Navbar for contest */}
+                <div className="fixed top-0 left-0 right-0 bg-black/80 backdrop-blur-xl border-b border-white/10 z-50">
+                    <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+                        <div className="font-bold hidden sm:block">{contest.title}</div>
+                        
+                        <div className="flex items-center gap-6">
+                            {tabSwitches > 0 && (
+                                <div className="text-orange-400 text-xs font-bold bg-orange-500/10 px-2 py-1 rounded">
+                                    Warnings: {tabSwitches}
+                                </div>
+                            )}
+                            <div className={`font-mono font-bold text-xl flex items-center gap-2 ${timeRemaining < 60 ? 'text-red-400' : 'text-teal-400'}`}>
+                                <Clock className="w-5 h-5" />
+                                {formatTime(timeRemaining)}
+                            </div>
+                            <button 
+                                onClick={() => submitContest(false)}
+                                disabled={stage === 'submitting'}
+                                className="bg-teal-500 text-black px-4 py-1.5 rounded-lg font-bold text-sm"
+                            >
+                                Submit All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="max-w-5xl mx-auto px-4 pt-24 pb-32 flex flex-col md:flex-row gap-8">
+                    {/* Main Question Area */}
+                    <div className="flex-1">
+                        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 md:p-10 min-h-[400px]">
+                            <div className="flex justify-between items-center mb-8">
+                                <span className="text-white/50 font-bold uppercase tracking-widest text-xs">Question {currentQIndex + 1} of {questions.length}</span>
+                                <span className="text-teal-400 font-bold bg-teal-500/10 px-3 py-1 rounded-lg text-sm">{currentQ?.points} Points</span>
+                            </div>
+                            
+                            <h2 className="text-2xl leading-relaxed font-medium mb-10">{currentQ?.question_text}</h2>
+
+                            <div className="grid grid-cols-1 gap-4">
+                                {currentQ?.options.map((opt, i) => {
+                                    const isSelected = answers[currentQ.id] === i;
+                                    return (
+                                        <button
+                                            key={i}
+                                            onClick={() => handleSelectOption(currentQ.id, i)}
+                                            className={`text-left p-5 rounded-2xl border transition-all flex items-center gap-4 ${
+                                                isSelected 
+                                                    ? 'bg-teal-500/10 border-teal-500' 
+                                                    : 'bg-black border-white/10 hover:border-white/30'
+                                            }`}
+                                        >
+                                            <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 ${
+                                                isSelected ? 'border-teal-400 bg-teal-400 text-black' : 'border-white/30 text-white/50'
+                                            }`}>
+                                                <span className="font-bold text-sm">{String.fromCharCode(65 + i)}</span>
+                                            </div>
+                                            <span className="text-lg">{opt}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Navigation Footer */}
+                        <div className="flex justify-between items-center mt-6">
+                            <button 
+                                onClick={() => setCurrentQIndex(p => Math.max(0, p - 1))}
+                                disabled={currentQIndex === 0}
+                                className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 disabled:opacity-30 rounded-xl font-bold transition-all border border-white/10"
+                            >
+                                <ChevronLeft className="w-5 h-5" /> Previous
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    if (isLast) submitContest(false);
+                                    else setCurrentQIndex(p => Math.min(questions.length - 1, p + 1));
+                                }}
+                                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${
+                                    isLast ? 'bg-teal-500 text-black' : 'bg-white/5 hover:bg-white/10 border border-white/10'
+                                }`}
+                            >
+                                {isLast ? 'Submit' : 'Next'} {isLast ? <CheckCircle2 className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Question Palette Sidebar */}
+                    <div className="w-full md:w-64 shrink-0">
+                        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 sticky top-24">
+                            <h3 className="font-bold mb-4 text-sm uppercase tracking-widest text-white/50">Question Map</h3>
+                            <div className="grid grid-cols-4 gap-2">
+                                {questions.map((q, i) => {
+                                    const isAnswered = answers[q.id] !== undefined;
+                                    const isCurrent = currentQIndex === i;
+                                    return (
+                                        <button
+                                            key={i}
+                                            onClick={() => setCurrentQIndex(i)}
+                                            className={`aspect-square rounded-lg font-bold text-sm flex items-center justify-center transition-all ${
+                                                isCurrent ? 'ring-2 ring-white ring-offset-2 ring-offset-[#111]' : ''
+                                            } ${
+                                                isAnswered ? 'bg-teal-500 text-black' : 'bg-black border border-white/20 text-white/50 hover:bg-white/10'
+                                            }`}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {stage === 'submitting' && (
+                    <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center">
+                        <Loader2 className="w-12 h-12 animate-spin text-teal-400 mb-4" />
+                        <h2 className="text-2xl font-bold">Submitting Contest...</h2>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    if (stage === 'ended' || stage === 'results') {
+        return (
+            <div className="min-h-[100dvh] pt-24 pb-12 px-4 relative flex items-center justify-center">
+                <div className="max-w-xl w-full text-center">
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-teal-500/20 text-teal-400 rounded-full mb-6">
+                        <CheckCircle2 className="w-10 h-10" />
+                    </div>
+                    
+                    <h1 className="text-4xl font-extrabold mb-4">Submission Received!</h1>
+                    
+                    {stage === 'ended' ? (
+                        <>
+                            <p className="text-white/60 mb-8 max-w-md mx-auto leading-relaxed">
+                                Your answers have been securely recorded. The detailed results and answer key will be available once the coordinator publishes them.
+                            </p>
+                            
+                            {results && (
+                                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 inline-block mx-auto mb-8">
+                                    <p className="text-sm text-white/50 uppercase tracking-widest font-bold mb-2">Preliminary Score</p>
+                                    <div className="text-5xl font-mono font-bold text-teal-400">
+                                        {results.score}<span className="text-2xl text-white/30">/{results.totalPoints}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <div className="text-left space-y-6 mt-8">
+                            <p className="text-center text-white/50 mb-8">Results have been published. Here is how you did:</p>
+                            
+                            {questions.map((q, i) => {
+                                const uAns = q.user_answer;
+                                const cAns = q.correct_option;
+                                const isCorrect = uAns === cAns;
+                                const isSkipped = uAns === undefined || uAns === null;
+
+                                return (
+                                    <div key={i} className={`bg-white/5 border rounded-2xl p-6 ${isCorrect ? 'border-green-500/30' : 'border-red-500/30'}`}>
+                                        <div className="flex gap-4">
+                                            <div className="font-bold text-white/50">{i + 1}.</div>
+                                            <div className="flex-1">
+                                                <p className="mb-4 font-medium">{q.question_text}</p>
+                                                <div className="grid grid-cols-1 gap-2 text-sm">
+                                                    {q.options.map((opt, oIdx) => {
+                                                        const isUserSelection = oIdx === uAns;
+                                                        const isActualCorrect = oIdx === cAns;
+                                                        
+                                                        let bg = "bg-black border-white/10";
+                                                        if (isActualCorrect) bg = "bg-green-500/20 border-green-500/50 text-green-200";
+                                                        else if (isUserSelection) bg = "bg-red-500/20 border-red-500/50 text-red-200";
+
+                                                        return (
+                                                            <div key={oIdx} className={`p-3 rounded-xl border flex items-center justify-between ${bg}`}>
+                                                                <div className="flex items-center gap-3">
+                                                                    <span className="opacity-50">{String.fromCharCode(65 + oIdx)}.</span>
+                                                                    {opt}
+                                                                </div>
+                                                                {isUserSelection && (
+                                                                    <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest opacity-80">
+                                                                        Your Answer
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    <div className="mt-8">
+                        <Link href={`/placement-series/${eventId}/contests`} className="inline-block bg-white/10 hover:bg-white/20 px-8 py-3 rounded-xl font-bold transition-all">
+                            Back to Contests
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return null;
+}
