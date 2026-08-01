@@ -86,6 +86,7 @@ export const metadata = {
 
 import ClientOverlays from "@/components/layout/ClientOverlays";
 import ConditionalShell from "@/components/layout/ConditionalShell";
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 export default function RootLayout({ children }) {
     return (
@@ -100,6 +101,10 @@ export default function RootLayout({ children }) {
                 >
                     Skip to main content
                 </a>
+
+                {/* Google Analytics */}
+                <GoogleAnalytics gaId="G-RW1J9Q3X7X" />
+
                 <ClientOverlays />
                 <ConditionalShell>
                     <main id="main-content">

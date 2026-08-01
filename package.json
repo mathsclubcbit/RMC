@@ -17,6 +17,7 @@
     "safari >= 14"
   ],
   "dependencies": {
+    "@next/third-parties": "^16.2.12",
     "@otplib/preset-default": "^12.0.1",
     "@radix-ui/react-select": "^2.2.6",
     "@react-three/drei": "^10.7.7",
