@@ -298,6 +298,8 @@ export default function DailyQuestionsClient({ eventId }) {
                         </div>
                     </div>
                 </div>
+            )}
+
             {/* Stats Modal */}
             {isStatsOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
