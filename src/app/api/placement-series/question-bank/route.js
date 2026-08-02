@@ -53,9 +53,58 @@ export async function GET(request) {
 export async function POST(request) {
     try {
         const body = await request.json();
-        const { eventId, questionText, options, correctOption, explanation, category, difficulty, tags } = body;
+        const { eventId } = body;
 
-        if (!eventId || !questionText || !options || correctOption === undefined) {
+        if (!eventId) {
+            return NextResponse.json({ error: 'eventId is required' }, { status: 400 });
+        }
+
+        const coordinator = await requireCoordinator(request, eventId);
+        if (!coordinator) {
+            return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+        }
+
+        const admin = createAdminClient();
+
+        // Bulk insert
+        if (body.questions && Array.isArray(body.questions)) {
+            const insertData = body.questions.map(q => ({
+                question_text: q.questionText || q.question_text,
+                options: q.options,
+                correct_option: q.correctOption ?? q.correct_option,
+                explanation: q.explanation || null,
+                category: q.category || null,
+                difficulty: q.difficulty || 'medium',
+                tags: q.tags || [],
+                created_by: eventId
+            }));
+
+            // Validate all
+            for (let q of insertData) {
+                if (!q.question_text || !q.options || q.correct_option === undefined) {
+                    return NextResponse.json({ error: 'Missing required fields in bulk data' }, { status: 400 });
+                }
+                if (!Array.isArray(q.options) || q.options.length !== 4) {
+                    return NextResponse.json({ error: 'Options must be exactly 4 items' }, { status: 400 });
+                }
+                if (q.correct_option < 0 || q.correct_option > 3) {
+                    return NextResponse.json({ error: 'correctOption must be 0-3' }, { status: 400 });
+                }
+            }
+
+            const { data: insertedQuestions, error } = await admin
+                .from('ps_question_bank')
+                .insert(insertData)
+                .select();
+
+            if (error) throw error;
+            return NextResponse.json({ questions: insertedQuestions });
+        }
+
+        // Single insert
+        const { questionText, options, correctOption, explanation, category, difficulty, tags } = body;
+
+        if (!questionText || !options || correctOption === undefined) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
@@ -66,13 +115,6 @@ export async function POST(request) {
         if (correctOption < 0 || correctOption > 3) {
             return NextResponse.json({ error: 'correctOption must be between 0 and 3' }, { status: 400 });
         }
-
-        const coordinator = await requireCoordinator(request, eventId);
-        if (!coordinator) {
-            return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-        }
-
-        const admin = createAdminClient();
         
         const { data: question, error } = await admin
             .from('ps_question_bank')

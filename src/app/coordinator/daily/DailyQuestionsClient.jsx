@@ -16,6 +16,11 @@ export default function DailyQuestionsClient({ eventId }) {
     const [search, setSearch] = useState("");
     const [selectedQIds, setSelectedQIds] = useState([]);
 
+    // Stats Modal State
+    const [isStatsOpen, setIsStatsOpen] = useState(false);
+    const [dailyStats, setDailyStats] = useState([]);
+    const [statsLoading, setStatsLoading] = useState(false);
+
     useEffect(() => {
         fetchDailyQuestions();
     }, [selectedDate]);
@@ -56,6 +61,22 @@ export default function DailyQuestionsClient({ eventId }) {
         setSelectedQIds(dailyQuestions.map(q => q.question.id)); // Pre-select current
         setIsModalOpen(true);
         fetchBankQuestions();
+    };
+
+    const fetchDailyStats = async () => {
+        setStatsLoading(true);
+        setIsStatsOpen(true);
+        try {
+            const res = await fetch(`/api/placement-series/daily/stats?eventId=${eventId}&date=${selectedDate}`);
+            if (res.ok) {
+                const data = await res.json();
+                setDailyStats(data.stats || []);
+            }
+        } catch (error) {
+            console.error("Failed to fetch stats:", error);
+        } finally {
+            setStatsLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -134,13 +155,23 @@ export default function DailyQuestionsClient({ eventId }) {
                                 className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 focus:border-teal-400/50 outline-none w-full sm:w-auto [color-scheme:dark]"
                             />
                         </div>
-                        <button 
-                            onClick={handleOpenAssignModal}
-                            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-400 text-black px-6 py-2.5 rounded-xl font-bold transition-all"
-                        >
-                            <Link2 className="w-5 h-5" />
-                            Assign Questions
-                        </button>
+                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                            <button 
+                                onClick={handleOpenAssignModal}
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-400 text-black px-6 py-2.5 rounded-xl font-bold transition-all"
+                            >
+                                <Link2 className="w-5 h-5" />
+                                Assign Questions
+                            </button>
+                            {dailyQuestions.length > 0 && (
+                                <button 
+                                    onClick={fetchDailyStats}
+                                    className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-xl font-bold transition-all"
+                                >
+                                    View Stats
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -264,6 +295,56 @@ export default function DailyQuestionsClient({ eventId }) {
                                 {isAssigning ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
                                 Assign {selectedQIds.length} Questions
                             </button>
+                        </div>
+                    </div>
+                </div>
+            {/* Stats Modal */}
+            {isStatsOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+                        <div className="flex items-center justify-between p-6 border-b border-white/10">
+                            <div>
+                                <h2 className="text-xl font-bold">Daily Stats for {selectedDate}</h2>
+                                <p className="text-sm text-white/50 mt-1">View participation and accuracy</p>
+                            </div>
+                            <button onClick={() => setIsStatsOpen(false)} className="p-2 hover:bg-white/10 rounded-full">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                            {statsLoading ? (
+                                <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-teal-400" /></div>
+                            ) : dailyStats.length === 0 ? (
+                                <div className="text-center py-12 text-white/50">No stats available.</div>
+                            ) : (
+                                dailyStats.map(stat => (
+                                    <div key={stat.questionId} className="bg-white/5 border border-white/10 rounded-xl p-5 flex flex-col md:flex-row md:items-center gap-4">
+                                        <div className="w-10 h-10 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center font-bold text-lg shrink-0 border border-teal-500/20">
+                                            {stat.questionNumber}
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-medium mb-3">{stat.questionText}</p>
+                                            <div className="flex flex-wrap gap-4 text-sm">
+                                                <div className="bg-black/50 px-3 py-1.5 rounded-lg border border-white/5">
+                                                    <span className="text-white/50 mr-2">Total Submissions:</span>
+                                                    <span className="font-bold">{stat.totalSubmissions}</span>
+                                                </div>
+                                                <div className="bg-black/50 px-3 py-1.5 rounded-lg border border-white/5">
+                                                    <span className="text-white/50 mr-2">Correct:</span>
+                                                    <span className="font-bold text-green-400">{stat.correctSubmissions}</span>
+                                                </div>
+                                                <div className="bg-black/50 px-3 py-1.5 rounded-lg border border-white/5">
+                                                    <span className="text-white/50 mr-2">Accuracy:</span>
+                                                    <span className={`font-bold ${stat.accuracy > 70 ? 'text-green-400' : stat.accuracy > 40 ? 'text-yellow-400' : 'text-red-400'}`}>
+                                                        {stat.accuracy}%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>

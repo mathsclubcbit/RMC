@@ -11,6 +11,9 @@ export default function ContestDetailClient({ contestId, eventId }) {
     const [questions, setQuestions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [activeTab, setActiveTab] = useState('questions');
+    const [submissions, setSubmissions] = useState([]);
+    const [submissionsLoading, setSubmissionsLoading] = useState(false);
 
     // Bank Modal
     const [isBankOpen, setIsBankOpen] = useState(false);
@@ -63,6 +66,27 @@ export default function ContestDetailClient({ contestId, eventId }) {
             return () => clearTimeout(delayDebounceFn);
         }
     }, [bankSearch, isBankOpen]);
+
+    useEffect(() => {
+        if (activeTab === 'submissions' && submissions.length === 0) {
+            fetchSubmissions();
+        }
+    }, [activeTab]);
+
+    const fetchSubmissions = async () => {
+        setSubmissionsLoading(true);
+        try {
+            const res = await fetch(`/api/placement-series/contests/${contestId}/submissions?eventId=${eventId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setSubmissions(data.submissions || []);
+            }
+        } catch (error) {
+            console.error("Failed to fetch submissions:", error);
+        } finally {
+            setSubmissionsLoading(false);
+        }
+    };
 
     const addQuestionFromBank = (bankQ) => {
         setQuestions(prev => [
@@ -184,52 +208,122 @@ export default function ContestDetailClient({ contestId, eventId }) {
                     </div>
                 </div>
 
-                <div className="mb-6 flex items-center justify-between">
-                    <h2 className="text-xl font-bold">Questions ({questions.length})</h2>
+                {/* Tabs */}
+                <div className="flex items-center gap-4 border-b border-white/10 mb-6">
                     <button 
-                        onClick={() => setIsBankOpen(true)}
-                        className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all"
+                        onClick={() => setActiveTab('questions')}
+                        className={`pb-3 px-2 font-medium transition-colors border-b-2 ${activeTab === 'questions' ? 'border-teal-400 text-teal-400' : 'border-transparent text-white/50 hover:text-white'}`}
                     >
-                        <Plus className="w-4 h-4" /> Add from Bank
+                        Questions
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('submissions')}
+                        className={`pb-3 px-2 font-medium transition-colors border-b-2 ${activeTab === 'submissions' ? 'border-teal-400 text-teal-400' : 'border-transparent text-white/50 hover:text-white'}`}
+                    >
+                        Submissions
                     </button>
                 </div>
 
-                <div className="space-y-4">
-                    {questions.length === 0 ? (
-                        <div className="text-center py-12 border border-dashed border-white/20 rounded-2xl">
-                            <p className="text-white/50">No questions added yet. Click 'Add from Bank' to start.</p>
+                {activeTab === 'questions' ? (
+                    <>
+                        <div className="mb-6 flex items-center justify-between">
+                            <h2 className="text-xl font-bold">Questions ({questions.length})</h2>
+                            <button 
+                                onClick={() => setIsBankOpen(true)}
+                                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all"
+                            >
+                                <Plus className="w-4 h-4" /> Add from Bank
+                            </button>
                         </div>
-                    ) : (
-                        questions.map((q, idx) => (
-                            <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-5 relative group">
-                                <button 
-                                    onClick={() => removeQuestion(idx)}
-                                    className="absolute top-4 right-4 p-2 text-white/40 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                                <div className="flex gap-4">
-                                    <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center font-bold shrink-0">
-                                        {q.questionNumber || (idx + 1)}
-                                    </div>
-                                    <div className="flex-1">
-                                        <h4 className="text-lg font-medium mb-4 pr-8">{q.questionText || q.question_text}</h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                            {q.options.map((opt, i) => (
-                                                <div key={i} className={`text-sm px-3 py-2 rounded-lg border ${
-                                                    i === (q.correctOption ?? q.correct_option) ? 'border-teal-400/50 bg-teal-400/10 text-teal-200' : 'border-white/10 bg-black/40 text-white/70'
-                                                }`}>
-                                                    <span className="mr-2 opacity-50">{String.fromCharCode(65 + i)}.</span>
-                                                    {opt}
+
+                        <div className="space-y-4">
+                            {questions.length === 0 ? (
+                                <div className="text-center py-12 border border-dashed border-white/20 rounded-2xl">
+                                    <p className="text-white/50">No questions added yet. Click 'Add from Bank' to start.</p>
+                                </div>
+                            ) : (
+                                questions.map((q, idx) => (
+                                    <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-5 relative group">
+                                        <button 
+                                            onClick={() => removeQuestion(idx)}
+                                            className="absolute top-4 right-4 p-2 text-white/40 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                        <div className="flex gap-4">
+                                            <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center font-bold shrink-0">
+                                                {q.questionNumber || (idx + 1)}
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="text-lg font-medium mb-4 pr-8">{q.questionText || q.question_text}</h4>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                    {q.options.map((opt, i) => (
+                                                        <div key={i} className={`text-sm px-3 py-2 rounded-lg border ${
+                                                            i === (q.correctOption ?? q.correct_option) ? 'border-teal-400/50 bg-teal-400/10 text-teal-200' : 'border-white/10 bg-black/40 text-white/70'
+                                                        }`}>
+                                                            <span className="mr-2 opacity-50">{String.fromCharCode(65 + i)}.</span>
+                                                            {opt}
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                ))
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+                        {submissionsLoading ? (
+                            <div className="flex items-center justify-center py-12">
+                                <Loader2 className="w-8 h-8 animate-spin text-teal-400" />
                             </div>
-                        ))
-                    )}
-                </div>
+                        ) : submissions.length === 0 ? (
+                            <div className="text-center py-12">
+                                <p className="text-white/50">No submissions yet.</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead>
+                                        <tr className="border-b border-white/10 bg-black/40">
+                                            <th className="px-6 py-4 font-semibold text-white/70">Participant</th>
+                                            <th className="px-6 py-4 font-semibold text-white/70">Score</th>
+                                            <th className="px-6 py-4 font-semibold text-white/70">Time Taken</th>
+                                            <th className="px-6 py-4 font-semibold text-white/70">Tab Switches</th>
+                                            <th className="px-6 py-4 font-semibold text-white/70">Submitted At</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/10">
+                                        {submissions.map((sub) => (
+                                            <tr key={sub.id} className="hover:bg-white/5 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <div className="font-medium">{sub.ps_participants?.name}</div>
+                                                    <div className="text-xs text-white/50 font-mono">{sub.ps_participants?.roll_no}</div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="font-bold text-teal-400">{sub.score} / {sub.total_points}</div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    {sub.time_taken_seconds ? `${Math.floor(sub.time_taken_seconds / 60)}m ${sub.time_taken_seconds % 60}s` : 'N/A'}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-2 py-1 rounded-md text-xs font-bold ${sub.tab_switch_count > 3 ? 'bg-red-500/20 text-red-400' : sub.tab_switch_count > 0 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-white/10 text-white/50'}`}>
+                                                        {sub.tab_switch_count}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-white/60">
+                                                    {sub.submitted_at ? new Date(sub.submitted_at).toLocaleString() : 'In Progress'}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Question Bank Modal */}

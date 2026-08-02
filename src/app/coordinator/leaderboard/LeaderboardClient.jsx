@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trophy, Search, Medal, Loader2, Star, Flame, Crown } from "lucide-react";
+import { Trophy, Search, Medal, Loader2, Star, Flame, Crown, X, User } from "lucide-react";
 
 export default function LeaderboardClient({ eventId }) {
     const [leaderboard, setLeaderboard] = useState([]);
@@ -9,6 +9,7 @@ export default function LeaderboardClient({ eventId }) {
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [total, setTotal] = useState(0);
+    const [selectedParticipant, setSelectedParticipant] = useState(null);
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
@@ -93,7 +94,8 @@ export default function LeaderboardClient({ eventId }) {
                         {leaderboard.map((p) => (
                             <div 
                                 key={p.participantId} 
-                                className="grid grid-cols-12 gap-4 items-center px-6 py-4 bg-white/5 border border-white/10 rounded-xl hover:border-teal-500/30 transition-colors"
+                                onClick={() => setSelectedParticipant(p)}
+                                className="grid grid-cols-12 gap-4 items-center px-6 py-4 bg-white/5 border border-white/10 rounded-xl hover:border-teal-500/50 hover:bg-white/10 transition-all cursor-pointer shadow-sm hover:shadow-lg hover:-translate-y-0.5"
                             >
                                 <div className="col-span-1 flex justify-center items-center">
                                     {getRankIcon(p.rank)}
@@ -151,6 +153,74 @@ export default function LeaderboardClient({ eventId }) {
                     </div>
                 )}
             </div>
+
+            {/* Participant Profile Modal */}
+            {selectedParticipant && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 blur-[80px] rounded-full pointer-events-none" />
+                        
+                        <div className="flex items-center justify-between p-6 border-b border-white/10 relative z-10">
+                            <h2 className="text-xl font-bold flex items-center gap-2">
+                                <User className="w-5 h-5 text-teal-400" /> Participant Details
+                            </h2>
+                            <button onClick={() => setSelectedParticipant(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 relative z-10 custom-scrollbar">
+                            <div className="flex flex-col md:flex-row items-center md:items-start gap-6 bg-white/5 p-6 rounded-2xl border border-white/10">
+                                <div className="w-20 h-20 rounded-2xl bg-teal-500/20 text-teal-300 flex items-center justify-center font-bold text-3xl shadow-[0_0_20px_rgba(45,212,191,0.2)]">
+                                    {getRankIcon(selectedParticipant.rank)}
+                                </div>
+                                <div className="text-center md:text-left flex-1">
+                                    <h3 className="text-2xl font-bold text-white mb-1">{selectedParticipant.name}</h3>
+                                    <p className="text-white/50 font-mono mb-4">{selectedParticipant.rollNo}</p>
+                                    
+                                    <div className="flex flex-wrap justify-center md:justify-start gap-3">
+                                        <div className="bg-black/50 border border-white/10 rounded-xl px-4 py-2 flex items-center gap-2">
+                                            <Trophy className="w-4 h-4 text-teal-400" />
+                                            <div>
+                                                <div className="text-[10px] uppercase text-white/50">Total Score</div>
+                                                <div className="font-bold font-mono">{selectedParticipant.totalScore}</div>
+                                            </div>
+                                        </div>
+                                        <div className="bg-black/50 border border-white/10 rounded-xl px-4 py-2 flex items-center gap-2">
+                                            <Flame className="w-4 h-4 text-orange-400" />
+                                            <div>
+                                                <div className="text-[10px] uppercase text-white/50">Current Streak</div>
+                                                <div className="font-bold font-mono">{selectedParticipant.streakCurrent}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
+                                <h4 className="font-bold mb-4 flex items-center gap-2">
+                                    <Medal className="w-5 h-5 text-purple-400" /> Earned Badges ({selectedParticipant.badges.length})
+                                </h4>
+                                
+                                {selectedParticipant.badges.length === 0 ? (
+                                    <div className="text-center py-6 text-white/40 bg-black/30 rounded-xl border border-white/5">
+                                        No badges earned yet.
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                        {selectedParticipant.badges.map(b => (
+                                            <div key={b.id} className="bg-gradient-to-br from-white/10 to-white/5 border border-white/10 p-3 rounded-xl flex flex-col items-center justify-center text-center group hover:border-teal-500/40 transition-colors">
+                                                <span className="text-4xl mb-2 group-hover:scale-110 transition-transform drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">{b.badgeIcon}</span>
+                                                <span className="text-xs font-bold text-white/90">{b.badgeLabel}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

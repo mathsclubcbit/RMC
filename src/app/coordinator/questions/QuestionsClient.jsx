@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, Search, Edit2, Trash2, X, Check, Database, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Search, Edit2, Trash2, X, Check, Database, Loader2, UploadCloud } from "lucide-react";
 
 export default function QuestionsClient({ eventId }) {
     const [questions, setQuestions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("");
+    const fileInputRef = useRef(null);
     
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -115,6 +116,38 @@ export default function QuestionsClient({ eventId }) {
         setFormData({ ...formData, options: newOptions });
     };
 
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const json = JSON.parse(event.target.result);
+                const questionsArray = Array.isArray(json) ? json : (json.questions || [json]);
+
+                const res = await fetch(`/api/placement-series/question-bank`, {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ eventId, questions: questionsArray })
+                });
+
+                if (res.ok) {
+                    alert(`Successfully imported ${questionsArray.length} questions!`);
+                    fetchQuestions();
+                } else {
+                    const err = await res.json();
+                    alert(`Failed to import questions: ${err.error}`);
+                }
+            } catch (error) {
+                console.error("Error parsing/uploading JSON:", error);
+                alert("Invalid JSON format or structure.");
+            }
+        };
+        reader.readAsText(file);
+        e.target.value = null; // Reset input
+    };
+
     return (
         <div className="min-h-[100dvh] bg-black text-white relative pb-24">
             <div className="absolute inset-0 pointer-events-none opacity-20">
@@ -130,13 +163,29 @@ export default function QuestionsClient({ eventId }) {
                         </h1>
                         <p className="text-white/50 mt-1">Manage global questions available for events.</p>
                     </div>
-                    <button 
-                        onClick={() => openModal()}
-                        className="flex items-center gap-2 bg-teal-500 hover:bg-teal-400 text-black px-6 py-2.5 rounded-xl font-bold transition-all"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Add Question
-                    </button>
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <input 
+                            type="file" 
+                            accept=".json" 
+                            className="hidden" 
+                            ref={fileInputRef} 
+                            onChange={handleFileUpload} 
+                        />
+                        <button 
+                            onClick={() => fileInputRef.current?.click()}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-xl font-bold transition-all"
+                        >
+                            <UploadCloud className="w-5 h-5" />
+                            Import JSON
+                        </button>
+                        <button 
+                            onClick={() => openModal()}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-400 text-black px-6 py-2.5 rounded-xl font-bold transition-all"
+                        >
+                            <Plus className="w-5 h-5" />
+                            Add Question
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
