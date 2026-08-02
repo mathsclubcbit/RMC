@@ -87,6 +87,7 @@ export const metadata = {
 import ClientOverlays from "@/components/layout/ClientOverlays";
 import ConditionalShell from "@/components/layout/ConditionalShell";
 import { GoogleAnalytics } from '@next/third-parties/google';
+import ToasterProvider from "@/components/ui/ToasterProvider";
 
 export default function RootLayout({ children }) {
     return (
@@ -111,6 +112,7 @@ export default function RootLayout({ children }) {
                         {children}
                     </main>
                 </ConditionalShell>
+                <ToasterProvider />
             </body>
         </html>
     );

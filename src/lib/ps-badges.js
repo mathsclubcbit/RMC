@@ -232,6 +232,9 @@ export async function publishContestBadges({ contestId, eventId, contestTitle })
             contestId,
             contestTitle,
         });
+
+        // Award podium bonus points: 1st=+100, 2nd=+70, 3rd=+50
+        await awardPoints(participant_id, PODIUM_BONUSES[i]);
     }
 }
 
@@ -250,4 +253,43 @@ export async function checkPerfectScore({ participantId, eventId, contestId, sco
         badgeType: 'perfect_contest',
         contestId,
     });
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Points Awarding
+// ──────────────────────────────────────────────────────────────────────────────
+
+/** Podium bonus points awarded when contest results are published */
+export const PODIUM_BONUSES = [100, 70, 50]; // 1st, 2nd, 3rd
+
+/**
+ * Add points to a participant's total_points balance.
+ * Safe to call multiple times — uses atomic SQL increment.
+ *
+ * @param {string} participantId
+ * @param {number} points - must be a positive integer
+ * @returns {Promise<void>}
+ */
+export async function awardPoints(participantId, points) {
+    if (!points || points <= 0) return;
+    const supabase = createAdminClient();
+    const { error } = await supabase.rpc('increment_participant_points', {
+        p_participant_id: participantId,
+        p_points: points,
+    });
+    if (error) {
+        // Fallback: manual read-modify-write if RPC not available
+        console.warn('[ps-badges] RPC not available, using fallback:', error.message);
+        const { data: p } = await supabase
+            .from('ps_participants')
+            .select('total_points')
+            .eq('id', participantId)
+            .single();
+        if (p) {
+            await supabase
+                .from('ps_participants')
+                .update({ total_points: (p.total_points || 0) + points })
+                .eq('id', participantId);
+        }
+    }
 }

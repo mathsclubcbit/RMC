@@ -86,7 +86,7 @@ export async function GET(request, { params }) {
 
                     // Include correct_option and user's answer only if results are published
                     if (isEnded && contest.results_published) {
-                        returnQ.correct_option = q.correct_option; // Original index
+                        returnQ.correct_option = shuffleResult.mapping.indexOf(q.correct_option); // Shuffled index
                         if (submission?.answers?.[q.id] !== undefined) {
                             returnQ.user_answer = submission.answers[q.id]; // Shuffled index from client
                         }
@@ -109,7 +109,17 @@ export async function PUT(request, { params }) {
     try {
         const id = (await params).id;
         const body = await request.json();
-        const { eventId, questions, ...updateFields } = body;
+        let { eventId, questions, ...updateFields } = body;
+        
+        // Map camelCase to snake_case for DB
+        if ('isPublished' in updateFields) {
+            updateFields.is_published = updateFields.isPublished;
+            delete updateFields.isPublished;
+        }
+        if ('resultsPublished' in updateFields) {
+            updateFields.results_published = updateFields.resultsPublished;
+            delete updateFields.resultsPublished;
+        }
 
         if (!eventId) return NextResponse.json({ error: 'eventId is required' }, { status: 400 });
 

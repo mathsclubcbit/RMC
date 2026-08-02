@@ -7,7 +7,7 @@ import { signParticipantToken, setParticipantCookie } from '@/lib/ps-auth';
 export async function POST(request) {
     try {
         const body = await request.json();
-        const { eventId, name, email, rollNo, phone } = body;
+        const { eventId, name, email, rollNo } = body;
 
         if (!eventId || !name || !email || !rollNo) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -42,7 +42,6 @@ export async function POST(request) {
                     email: trimmedEmail,
                     name: name.trim(),
                     roll_no: trimmedRollNo,
-                    phone: phone?.trim() || null,
                 },
                 {
                     onConflict: 'event_id,email',

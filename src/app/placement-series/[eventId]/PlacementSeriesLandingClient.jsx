@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Loader2, CalendarDays, CheckCircle2, XCircle, ArrowRight, Flame } from "lucide-react";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
+import toast from "react-hot-toast";
 
 export default function PlacementSeriesLandingClient({ eventId }) {
     const router = useRouter();
@@ -13,7 +14,7 @@ export default function PlacementSeriesLandingClient({ eventId }) {
     
     // Auth Form State
     const [isRegistering, setIsRegistering] = useState(false);
-    const [formData, setFormData] = useState({ name: "", email: "", rollNo: "", phone: "" });
+    const [formData, setFormData] = useState({ name: "", email: "", rollNo: "" });
     const [authError, setAuthError] = useState("");
 
     // Answer State
@@ -78,7 +79,7 @@ export default function PlacementSeriesLandingClient({ eventId }) {
 
     const submitAnswer = async (dailyQuestionId, selectedOption) => {
         if (!session) {
-            alert("Please register or login first.");
+            toast.error("Please register or login first.");
             return;
         }
         
@@ -93,12 +94,15 @@ export default function PlacementSeriesLandingClient({ eventId }) {
             
             if (res.ok) {
                 if (data.isCorrect) {
+                    toast.success("Correct Answer!");
                     confetti({
                         particleCount: 100,
                         spread: 70,
                         origin: { y: 0.6 },
                         colors: ['#2dd4bf', '#ffffff', '#0f766e']
                     });
+                } else {
+                    toast.error("Incorrect Answer.");
                 }
                 
                 // Update local state to show result immediately
@@ -121,9 +125,9 @@ export default function PlacementSeriesLandingClient({ eventId }) {
                 
             } else {
                 if (data.error === 'already_submitted') {
-                    alert("You have already submitted an answer for this question.");
+                    toast.error("You have already submitted an answer for this question.");
                 } else {
-                    alert(data.error || "Failed to submit answer");
+                    toast.error(data.error || "Failed to submit answer");
                 }
             }
         } catch (error) {
@@ -171,9 +175,6 @@ export default function PlacementSeriesLandingClient({ eventId }) {
                             <div>
                                 <input required type="text" placeholder="Roll Number (e.g. 160121733001)" value={formData.rollNo} onChange={e => setFormData({...formData, rollNo: e.target.value})} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 focus:border-teal-400/50 outline-none transition-colors uppercase" />
                             </div>
-                            <div>
-                                <input type="tel" placeholder="Phone (Optional)" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 focus:border-teal-400/50 outline-none transition-colors" />
-                            </div>
                             <button disabled={isRegistering} type="submit" className="w-full bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-black py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all">
                                 {isRegistering ? <Loader2 className="w-5 h-5 animate-spin" /> : "Start Solving"}
                                 {!isRegistering && <ArrowRight className="w-5 h-5" />}
@@ -183,16 +184,22 @@ export default function PlacementSeriesLandingClient({ eventId }) {
                 )}
 
                 {session && (
-                    <div className="flex justify-between items-center bg-white/5 border border-white/10 rounded-2xl p-4 mb-8">
-                        <div>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white/5 border border-white/10 rounded-2xl p-5 mb-8 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-3xl rounded-full opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
+                        <div className="relative z-10 mb-4 sm:mb-0">
                             <p className="text-sm text-white/50">Welcome back,</p>
-                            <p className="font-bold text-lg">{session.name}</p>
+                            <p className="font-bold text-xl text-white">{session.name}</p>
                         </div>
-                        <div className="flex items-center gap-3 bg-black/50 px-4 py-2 rounded-xl border border-white/5">
-                            <Flame className={`w-5 h-5 ${session.streakCurrent > 0 ? 'text-orange-500' : 'text-white/30'}`} />
+                        <div className="relative z-10 w-full sm:w-auto flex items-center justify-between sm:justify-start gap-4 bg-orange-500/10 px-5 py-3 rounded-xl border border-orange-500/30 shadow-[0_0_15px_rgba(249,115,22,0.1)]">
+                            <div className="animate-pulse">
+                                <Flame className={`w-6 h-6 ${session.streakCurrent > 0 ? 'text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.8)]' : 'text-white/30'}`} />
+                            </div>
                             <div>
-                                <p className="text-xs text-white/50 font-medium">Current Streak</p>
-                                <p className="font-bold font-mono">{session.streakCurrent} Days</p>
+                                <p className="text-xs text-orange-200/70 font-medium uppercase tracking-wider mb-0.5">Current Streak</p>
+                                <div className="flex items-baseline gap-2">
+                                    <p className="font-bold font-mono text-xl text-orange-400">{session.streakCurrent} Days</p>
+                                    <p className="text-[10px] text-orange-300/50 hidden md:block">Keep it alive today!</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -210,36 +217,38 @@ export default function PlacementSeriesLandingClient({ eventId }) {
                             const isSubmitted = !!q.submission;
                             
                             return (
-                                <div key={q.id} className="bg-white/5 border border-white/10 rounded-3xl p-6 relative overflow-hidden group hover:border-teal-500/30 transition-all">
-                                    <div className="flex items-start gap-4 mb-6">
-                                        <div className="w-10 h-10 shrink-0 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center font-bold text-lg border border-teal-500/20">
+                                <div key={q.id} className="bg-white/5 border border-white/10 rounded-3xl p-6 relative overflow-hidden group hover:border-teal-500/40 hover:shadow-[0_0_30px_rgba(45,212,191,0.05)] transition-all duration-300 hover:-translate-y-1">
+                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500/0 via-teal-500/0 to-teal-500/0 group-hover:from-teal-500/50 group-hover:via-emerald-500/50 group-hover:to-teal-500/50 transition-all duration-500" />
+                                    <div className="flex items-start gap-4 mb-6 relative z-10">
+                                        <div className="w-10 h-10 shrink-0 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center font-bold text-lg border border-teal-500/20 shadow-inner">
                                             {idx + 1}
                                         </div>
                                         <div>
                                             <div className="flex gap-2 mb-2">
                                                 <span className="text-xs font-semibold px-2 py-0.5 bg-white/10 rounded-md text-white/70">{q.category}</span>
-                                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${
-                                                    q.difficulty === 'hard' ? 'bg-red-500/20 text-red-300' : 
-                                                    q.difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-300' : 'bg-green-500/20 text-green-300'
+                                                <span className={`text-xs font-bold px-2 py-0.5 rounded-md shadow-sm border ${
+                                                    q.difficulty === 'hard' ? 'bg-gradient-to-r from-red-500/20 to-red-600/20 border-red-500/30 text-red-300' : 
+                                                    q.difficulty === 'medium' ? 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border-yellow-500/30 text-yellow-300' : 
+                                                    'bg-gradient-to-r from-green-500/20 to-green-600/20 border-green-500/30 text-green-300'
                                                 }`}>{q.difficulty}</span>
                                             </div>
                                             <h3 className="text-xl font-medium leading-relaxed">{q.questionText}</h3>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-14">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-0 md:pl-14 mt-4 md:mt-0">
                                         {q.options.map((opt, oIdx) => {
                                             const isSelected = isSubmitted && q.submission.selectedOption === oIdx;
                                             
                                             // Determine styles if submitted
-                                            let btnClass = "bg-black/50 border-white/10 hover:border-teal-500/50 hover:bg-white/5 text-white/70";
+                                            let btnClass = "bg-black/50 border-white/10 hover:border-teal-500/50 hover:bg-white/5 text-white/70 hover:scale-[1.01] hover:shadow-lg";
                                             if (isSubmitted) {
                                                 if (isSelected) {
                                                     btnClass = q.submission.isCorrect 
-                                                        ? "bg-green-500/20 border-green-500 text-green-300"
-                                                        : "bg-red-500/20 border-red-500 text-red-300";
+                                                        ? "bg-green-500/20 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)] text-green-300 scale-[1.02] z-10"
+                                                        : "bg-red-500/20 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)] text-red-300 scale-[1.02] z-10";
                                                 } else {
-                                                    btnClass = "bg-black/50 border-white/5 text-white/30 cursor-not-allowed";
+                                                    btnClass = "bg-black/50 border-white/5 text-white/30 cursor-not-allowed opacity-50";
                                                 }
                                             }
 
@@ -248,7 +257,7 @@ export default function PlacementSeriesLandingClient({ eventId }) {
                                                     key={oIdx}
                                                     disabled={isSubmitted || submittingId === q.id}
                                                     onClick={() => submitAnswer(q.id, oIdx)}
-                                                    className={`p-4 rounded-xl border text-left flex items-center gap-3 transition-all ${btnClass}`}
+                                                    className={`p-4 rounded-xl border text-left flex items-center gap-3 transition-all duration-200 transform ${btnClass} ${submittingId === q.id ? 'scale-[0.98] opacity-80' : ''}`}
                                                 >
                                                     <span className="w-6 h-6 shrink-0 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold font-mono">
                                                         {String.fromCharCode(65 + oIdx)}
@@ -266,7 +275,7 @@ export default function PlacementSeriesLandingClient({ eventId }) {
                                     </div>
 
                                     {isSubmitted && q.submission.explanation && (
-                                        <div className="mt-6 pl-14">
+                                        <div className="mt-6 pl-0 md:pl-14">
                                             <div className="p-4 rounded-xl bg-teal-500/5 border border-teal-500/20">
                                                 <p className="text-sm font-bold text-teal-400 mb-1">Explanation</p>
                                                 <p className="text-white/70 text-sm leading-relaxed">{q.submission.explanation}</p>

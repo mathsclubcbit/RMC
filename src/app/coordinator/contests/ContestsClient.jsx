@@ -13,8 +13,10 @@ export default function ContestsClient({ eventId }) {
     const [formData, setFormData] = useState({
         title: "",
         weekNumber: 1,
-        startsAt: "",
-        endsAt: "",
+        startDate: "",
+        startTime: "",
+        endDate: "",
+        endTime: "",
         durationMinutes: 30
     });
 
@@ -41,9 +43,12 @@ export default function ContestsClient({ eventId }) {
         e.preventDefault();
         setIsSaving(true);
         try {
-            // Convert local datetime to ISO
-            const startISO = new Date(formData.startsAt).toISOString();
-            const endISO = new Date(formData.endsAt).toISOString();
+            // Combine Date and Time strings into valid Date objects
+            const startStr = `${formData.startDate}T${formData.startTime}`;
+            const endStr = `${formData.endDate}T${formData.endTime}`;
+            
+            const startISO = new Date(startStr).toISOString();
+            const endISO = new Date(endStr).toISOString();
             
             const payload = {
                 eventId,
@@ -92,7 +97,7 @@ export default function ContestsClient({ eventId }) {
                     <button 
                         onClick={() => {
                             setFormData({
-                                title: "", weekNumber: contests.length + 1, startsAt: "", endsAt: "", durationMinutes: 30
+                                title: "", weekNumber: contests.length + 1, startDate: "", startTime: "", endDate: "", endTime: "", durationMinutes: 30
                             });
                             setIsModalOpen(true);
                         }}
@@ -196,21 +201,53 @@ export default function ContestsClient({ eventId }) {
                                     />
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-white/70 mb-2">Start Time</label>
-                                <input 
-                                    required type="datetime-local" 
-                                    value={formData.startsAt} onChange={e => setFormData({...formData, startsAt: e.target.value})}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 focus:border-teal-400/50 outline-none [color-scheme:dark]"
-                                />
+                            <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-4 mt-2">
+                                <div>
+                                    <label className="block text-sm font-medium text-white/70 mb-2">Start Date</label>
+                                    <div className="relative">
+                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+                                        <input 
+                                            required type="date" 
+                                            value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 focus:border-teal-400/50 outline-none [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-white/70 mb-2">Start Time</label>
+                                    <div className="relative">
+                                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+                                        <input 
+                                            required type="time" 
+                                            value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 focus:border-teal-400/50 outline-none [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-white/70 mb-2">End Time</label>
-                                <input 
-                                    required type="datetime-local" 
-                                    value={formData.endsAt} onChange={e => setFormData({...formData, endsAt: e.target.value})}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 focus:border-teal-400/50 outline-none [color-scheme:dark]"
-                                />
+                            <div className="grid grid-cols-2 gap-4 pb-2">
+                                <div>
+                                    <label className="block text-sm font-medium text-white/70 mb-2">End Date</label>
+                                    <div className="relative">
+                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+                                        <input 
+                                            required type="date" 
+                                            value={formData.endDate} onChange={e => setFormData({...formData, endDate: e.target.value})}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 focus:border-teal-400/50 outline-none [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-white/70 mb-2">End Time</label>
+                                    <div className="relative">
+                                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+                                        <input 
+                                            required type="time" 
+                                            value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 focus:border-teal-400/50 outline-none [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                             <div className="flex justify-end gap-3 pt-4 border-t border-white/10 mt-6">
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-xl text-white/70 hover:bg-white/10 font-medium">Cancel</button>

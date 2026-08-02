@@ -87,27 +87,27 @@ export default function ParticipantProfileClient({ eventId }) {
                             </div>
                             <p className="text-white/50 font-mono mb-4">{session.rollNo} • {session.email}</p>
                             
-                            <div className="flex flex-wrap justify-center md:justify-start gap-4">
-                                <div className="flex items-center gap-2 bg-black/50 border border-white/5 px-4 py-2 rounded-xl">
-                                    <Flame className="w-4 h-4 text-orange-500" />
-                                    <div>
-                                        <div className="text-xs text-white/50">Current Streak</div>
-                                        <div className="font-bold">{session.streakCurrent} Days</div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full md:w-auto">
+                                <div className="flex flex-col items-center md:items-start gap-1 bg-white/5 backdrop-blur-md border border-white/10 px-5 py-3 rounded-2xl hover:bg-white/10 hover:-translate-y-0.5 transition-all">
+                                    <div className="flex items-center gap-2 text-orange-400">
+                                        <Flame className="w-5 h-5 drop-shadow-[0_0_8px_rgba(249,115,22,0.8)]" />
+                                        <span className="text-xs font-bold uppercase tracking-widest text-white/50">Streak</span>
                                     </div>
+                                    <div className="font-mono font-bold text-2xl text-white">{session.streakCurrent}</div>
                                 </div>
-                                <div className="flex items-center gap-2 bg-black/50 border border-white/5 px-4 py-2 rounded-xl">
-                                    <Medal className="w-4 h-4 text-teal-400" />
-                                    <div>
-                                        <div className="text-xs text-white/50">Total Badges</div>
-                                        <div className="font-bold">{badges.length} Earned</div>
+                                <div className="flex flex-col items-center md:items-start gap-1 bg-white/5 backdrop-blur-md border border-white/10 px-5 py-3 rounded-2xl hover:bg-white/10 hover:-translate-y-0.5 transition-all">
+                                    <div className="flex items-center gap-2 text-teal-400">
+                                        <Medal className="w-5 h-5 drop-shadow-[0_0_8px_rgba(45,212,191,0.8)]" />
+                                        <span className="text-xs font-bold uppercase tracking-widest text-white/50">Badges</span>
                                     </div>
+                                    <div className="font-mono font-bold text-2xl text-white">{badges.length}</div>
                                 </div>
-                                <div className="flex items-center gap-2 bg-black/50 border border-white/5 px-4 py-2 rounded-xl">
-                                    <Calendar className="w-4 h-4 text-purple-400" />
-                                    <div>
-                                        <div className="text-xs text-white/50">Joined</div>
-                                        <div className="font-bold">{new Date(session.createdAt).toLocaleDateString()}</div>
+                                <div className="flex flex-col items-center md:items-start gap-1 bg-white/5 backdrop-blur-md border border-white/10 px-5 py-3 rounded-2xl hover:bg-white/10 hover:-translate-y-0.5 transition-all">
+                                    <div className="flex items-center gap-2 text-purple-400">
+                                        <Calendar className="w-5 h-5 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
+                                        <span className="text-xs font-bold uppercase tracking-widest text-white/50">Joined</span>
                                     </div>
+                                    <div className="font-bold text-sm text-white mt-1">{new Date(session.createdAt).toLocaleDateString()}</div>
                                 </div>
                             </div>
                         </div>
@@ -136,8 +136,8 @@ export default function ParticipantProfileClient({ eventId }) {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {badges.map((badge) => (
                                 <div key={badge.id} className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row items-center text-center sm:text-left gap-6 group hover:border-teal-500/30 transition-all">
-                                    <div className="w-20 h-20 rounded-full bg-black border-4 border-white/10 flex items-center justify-center text-4xl shadow-xl group-hover:scale-110 group-hover:border-teal-500/50 transition-all">
-                                        {badge.badgeIcon}
+                                    <div className="w-20 h-20 rounded-full bg-gradient-to-b from-white/20 to-white/5 border border-white/30 shadow-[inset_0_1px_4px_rgba(255,255,255,0.4),0_4px_10px_rgba(0,0,0,0.5)] flex items-center justify-center text-4xl group-hover:scale-110 group-hover:rotate-[10deg] group-hover:border-teal-400 group-hover:shadow-[0_0_30px_rgba(45,212,191,0.6),inset_0_1px_4px_rgba(255,255,255,0.8)] transition-all duration-300 backdrop-blur-md">
+                                        <span className="drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]">{badge.badgeIcon}</span>
                                     </div>
                                     <div className="flex-1">
                                         <div className="text-xs font-bold text-teal-400 uppercase tracking-widest mb-1">{badge.badgeType.replace('_', ' ')}</div>

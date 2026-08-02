@@ -17,7 +17,7 @@ export default async function PlacementSeriesLayout({ children, params }) {
     return (
         <div className="min-h-[100dvh] bg-black text-white font-sans selection:bg-teal-500/20 selection:text-teal-400">
             <PlacementSeriesNav eventId={eventId} eventTitle={event?.title || "Placement Series"} />
-            <main>
+            <main className="pt-24 pb-0 md:pt-16 md:pb-0">
                 {children}
             </main>
         </div>

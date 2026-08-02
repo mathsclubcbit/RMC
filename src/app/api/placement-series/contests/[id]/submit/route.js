@@ -3,7 +3,7 @@ export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireParticipant, deterministicShuffle } from '@/lib/ps-auth';
-import { checkPerfectScore } from '@/lib/ps-badges';
+import { checkPerfectScore, awardPoints } from '@/lib/ps-badges';
 
 export async function POST(request, { params }) {
     try {
@@ -83,7 +83,12 @@ export async function POST(request, { params }) {
 
         if (updateErr) throw updateErr;
 
-        // 6. Check for perfect score badge
+        // 6. Award points: +20 participation flat + raw score
+        const participationBonus = 20;
+        const totalPointsToAward = participationBonus + score;
+        await awardPoints(participant.participantId, totalPointsToAward);
+
+        // 7. Check for perfect score badge
         if (score === totalPoints && totalPoints > 0) {
             await checkPerfectScore({ 
                 participantId: participant.participantId, 
@@ -100,7 +105,8 @@ export async function POST(request, { params }) {
             totalPoints,
             totalQuestions: questions?.length || 0,
             percentage: totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0,
-            timeTakenSeconds
+            timeTakenSeconds,
+            pointsAwarded: totalPointsToAward
         });
 
     } catch (error) {

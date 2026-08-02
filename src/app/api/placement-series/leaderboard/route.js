@@ -15,6 +15,7 @@ export async function GET(request) {
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '50');
         const search = searchParams.get('search');
+        const tab = searchParams.get('tab') || 'overall'; // overall | contest | daily
         const offset = (page - 1) * limit;
 
         const admin = createAdminClient();
@@ -29,10 +30,20 @@ export async function GET(request) {
             query = query.or(`name.ilike.%${search}%,roll_no.ilike.%${search}%`);
         }
 
-        // Primary sort: contest score, Secondary sort: highest streak
-        query = query.order('total_score', { ascending: false })
-                     .order('streak_longest', { ascending: false })
-                     .range(offset, offset + limit - 1);
+        // Sort depends on tab
+        if (tab === 'contest') {
+            query = query.order('contest_score', { ascending: false })
+                         .order('streak_longest', { ascending: false });
+        } else if (tab === 'daily') {
+            query = query.order('daily_questions_answered', { ascending: false })
+                         .order('streak_current', { ascending: false });
+        } else {
+            // Overall — sort by total_points (new unified column)
+            query = query.order('total_points', { ascending: false })
+                         .order('streak_longest', { ascending: false });
+        }
+
+        query = query.range(offset, offset + limit - 1);
 
         const { data: leaderboard, count, error } = await query;
         if (error) throw error;
@@ -50,19 +61,31 @@ export async function GET(request) {
             if (badges) {
                 badges.forEach(b => {
                     if (!badgesMap[b.participant_id]) badgesMap[b.participant_id] = [];
-                    badgesMap[b.participant_id].push(b);
+                    badgesMap[b.participant_id].push({
+                        ...b,
+                        badgeType: b.badge_type,
+                        badgeLabel: b.badge_label,
+                        badgeIcon: b.badge_icon
+                    });
                 });
             }
         }
 
         // 3. Format response with computed ranks
         const formattedLeaderboard = (leaderboard || []).map((p, index) => {
+            // Daily points: attempt (5) + correct bonus is tracked in total_points.
+            // We compute daily pts as: total_points - contest_score - participation_bonus
+            // Since we can't know exact daily points from the view, expose raw fields.
+            const contestScore = p.contest_score || 0;
+            const totalPoints = p.total_points || 0;
+
             return {
                 rank: offset + index + 1,
                 participantId: p.participant_id,
                 name: p.name,
                 rollNo: p.roll_no,
-                totalScore: p.total_score,
+                totalPoints,
+                contestScore,
                 contestsParticipated: p.contests_participated,
                 dailyQuestionsAnswered: p.daily_questions_answered,
                 streakCurrent: p.streak_current,
@@ -75,7 +98,8 @@ export async function GET(request) {
             leaderboard: formattedLeaderboard,
             total: count || 0,
             page,
-            limit
+            limit,
+            tab
         });
 
     } catch (error) {

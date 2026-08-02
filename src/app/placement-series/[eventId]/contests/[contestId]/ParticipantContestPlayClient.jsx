@@ -5,6 +5,7 @@ import { Loader2, ArrowLeft, Clock, AlertTriangle, CheckCircle2, ChevronRight, C
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
+import toast from 'react-hot-toast';
 
 export default function ParticipantContestPlayClient({ eventId, contestId }) {
     const router = useRouter();
@@ -101,9 +102,11 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
                 setSubmission(data.submission);
                 setStage('playing');
             } else {
-                alert(data.error || "Failed to start");
                 if (data.error === 'already_submitted') {
+                    toast.error("You have already submitted this contest.");
                     fetchContestInit(); // refresh
+                } else {
+                    toast.error(data.error || "Failed to start");
                 }
             }
         } catch (error) {
@@ -152,8 +155,9 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
                 if (data.percentage >= 80) {
                     confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
                 }
+                toast.success("Successfully submitted!");
             } else {
-                alert(data.error || "Failed to submit");
+                toast.error(data.error || "Failed to submit");
                 setStage('playing');
             }
         } catch (error) {
@@ -190,9 +194,13 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
                         <div className="flex items-center gap-2"><span>{contest.total_questions} Questions</span></div>
                     </div>
                     
-                    <div className="bg-orange-500/10 border border-orange-500/30 text-orange-200 text-sm p-4 rounded-xl mb-8 text-left flex items-start gap-3">
-                        <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
-                        <p><strong>Anti-Cheat Active:</strong> Switching tabs or leaving the contest window will be recorded and may result in disqualification.</p>
+                    <div className="bg-orange-500/10 border border-orange-500/30 text-orange-200 text-sm p-5 rounded-2xl mb-8 text-left flex items-start gap-4 relative overflow-hidden backdrop-blur-md shadow-[0_0_20px_rgba(249,115,22,0.15)]">
+                        <div className="absolute top-0 left-0 w-1.5 h-full bg-orange-500" />
+                        <AlertTriangle className="w-6 h-6 shrink-0 mt-0.5 text-orange-400 drop-shadow-[0_0_8px_rgba(249,115,22,0.8)]" />
+                        <div>
+                            <p className="font-bold text-orange-300 uppercase tracking-widest text-xs mb-1">Anti-Cheat Active</p>
+                            <p className="leading-relaxed text-orange-200/80">Switching tabs or leaving the contest window will be recorded and may result in disqualification. Keep this tab active.</p>
+                        </div>
                     </div>
 
                     {isUpcoming ? (
@@ -227,7 +235,9 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
             <div className="min-h-[100dvh] bg-[#050505] text-white">
                 {/* Header Navbar for contest */}
                 <div className="fixed top-0 left-0 right-0 bg-black/80 backdrop-blur-xl border-b border-white/10 z-50">
-                    <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+                    {/* Progress Bar (Goal Gradient) */}
+                    <div className="absolute bottom-0 left-0 h-0.5 bg-teal-500 transition-all duration-300 shadow-[0_0_10px_rgba(45,212,191,0.8)]" style={{ width: `${((Object.keys(answers).length) / questions.length) * 100}%` }} />
+                    <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between relative z-10">
                         <div className="font-bold hidden sm:block">{contest.title}</div>
                         
                         <div className="flex items-center gap-6">
@@ -251,7 +261,7 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
                     </div>
                 </div>
 
-                <div className="max-w-5xl mx-auto px-4 pt-24 pb-32 flex flex-col md:flex-row gap-8">
+                <div className="max-w-5xl mx-auto px-4 pt-24 pb-32 flex flex-col-reverse md:flex-row gap-8">
                     {/* Main Question Area */}
                     <div className="flex-1">
                         <div className="bg-white/5 border border-white/10 rounded-3xl p-6 md:p-10 min-h-[400px]">
@@ -312,9 +322,9 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
 
                     {/* Question Palette Sidebar */}
                     <div className="w-full md:w-64 shrink-0">
-                        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 sticky top-24">
-                            <h3 className="font-bold mb-4 text-sm uppercase tracking-widest text-white/50">Question Map</h3>
-                            <div className="grid grid-cols-4 gap-2">
+                        <div className="bg-white/5 border border-white/10 rounded-3xl p-4 md:p-6 sticky top-20 md:top-24 z-20 backdrop-blur-xl">
+                            <h3 className="font-bold mb-3 md:mb-4 text-xs md:text-sm uppercase tracking-widest text-white/50">Question Map</h3>
+                            <div className="flex overflow-x-auto md:grid md:grid-cols-4 gap-2 pb-2 md:pb-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 {questions.map((q, i) => {
                                     const isAnswered = answers[q.id] !== undefined;
                                     const isCurrent = currentQIndex === i;
@@ -322,10 +332,10 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
                                         <button
                                             key={i}
                                             onClick={() => setCurrentQIndex(i)}
-                                            className={`aspect-square rounded-lg font-bold text-sm flex items-center justify-center transition-all ${
-                                                isCurrent ? 'ring-2 ring-white ring-offset-2 ring-offset-[#111]' : ''
+                                            className={`shrink-0 w-10 md:w-auto aspect-square rounded-lg font-bold text-sm flex items-center justify-center transition-all duration-300 ${
+                                                isCurrent ? 'ring-2 ring-white ring-offset-2 ring-offset-[#111] scale-110 z-10' : 'hover:scale-105 hover:border-white/50'
                                             } ${
-                                                isAnswered ? 'bg-teal-500 text-black' : 'bg-black border border-white/20 text-white/50 hover:bg-white/10'
+                                                isAnswered ? 'bg-teal-500 text-black shadow-[0_0_10px_rgba(45,212,191,0.4)] border border-teal-400' : 'bg-transparent border-2 border-white/20 text-white/50'
                                             }`}
                                         >
                                             {i + 1}
@@ -394,18 +404,25 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
                                                         const isActualCorrect = oIdx === cAns;
                                                         
                                                         let bg = "bg-black border-white/10";
-                                                        if (isActualCorrect) bg = "bg-green-500/20 border-green-500/50 text-green-200";
-                                                        else if (isUserSelection) bg = "bg-red-500/20 border-red-500/50 text-red-200";
+                                                        if (isActualCorrect) bg = "bg-green-500/20 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.15)] text-green-200 ring-1 ring-green-500/50 relative z-10";
+                                                        else if (isUserSelection) bg = "bg-red-500/20 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.15)] text-red-200 relative z-10";
 
                                                         return (
-                                                            <div key={oIdx} className={`p-3 rounded-xl border flex items-center justify-between ${bg}`}>
+                                                            <div key={oIdx} className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all ${bg}`}>
                                                                 <div className="flex items-center gap-3">
-                                                                    <span className="opacity-50">{String.fromCharCode(65 + oIdx)}.</span>
-                                                                    {opt}
+                                                                    <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold font-mono shrink-0 ${isActualCorrect ? 'bg-green-500/30 text-green-300' : isUserSelection ? 'bg-red-500/30 text-red-300' : 'bg-white/10'}`}>
+                                                                        {String.fromCharCode(65 + oIdx)}
+                                                                    </span>
+                                                                    <span className="font-medium text-base">{opt}</span>
                                                                 </div>
                                                                 {isUserSelection && (
-                                                                    <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest opacity-80">
+                                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-black/50 border border-white/10 w-fit shrink-0 text-white">
                                                                         Your Answer
+                                                                    </div>
+                                                                )}
+                                                                {isActualCorrect && !isUserSelection && (
+                                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-green-500/20 text-green-300 border border-green-500/30 w-fit shrink-0">
+                                                                        Correct Answer
                                                                     </div>
                                                                 )}
                                                             </div>

@@ -111,13 +111,17 @@ export default function ParticipantContestsClient({ eventId }) {
                 </div>
 
                 {!session && (
-                    <div className="text-center py-20 bg-white/5 border border-white/10 rounded-3xl mb-8">
-                        <Lock className="w-12 h-12 text-white/20 mx-auto mb-4" />
-                        <h3 className="text-xl font-bold">Authentication Required</h3>
-                        <p className="text-white/50 mt-2">Please register or solve a Daily Question first to unlock contests.</p>
-                        <Link href={`/placement-series/${eventId}`} className="inline-block mt-6 px-6 py-2 bg-teal-500 text-black font-bold rounded-xl">
-                            Go to Daily Challenge
-                        </Link>
+                    <div className="text-center py-20 bg-white/5 border border-white/10 rounded-3xl mb-8 relative overflow-hidden group">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-gradient-to-b from-teal-500/10 to-transparent opacity-50" />
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 blur-3xl rounded-full" />
+                        <div className="relative z-10">
+                            <Lock className="w-16 h-16 text-teal-500/50 mx-auto mb-6 drop-shadow-[0_0_15px_rgba(45,212,191,0.5)] group-hover:scale-110 transition-transform duration-500" />
+                            <h3 className="text-3xl font-extrabold mb-3 text-white">Unlock the Arena</h3>
+                            <p className="text-white/50 mt-2 max-w-sm mx-auto">Please register or solve a Daily Question first to unlock access to the weekly contests.</p>
+                            <Link href={`/placement-series/${eventId}`} className="inline-block mt-8 px-8 py-3 bg-teal-500 hover:bg-teal-400 text-black font-bold rounded-xl shadow-[0_0_20px_rgba(45,212,191,0.3)] transition-all hover:scale-105">
+                                Go to Daily Challenge
+                            </Link>
+                        </div>
                     </div>
                 )}
 
@@ -147,7 +151,7 @@ export default function ParticipantContestsClient({ eventId }) {
                                     <input 
                                         required type="text" placeholder="Enter 6-digit OTP" 
                                         value={otp} onChange={e => setOtp(e.target.value)} 
-                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 focus:border-teal-400/50 outline-none transition-colors text-center font-mono text-xl tracking-[0.5em]" 
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 focus:border-teal-400/50 outline-none transition-colors text-center font-mono text-xl tracking-[0.2em] md:tracking-[0.5em]"
                                         maxLength={6}
                                     />
                                     <button 
@@ -168,26 +172,28 @@ export default function ParticipantContestsClient({ eventId }) {
                             <Link 
                                 href={`/placement-series/${eventId}/contests/${contest.id}`} 
                                 key={contest.id}
-                                className="bg-white/5 border border-white/10 hover:border-teal-400/50 rounded-3xl p-6 transition-all group block"
+                                className="bg-white/5 border border-white/10 hover:border-teal-400/50 hover:shadow-[0_0_30px_rgba(45,212,191,0.1)] rounded-3xl p-6 transition-all duration-300 group block hover:-translate-y-1 relative overflow-hidden"
                             >
-                                <div className="flex justify-between items-start mb-6">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500/0 via-teal-500/0 to-teal-500/0 group-hover:from-teal-500/50 group-hover:via-emerald-500/50 group-hover:to-teal-500/50 transition-all duration-500" />
+                                <div className="flex flex-wrap justify-between items-start mb-6 relative z-10 gap-4">
                                     <div>
-                                        <div className="flex items-center gap-2 mb-2">
+                                        <div className="flex flex-wrap items-center gap-2 mb-3">
                                             <span className="text-xs font-bold px-3 py-1 bg-white/10 rounded-md uppercase tracking-wider">Week {contest.weekNumber}</span>
-                                            <span className={`text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider ${
-                                                contest.status === 'active' ? 'bg-teal-500/20 text-teal-300' :
-                                                contest.status === 'upcoming' ? 'bg-yellow-500/20 text-yellow-300' :
+                                            <span className={`text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider flex items-center gap-2 ${
+                                                contest.status === 'active' ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30 shadow-[0_0_10px_rgba(45,212,191,0.2)]' :
+                                                contest.status === 'upcoming' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
                                                 'bg-white/10 text-white/50'
                                             }`}>
+                                                {contest.status === 'active' && <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />}
                                                 {contest.status}
                                             </span>
                                             {contest.hasSubmitted && (
-                                                <span className="text-xs font-bold px-3 py-1 bg-purple-500/20 text-purple-300 rounded-md uppercase tracking-wider">
+                                                <span className="text-xs font-bold px-3 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-md uppercase tracking-wider">
                                                     Attempted
                                                 </span>
                                             )}
                                         </div>
-                                        <h3 className="text-2xl font-bold">{contest.title}</h3>
+                                        <h3 className="text-2xl font-bold group-hover:text-teal-400 transition-colors">{contest.title}</h3>
                                     </div>
                                     <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-teal-500 group-hover:text-black transition-colors shrink-0">
                                         <ArrowRight className="w-6 h-6" />

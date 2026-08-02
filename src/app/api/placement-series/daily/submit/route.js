@@ -3,7 +3,7 @@ export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireParticipant, deterministicShuffle } from '@/lib/ps-auth';
-import { processDailyBadges } from '@/lib/ps-badges';
+import { processDailyBadges, awardPoints } from '@/lib/ps-badges';
 
 export async function POST(request) {
     try {
@@ -29,7 +29,7 @@ export async function POST(request) {
                 id, 
                 question_date, 
                 event_id,
-                question:ps_question_bank ( id, options, correct_option, explanation )
+                question:ps_question_bank ( id, options, correct_option, explanation, difficulty )
             `)
             .eq('id', dailyQuestionId)
             .eq('event_id', participant.eventId)
@@ -125,7 +125,15 @@ export async function POST(request) {
                 .eq('id', participant.participantId);
         }
 
-        // 8. Process Badges
+        // 8. Award Points
+        // +5 for attempting, +10 for correct (easy/medium), +15 for correct (hard)
+        let pointsToAward = 5; // base attempt points
+        if (isCorrect) {
+            pointsToAward += q.difficulty === 'hard' ? 15 : 10;
+        }
+        await awardPoints(participant.participantId, pointsToAward);
+
+        // 9. Process Badges
         const { newBadges } = await processDailyBadges({ 
             participantId: participant.participantId, 
             eventId: participant.eventId 
@@ -135,6 +143,7 @@ export async function POST(request) {
             isCorrect,
             explanation: q.explanation || null,
             streakCurrent: newStreak,
+            pointsAwarded: pointsToAward,
             newBadges
         });
 
