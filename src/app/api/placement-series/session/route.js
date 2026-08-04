@@ -16,7 +16,7 @@ export async function GET(request) {
         // Fetch participant details
         const { data: dbUser, error: fetchErr } = await admin
             .from('ps_participants')
-            .select('id, name, email, roll_no, is_verified, streak_current, streak_longest, last_daily_date, created_at')
+            .select('id, name, email, roll_no, year, branch, college, is_verified, streak_current, streak_longest, last_daily_date, created_at')
             .eq('id', participant.participantId)
             .single();
 
@@ -36,6 +36,9 @@ export async function GET(request) {
                 name: dbUser.name,
                 email: dbUser.email,
                 rollNo: dbUser.roll_no,
+                year: dbUser.year,
+                branch: dbUser.branch,
+                college: dbUser.college,
                 isVerified: Boolean(dbUser.is_verified),
                 streakCurrent: dbUser.streak_current,
                 streakLongest: dbUser.streak_longest,

@@ -16,57 +16,145 @@ export const BADGE_DEFINITIONS = {
     first_answer: {
         label: '🌱 First Step',
         icon: '🌱',
-        linkedinText: "I just started my placement prep journey with @RMC CBIT's Placement Series! Every expert was once a beginner. #PlacementPrep #RMCCBIT",
+        linkedinText: `I've taken the first step in my structured placement preparation journey.
+
+I joined the RMC CBIT Placement Series — a competitive aptitude and reasoning challenge designed to sharpen skills that matter for campus placements.
+
+Starting is often the hardest part. Today, I started.
+
+🔗 RMC CBIT | rmccbit.in
+
+#PlacementPreparation #CampusPlacements #RMCCBIT #Aptitude #CareerGrowth`,
     },
     streak_3: {
         label: '🔥 3-Day Streak',
         icon: '🔥',
-        linkedinText: "3 days strong! Completed a 3-day answer streak on RMC CBIT's Placement Series. Consistency is key! 🔥 #PlacementPrep #RMCCBIT #3DayStreak",
+        linkedinText: `Three consecutive days of structured placement preparation — and counting.
+
+I've been solving daily aptitude, reasoning, and technical questions on the RMC CBIT Placement Series. Consistency over intensity — that's the approach I'm committing to.
+
+What does your daily prep routine look like?
+
+🔗 RMC CBIT | rmccbit.in
+
+#PlacementPreparation #CampusPlacements #RMCCBIT #Consistency #3DayStreak`,
     },
     streak_7: {
         label: '🔥🔥 7-Day Streak',
         icon: '🔥🔥',
-        linkedinText: "A full week of daily placement prep! 7-day answer streak on RMC CBIT's Placement Series. #PlacementPrep #7DayStreak #RMCCBIT",
+        linkedinText: `7 days. 7 sessions. 21 questions solved.
+
+I've maintained a full week of daily aptitude and reasoning practice on the RMC CBIT Placement Series. Research consistently shows that daily practice — even for 15 minutes — builds retention and pattern recognition far better than cramming.
+
+Building the habit, one day at a time.
+
+🔗 RMC CBIT | rmccbit.in
+
+#PlacementPreparation #CampusPlacements #RMCCBIT #7DayStreak #LearningEveryDay`,
     },
     streak_14: {
         label: '⚡ 14-Day Streak',
         icon: '⚡',
-        linkedinText: "Two weeks of non-stop placement prep! ⚡ 14-day streak on RMC CBIT's Placement Series. Building habits that last! #RMCCBIT #14DayStreak",
+        linkedinText: `Two weeks of unbroken placement preparation.
+
+Maintaining a 14-day streak on the RMC CBIT Placement Series has reinforced one principle for me: discipline consistently outperforms motivation. Motivation fluctuates. Systems don't.
+
+I'm covering aptitude, logical reasoning, and technical problem-solving daily — the exact domains that matter most in campus recruitment.
+
+🔗 RMC CBIT | rmccbit.in
+
+#PlacementPreparation #CampusPlacements #RMCCBIT #14DayStreak #Discipline`,
     },
     streak_21: {
         label: '💎 21-Day Streak',
         icon: '💎',
-        linkedinText: "21 days — a habit is formed! 💎 Kept a 21-day streak on RMC CBIT's Placement Series. Placement-ready mindset! #RMCCBIT #21DayStreak",
+        linkedinText: `21 days of deliberate, daily practice.
+
+They say it takes 21 days to form a habit. I've done exactly that on the RMC CBIT Placement Series — solving structured aptitude and reasoning challenges every single day for three weeks.
+
+The habit is formed. The preparation continues.
+
+🔗 RMC CBIT | rmccbit.in
+
+#PlacementPreparation #CampusPlacements #RMCCBIT #21DayStreak #GrowthMindset`,
     },
     streak_30: {
         label: '👑 30-Day Streak',
         icon: '👑',
-        linkedinText: "30 DAYS! 👑 I conquered the RMC CBIT Placement Series month-long challenge. This is what dedication looks like! #RMCCBIT #30DayStreak #PlacementKing",
+        linkedinText: `30 days of uninterrupted, structured placement preparation.
+
+I've completed the RMC CBIT Placement Series month-long streak challenge — solving daily aptitude, reasoning, and technical questions without missing a single day.
+
+This milestone represents more than a number. It represents a commitment to showing up, even on difficult days. That same commitment is what I bring to everything I pursue.
+
+🔗 RMC CBIT | rmccbit.in
+
+#PlacementPreparation #CampusPlacements #RMCCBIT #30DayStreak #CommitmentToGrowth`,
     },
     fifty_answers: {
         label: '📚 50 Questions Answered',
         icon: '📚',
-        linkedinText: "50 placement questions answered on RMC CBIT's Placement Series! 📚 Building that knowledge base one question at a time. #RMCCBIT #PlacementPrep",
+        linkedinText: `Milestone reached: 50 placement preparation questions solved.
+
+Through the RMC CBIT Placement Series, I've now answered 50 structured questions spanning quantitative aptitude, logical reasoning, and core technical concepts — the exact areas evaluated in leading campus recruitment drives.
+
+Progress isn't always visible, but it's always accumulating.
+
+🔗 RMC CBIT | rmccbit.in
+
+#PlacementPreparation #CampusPlacements #RMCCBIT #Aptitude #50Questions`,
     },
     perfect_contest: {
         label: '⭐ Perfect Score',
         icon: '⭐',
-        linkedinText: "PERFECT SCORE! 💯 Aced a weekly contest on RMC CBIT's Placement Series. Hard work pays off! ⭐ #RMCCBIT #PerfectScore #PlacementSeries",
+        linkedinText: `Perfect score achieved in the RMC CBIT Placement Series weekly contest.
+
+I scored 100% on a timed competitive assessment covering aptitude, reasoning, and technical concepts — competing against peers across the series.
+
+Preparation meets opportunity. Today, it did.
+
+🔗 RMC CBIT | rmccbit.in
+
+#PlacementPreparation #CampusPlacements #RMCCBIT #PerfectScore #CompetitiveExam`,
     },
     contest_gold: {
         label: '🥇 Contest Winner',
         icon: '🥇',
-        linkedinText: '🥇 Won the {contestTitle} on RMC CBIT\'s Placement Series! Thrilled to be at the top! #RMCCBIT #PlacementSeries #ContestWinner',
+        linkedinText: `Ranked 1st in the {contestTitle} — RMC CBIT Placement Series.
+
+Competing in a timed, high-pressure aptitude and reasoning assessment, I secured the top position. This result reflects consistent preparation, problem-solving speed, and accuracy under pressure.
+
+Grateful for the platform RMC CBIT has built for students to compete and grow.
+
+🔗 RMC CBIT | rmccbit.in
+
+#PlacementPreparation #CampusPlacements #RMCCBIT #ContestWinner #1stPlace`,
     },
     contest_silver: {
         label: '🥈 Contest Runner-up',
         icon: '🥈',
-        linkedinText: '🥈 Runner-up in the {contestTitle} on RMC CBIT\'s Placement Series! Great contest — pushing harder next time! #RMCCBIT #PlacementSeries',
+        linkedinText: `Ranked 2nd in the {contestTitle} — RMC CBIT Placement Series.
+
+A strong performance in a competitive, timed aptitude assessment. Second place is a reminder of how close the margins are — and how much further preparation can take me.
+
+Every contest is a data point. On to the next one.
+
+🔗 RMC CBIT | rmccbit.in
+
+#PlacementPreparation #CampusPlacements #RMCCBIT #RunnerUp #ContinuousImprovement`,
     },
     contest_bronze: {
         label: '🥉 Contest 3rd Place',
         icon: '🥉',
-        linkedinText: '🥉 3rd place in the {contestTitle} on RMC CBIT\'s Placement Series! Proud of the progress! #RMCCBIT #PlacementSeries',
+        linkedinText: `Finished in the Top 3 of the {contestTitle} — RMC CBIT Placement Series.
+
+Competing against motivated peers in a timed aptitude and reasoning challenge, I secured 3rd place. It's a result I'm proud of — and a benchmark to beat next time.
+
+Growth happens in competition.
+
+🔗 RMC CBIT | rmccbit.in
+
+#PlacementPreparation #CampusPlacements #RMCCBIT #Top3 #AptitudeChallenge`,
     },
 };
 
