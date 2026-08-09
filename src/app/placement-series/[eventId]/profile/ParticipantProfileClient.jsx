@@ -352,8 +352,6 @@ export default function ParticipantProfileClient({ eventId }) {
 
     return (
         <>
-    return (
-        <>
         <div className="min-h-[100dvh] pt-20 sm:pt-24 md:pt-28 pb-12 px-3.5 sm:px-6 lg:px-8 relative overflow-hidden">
             {/* Ambient */}
             <div className="absolute inset-0 pointer-events-none opacity-25 z-0">
