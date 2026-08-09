@@ -136,33 +136,34 @@ export default function PlacementSeriesLandingClient({ eventId }) {
     }
 
     return (
-        <div className="min-h-[100dvh] pt-24 pb-12 px-4 relative">
-            <div className="absolute inset-0 pointer-events-none opacity-20 z-0">
-                <div className="absolute top-20 left-20 w-[400px] h-[400px] bg-teal-500/10 blur-[100px] rounded-full" />
-                <div className="absolute bottom-20 right-20 w-[400px] h-[400px] bg-blue-500/10 blur-[100px] rounded-full" />
+        <div className="min-h-[100dvh] pt-20 sm:pt-24 md:pt-28 pb-12 px-3.5 sm:px-6 lg:px-8 relative overflow-hidden">
+            {/* Ambient glows */}
+            <div className="absolute inset-0 pointer-events-none opacity-25 z-0">
+                <div className="absolute top-10 sm:top-20 left-10 sm:left-20 w-[280px] sm:w-[450px] h-[280px] sm:h-[450px] bg-teal-500/15 blur-[90px] sm:blur-[120px] rounded-full" />
+                <div className="absolute bottom-10 sm:bottom-20 right-10 sm:right-20 w-[280px] sm:w-[450px] h-[280px] sm:h-[450px] bg-blue-500/15 blur-[90px] sm:blur-[120px] rounded-full" />
             </div>
 
-            <div className="max-w-4xl mx-auto relative z-10">
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl md:text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-emerald-400">
+            <div className="max-w-4xl mx-auto relative z-10 space-y-8 sm:space-y-10">
+                <div className="text-center max-w-2xl mx-auto px-2">
+                    <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-black mb-3 sm:mb-4 bg-clip-text text-transparent bg-gradient-to-r from-teal-400 via-emerald-400 to-teal-200 tracking-tight">
                         Daily Challenge
                     </h1>
-                    <p className="text-white/60 max-w-2xl mx-auto">
+                    <p className="text-white/60 text-xs sm:text-sm md:text-base leading-relaxed">
                         Solve exactly 3 questions every day to build your streak, earn badges, and prepare for the weekly contests.
                     </p>
                 </div>
 
                 {!session && (
-                    <div className="max-w-md mx-auto bg-white/5 border border-white/10 rounded-3xl p-8 mb-12 backdrop-blur-xl">
-                        <h2 className="text-2xl font-bold mb-2">Join the Series</h2>
-                        <p className="text-white/50 mb-6 text-sm">
+                    <div className="max-w-md mx-auto bg-white/5 border border-white/10 rounded-2xl sm:rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl">
+                        <h2 className="text-xl sm:text-2xl font-bold mb-2">Join the Series</h2>
+                        <p className="text-white/50 mb-6 text-xs sm:text-sm leading-relaxed">
                             Log in with your Google Account to track your daily streak and prepare for contests.
                         </p>
 
                         <button
                             onClick={handleGoogleSignIn}
                             disabled={isSigningIn}
-                            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 disabled:opacity-60 text-gray-900 font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98]"
+                            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 disabled:opacity-60 text-gray-900 font-bold py-3.5 px-4 rounded-xl sm:rounded-2xl transition-all duration-200 shadow-lg hover:shadow-teal-500/10 active:scale-[0.98] min-h-[48px] cursor-pointer"
                         >
                             {isSigningIn ? (
                                 <Loader2 className="w-5 h-5 animate-spin text-gray-600" />
@@ -174,26 +175,26 @@ export default function PlacementSeriesLandingClient({ eventId }) {
                                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                                 </svg>
                             )}
-                            <span>{isSigningIn ? "Redirecting to Google…" : "Continue with Google"}</span>
+                            <span className="text-xs sm:text-sm">{isSigningIn ? "Redirecting to Google…" : "Continue with Google"}</span>
                         </button>
                     </div>
                 )}
 
                 {session && (
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white/5 border border-white/10 rounded-2xl p-5 mb-8 relative overflow-hidden group">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white/5 border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-6 relative overflow-hidden group backdrop-blur-xl shadow-xl">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-3xl rounded-full opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
-                        <div className="relative z-10 mb-4 sm:mb-0">
-                            <p className="text-sm text-white/50">Welcome back,</p>
-                            <p className="font-bold text-xl text-white">{session.name}</p>
+                        <div className="relative z-10 mb-3 sm:mb-0">
+                            <p className="text-xs sm:text-sm text-white/50">Welcome back,</p>
+                            <p className="font-extrabold text-lg sm:text-xl text-white tracking-tight">{session.name}</p>
                         </div>
-                        <div className="relative z-10 w-full sm:w-auto flex items-center justify-between sm:justify-start gap-4 bg-orange-500/10 px-5 py-3 rounded-xl border border-orange-500/30 shadow-[0_0_15px_rgba(249,115,22,0.1)]">
+                        <div className="relative z-10 w-full sm:w-auto flex items-center justify-between sm:justify-start gap-4 bg-orange-500/10 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border border-orange-500/30 shadow-[0_0_20px_rgba(249,115,22,0.12)]">
                             <div className="animate-pulse">
-                                <Flame className={`w-6 h-6 ${session.streakCurrent > 0 ? 'text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.8)]' : 'text-white/30'}`} />
+                                <Flame className={`w-5 h-5 sm:w-6 sm:h-6 ${session.streakCurrent > 0 ? 'text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.8)]' : 'text-white/30'}`} />
                             </div>
                             <div>
-                                <p className="text-xs text-orange-200/70 font-medium uppercase tracking-wider mb-0.5">Current Streak</p>
+                                <p className="text-[10px] sm:text-xs text-orange-200/70 font-semibold uppercase tracking-wider mb-0.5">Current Streak</p>
                                 <div className="flex items-baseline gap-2">
-                                    <p className="font-bold font-mono text-xl text-orange-400">{session.streakCurrent} Days</p>
+                                    <p className="font-bold font-mono text-lg sm:text-xl text-orange-400">{session.streakCurrent} Days</p>
                                     <p className="text-[10px] text-orange-300/50 hidden md:block">Keep it alive today!</p>
                                 </div>
                             </div>
@@ -201,50 +202,50 @@ export default function PlacementSeriesLandingClient({ eventId }) {
                     </div>
                 )}
 
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                     {questions.length === 0 ? (
-                        <div className="text-center py-16 bg-white/5 border border-white/10 rounded-3xl">
-                            <CalendarDays className="w-12 h-12 text-white/20 mx-auto mb-4" />
-                            <h3 className="text-xl font-bold">No Questions Yet</h3>
-                            <p className="text-white/50 mt-2">Today's challenges haven't been posted. Check back soon!</p>
+                        <div className="text-center py-12 sm:py-16 bg-white/5 border border-white/10 rounded-2xl sm:rounded-3xl p-6">
+                            <CalendarDays className="w-10 h-10 sm:w-12 sm:h-12 text-white/20 mx-auto mb-4" />
+                            <h3 className="text-lg sm:text-xl font-bold">No Questions Yet</h3>
+                            <p className="text-white/50 text-xs sm:text-sm mt-2">Today's challenges haven't been posted. Check back soon!</p>
                         </div>
                     ) : (
                         questions.map((q, idx) => {
                             const isSubmitted = !!q.submission;
                             
                             return (
-                                <div key={q.id} className="bg-white/5 border border-white/10 rounded-3xl p-6 relative overflow-hidden group hover:border-teal-500/40 hover:shadow-[0_0_30px_rgba(45,212,191,0.05)] transition-all duration-300 hover:-translate-y-1">
+                                <div key={q.id} className="bg-white/5 border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 relative overflow-hidden group hover:border-teal-500/40 hover:shadow-[0_0_30px_rgba(45,212,191,0.08)] transition-all duration-300 hover:-translate-y-0.5 backdrop-blur-xl">
                                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500/0 via-teal-500/0 to-teal-500/0 group-hover:from-teal-500/50 group-hover:via-emerald-500/50 group-hover:to-teal-500/50 transition-all duration-500" />
-                                    <div className="flex items-start gap-4 mb-6 relative z-10">
-                                        <div className="w-10 h-10 shrink-0 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center font-bold text-lg border border-teal-500/20 shadow-inner">
+                                    <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6 relative z-10">
+                                        <div className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center font-extrabold text-sm sm:text-lg border border-teal-500/20 shadow-inner">
                                             {idx + 1}
                                         </div>
-                                        <div>
-                                            <div className="flex gap-2 mb-2">
-                                                <span className="text-xs font-semibold px-2 py-0.5 bg-white/10 rounded-md text-white/70">{q.category}</span>
-                                                <span className={`text-xs font-bold px-2 py-0.5 rounded-md shadow-sm border ${
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-2">
+                                                <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 bg-white/10 rounded-md text-white/70">{q.category}</span>
+                                                <span className={`text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-md shadow-sm border ${
                                                     q.difficulty === 'hard' ? 'bg-gradient-to-r from-red-500/20 to-red-600/20 border-red-500/30 text-red-300' : 
                                                     q.difficulty === 'medium' ? 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border-yellow-500/30 text-yellow-300' : 
                                                     'bg-gradient-to-r from-green-500/20 to-green-600/20 border-green-500/30 text-green-300'
                                                 }`}>{q.difficulty}</span>
                                             </div>
-                                            <h3 className="text-xl font-medium leading-relaxed">{q.questionText}</h3>
+                                            <h3 className="text-base sm:text-lg md:text-xl font-semibold leading-relaxed text-white">{q.questionText}</h3>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-0 md:pl-14 mt-4 md:mt-0">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3.5 pl-0 md:pl-14 mt-2 sm:mt-4">
                                         {q.options.map((opt, oIdx) => {
                                             const isSelected = isSubmitted && q.submission.selectedOption === oIdx;
                                             
                                             // Determine styles if submitted
-                                            let btnClass = "bg-black/50 border-white/10 hover:border-teal-500/50 hover:bg-white/5 text-white/70 hover:scale-[1.01] hover:shadow-lg";
+                                            let btnClass = "bg-black/50 border-white/10 hover:border-teal-500/50 hover:bg-white/10 text-white/80 hover:text-white hover:scale-[1.01] hover:shadow-md cursor-pointer active:scale-95";
                                             if (isSubmitted) {
                                                 if (isSelected) {
                                                     btnClass = q.submission.isCorrect 
-                                                        ? "bg-green-500/20 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)] text-green-300 scale-[1.02] z-10"
-                                                        : "bg-red-500/20 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)] text-red-300 scale-[1.02] z-10";
+                                                        ? "bg-green-500/20 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)] text-green-300 scale-[1.01] z-10"
+                                                        : "bg-red-500/20 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)] text-red-300 scale-[1.01] z-10";
                                                 } else {
-                                                    btnClass = "bg-black/50 border-white/5 text-white/30 cursor-not-allowed opacity-50";
+                                                    btnClass = "bg-black/40 border-white/5 text-white/30 cursor-not-allowed opacity-50";
                                                 }
                                             }
 
