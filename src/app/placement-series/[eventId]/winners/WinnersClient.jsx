@@ -139,35 +139,35 @@ export default function WinnersClient({ eventId }) {
     }, [eventId]);
 
     return (
-        <div className="min-h-[100dvh] pt-24 pb-12 px-4 relative">
-            <div className="absolute inset-0 pointer-events-none opacity-20 z-0">
-                <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-yellow-500/10 blur-[100px] rounded-full" />
+        <div className="min-h-[100dvh] pt-20 sm:pt-24 md:pt-28 pb-12 px-3.5 sm:px-6 lg:px-8 relative overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none opacity-25 z-0">
+                <div className="absolute top-10 sm:top-20 left-1/2 -translate-x-1/2 w-[350px] sm:w-[600px] h-[200px] sm:h-[300px] bg-yellow-500/15 blur-[90px] sm:blur-[120px] rounded-full" />
             </div>
 
-            <div className="max-w-4xl mx-auto relative z-10">
+            <div className="max-w-4xl mx-auto relative z-10 space-y-8 sm:space-y-10">
                 {/* Header */}
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl md:text-5xl font-extrabold mb-4 flex items-center justify-center gap-4">
-                        <Trophy className="w-10 h-10 text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]" />
+                <div className="text-center max-w-2xl mx-auto px-2">
+                    <h1 className="text-3xl xs:text-4xl sm:text-5xl font-black mb-3 sm:mb-4 flex items-center justify-center gap-3 sm:gap-4 bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-amber-300 to-yellow-500">
+                        <Trophy className="w-8 h-8 sm:w-10 sm:h-10 text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,0.6)] shrink-0" />
                         Hall of Fame
                     </h1>
-                    <p className="text-white/60 max-w-2xl mx-auto">
+                    <p className="text-white/60 text-xs sm:text-sm md:text-base leading-relaxed">
                         The champions who dominated each weekly contest. Their victories live on here forever.
                     </p>
                 </div>
 
                 {loading ? (
-                    <div className="flex justify-center py-20">
+                    <div className="flex justify-center py-16 sm:py-20">
                         <Loader2 className="w-8 h-8 animate-spin text-teal-400" />
                     </div>
                 ) : contests.length === 0 ? (
-                    <div className="text-center py-20 bg-white/5 border border-white/10 rounded-3xl">
-                        <Trophy className="w-12 h-12 text-white/20 mx-auto mb-4" />
-                        <h3 className="text-xl font-bold">No published results yet</h3>
-                        <p className="text-white/50 mt-2">Contest results will appear here once the coordinator publishes them.</p>
+                    <div className="text-center py-16 sm:py-20 bg-white/5 border border-white/10 rounded-2xl sm:rounded-3xl p-6">
+                        <Trophy className="w-10 h-10 sm:w-12 sm:h-12 text-white/20 mx-auto mb-4" />
+                        <h3 className="text-lg sm:text-xl font-bold">No published results yet</h3>
+                        <p className="text-white/50 text-xs sm:text-sm mt-2">Contest results will appear here once the coordinator publishes them.</p>
                     </div>
                 ) : (
-                    <div className="space-y-8">
+                    <div className="space-y-6 sm:space-y-8">
                         {contests.map((contest, index) => (
                             <ContestCard key={contest.contestId} contest={contest} index={index} />
                         ))}
