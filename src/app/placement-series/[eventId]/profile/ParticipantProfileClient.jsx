@@ -352,39 +352,41 @@ export default function ParticipantProfileClient({ eventId }) {
 
     return (
         <>
-        <div className="min-h-[100dvh] pt-24 pb-12 px-4 relative">
+    return (
+        <>
+        <div className="min-h-[100dvh] pt-20 sm:pt-24 md:pt-28 pb-12 px-3.5 sm:px-6 lg:px-8 relative overflow-hidden">
             {/* Ambient */}
-            <div className="absolute inset-0 pointer-events-none opacity-20 z-0">
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-500/10 blur-[100px] rounded-full" />
-                <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-emerald-500/10 blur-[100px] rounded-full" />
+            <div className="absolute inset-0 pointer-events-none opacity-25 z-0">
+                <div className="absolute top-0 right-0 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-teal-500/10 blur-[100px] rounded-full" />
+                <div className="absolute bottom-0 left-0 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] bg-emerald-500/10 blur-[100px] rounded-full" />
             </div>
 
-            <div className="max-w-4xl mx-auto relative z-10 space-y-8">
+            <div className="max-w-4xl mx-auto relative z-10 space-y-6 sm:space-y-8">
 
                 {/* ── Profile Hero ── */}
-                <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-xl relative overflow-hidden">
+                <div className="bg-white/5 border border-white/10 rounded-2xl sm:rounded-3xl p-5 sm:p-8 backdrop-blur-xl relative overflow-hidden shadow-2xl">
                     {/* Decorative gradient blob */}
                     <div className="absolute -top-20 -right-20 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
 
-                    <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+                    <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 relative z-10">
                         {/* Avatar */}
-                        <div className="w-28 h-28 rounded-full bg-gradient-to-br from-teal-400 to-emerald-600 p-[3px] shrink-0">
-                            <div className="w-full h-full rounded-full bg-[#0a0a0a] flex items-center justify-center text-4xl font-extrabold text-teal-400">
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-teal-400 to-emerald-600 p-[3px] shrink-0 shadow-lg shadow-teal-500/20">
+                            <div className="w-full h-full rounded-full bg-[#090d16] flex items-center justify-center text-3xl sm:text-4xl font-extrabold text-teal-400">
                                 {session.name.charAt(0).toUpperCase()}
                             </div>
                         </div>
 
                         {/* Name + badges */}
-                        <div className="flex-1 text-center md:text-left">
-                            <div className="flex items-center justify-center md:justify-start gap-3 mb-1 flex-wrap">
-                                <h1 className="text-3xl font-bold">{session.name}</h1>
+                        <div className="flex-1 text-center sm:text-left min-w-0">
+                            <div className="flex items-center justify-center sm:justify-start gap-2.5 mb-1 flex-wrap">
+                                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{session.name}</h1>
                                 {session.isVerified && (
-                                    <span className="flex items-center gap-1 px-2 py-0.5 bg-green-500/15 text-green-400 text-xs font-bold uppercase tracking-widest rounded-full border border-green-500/30">
+                                    <span className="flex items-center gap-1 px-2.5 py-0.5 bg-green-500/15 text-green-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-full border border-green-500/30">
                                         <BadgeCheck className="w-3.5 h-3.5" /> Verified
                                     </span>
                                 )}
                             </div>
-                            <p className="text-white/40 text-sm mb-5">
+                            <p className="text-white/40 text-xs sm:text-sm mb-4 truncate">
                                 {session.email}
                             </p>
 
@@ -392,34 +394,34 @@ export default function ParticipantProfileClient({ eventId }) {
                             <button
                                 onClick={handleLogout}
                                 disabled={isLoggingOut}
-                                className="flex items-center gap-2 px-4 py-2 mb-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 rounded-xl text-sm font-medium text-red-400 hover:text-red-300 transition-all duration-200 disabled:opacity-50"
+                                className="inline-flex items-center gap-2 px-3.5 py-2 mb-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 rounded-xl text-xs sm:text-sm font-semibold text-red-400 hover:text-red-300 transition-all duration-200 disabled:opacity-50 min-h-[38px] active:scale-95 cursor-pointer"
                             >
                                 {isLoggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
                                 {isLoggingOut ? 'Logging out…' : 'Log Out'}
                             </button>
 
                             {/* Stat chips */}
-                            <div className="grid grid-cols-3 gap-3 w-full md:max-w-sm">
-                                <div className="flex flex-col items-center md:items-start gap-1 bg-orange-500/10 border border-orange-500/20 px-4 py-3 rounded-2xl">
-                                    <div className="flex items-center gap-1.5 text-orange-400">
-                                        <Flame className="w-4 h-4 drop-shadow-[0_0_6px_rgba(249,115,22,0.8)]" />
-                                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Streak</span>
+                            <div className="grid grid-cols-3 gap-2.5 sm:gap-3 w-full sm:max-w-md mx-auto sm:mx-0">
+                                <div className="flex flex-col items-center sm:items-start gap-0.5 bg-orange-500/10 border border-orange-500/20 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl">
+                                    <div className="flex items-center gap-1 text-orange-400">
+                                        <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 drop-shadow-[0_0_6px_rgba(249,115,22,0.8)]" />
+                                        <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-white/40">Streak</span>
                                     </div>
-                                    <div className="font-mono font-bold text-xl text-white">{session.streakCurrent}</div>
+                                    <div className="font-mono font-bold text-base sm:text-xl text-white">{session.streakCurrent}</div>
                                 </div>
-                                <div className="flex flex-col items-center md:items-start gap-1 bg-teal-500/10 border border-teal-500/20 px-4 py-3 rounded-2xl">
-                                    <div className="flex items-center gap-1.5 text-teal-400">
-                                        <Medal className="w-4 h-4 drop-shadow-[0_0_6px_rgba(45,212,191,0.8)]" />
-                                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Badges</span>
+                                <div className="flex flex-col items-center sm:items-start gap-0.5 bg-teal-500/10 border border-teal-500/20 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl">
+                                    <div className="flex items-center gap-1 text-teal-400">
+                                        <Medal className="w-3.5 h-3.5 sm:w-4 sm:h-4 drop-shadow-[0_0_6px_rgba(45,212,191,0.8)]" />
+                                        <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-white/40">Badges</span>
                                     </div>
-                                    <div className="font-mono font-bold text-xl text-white">{badges.length}</div>
+                                    <div className="font-mono font-bold text-base sm:text-xl text-white">{badges.length}</div>
                                 </div>
-                                <div className="flex flex-col items-center md:items-start gap-1 bg-purple-500/10 border border-purple-500/20 px-4 py-3 rounded-2xl">
-                                    <div className="flex items-center gap-1.5 text-purple-400">
-                                        <Calendar className="w-4 h-4 drop-shadow-[0_0_6px_rgba(168,85,247,0.8)]" />
-                                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Joined</span>
+                                <div className="flex flex-col items-center sm:items-start gap-0.5 bg-purple-500/10 border border-purple-500/20 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl">
+                                    <div className="flex items-center gap-1 text-purple-400">
+                                        <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 drop-shadow-[0_0_6px_rgba(168,85,247,0.8)]" />
+                                        <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-white/40">Joined</span>
                                     </div>
-                                    <div className="font-bold text-xs text-white mt-1">{new Date(session.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</div>
+                                    <div className="font-bold text-[11px] sm:text-xs text-white mt-0.5 truncate">{new Date(session.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</div>
                                 </div>
                             </div>
                         </div>
