@@ -14,7 +14,7 @@ export async function GET(request) {
         }
 
         const dateParam = searchParams.get('date');
-        const queryDate = dateParam || new Date().toISOString().split('T')[0];
+        const queryDate = dateParam || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
         // Auth is optional for GET. If token exists, we personalize options and check submissions.
         const participant = await requireParticipant(request, false);

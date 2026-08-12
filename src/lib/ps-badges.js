@@ -245,7 +245,7 @@ export async function processDailyBadges({ participantId, eventId }) {
         .eq('participant_id', participantId);
 
     // ── First Answer badge ──
-    if (totalAnswers === 1) {
+    if (totalAnswers <= 1) {
         const badge = await upsertBadge(supabase, {
             participantId,
             eventId,

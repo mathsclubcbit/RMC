@@ -25,6 +25,9 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
     const [tabSwitches, setTabSwitches] = useState(0);
     
     const timerRef = useRef(null);
+    const answersRef = useRef({});
+    const tabSwitchesRef = useRef(0);
+    const hasAutoSubmittedRef = useRef(false);
 
     useEffect(() => {
         fetchContestInit();
@@ -36,7 +39,11 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
         if (stage === 'playing') {
             const handleVisibilityChange = () => {
                 if (document.hidden) {
-                    setTabSwitches(prev => prev + 1);
+                    setTabSwitches(prev => {
+                        const next = prev + 1;
+                        tabSwitchesRef.current = next;
+                        return next;
+                    });
                     // Could also auto-submit on 3rd violation, etc.
                 }
             };
@@ -45,14 +52,19 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
         }
     }, [stage]);
 
-    // Timer countdown
+    // Timer countdown — only start/stop when stage changes, not every second
     useEffect(() => {
-        if (stage === 'playing' && timeRemaining > 0) {
+        if (stage === 'playing') {
+            hasAutoSubmittedRef.current = false;
             timerRef.current = setInterval(() => {
                 setTimeRemaining(prev => {
                     if (prev <= 1) {
                         clearInterval(timerRef.current);
-                        autoSubmit();
+                        // Use a ref guard to prevent double auto-submit
+                        if (!hasAutoSubmittedRef.current) {
+                            hasAutoSubmittedRef.current = true;
+                            autoSubmit();
+                        }
                         return 0;
                     }
                     return prev - 1;
@@ -60,7 +72,7 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
             }, 1000);
             return () => clearInterval(timerRef.current);
         }
-    }, [stage, timeRemaining]);
+    }, [stage]);
 
     const fetchContestInit = async () => {
         try {
@@ -77,7 +89,8 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
                         setQuestions(data.questions || []);
                     } else {
                         // Resuming... need to hit start endpoint to get questions and fresh timer
-                        startContest();
+                        // Set contest state first so the page doesn't go blank if startContest fails
+                        await startContest();
                     }
                 }
             } else {
@@ -117,40 +130,33 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
     };
 
     const handleSelectOption = (questionId, optionIndex) => {
-        setAnswers(prev => ({
-            ...prev,
-            [questionId]: optionIndex
-        }));
+        const updated = { ...answersRef.current, [questionId]: optionIndex };
+        answersRef.current = updated;
+        setAnswers(updated);
     };
 
     const autoSubmit = () => {
-        // Use a ref to ensure we have latest answers if needed, 
-        // but react state inside setTimeout can be tricky. 
-        // We'll just trigger the submit flow.
-        submitContest(true);
+        // Called from inside setTimeRemaining updater — use refs for latest values
+        submitContestWithRefs(true);
     };
 
-    const submitContest = async (isAuto = false) => {
-        if (!isAuto && !confirm("Are you sure you want to submit? You cannot change your answers after this.")) {
-            return;
-        }
-        
+    // Core submit logic — accepts answers/tabSwitches as params to support both
+    // direct calls (from button with current state) and auto-submit (from refs).
+    const doSubmit = async (isAuto, answersToSubmit, tabSwitchCount) => {
         setStage('submitting');
         clearInterval(timerRef.current);
 
         try {
-            // Need to use current state of answers from the function scope, 
-            // setAnswers is async but we rely on current closure state.
             const res = await fetch(`/api/placement-series/contests/${contestId}/submit`, {
                 method: "POST",
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ answers, tabSwitchCount: tabSwitches })
+                body: JSON.stringify({ answers: answersToSubmit, tabSwitchCount })
             });
             const data = await res.json();
             
             if (res.ok) {
                 setResults(data);
-                setStage('ended'); // They have to wait for global results publish to see answers
+                setStage('ended');
                 
                 if (data.percentage >= 80) {
                     confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
@@ -164,6 +170,19 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
             console.error(error);
             setStage('playing');
         }
+    };
+
+    // Called from auto-submit timer — reads refs to avoid stale closure
+    const submitContestWithRefs = (isAuto) => {
+        doSubmit(isAuto, answersRef.current, tabSwitchesRef.current);
+    };
+
+    // Called from user-initiated submit buttons — reads current state
+    const submitContest = async (isAuto = false) => {
+        if (!isAuto && !confirm("Are you sure you want to submit? You cannot change your answers after this.")) {
+            return;
+        }
+        doSubmit(isAuto, answers, tabSwitches);
     };
 
     const formatTime = (seconds) => {

@@ -33,9 +33,10 @@ export async function POST(request) {
         if (dbUser.otp_expires_at) {
             const expiresAt = new Date(dbUser.otp_expires_at).getTime();
             const now = Date.now();
-            // Assuming OTP is valid for 10 mins (600,000 ms). 
-            // If it expires in > 9 mins, we just sent it within the last 60 seconds.
-            if (expiresAt - now > 9 * 60 * 1000) {
+            // Only enforce cooldown if the OTP hasn't expired yet
+            // OTP is valid for 10 mins (600,000 ms). If it expires in > 9 mins,
+            // we just sent it within the last 60 seconds.
+            if (expiresAt > now && expiresAt - now > 9 * 60 * 1000) {
                 return NextResponse.json({ error: 'Please wait before requesting a new OTP' }, { status: 429 });
             }
         }

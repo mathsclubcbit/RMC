@@ -51,22 +51,45 @@ export async function POST(request, { params }) {
             // Resume existing submission
             submission = existingSub;
         } else {
-            // Start new submission
-            const { data: newSub, error: insertErr } = await admin
-                .from('ps_contest_submissions')
-                .insert({
-                    contest_id: id,
-                    participant_id: participant.participantId,
-                    answers: {},
-                    score: 0,
-                    total_points: 0,
-                    started_at: new Date().toISOString()
-                })
-                .select()
-                .single();
-            
-            if (insertErr) throw insertErr;
-            submission = newSub;
+            // Start new submission — handle race condition with unique constraint
+            try {
+                const { data: newSub, error: insertErr } = await admin
+                    .from('ps_contest_submissions')
+                    .insert({
+                        contest_id: id,
+                        participant_id: participant.participantId,
+                        answers: {},
+                        score: 0,
+                        total_points: 0,
+                        started_at: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
+                
+                if (insertErr) {
+                    // Check for unique constraint violation (double-click race condition)
+                    if (insertErr.code === '23505') {
+                        // Another request already created the submission — fetch and resume it
+                        const { data: raceSub } = await admin
+                            .from('ps_contest_submissions')
+                            .select('*')
+                            .eq('contest_id', id)
+                            .eq('participant_id', participant.participantId)
+                            .single();
+                        
+                        if (raceSub?.submitted_at) {
+                            return NextResponse.json({ error: 'already_submitted' }, { status: 409 });
+                        }
+                        submission = raceSub;
+                    } else {
+                        throw insertErr;
+                    }
+                } else {
+                    submission = newSub;
+                }
+            } catch (insertError) {
+                throw insertError;
+            }
         }
 
         // 3. Calculate remaining time

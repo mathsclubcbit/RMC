@@ -151,6 +151,7 @@ export async function PUT(request, { params }) {
         // 2. Upsert questions if provided
         if (questions && Array.isArray(questions)) {
             let totalQuestions = 0;
+            let skippedQuestions = [];
             // First, delete existing questions that aren't in the new list to allow clean replacement
             // (A more robust sync would check IDs, but for simplicity we assume the coordinator sends full lists)
             const questionNumbersToKeep = questions.map(q => q.questionNumber).filter(Boolean);
@@ -162,7 +163,15 @@ export async function PUT(request, { params }) {
 
             for (const q of questions) {
                 const { questionNumber, questionText, options, correctOption, points, questionBankId } = q;
-                if (!questionNumber || !questionText || !options || correctOption === undefined) continue;
+                if (!questionNumber || !questionText || !options || correctOption === undefined) {
+                    skippedQuestions.push({
+                        questionNumber: questionNumber || '?',
+                        reason: !questionNumber ? 'missing questionNumber' :
+                                !questionText ? 'missing questionText' :
+                                !options ? 'missing options' : 'missing correctOption'
+                    });
+                    continue;
+                }
 
                 await admin.from('ps_contest_questions').upsert({
                     contest_id: id,
@@ -180,6 +189,15 @@ export async function PUT(request, { params }) {
             
             // Update total questions count
             await admin.from('ps_contests').update({ total_questions: totalQuestions }).eq('id', id);
+
+            if (skippedQuestions.length > 0) {
+                return NextResponse.json({
+                    success: true,
+                    totalQuestions,
+                    warning: `${skippedQuestions.length} question(s) were skipped due to invalid data.`,
+                    skippedQuestions
+                });
+            }
         }
 
         return NextResponse.json({ success: true });

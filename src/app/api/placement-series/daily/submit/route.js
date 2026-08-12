@@ -39,8 +39,8 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Question not found' }, { status: 404 });
         }
 
-        // 2. Validate timing (±12h tolerance for IST/UTC differences)
-        const todayStr = new Date().toISOString().split('T')[0];
+        // 2. Validate timing — compute today in IST (±12h tolerance for edge cases)
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
         if (dq.question_date !== todayStr) {
             // Basic date check. In a production app, strict timezone parsing is better.
             const qDate = new Date(dq.question_date).getTime();
@@ -104,7 +104,7 @@ export async function POST(request) {
         let newLongest = dbUser.streak_longest;
         
         if (dbUser.last_daily_date !== todayStr) {
-            const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+            const yesterdayStr = new Date(Date.now() - 86400000).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
             
             if (dbUser.last_daily_date === yesterdayStr) {
                 newStreak += 1; // Continued streak

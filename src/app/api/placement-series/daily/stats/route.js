@@ -32,7 +32,7 @@ export async function GET(request) {
                 )
             `)
             .eq('event_id', eventId)
-            .eq('assigned_date', date)
+            .eq('question_date', date)
             .order('question_number', { ascending: true });
 
         if (qError) throw qError;
