@@ -56,6 +56,38 @@ export function createAdminClient() {
 }
 
 /**
+ * Finds a Supabase Auth user by email address across all pages.
+ * admin.listUsers() only returns 50 users per page by default.
+ *
+ * @param {import('@supabase/supabase-js').SupabaseClient} adminClient
+ * @param {string} email
+ * @returns {Promise<import('@supabase/supabase-js').User|null>}
+ */
+export async function findUserByEmail(adminClient, email) {
+    if (!email) return null;
+    const targetEmail = email.trim().toLowerCase();
+    let page = 1;
+    const perPage = 1000;
+
+    try {
+        while (true) {
+            const { data, error } = await adminClient.auth.admin.listUsers({ page, perPage });
+            if (error || !data?.users || data.users.length === 0) {
+                break;
+            }
+            const found = data.users.find(u => u.email?.toLowerCase() === targetEmail);
+            if (found) return found;
+            if (data.users.length < perPage) break;
+            page++;
+        }
+    } catch (err) {
+        console.error('Error finding user by email:', err);
+    }
+    return null;
+}
+
+
+/**
  * Cached getter for events.
  * Uses Next.js native caching with tag-based invalidation.
  */

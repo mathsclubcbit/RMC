@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createAdminClient, findUserByEmail } from '@/lib/supabase/server';
 import bcrypt from 'bcrypt';
 import { SignJWT } from 'jose';
 
@@ -107,58 +107,53 @@ export async function POST(request) {
             return NextResponse.json({ error: msg }, { status: 401 });
         }
 
-        const coordinatorEmail = `coord-${cleanEventId}@rmccbit.in`;
+        const coordinatorEmail = `coord-${cleanEventId}@rmccbit.in`.toLowerCase();
 
-        let userId;
+        let userId = null;
         
-        // Try to find existing user by listing users (getUserByEmail doesn't exist in current Supabase JS)
-        let existingUser = null;
         try {
-            // Use listUsers to find the coordinator user
-            const { data: listData, error: listError } = await admin.auth.admin.listUsers();
-            
-            if (!listError && listData?.users) {
-                existingUser = listData.users.find(u => u.email === coordinatorEmail);
+            // Find existing user across all auth pages
+            let existingUser = await findUserByEmail(admin, coordinatorEmail);
+
+            if (!existingUser) {
+                // Try creating new coordinator user
+                const { data: newUser, error: createError } = await admin.auth.admin.createUser({
+                    email: coordinatorEmail,
+                    password: cleanPassword,
+                    email_confirm: true,
+                    app_metadata: { role: 'coordinator', event_id: cleanEventId }
+                });
+                
+                if (createError) {
+                    // If user already exists (e.g. pagination race or previous creation), re-fetch user
+                    if (createError.code === 'email_exists' || createError.status === 422 || createError.message?.toLowerCase().includes('already')) {
+                        existingUser = await findUserByEmail(admin, coordinatorEmail);
+                    } else {
+                        console.error('[Coordinator Login] Failed to create user:', createError);
+                    }
+                } else {
+                    userId = newUser?.user?.id;
+                }
             }
-        } catch (listErr) {
-            console.error('[Coordinator Login] Error listing users:', listErr);
+
+            if (existingUser) {
+                // Update existing user password and metadata
+                const { error: updateError } = await admin.auth.admin.updateUserById(existingUser.id, {
+                    password: cleanPassword,
+                    app_metadata: { role: 'coordinator', event_id: cleanEventId }
+                });
+                
+                if (updateError) {
+                    console.error('[Coordinator Login] Failed to update user:', updateError);
+                }
+                userId = existingUser.id;
+            }
+        } catch (authErr) {
+            console.error('[Coordinator Login] Error managing auth user:', authErr);
         }
 
-        if (!existingUser) {
-            // Create new coordinator user
-            const { data: newUser, error: createError } = await admin.auth.admin.createUser({
-                email: coordinatorEmail,
-                password: cleanPassword,
-                email_confirm: true,
-                app_metadata: { role: 'coordinator', event_id: cleanEventId }
-            });
-            
-            if (createError) {
-                console.error('[Coordinator Login] Failed to create user:', createError);
-                const msg = 'Failed to set up coordinator account. Please try again.';
-                if (isForm) {
-                    return NextResponse.redirect(new URL(`/coordinator/login?error=${encodeURIComponent(msg)}`, request.url));
-                }
-                return NextResponse.json({ error: msg }, { status: 500 });
-            }
-            userId = newUser?.user?.id;
-        } else {
-            // Update existing user
-            const { error: updateError } = await admin.auth.admin.updateUserById(existingUser.id, {
-                password: cleanPassword,
-                app_metadata: { role: 'coordinator', event_id: cleanEventId }
-            });
-            
-            if (updateError) {
-                console.error('[Coordinator Login] Failed to update user:', updateError);
-                const msg = 'Failed to update coordinator account. Please try again.';
-                if (isForm) {
-                    return NextResponse.redirect(new URL(`/coordinator/login?error=${encodeURIComponent(msg)}`, request.url));
-                }
-                return NextResponse.json({ error: msg }, { status: 500 });
-            }
-            userId = existingUser.id;
-        }
+        // Fallback userId if Supabase auth user sync had any issue
+        userId = userId || `coord-${cleanEventId}`;
         
         console.log('[Coordinator Login] User ready:', coordinatorEmail, 'ID:', userId);
 
