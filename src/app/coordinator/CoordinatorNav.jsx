@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, QrCode, Edit3, LogOut, Home, ChevronRight, Users, Database, CalendarDays, Swords, Trophy, Medal } from "lucide-react";
+import { LayoutDashboard, QrCode, Edit3, LogOut, Home, ChevronRight, Users, Database, CalendarDays, Swords, Trophy, Medal, Camera } from "lucide-react";
 import { useLoading } from "@/context/LoadingContext";
 
 const baseNavItems = [
@@ -16,6 +16,7 @@ const psNavItems = [
     { href: "/coordinator/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/coordinator/questions", label: "Q-Bank", icon: Database },
     { href: "/coordinator/daily", label: "Daily Qs", icon: CalendarDays },
+    { href: "/coordinator/story", label: "Story", icon: Camera },
     { href: "/coordinator/contests", label: "Contests", icon: Swords },
     { href: "/coordinator/leaderboard", label: "Ranks", icon: Trophy },
 ];

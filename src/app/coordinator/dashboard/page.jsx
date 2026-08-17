@@ -7,6 +7,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { jwtVerify } from "jose";
 
 import { getAllRegistrations } from "@/lib/google";
+import DailyStatsDashboard from "./DailyStatsDashboard";
 
 export const dynamic = 'force-dynamic';
 
@@ -112,13 +113,14 @@ async function getCoordinatorEventAndStats() {
         }
 
         // Detect Placement Series
+        const isPSEventType = event?.payload?.eventType === 'Placement Series' || event?.event_type === 'Placement Series';
         const { count: pCount } = await admin.from("ps_participants")
             .select("id", { count: 'exact', head: true })
             .eq("event_id", eventId);
             
-        if (pCount !== null && pCount > 0) {
+        if (pCount !== null && (pCount > 0 || isPSEventType)) {
             isPlacementSeries = true;
-            psStats.totalParticipants = pCount;
+            psStats.totalParticipants = pCount || 0;
 
             const { data: contests } = await admin.from("ps_contests").select("id").eq("event_id", eventId);
             if (contests && contests.length > 0) {
@@ -223,6 +225,12 @@ export default async function CoordinatorDashboard() {
                                 <StatCard label="Daily Subms" value={psStats.totalDailySubmissions} accent="amber" />
                                 <StatCard label="Badges Earned" value={psStats.totalBadges} accent="emerald" />
                             </div>
+
+                            {/* Live Daily Stats Dashboard */}
+                            <DailyStatsDashboard 
+                                eventId={event.id}
+                                initialTotalParticipants={psStats.totalParticipants}
+                            />
 
                             {/* PS Action Modules */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
