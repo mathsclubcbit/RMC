@@ -44,6 +44,7 @@ export default function QuizLandingClient({ eventId, entryCode }) {
             if (!form.phone.trim()) return setError("Please enter your phone number");
             if (!form.rollNo.trim()) return setError("Please enter your roll number");
             if (!form.department.trim()) return setError("Please enter your department");
+        }
 
         setIsStarting(true);
         try {
