@@ -2,7 +2,7 @@
 
 > "The Enigma of RMC" - A cinematic, premium web experience for the Ramanujan Math Club of CBIT.
 
-![RMC Banner](public/banner-placeholder.png) 
+![RMC Banner](public/full logo.png) 
 *(Note: Replace with actual banner if available)*
 
 ## 🌌 Overview
