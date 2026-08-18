@@ -312,7 +312,7 @@ Decision email → Applicant
 - [ ] Verify applicant status page shows APPROVED
 - [ ] Test duplicate submission prevention (same email)
 - [ ] Test with recruitment toggle OFF — form should show "Applications closed" state
-- [ ] Verify mobile responsiveness of multi-step form
+- [ ] Verify mobile responsiveness of multi-step form.
 
 ---
 
