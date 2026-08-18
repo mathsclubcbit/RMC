@@ -102,12 +102,26 @@ export async function POST(request) {
             return NextResponse.json({ error: 'This event is not a Quiz' }, { status: 400 });
         }
 
+        // 1.5 Fetch existing registration by email
+        let activeRegistrationId = registrationId;
+        if (!activeRegistrationId) {
+            const { data: regLookup } = await supabase
+                .from('registrations')
+                .select('id')
+                .eq('event_id', eventId)
+                .eq('email', participantEmail.toLowerCase().trim())
+                .maybeSingle();
+            if (regLookup) {
+                activeRegistrationId = regLookup.id;
+            }
+        }
+
         if (payload.secureWalkInMode) {
             const cookieStore = await cookies();
             const qrSessionToken = cookieStore.get(`qr_session_${eventId}`)?.value;
             
             // Allow if they have a valid QR session cookie OR if they have a valid registrationId
-            if (!qrSessionToken && !registrationId) {
+            if (!qrSessionToken && !activeRegistrationId) {
                 return NextResponse.json({ error: 'This arena requires a live QR scan to enter or a valid online registration.' }, { status: 401 });
             }
         }
@@ -144,11 +158,11 @@ export async function POST(request) {
         let existing = existingByEmail;
 
         // Check by registrationId
-        if (!existing && registrationId) {
+        if (!existing && activeRegistrationId) {
             const { data: existingByReg } = await supabase
                 .from('quiz_sessions')
                 .select('id, submitted_at, score, total_possible, started_at')
-                .eq('registration_id', registrationId)
+                .eq('registration_id', activeRegistrationId)
                 .maybeSingle();
             if (existingByReg) existing = existingByReg;
         }
@@ -231,7 +245,7 @@ export async function POST(request) {
         const totalPossible = assigned.reduce((sum, q) => sum + q.points, 0);
 
         // 6. Auto-register Walk-In if needed
-        let finalRegistrationId = registrationId;
+        let finalRegistrationId = activeRegistrationId;
         const cookieStore = await cookies();
         const hasQrSession = !!cookieStore.get(`qr_session_${eventId}`)?.value;
 

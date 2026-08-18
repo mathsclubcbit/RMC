@@ -13,6 +13,14 @@ export async function POST(request) {
 
         const supabase = createAdminClient();
 
+        const cookieStore = await cookies();
+        
+        // If they already have an active session for this event, no need to claim again
+        const hasSession = !!cookieStore.get(`qr_session_${eventId}`)?.value;
+        if (hasSession) {
+            return NextResponse.json({ success: true, message: 'Existing session found' });
+        }
+
         // Validate the QR code using the RPC
         const { data: isValid, error: rpcErr } = await supabase.rpc('increment_qr_scan', { qr_id: entryCode });
         
@@ -22,9 +30,6 @@ export async function POST(request) {
 
         // Generate a simple token for cookie
         const claimToken = Math.random().toString(36).substring(2, 15);
-        
-        // Await the cookies() call as required in Next.js 15
-        const cookieStore = await cookies();
         
         // Set HTTP-only cookie valid for 10 minutes (600 seconds)
         cookieStore.set(`qr_session_${eventId}`, claimToken, {
