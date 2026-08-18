@@ -40,7 +40,7 @@ function generateEventId() {
     return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export async function GET() {
+export async function GET(request) {
     if (!hasSupabaseConfig()) {
         return NextResponse.json([], { status: 200 });
     }
@@ -69,10 +69,14 @@ export async function GET() {
                 date: row.date,
                 createdAt: row.created_at,
                 updatedAt: row.updated_at,
-            }))
-            .filter(event => event.isHidden !== true);
+            }));
 
-        return NextResponse.json(events);
+        const url = new URL(request.url);
+        const includeHidden = url.searchParams.get('includeHidden') === 'true';
+
+        const filteredEvents = includeHidden ? events : events.filter(event => event.isHidden !== true);
+
+        return NextResponse.json(filteredEvents);
     } catch (error) {
         console.error('Error reading events:', error);
         return NextResponse.json({ error: 'Failed to load events' }, { status: 500 });
