@@ -58,13 +58,22 @@ export default function QuizLandingClient({ eventId, entryCode }) {
 
     const handleStart = async () => {
         setError("");
-        if (!form.name.trim()) return setError("Please enter your name to start the quiz");
-        if (!form.email.trim()) return setError("Please enter your email to start the quiz");
+        
+        if (!form.name.trim()) return setError("Please enter your full name.");
+        
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!form.email.trim()) return setError("Please enter your email address.");
+        if (!emailRegex.test(form.email.trim())) return setError("Please enter a valid email address format (e.g. name@domain.com).");
         
         if (entryCode) {
-            if (!form.phone.trim()) return setError("Please enter your phone number");
-            if (!form.rollNo.trim()) return setError("Please enter your roll number");
-            if (!form.department.trim()) return setError("Please enter your department");
+            const cleanPhone = form.phone.trim().replace(/\D/g, '');
+            if (!form.phone.trim()) return setError("Please enter your phone number.");
+            if (cleanPhone.length < 10) return setError("Please enter a valid phone number (at least 10 digits).");
+            
+            if (!form.rollNo.trim()) return setError("Please enter your roll number.");
+            if (form.rollNo.trim().length < 3) return setError("Please enter a valid roll number.");
+            
+            if (!form.department.trim()) return setError("Please enter your department.");
         }
 
         setIsStarting(true);

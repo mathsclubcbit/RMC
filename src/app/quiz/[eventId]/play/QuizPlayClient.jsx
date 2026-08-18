@@ -362,7 +362,7 @@ export default function QuizPlayClient({ eventId }) {
                 <div className="lg:w-80 flex-shrink-0">
                     <div className="sticky top-28 p-6 rounded-3xl bg-white/[0.02] border border-white/5 backdrop-blur-md shadow-2xl">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xs text-white/50 uppercase tracking-[0.2em] font-bold">Mission Control</h3>
+                            <h3 className="text-xs text-white/50 uppercase tracking-[0.2em] font-bold">Quiz Progress</h3>
                             <HelpCircle className="w-4 h-4 text-white/20 hover:text-white/60 transition-colors cursor-help" title="Hotkeys: 1-4 (Select), Arrows (Navigate), F (Flag)" />
                         </div>
                         
@@ -415,14 +415,14 @@ export default function QuizPlayClient({ eventId }) {
                                 disabled={isSubmitting}
                                 className="w-full py-4 rounded-xl bg-teal-500/10 border border-teal-500/30 hover:bg-teal-500/20 text-teal-300 hover:text-teal-200 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                             >
-                                <Send className="w-4 h-4" /> Abort & Submit
+                                <Send className="w-4 h-4" /> Submit Quiz
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Confirm Modal (Extraction Protocol) */}
+            {/* Confirm Modal */}
             {showConfirm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowConfirm(false)} />
@@ -433,20 +433,20 @@ export default function QuizPlayClient({ eventId }) {
                             <Send className="w-10 h-10 text-teal-400" />
                         </div>
                         
-                        <h2 className="text-2xl font-black mb-2 uppercase tracking-tight">Initiate Extraction?</h2>
+                        <h2 className="text-2xl font-black mb-2 uppercase tracking-tight">Submit Quiz?</h2>
                         <p className="text-sm text-white/50 mb-6">
-                            Are you ready to submit your operation data?
+                            Are you ready to submit your final answers?
                         </p>
                         
                         <div className="bg-black/50 border border-white/5 rounded-2xl p-4 mb-8">
                             <div className="flex justify-between items-center mb-2">
-                                <span className="text-xs text-white/40 uppercase tracking-widest font-bold">Locked Targets</span>
+                                <span className="text-xs text-white/40 uppercase tracking-widest font-bold">Answered Questions</span>
                                 <span className="text-sm font-mono text-emerald-400 font-bold">{totalAnswered} / {questions.length}</span>
                             </div>
                             
                             {totalAnswered < questions.length && (
                                 <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider flex items-center gap-2 justify-center">
-                                    <AlertTriangle className="w-4 h-4" /> {questions.length - totalAnswered} Targets Pending
+                                    <AlertTriangle className="w-4 h-4" /> {questions.length - totalAnswered} Questions Pending
                                 </div>
                             )}
                         </div>
