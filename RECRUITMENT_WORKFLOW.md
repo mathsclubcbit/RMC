@@ -29,5 +29,5 @@ This document explains the step-by-step recruitment journey for new members appl
 - The candidate gets an automated email with the interview details.
 - To make communication easier, the dashboard also gives you a quick link to message the candidate directly on WhatsApp.
 
-## 6. Final Decision
+## 6. Final Decisio
 - After conducting the interviews, team heads and the council convene to make the final selection and officially welcome the new members to the team!
