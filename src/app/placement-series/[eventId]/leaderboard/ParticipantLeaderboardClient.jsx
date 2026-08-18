@@ -7,7 +7,7 @@ import Link from "next/link";
 const TABS = [
     { id: "overall", label: "Overall", icon: Trophy },
     { id: "contest", label: "Contest Champions", icon: Swords },
-    { id: "daily", label: "Daily Stars", icon: Flame },
+    { id: "daily", label: "Streaks", icon: Flame },
 ];
 
 export default function ParticipantLeaderboardClient({ eventId }) {
@@ -66,12 +66,13 @@ export default function ParticipantLeaderboardClient({ eventId }) {
     };
 
     const getScoreLabel = () => {
-        if (activeTab === "daily") return "Questions";
+        if (activeTab === "daily") return "Streak";
+        if (activeTab === "contest") return "Contest Pts";
         return "Points";
     };
 
     const getScoreValue = (p) => {
-        if (activeTab === "daily") return p.dailyQuestionsAnswered;
+        if (activeTab === "daily") return p.streakCurrent;
         if (activeTab === "contest") return p.contestScore;
         return p.totalPoints;
     };
@@ -108,7 +109,7 @@ export default function ParticipantLeaderboardClient({ eventId }) {
                                         : 'bg-white/5 border-white/10 text-white/60 hover:border-teal-500/40 hover:text-white hover:bg-white/10'
                                 }`}
                             >
-                                <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${tab.id === 'daily' && isActive ? 'fill-black text-black' : tab.id === 'daily' ? 'fill-orange-500 text-orange-500' : ''}`} />
                                 {tab.label}
                             </button>
                         );
@@ -183,7 +184,10 @@ export default function ParticipantLeaderboardClient({ eventId }) {
                                         onMouseLeave={() => setHoveredScore(null)}
                                         onClick={() => setHoveredScore(hoveredScore === p.participantId ? null : p.participantId)}
                                     >
-                                        <span className={`font-mono font-extrabold text-xs sm:text-base px-2.5 sm:px-3.5 py-1 rounded-lg cursor-pointer transition-all ${isMe ? 'bg-teal-500 text-black shadow-[0_0_10px_rgba(45,212,191,0.5)]' : 'bg-black/50 border border-white/10 text-teal-300'}`}>
+                                        <span className={`font-mono font-extrabold text-xs sm:text-base px-2.5 sm:px-3.5 py-1 rounded-lg cursor-pointer transition-all flex items-center justify-center gap-1 ${isMe ? 'bg-teal-500 text-black shadow-[0_0_10px_rgba(45,212,191,0.5)]' : 'bg-black/50 border border-white/10 text-teal-300'}`}>
+                                            {activeTab === "daily" && (
+                                                <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-orange-500 text-orange-500 shrink-0 drop-shadow-[0_0_6px_rgba(249,115,22,0.6)]" />
+                                            )}
                                             {scoreVal}
                                         </span>
                                         {/* Breakdown tooltip on hover — only on overall tab */}
@@ -209,7 +213,7 @@ export default function ParticipantLeaderboardClient({ eventId }) {
                                     </div>
 
                                     <div className="w-16 sm:w-20 shrink-0 hidden md:flex justify-center items-center gap-1.5">
-                                        <Flame className={`w-4 h-4 ${p.streakCurrent > 2 ? 'text-orange-500' : 'text-white/30'}`} />
+                                        <Flame className={`w-4 h-4 ${p.streakCurrent > 0 ? 'fill-orange-500 text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]' : 'text-white/20'}`} />
                                         <span className="font-mono font-bold text-sm">{p.streakCurrent}</span>
                                     </div>
                                     <div className="w-28 sm:w-32 shrink-0 hidden md:flex justify-center">

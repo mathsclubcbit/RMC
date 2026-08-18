@@ -3,8 +3,46 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
     Loader2, Download, RefreshCw, ChevronLeft, ChevronRight,
-    Check, Copy
+    Check, Copy, Lightbulb, HelpCircle, FileText, Building2
 } from "lucide-react";
+
+// ── Company logo lookup ──────────────────────────────────────────────────────
+// Maps lowercased company name/tag -> key used in /api/proxy-logo?company=KEY
+// Keys must match LOCAL_LOGO_MAP in the proxy route
+const COMPANY_KEY_MAP = {
+    tcs:             'tcs',
+    'tata':          'tcs',
+    wipro:           'wipro',
+    infosys:         'infosys',
+    cognizant:       'cognizant',
+    hcl:             'hcl',
+    'hcl tech':      'hcl',
+    hcltech:         'hcl',
+    google:          'google',
+    microsoft:       'microsoft',
+    amazon:          'amazon',
+    ibm:             'ibm',
+    salesforce:      'salesforce',
+    deloitte:        'deloitte',
+    goldman:         'goldman',
+    'goldman sachs': 'goldman',
+    wipro:           'wipro',
+};
+
+function getCompanyKey(tags = [], category = '') {
+    const candidates = [
+        ...tags.filter(t => !String(t).startsWith('q_no:')).map(t => String(t).toLowerCase()),
+        String(category).toLowerCase()
+    ];
+    for (const c of candidates) {
+        if (COMPANY_KEY_MAP[c]) return COMPANY_KEY_MAP[c];
+        // Partial match
+        for (const [key, logoKey] of Object.entries(COMPANY_KEY_MAP)) {
+            if (c.includes(key) || key.includes(c)) return logoKey;
+        }
+    }
+    return null;
+}
 
 // Helper to wrap text into multiple lines
 function wrapText(ctx, text, maxWidth) {
@@ -44,19 +82,31 @@ export default function StoryClient({ eventId }) {
     const [downloadDone, setDownloadDone] = useState(false);
     const [copiedDone, setCopiedDone] = useState(false);
 
+    // Story Mode: 'question' or 'explanation'
+    const [storyMode, setStoryMode] = useState("question");
+
     // Custom editable question state
     const [customQuestionText, setCustomQuestionText] = useState(
-        "Statements: 1. All programmers are logical.\n2. Some logical people are mathematicians.\n3. No mathematician is careless.\nWhat follows?"
+        "In a 100 m race, A beats B by either 10 m or 2 seconds. Find A's speed."
     );
     const [customOptions, setCustomOptions] = useState([
-        "Only I follows",
-        "I and II follows",
-        "Only II follows",
-        "None follows"
+        "50/9 m/s",
+        "5 m/s",
+        "6 m/s",
+        "45/8 m/s"
     ]);
-    const [footerText, setFooterText] = useState("Link in story to submit your answer");
+    const [customCorrectOption, setCustomCorrectOption] = useState(0);
+    const [customExplanation, setCustomExplanation] = useState(
+        "Since A beats B by 10 m or 2 sec, B covers 10 m in 2 sec, so B's speed = 5 m/s.\nTime taken by B to run 100 m = 100/5 = 20 sec.\nTime taken by A = 20 - 2 = 18 sec.\nTherefore, A's speed = 100/18 = 50/9 m/s."
+    );
+
+    const [footerText, setFooterText] = useState("Link in story to solve & submit");
     const [showFooter, setShowFooter] = useState(true);
 
+    // Company logo
+    const [companyLogo, setCompanyLogo] = useState(null);   // domain string or null
+    const [showCompanyLogo, setShowCompanyLogo] = useState(true);
+    const logoImgRef = useRef(null);
     const canvasRef = useRef(null);
     const templateImgRef = useRef(null);
 
@@ -76,7 +126,7 @@ export default function StoryClient({ eventId }) {
         const W = 1080;
         const H = 1920;
 
-        // Base Background
+        // 1. Base Background & Template
         if (templateImgRef.current && templateImgRef.current.complete && templateImgRef.current.naturalWidth > 0) {
             ctx.drawImage(templateImgRef.current, 0, 0, W, H);
         } else {
@@ -93,7 +143,7 @@ export default function StoryClient({ eventId }) {
             ctx.fillText("PLACEMENT SERIES 4.0", 540, 390);
         }
 
-        // Question text
+        // 2. Question text in designated box (Y: 794 - 1207)
         const qText = customQuestionText || (questions[currentIdx] ? questions[currentIdx].questionText : "");
 
         if (qText) {
@@ -129,68 +179,160 @@ export default function StoryClient({ eventId }) {
             ctx.restore();
         }
 
-        // 4 Option Boxes
-        const currentOptions = customOptions[0] ? customOptions : (questions[currentIdx] ? questions[currentIdx].options : ["A", "B", "C", "D"]);
-        const optionCoords = [
-            { x: 107, y: 1432, letter: "A" },
-            { x: 566, y: 1432, letter: "B" },
-            { x: 107, y: 1626, letter: "C" },
-            { x: 566, y: 1626, letter: "D" }
-        ];
+        // 3. Lower Area: Question Mode (4 Options) vs Explanation Mode (Full Solution Card)
+        if (storyMode === "question") {
+            // ── 4 Option Boxes ──
+            const currentOptions = customOptions[0] ? customOptions : (questions[currentIdx] ? questions[currentIdx].options : ["A", "B", "C", "D"]);
+            const optionCoords = [
+                { x: 107, y: 1432, letter: "A" },
+                { x: 566, y: 1432, letter: "B" },
+                { x: 107, y: 1626, letter: "C" },
+                { x: 566, y: 1626, letter: "D" }
+            ];
 
-        optionCoords.forEach(({ x, y, letter }, i) => {
-            const optVal = currentOptions[i] || `Option ${letter}`;
+            optionCoords.forEach(({ x, y, letter }, i) => {
+                const optVal = currentOptions[i] || `Option ${letter}`;
+
+                ctx.save();
+                // Circular Badge (52px diameter)
+                ctx.fillStyle = "#12161E";
+                ctx.beginPath();
+                ctx.arc(x + 44, y + 50, 26, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Letter
+                ctx.font = "800 26px 'Outfit', sans-serif";
+                ctx.fillStyle = "#F9FAFB";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(letter, x + 44, y + 51);
+
+                // Option Text
+                let optFontSize = 38;
+                const maxOptWidth = 310;
+
+                for (let size = 38; size >= 20; size -= 2) {
+                    ctx.font = `800 ${size}px 'Outfit', 'Plus Jakarta Sans', sans-serif`;
+                    const testLines = wrapText(ctx, optVal, maxOptWidth);
+                    if (testLines.length <= 2) {
+                        optFontSize = size;
+                        break;
+                    }
+                }
+
+                ctx.font = `800 ${optFontSize}px 'Outfit', 'Plus Jakarta Sans', sans-serif`;
+                ctx.fillStyle = "#0D1117";
+                ctx.textAlign = "left";
+                ctx.textBaseline = "middle";
+
+                const optLines = wrapText(ctx, optVal, maxOptWidth);
+                if (optLines.length === 1) {
+                    ctx.fillText(optLines[0], x + 82, y + 51);
+                } else {
+                    const optLineHeight = optFontSize * 1.22;
+                    ctx.fillText(optLines[0], x + 82, y + 50 - optLineHeight / 2 + 2);
+                    ctx.fillText(optLines[1] || "", x + 82, y + 50 + optLineHeight / 2 + 2);
+                }
+                ctx.restore();
+            });
+        } else {
+            // ── EXPLANATION / SOLUTION MODE ──
+            // Remove options entirely and render a dedicated explanation card
+            const correctLetter = String.fromCharCode(65 + (customCorrectOption >= 0 ? customCorrectOption : 0));
+            const explText = customExplanation.trim() || "No explanation provided for this question.";
 
             ctx.save();
-            // Circular Badge (52px diameter)
-            ctx.fillStyle = "#12161E";
+            const cardX = 95;
+            const cardY = 1380;
+            const cardWidth = 890;
+            const cardHeight = 350;
+            const radius = 28;
+
+            // Frosted Background Card
+            ctx.fillStyle = "#111622";
             ctx.beginPath();
-            ctx.arc(x + 44, y + 50, 26, 0, Math.PI * 2);
+            ctx.moveTo(cardX + radius, cardY);
+            ctx.lineTo(cardX + cardWidth - radius, cardY);
+            ctx.quadraticCurveTo(cardX + cardWidth, cardY, cardX + cardWidth, cardY + radius);
+            ctx.lineTo(cardX + cardWidth, cardY + cardHeight - radius);
+            ctx.quadraticCurveTo(cardX + cardWidth, cardY + cardHeight, cardX + cardWidth - radius, cardY + cardHeight);
+            ctx.lineTo(cardX + radius, cardY + cardHeight);
+            ctx.quadraticCurveTo(cardX, cardY + cardHeight, cardX, cardY + cardHeight - radius);
+            ctx.lineTo(cardX, cardY + radius);
+            ctx.quadraticCurveTo(cardX, cardY, cardX + radius, cardY);
+            ctx.closePath();
             ctx.fill();
 
-            // Letter
-            ctx.font = "800 26px 'Outfit', sans-serif";
-            ctx.fillStyle = "#F9FAFB";
-            ctx.textAlign = "center";
+            // Border
+            ctx.strokeStyle = "rgba(45, 212, 191, 0.4)";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Correct Answer Tag Pill
+            const tagX = cardX + 32;
+            const tagY = cardY + 28;
+            const tagW = 340;
+            const tagH = 46;
+
+            ctx.fillStyle = "rgba(45, 212, 191, 0.15)";
+            ctx.beginPath();
+            ctx.roundRect(tagX, tagY, tagW, tagH, 12);
+            ctx.fill();
+            ctx.strokeStyle = "rgba(45, 212, 191, 0.6)";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.font = "800 20px 'Outfit', sans-serif";
+            ctx.fillStyle = "#2DD4BF";
+            ctx.textAlign = "left";
             ctx.textBaseline = "middle";
-            ctx.fillText(letter, x + 44, y + 51);
+            ctx.fillText(`✓ CORRECT OPTION: (${correctLetter})`, tagX + 16, tagY + tagH / 2 + 1);
 
-            // Option Text
-            let optFontSize = 38;
-            const maxOptWidth = 310;
+            // Explanation Header
+            ctx.font = "800 20px 'Outfit', sans-serif";
+            ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+            ctx.textAlign = "right";
+            ctx.fillText("SOLUTION & EXPLANATION", cardX + cardWidth - 32, tagY + tagH / 2 + 1);
 
-            for (let size = 38; size >= 20; size -= 2) {
-                ctx.font = `800 ${size}px 'Outfit', 'Plus Jakarta Sans', sans-serif`;
-                const testLines = wrapText(ctx, optVal, maxOptWidth);
-                if (testLines.length <= 2) {
-                    optFontSize = size;
+            // Solution Text Wrapping & Auto-scaling
+            const maxExplWidth = cardWidth - 64;
+            const maxExplHeight = cardHeight - 110;
+            let explFontSize = 30;
+
+            for (let size = 32; size >= 18; size -= 2) {
+                ctx.font = `600 ${size}px 'Outfit', 'Plus Jakarta Sans', sans-serif`;
+                const testLines = wrapText(ctx, explText, maxExplWidth);
+                const testLineHeight = size * 1.35;
+                if (testLines.length * testLineHeight <= maxExplHeight) {
+                    explFontSize = size;
                     break;
                 }
             }
 
-            ctx.font = `800 ${optFontSize}px 'Outfit', 'Plus Jakarta Sans', sans-serif`;
-            ctx.fillStyle = "#0D1117";
+            ctx.font = `600 ${explFontSize}px 'Outfit', 'Plus Jakarta Sans', sans-serif`;
+            ctx.fillStyle = "#F3F4F6";
             ctx.textAlign = "left";
-            ctx.textBaseline = "middle";
+            ctx.textBaseline = "top";
 
-            const optLines = wrapText(ctx, optVal, maxOptWidth);
-            if (optLines.length === 1) {
-                ctx.fillText(optLines[0], x + 82, y + 51);
-            } else {
-                const optLineHeight = optFontSize * 1.22;
-                ctx.fillText(optLines[0], x + 82, y + 50 - optLineHeight / 2 + 2);
-                ctx.fillText(optLines[1] || "", x + 82, y + 50 + optLineHeight / 2 + 2);
-            }
+            const explLines = wrapText(ctx, explText, maxExplWidth);
+            const explLineHeight = explFontSize * 1.38;
+            let textY = cardY + 95;
+
+            explLines.forEach((line) => {
+                ctx.fillText(line, cardX + 32, textY);
+                textY += explLineHeight;
+            });
+
             ctx.restore();
-        });
+        }
 
-        // Bottom Footer Banner
+        // 4. Bottom Footer Banner
         if (showFooter && footerText.trim()) {
             ctx.save();
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
 
-            ctx.fillStyle = "rgba(18, 22, 30, 0.48)";
+            ctx.fillStyle = "rgba(18, 22, 30, 0.65)";
             const bannerWidth = 840;
             const bannerHeight = 64;
             const bannerX = (W - bannerWidth) / 2;
@@ -217,9 +359,39 @@ export default function StoryClient({ eventId }) {
             ctx.restore();
         }
 
-    }, [customQuestionText, customOptions, questions, currentIdx, footerText, showFooter]);
+        // 5. Company Logo – bottom-right corner badge
+        if (showCompanyLogo && logoImgRef.current && logoImgRef.current.complete && logoImgRef.current.naturalWidth > 0) {
+            const logo = logoImgRef.current;
+            const badgeW = 320;
+            const badgeH = 110;
+            const badgeX = W - badgeW - 48;
+            const badgeY = H - badgeH - (showFooter && footerText.trim() ? 130 : 48);
+            const radius = 28;
 
-    // Load template image safely
+            ctx.save();
+            // Frosted pill background
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+            ctx.beginPath();
+            ctx.roundRect(badgeX, badgeY, badgeW, badgeH, radius);
+            ctx.fill();
+
+            // Fit logo inside badge with padding
+            const pad = 18;
+            const availW = badgeW - pad * 2;
+            const availH = badgeH - pad * 2;
+            const scale = Math.min(availW / logo.naturalWidth, availH / logo.naturalHeight);
+            const drawW = logo.naturalWidth * scale;
+            const drawH = logo.naturalHeight * scale;
+            const drawX = badgeX + pad + (availW - drawW) / 2;
+            const drawY = badgeY + pad + (availH - drawH) / 2;
+
+            ctx.drawImage(logo, drawX, drawY, drawW, drawH);
+            ctx.restore();
+        }
+
+    }, [customQuestionText, customOptions, customCorrectOption, customExplanation, storyMode, questions, currentIdx, footerText, showFooter, showCompanyLogo]);
+
+    // Load template image
     useEffect(() => {
         const img = new Image();
         img.src = "/story-template.png";
@@ -262,6 +434,13 @@ export default function StoryClient({ eventId }) {
                 const firstQ = data.questions[0];
                 setCustomQuestionText(firstQ.questionText);
                 setCustomOptions([...firstQ.options]);
+                setCustomCorrectOption(firstQ.correctOption ?? 0);
+                setCustomExplanation(firstQ.explanation || "");
+                // Detect logo for the first question
+                setCompanyLogo(getCompanyKey(firstQ.tags || [], firstQ.category || ''));
+                if (data.isPreviousDayFallback) {
+                    setError(`Showing questions from ${data.sourceDate} (Review / Solution Day).`);
+                }
             }
         } catch (err) {
             setError(err.message);
@@ -276,14 +455,40 @@ export default function StoryClient({ eventId }) {
         }
     }, [date, eventId, fetchQuestions]);
 
-    // When question index changes
+    // When question index changes — also update company logo
     useEffect(() => {
         if (questions.length > 0 && questions[currentIdx]) {
             const q = questions[currentIdx];
             setCustomQuestionText(q.questionText);
             setCustomOptions([...q.options]);
+            setCustomCorrectOption(q.correctOption ?? 0);
+            setCustomExplanation(q.explanation || "");
+
+            // Resolve logo
+            const domain = getCompanyKey(q.tags || [], q.category || '');
+            setCompanyLogo(domain);
         }
     }, [currentIdx, questions]);
+
+    // Load company logo image whenever companyLogo domain changes
+    useEffect(() => {
+        if (!companyLogo || !showCompanyLogo) {
+            logoImgRef.current = null;
+            drawToCanvas();
+            return;
+        }
+        const img = new Image();
+        // Use our proxy route serving local logos (no CORS issues)
+        img.src = `/api/proxy-logo?company=${encodeURIComponent(companyLogo)}`;
+        img.onload = () => {
+            logoImgRef.current = img;
+            drawToCanvas();
+        };
+        img.onerror = () => {
+            logoImgRef.current = null;
+            drawToCanvas();
+        };
+    }, [companyLogo, showCompanyLogo, drawToCanvas]);
 
     // Download PNG
     const handleDownload = () => {
@@ -293,7 +498,8 @@ export default function StoryClient({ eventId }) {
         setDownloadDone(true);
         const link = document.createElement("a");
         const qNum = currentIdx + 1;
-        link.download = `RMC-PlacementSeries-${date || 'story'}-Q${qNum}.png`;
+        const modeLabel = storyMode === 'explanation' ? 'Explanation' : 'Question';
+        link.download = `RMC-PlacementSeries-${date || 'story'}-${modeLabel}-Q${qNum}.png`;
         link.href = canvas.toDataURL("image/png");
         link.click();
 
@@ -331,20 +537,20 @@ export default function StoryClient({ eventId }) {
                 {/* ── Minimal Header ───────────────────────────────────── */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-white/10">
                     <div>
-                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
                             Story Generator
                         </h1>
                         <p className="text-xs sm:text-sm text-white/50 mt-0.5">
-                            Placement Series 4.0 · 1080 × 1920 Instagram Story
+                            Placement Series 4.0 · 1080 × 1920 Instagram &amp; WhatsApp Story
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                         <input
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-white focus:outline-none focus:border-teal-400"
+                            className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-white focus:outline-none focus:border-teal-400 [color-scheme:dark]"
                         />
                         <button
                             onClick={() => fetchQuestions(date)}
@@ -357,27 +563,63 @@ export default function StoryClient({ eventId }) {
                     </div>
                 </div>
 
-                {/* ── Question Selector Tabs ───────────────────────────── */}
-                {questions.length > 0 && (
-                    <div className="flex items-center gap-2 mb-6">
-                        {questions.map((q, idx) => (
-                            <button
-                                key={idx}
-                                onClick={() => setCurrentIdx(idx)}
-                                className={`px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
-                                    currentIdx === idx
-                                        ? "bg-teal-400 text-black font-semibold"
-                                        : "bg-white/5 text-white/70 border border-white/10 hover:bg-white/10"
-                                }`}
-                            >
-                                Question {idx + 1}
-                            </button>
-                        ))}
+                {/* ── Mode Switcher & Question Selector ─────────────────── */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    {/* Story Mode Toggle */}
+                    <div className="flex items-center bg-white/5 p-1 rounded-xl border border-white/10 w-full sm:w-auto">
+                        <button
+                            onClick={() => {
+                                setStoryMode("question");
+                                setFooterText("Link in story to solve & submit");
+                            }}
+                            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                                storyMode === "question"
+                                    ? "bg-teal-500 text-black shadow-md"
+                                    : "text-white/60 hover:text-white"
+                            }`}
+                        >
+                            <HelpCircle className="w-4 h-4" />
+                            Question Story
+                        </button>
+                        <button
+                            onClick={() => {
+                                setStoryMode("explanation");
+                                setFooterText("Full solutions on placement series portal");
+                            }}
+                            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                                storyMode === "explanation"
+                                    ? "bg-purple-500 text-white shadow-md shadow-purple-500/20"
+                                    : "text-white/60 hover:text-white"
+                            }`}
+                        >
+                            <Lightbulb className="w-4 h-4" />
+                            Explanation Story
+                        </button>
                     </div>
-                )}
+
+                    {/* Question Tabs */}
+                    {questions.length > 0 && (
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+                            {questions.map((q, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setCurrentIdx(idx)}
+                                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                                        currentIdx === idx
+                                            ? "bg-white text-black font-bold shadow"
+                                            : "bg-white/5 text-white/70 border border-white/10 hover:bg-white/10"
+                                    }`}
+                                >
+                                    Q{idx + 1} {q.category ? `· ${q.category}` : ''}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
                 {error && (
-                    <div className="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-xs">
+                    <div className="mb-6 p-3 rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-300 text-xs flex items-center gap-2">
+                        <Lightbulb className="w-4 h-4 shrink-0" />
                         {error}
                     </div>
                 )}
@@ -387,147 +629,182 @@ export default function StoryClient({ eventId }) {
                     
                     {/* Left: Clean Minimal Editor */}
                     <div className="flex flex-col gap-4">
-                        <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-4 sm:p-5">
-                            <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">
-                                Edit Question &amp; Options
-                            </h2>
+                        <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-5 shadow-xl">
+                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
+                                <h2 className="text-xs font-bold text-teal-400 uppercase tracking-wider flex items-center gap-2">
+                                    <FileText className="w-4 h-4" />
+                                    {storyMode === "question" ? "Edit Question & Options" : "Edit Question & Explanation"}
+                                </h2>
+                                <span className="text-[11px] text-white/40 font-mono">
+                                    {storyMode === "question" ? "Options Mode" : "Solution Mode"}
+                                </span>
+                            </div>
 
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 <div>
-                                    <label className="block text-[11px] font-medium text-white/40 uppercase mb-1">
-                                        Question Text
+                                    <label className="block text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-1.5">
+                                        Question Statement
                                     </label>
                                     <textarea
                                         rows={4}
                                         value={customQuestionText}
                                         onChange={(e) => setCustomQuestionText(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-xs sm:text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-teal-400 transition-colors resize-none"
-                                        placeholder="Question text..."
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-teal-400/50 resize-none font-sans"
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                    {['A', 'B', 'C', 'D'].map((letter, idx) => (
-                                        <div key={idx}>
-                                            <label className="block text-[10px] font-medium text-white/40 uppercase mb-0.5">
-                                                Option {letter}
+                                {storyMode === "question" ? (
+                                    /* Options Editor */
+                                    <div className="space-y-2.5">
+                                        <label className="block text-[11px] font-semibold text-white/50 uppercase tracking-wider">
+                                            Options (A, B, C, D)
+                                        </label>
+                                        {["A", "B", "C", "D"].map((letter, i) => (
+                                            <div key={letter} className="flex items-center gap-2">
+                                                <span className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-white/70 shrink-0 font-mono">
+                                                    {letter}
+                                                </span>
+                                                <input
+                                                    type="text"
+                                                    value={customOptions[i] || ""}
+                                                    onChange={(e) => {
+                                                        const updated = [...customOptions];
+                                                        updated[i] = e.target.value;
+                                                        setCustomOptions(updated);
+                                                    }}
+                                                    placeholder={`Option ${letter}`}
+                                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-teal-400/50"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    /* Explanation Editor */
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="block text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-1.5">
+                                                Correct Option
                                             </label>
-                                            <input
-                                                type="text"
-                                                value={customOptions[idx] || ""}
-                                                onChange={(e) => {
-                                                    const updated = [...customOptions];
-                                                    updated[idx] = e.target.value;
-                                                    setCustomOptions(updated);
-                                                }}
-                                                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-teal-400"
+                                            <div className="grid grid-cols-4 gap-2">
+                                                {["A", "B", "C", "D"].map((letter, idx) => (
+                                                    <button
+                                                        key={letter}
+                                                        type="button"
+                                                        onClick={() => setCustomCorrectOption(idx)}
+                                                        className={`py-2 rounded-xl text-xs font-bold border transition-all ${
+                                                            customCorrectOption === idx
+                                                                ? "bg-purple-500 border-purple-500 text-white shadow-md"
+                                                                : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+                                                        }`}
+                                                    >
+                                                        Option {letter}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-1.5">
+                                                Step-by-Step Explanation / Solution
+                                            </label>
+                                            <textarea
+                                                rows={5}
+                                                value={customExplanation}
+                                                onChange={(e) => setCustomExplanation(e.target.value)}
+                                                placeholder="Write step-by-step mathematical steps or reasoning here..."
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-purple-400/50 resize-none font-sans leading-relaxed"
                                             />
                                         </div>
-                                    ))}
-                                </div>
+                                    </div>
+                                )}
 
-                                <div className="pt-2 border-t border-white/10">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <label className="text-[10px] font-medium text-white/40 uppercase">
-                                            Bottom Text Banner
+                                {/* Footer Text */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <label className="text-[11px] font-semibold text-white/50 uppercase tracking-wider">
+                                            Footer Banner
                                         </label>
-                                        <label className="text-[11px] text-teal-400 cursor-pointer flex items-center gap-1">
+                                        <label className="flex items-center gap-1.5 cursor-pointer text-xs text-white/60">
                                             <input
                                                 type="checkbox"
                                                 checked={showFooter}
                                                 onChange={(e) => setShowFooter(e.target.checked)}
-                                                className="accent-teal-400 rounded"
+                                                className="rounded bg-white/10 border-white/20 text-teal-400 focus:ring-0"
                                             />
-                                            Show
+                                            Show Banner
                                         </label>
                                     </div>
-                                    <input
-                                        type="text"
-                                        value={footerText}
-                                        onChange={(e) => setFooterText(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-teal-400"
-                                    />
+                                    {showFooter && (
+                                        <input
+                                            type="text"
+                                            value={footerText}
+                                            onChange={(e) => setFooterText(e.target.value)}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-teal-400/50"
+                                        />
+                                    )}
+                                </div>
+
+                                {/* Company Logo */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <label className="text-[11px] font-semibold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+                                            <Building2 className="w-3.5 h-3.5" />
+                                            Company Logo
+                                        </label>
+                                        <label className="flex items-center gap-1.5 cursor-pointer text-xs text-white/60">
+                                            <input
+                                                type="checkbox"
+                                                checked={showCompanyLogo}
+                                                onChange={(e) => setShowCompanyLogo(e.target.checked)}
+                                                className="rounded bg-white/10 border-white/20 text-teal-400 focus:ring-0"
+                                            />
+                                            Show Logo
+                                        </label>
+                                    </div>
+                                    <div className={`text-xs px-3 py-2 rounded-xl border ${companyLogo ? 'bg-teal-500/10 border-teal-500/20 text-teal-300' : 'bg-white/5 border-white/10 text-white/30'}`}>
+                                        {companyLogo
+                                            ? <span>✓ Detected: <span className="font-bold">{companyLogo}</span></span>
+                                            : <span>No company detected from tags/category</span>
+                                        }
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col sm:flex-row gap-3">
                             <button
                                 onClick={handleDownload}
-                                className="flex-1 py-2.5 px-4 rounded-lg bg-teal-400 hover:bg-teal-300 text-black font-semibold text-xs sm:text-sm transition-colors flex items-center justify-center gap-2"
+                                className="flex-1 flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-400 text-black px-5 py-3 rounded-xl font-bold transition-all text-sm shadow-lg hover:shadow-teal-500/20 active:scale-[0.98]"
                             >
-                                {downloadDone ? (
-                                    <>
-                                        <Check className="w-4 h-4" />
-                                        <span>Downloaded!</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Download className="w-4 h-4" />
-                                        <span>Download Story PNG (1080×1920)</span>
-                                    </>
-                                )}
+                                {downloadDone ? <Check className="w-4 h-4 text-black" /> : <Download className="w-4 h-4" />}
+                                {downloadDone ? "Saved!" : "Download Story PNG"}
                             </button>
 
                             <button
                                 onClick={handleCopyImage}
-                                className="py-2.5 px-4 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs sm:text-sm font-medium transition-colors flex items-center justify-center gap-1.5"
+                                className="flex-1 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-3 rounded-xl font-bold transition-all text-sm border border-white/10 active:scale-[0.98]"
                             >
-                                {copiedDone ? (
-                                    <>
-                                        <Check className="w-4 h-4 text-teal-400" />
-                                        <span className="text-teal-300">Copied</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Copy className="w-4 h-4 text-white/50" />
-                                        <span>Copy</span>
-                                    </>
-                                )}
+                                {copiedDone ? <Check className="w-4 h-4 text-teal-400" /> : <Copy className="w-4 h-4" />}
+                                {copiedDone ? "Copied to Clipboard!" : "Copy Image"}
                             </button>
                         </div>
                     </div>
 
-                    {/* Right: Clean Canvas Preview */}
+                    {/* Right: Live Canvas Preview */}
                     <div className="flex flex-col items-center">
-                        <div className="w-full max-w-[380px]">
-                            {/* Pagination indicator */}
-                            <div className="flex items-center justify-between mb-2 text-xs text-white/40">
-                                <span>Preview (1080 × 1920)</span>
-                                {questions.length > 1 && (
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={() => setCurrentIdx(i => Math.max(0, i - 1))}
-                                            disabled={currentIdx === 0}
-                                            className="p-1 rounded hover:bg-white/10 disabled:opacity-20"
-                                        >
-                                            <ChevronLeft className="w-3.5 h-3.5" />
-                                        </button>
-                                        <span>{currentIdx + 1} / {questions.length}</span>
-                                        <button
-                                            onClick={() => setCurrentIdx(i => Math.min(questions.length - 1, i + 1))}
-                                            disabled={currentIdx === questions.length - 1}
-                                            className="p-1 rounded hover:bg-white/10 disabled:opacity-20"
-                                        >
-                                            <ChevronRight className="w-3.5 h-3.5" />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Clean Bordered Canvas Wrapper */}
-                            <div className="w-full aspect-[9/16] rounded-xl overflow-hidden border border-white/10 bg-[#363D46] shadow-xl">
-                                <canvas
-                                    ref={canvasRef}
-                                    width={1080}
-                                    height={1920}
-                                    className="w-full h-full object-contain block"
-                                />
-                            </div>
+                        <div className="w-full max-w-[360px] aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-zinc-900 relative">
+                            <canvas
+                                ref={canvasRef}
+                                width={1080}
+                                height={1920}
+                                className="w-full h-full object-contain"
+                            />
                         </div>
+                        <p className="text-[11px] text-white/40 mt-3 text-center">
+                            Live 1080 × 1920 preview · Optimized for Instagram &amp; WhatsApp Story
+                        </p>
                     </div>
-
                 </div>
             </div>
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, CalendarDays, CheckCircle2, XCircle, Flame } from "lucide-react";
+import { Loader2, CalendarDays, CheckCircle2, XCircle, Flame, Lightbulb, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 import toast from "react-hot-toast";
@@ -11,6 +11,8 @@ export default function PlacementSeriesLandingClient({ eventId }) {
     const router = useRouter();
     const [session, setSession] = useState(null);
     const [questions, setQuestions] = useState([]);
+    const [isExplanationDay, setIsExplanationDay] = useState(false);
+    const [sourceDate, setSourceDate] = useState(null);
     const [loading, setLoading] = useState(true);
 
     // Auth State
@@ -38,6 +40,8 @@ export default function PlacementSeriesLandingClient({ eventId }) {
             if (qRes.ok) {
                 const qData = await qRes.json();
                 setQuestions(qData.questions || []);
+                setIsExplanationDay(!!qData.isExplanationDay);
+                setSourceDate(qData.sourceDate || null);
             }
         } catch (error) {
             console.error("Failed to load:", error);
@@ -131,25 +135,27 @@ export default function PlacementSeriesLandingClient({ eventId }) {
         }
     };
 
-    if (loading) {
-        return <div className="min-h-screen bg-black flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-teal-400" /></div>;
-    }
-
     return (
-        <div className="min-h-[100dvh] pt-20 sm:pt-24 md:pt-28 pb-12 px-3.5 sm:px-6 lg:px-8 relative overflow-hidden">
-            {/* Ambient glows */}
-            <div className="absolute inset-0 pointer-events-none opacity-25 z-0">
-                <div className="absolute top-10 sm:top-20 left-10 sm:left-20 w-[280px] sm:w-[450px] h-[280px] sm:h-[450px] bg-teal-500/15 blur-[90px] sm:blur-[120px] rounded-full" />
-                <div className="absolute bottom-10 sm:bottom-20 right-10 sm:right-20 w-[280px] sm:w-[450px] h-[280px] sm:h-[450px] bg-blue-500/15 blur-[90px] sm:blur-[120px] rounded-full" />
+        <div className="min-h-screen bg-black text-white selection:bg-teal-500 selection:text-black">
+            {/* Background elements */}
+            <div className="fixed inset-0 pointer-events-none z-0">
+                <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-teal-500/10 via-emerald-500/5 to-transparent blur-[140px] rounded-full" />
+                <div className="absolute top-1/3 -left-40 w-[600px] h-[600px] bg-teal-600/5 blur-[150px] rounded-full" />
+                <div className="absolute top-2/3 -right-40 w-[600px] h-[600px] bg-emerald-600/5 blur-[150px] rounded-full" />
             </div>
 
-            <div className="max-w-4xl mx-auto relative z-10 space-y-8 sm:space-y-10">
-                <div className="text-center max-w-2xl mx-auto px-2">
-                    <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-black mb-3 sm:mb-4 bg-clip-text text-transparent bg-gradient-to-r from-teal-400 via-emerald-400 to-teal-200 tracking-tight">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-16 relative z-10 space-y-6 sm:space-y-8">
+                {/* Hero Header */}
+                <div className="text-center space-y-3 sm:space-y-4 max-w-2xl mx-auto">
+                    <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-teal-400 text-xs sm:text-sm font-semibold tracking-wide backdrop-blur-md">
+                        <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+                        Placement Series 4.0
+                    </div>
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-b from-white via-white/90 to-white/60 bg-clip-text text-transparent">
                         Daily Challenge
                     </h1>
                     <p className="text-white/60 text-xs sm:text-sm md:text-base leading-relaxed">
-                        Solve exactly 3 questions every day to build your streak, earn badges, and prepare for the weekly contests.
+                        Solve questions to build your streak, earn badges, and prepare for placement contests.
                     </p>
                 </div>
 
@@ -189,33 +195,53 @@ export default function PlacementSeriesLandingClient({ eventId }) {
                         </div>
                         <div className="relative z-10 w-full sm:w-auto flex items-center justify-between sm:justify-start gap-4 bg-orange-500/10 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border border-orange-500/30 shadow-[0_0_20px_rgba(249,115,22,0.12)]">
                             <div className="animate-pulse">
-                                <Flame className={`w-5 h-5 sm:w-6 sm:h-6 ${session.streakCurrent > 0 ? 'text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.8)]' : 'text-white/30'}`} />
+                                <Flame className={`w-5 h-5 sm:w-6 sm:h-6 ${session.streakCurrent > 0 ? 'fill-orange-500 text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.8)]' : 'text-white/30'}`} />
                             </div>
                             <div>
                                 <p className="text-[10px] sm:text-xs text-orange-200/70 font-semibold uppercase tracking-wider mb-0.5">Current Streak</p>
                                 <div className="flex items-baseline gap-2">
                                     <p className="font-bold font-mono text-lg sm:text-xl text-orange-400">{session.streakCurrent} Days</p>
-                                    <p className="text-[10px] text-orange-300/50 hidden md:block">Keep it alive today!</p>
+                                    <p className="text-[10px] text-orange-300/50 hidden md:block">Keep it alive!</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 )}
 
+                {/* Explanation / Solution Day Banner */}
+                {isExplanationDay && (
+                    <div className="bg-gradient-to-r from-teal-500/15 via-emerald-500/15 to-teal-500/15 border border-teal-500/30 rounded-2xl sm:rounded-3xl p-5 sm:p-6 backdrop-blur-xl shadow-[0_0_30px_rgba(45,212,191,0.1)] flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-300 flex items-center justify-center shrink-0 border border-teal-500/30">
+                            <Lightbulb className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                                Solution &amp; Review Day
+                            </h3>
+                            <p className="text-xs sm:text-sm text-white/70 mt-1 leading-relaxed">
+                                Today is a review day! Check the step-by-step solutions and detailed explanations for the questions from <strong className="text-teal-300">{sourceDate}</strong>.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 <div className="space-y-4 sm:space-y-6">
-                    {questions.length === 0 ? (
+                    {loading ? (
+                        <div className="flex justify-center py-16">
+                            <Loader2 className="w-8 h-8 animate-spin text-teal-400" />
+                        </div>
+                    ) : questions.length === 0 ? (
                         <div className="text-center py-12 sm:py-16 bg-white/5 border border-white/10 rounded-2xl sm:rounded-3xl p-6">
                             <CalendarDays className="w-10 h-10 sm:w-12 sm:h-12 text-white/20 mx-auto mb-4" />
                             <h3 className="text-lg sm:text-xl font-bold">No Questions Yet</h3>
-                            <p className="text-white/50 text-xs sm:text-sm mt-2">Today's challenges haven't been posted. Check back soon!</p>
+                            <p className="text-white/50 text-xs sm:text-sm mt-2">Questions haven't been posted yet. Check back soon!</p>
                         </div>
                     ) : (
                         questions.map((q, idx) => {
-                            const isSubmitted = !!q.submission;
+                            const isSubmitted = !!q.submission || isExplanationDay;
                             
                             return (
-                                <div key={q.id} className="bg-white/5 border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 relative overflow-hidden group hover:border-teal-500/40 hover:shadow-[0_0_30px_rgba(45,212,191,0.08)] transition-all duration-300 hover:-translate-y-0.5 backdrop-blur-xl">
-                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500/0 via-teal-500/0 to-teal-500/0 group-hover:from-teal-500/50 group-hover:via-emerald-500/50 group-hover:to-teal-500/50 transition-all duration-500" />
+                                <div key={q.id} className="bg-white/5 border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 relative overflow-hidden group hover:border-teal-500/40 hover:shadow-[0_0_30px_rgba(45,212,191,0.08)] transition-all duration-300 backdrop-blur-xl">
                                     <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6 relative z-10">
                                         <div className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center font-extrabold text-sm sm:text-lg border border-teal-500/20 shadow-inner">
                                             {idx + 1}
@@ -223,6 +249,11 @@ export default function PlacementSeriesLandingClient({ eventId }) {
                                         <div className="min-w-0 flex-1">
                                             <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-2">
                                                 <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 bg-white/10 rounded-md text-white/70">{q.category}</span>
+                                                {q.tags && q.tags.length > 0 && q.tags.filter(t => !String(t).startsWith('q_no:')).map((t, tI) => (
+                                                    <span key={tI} className="text-[10px] sm:text-xs font-bold px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded-md border border-purple-500/30">
+                                                        {t}
+                                                    </span>
+                                                ))}
                                                 <span className={`text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-md shadow-sm border ${
                                                     q.difficulty === 'hard' ? 'bg-gradient-to-r from-red-500/20 to-red-600/20 border-red-500/30 text-red-300' : 
                                                     q.difficulty === 'medium' ? 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border-yellow-500/30 text-yellow-300' : 
@@ -235,11 +266,18 @@ export default function PlacementSeriesLandingClient({ eventId }) {
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3.5 pl-0 md:pl-14 mt-2 sm:mt-4">
                                         {q.options.map((opt, oIdx) => {
-                                            const isSelected = isSubmitted && q.submission.selectedOption === oIdx;
+                                            const isSelected = isSubmitted && q.submission?.selectedOption === oIdx;
+                                            const isCorrectOption = isExplanationDay ? (oIdx === q.correctOption) : (isSubmitted && q.submission?.isCorrect && isSelected);
                                             
-                                            // Determine styles if submitted
-                                            let btnClass = "bg-black/50 border-white/10 hover:border-teal-500/50 hover:bg-white/10 text-white/80 hover:text-white hover:scale-[1.01] hover:shadow-md cursor-pointer active:scale-95";
-                                            if (isSubmitted) {
+                                            // Determine styles
+                                            let btnClass = "bg-black/50 border-white/10 hover:border-teal-500/50 hover:bg-white/10 text-white/80 hover:text-white cursor-pointer active:scale-95";
+                                            if (isExplanationDay) {
+                                                if (oIdx === q.correctOption) {
+                                                    btnClass = "bg-emerald-500/20 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)] text-emerald-200 cursor-default";
+                                                } else {
+                                                    btnClass = "bg-black/40 border-white/5 text-white/40 cursor-default opacity-60";
+                                                }
+                                            } else if (isSubmitted) {
                                                 if (isSelected) {
                                                     btnClass = q.submission.isCorrect 
                                                         ? "bg-green-500/20 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)] text-green-300 scale-[1.01] z-10"
@@ -252,18 +290,22 @@ export default function PlacementSeriesLandingClient({ eventId }) {
                                             return (
                                                 <button 
                                                     key={oIdx}
-                                                    disabled={isSubmitted || submittingId === q.id}
+                                                    disabled={isSubmitted || isExplanationDay || submittingId === q.id}
                                                     onClick={() => submitAnswer(q.id, oIdx)}
-                                                    className={`p-4 rounded-xl border text-left flex items-center gap-3 transition-all duration-200 transform ${btnClass} ${submittingId === q.id ? 'scale-[0.98] opacity-80' : ''}`}
+                                                    className={`p-4 rounded-xl border text-left flex items-center gap-3 transition-all duration-200 transform ${btnClass}`}
                                                 >
-                                                    <span className="w-6 h-6 shrink-0 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold font-mono">
-                                                        {String.fromCharCode(65 + oIdx)}
+                                                    <span className={`w-6 h-6 shrink-0 rounded-full border flex items-center justify-center text-xs font-bold font-mono ${
+                                                        isExplanationDay && oIdx === q.correctOption 
+                                                            ? 'bg-emerald-500 border-emerald-500 text-black' 
+                                                            : 'bg-white/5 border-white/10 text-white/70'
+                                                    }`}>
+                                                        {isExplanationDay && oIdx === q.correctOption ? <Check className="w-3.5 h-3.5" /> : String.fromCharCode(65 + oIdx)}
                                                     </span>
                                                     <span className="font-medium">{opt}</span>
                                                     
-                                                    {isSubmitted && isSelected && (
+                                                    {!isExplanationDay && isSubmitted && isSelected && (
                                                         <div className="ml-auto">
-                                                            {q.submission.isCorrect ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                                                            {q.submission?.isCorrect ? <CheckCircle2 className="w-5 h-5 text-green-400" /> : <XCircle className="w-5 h-5 text-red-400" />}
                                                         </div>
                                                     )}
                                                 </button>
@@ -271,11 +313,16 @@ export default function PlacementSeriesLandingClient({ eventId }) {
                                         })}
                                     </div>
 
-                                    {isSubmitted && q.submission.explanation && (
+                                    {/* Explanation rendering */}
+                                    {((isSubmitted && q.submission?.explanation) || (isExplanationDay && q.explanation)) && (
                                         <div className="mt-6 pl-0 md:pl-14">
-                                            <div className="p-4 rounded-xl bg-teal-500/5 border border-teal-500/20">
-                                                <p className="text-sm font-bold text-teal-400 mb-1">Explanation</p>
-                                                <p className="text-white/70 text-sm leading-relaxed">{q.submission.explanation}</p>
+                                            <div className="p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-teal-500/10 border border-teal-500/30 text-teal-100 shadow-[0_0_20px_rgba(45,212,191,0.08)]">
+                                                <p className="text-xs sm:text-sm font-bold text-teal-400 mb-1.5 flex items-center gap-1.5 uppercase tracking-wider">
+                                                    <Lightbulb className="w-4 h-4" /> Explanation &amp; Solution
+                                                </p>
+                                                <p className="text-white/80 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
+                                                    {q.submission?.explanation || q.explanation}
+                                                </p>
                                             </div>
                                         </div>
                                     )}

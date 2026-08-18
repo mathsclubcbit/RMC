@@ -35,8 +35,9 @@ export async function GET(request) {
             query = query.order('contest_score', { ascending: false })
                          .order('streak_longest', { ascending: false });
         } else if (tab === 'daily') {
-            query = query.order('daily_questions_answered', { ascending: false })
-                         .order('streak_current', { ascending: false });
+            query = query.order('streak_current', { ascending: false })
+                         .order('streak_longest', { ascending: false })
+                         .order('daily_questions_answered', { ascending: false });
         } else {
             // Overall — sort by total_points (new unified column)
             query = query.order('total_points', { ascending: false })

@@ -93,26 +93,20 @@ export async function POST(request) {
             throw insertErr;
         }
 
-        // 7. Update Streak Logic
+        // 7. Update Streak / Days Count Logic (Cumulative days attempted — increments on each new calendar date)
         const { data: dbUser } = await admin
             .from('ps_participants')
             .select('streak_current, streak_longest, last_daily_date')
             .eq('id', participant.participantId)
             .single();
 
-        let newStreak = dbUser.streak_current;
-        let newLongest = dbUser.streak_longest;
+        let newStreak = dbUser?.streak_current || 0;
+        let newLongest = dbUser?.streak_longest || 0;
         
-        if (dbUser.last_daily_date !== todayStr) {
-            const yesterdayStr = new Date(Date.now() - 86400000).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-            
-            if (dbUser.last_daily_date === yesterdayStr) {
-                newStreak += 1; // Continued streak
-            } else {
-                newStreak = 1; // Broken streak
-            }
-            
-            newLongest = Math.max(newLongest, newStreak);
+        if (dbUser?.last_daily_date !== todayStr) {
+            // New attendance date: increment streak by 1 (no expiration)
+            newStreak = (dbUser?.streak_current || 0) + 1;
+            newLongest = Math.max(dbUser?.streak_longest || 0, newStreak);
 
             // Update participant table
             await admin

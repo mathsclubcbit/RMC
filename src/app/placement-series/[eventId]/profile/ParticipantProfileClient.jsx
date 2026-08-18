@@ -402,7 +402,7 @@ export default function ParticipantProfileClient({ eventId }) {
                             <div className="grid grid-cols-3 gap-2.5 sm:gap-3 w-full sm:max-w-md mx-auto sm:mx-0">
                                 <div className="flex flex-col items-center sm:items-start gap-0.5 bg-orange-500/10 border border-orange-500/20 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl">
                                     <div className="flex items-center gap-1 text-orange-400">
-                                        <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 drop-shadow-[0_0_6px_rgba(249,115,22,0.8)]" />
+                                        <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-orange-500 text-orange-500 drop-shadow-[0_0_6px_rgba(249,115,22,0.8)]" />
                                         <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-white/40">Streak</span>
                                     </div>
                                     <div className="font-mono font-bold text-base sm:text-xl text-white">{session.streakCurrent}</div>

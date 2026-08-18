@@ -423,7 +423,7 @@ export default function DailyStatsDashboard({ eventId, initialTotalParticipants 
                     <div className="rounded-2xl border border-white/10 bg-black/40 p-5 md:p-6">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-white/5">
                             <div className="flex items-center gap-2">
-                                <Flame className="w-5 h-5 text-amber-400" />
+                                <Flame className="w-5 h-5 fill-orange-500 text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.8)]" />
                                 <h3 className="text-base font-bold text-white">Streak Dynamics & Retention</h3>
                             </div>
                             <span className="text-xs font-mono text-white/40">

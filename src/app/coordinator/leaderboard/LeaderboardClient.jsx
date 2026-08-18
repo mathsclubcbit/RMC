@@ -110,13 +110,13 @@ export default function LeaderboardClient({ eventId }) {
                                     </span>
                                 </div>
                                 <div className="col-span-2 flex justify-center items-center gap-1.5">
-                                    <Flame className={`w-4 h-4 ${p.streakCurrent > 2 ? 'text-orange-500' : 'text-white/30'}`} />
+                                    <Flame className={`w-4 h-4 ${p.streakCurrent > 0 ? 'fill-orange-500 text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]' : 'text-white/20'}`} />
                                     <span className="font-mono font-bold">{p.streakCurrent}</span>
                                 </div>
                                 <div className="col-span-2 flex justify-center">
                                     <div className="flex -space-x-2">
                                         {p.badges.slice(0, 3).map((b, i) => (
-                                            <div key={b.id} className="w-8 h-8 rounded-full bg-black border-2 border-white/10 flex items-center justify-center text-lg z-10 hover:z-20 relative group" title={b.badgeLabel}>
+                                            <div key={b.id || b.badgeType || b.badge_type || `${b.badgeLabel}-${i}`} className="w-8 h-8 rounded-full bg-black border-2 border-white/10 flex items-center justify-center text-lg z-10 hover:z-20 relative group" title={b.badgeLabel}>
                                                 {b.badgeIcon}
                                             </div>
                                         ))}
@@ -187,7 +187,7 @@ export default function LeaderboardClient({ eventId }) {
                                             </div>
                                         </div>
                                         <div className="bg-black/50 border border-white/10 rounded-xl px-4 py-2 flex items-center gap-2">
-                                            <Flame className="w-4 h-4 text-orange-400" />
+                                            <Flame className="w-4 h-4 fill-orange-500 text-orange-400" />
                                             <div>
                                                 <div className="text-[10px] uppercase text-white/50">Current Streak</div>
                                                 <div className="font-bold font-mono">{selectedParticipant.streakCurrent}</div>
@@ -208,8 +208,8 @@ export default function LeaderboardClient({ eventId }) {
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                        {selectedParticipant.badges.map(b => (
-                                            <div key={b.id} className="bg-gradient-to-br from-white/10 to-white/5 border border-white/10 p-3 rounded-xl flex flex-col items-center justify-center text-center group hover:border-teal-500/40 transition-colors">
+                                        {selectedParticipant.badges.map((b, i) => (
+                                            <div key={b.id || b.badgeType || b.badge_type || `${b.badgeLabel}-${i}`} className="bg-gradient-to-br from-white/10 to-white/5 border border-white/10 p-3 rounded-xl flex flex-col items-center justify-center text-center group hover:border-teal-500/40 transition-colors">
                                                 <span className="text-4xl mb-2 group-hover:scale-110 transition-transform drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">{b.badgeIcon}</span>
                                                 <span className="text-xs font-bold text-white/90">{b.badgeLabel}</span>
                                             </div>
