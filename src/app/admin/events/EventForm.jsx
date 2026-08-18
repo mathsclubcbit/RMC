@@ -301,6 +301,7 @@ const defaultEvent = {
     eventType: "General",
     venueType: "Offline",
     status: "Registration Open",
+    isHidden: false,
     description: "",
     year: "",
     registrationFee: "",
@@ -343,6 +344,17 @@ const defaultEvent = {
         winner: "",
         runnerUp: "",
         participation: ""
+    },
+    // Quiz specific
+    quizConfig: {
+        totalQuestions: 15,
+        durationMinutes: 20,
+        easyCount: 5,
+        mediumCount: 5,
+        hardCount: 5,
+        negativeMarking: false,
+        negativeMarkValue: 0,
+        showAnswersAfter: true
     }
 };
 
@@ -366,6 +378,15 @@ const HACKATHON_STEPS = [
     { id: 2, label: "Time & Place", icon: Calendar },
     { id: 3, label: "Registration", icon: Users },
     { id: 4, label: "Competition Details", icon: Users },
+    { id: 5, label: "Graphics", icon: ImageIcon },
+    { id: 6, label: "Security", icon: Lock },
+];
+
+const QUIZ_STEPS = [
+    { id: 1, label: "Basics", icon: CheckCircle2 },
+    { id: 2, label: "Time & Place", icon: Calendar },
+    { id: 3, label: "Registration", icon: Users },
+    { id: 4, label: "Quiz Config", icon: CheckCircle2 },
     { id: 5, label: "Graphics", icon: ImageIcon },
     { id: 6, label: "Security", icon: Lock },
 ];
@@ -417,7 +438,9 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
     // Determine which step configuration to use
     const activeSteps = event.eventType === "Hackathon" || event.eventType === "Ideathon"
         ? HACKATHON_STEPS
-        : STEPS;
+        : event.eventType === "Quiz"
+            ? QUIZ_STEPS
+            : STEPS;
 
     // --- Logic Reuse ---
     const payload = useMemo(() => {
@@ -572,7 +595,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
         // Step 1: Basics
         if (currentStep === 1) {
             return (
-                <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                <div key="step-1" className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                     {!isEdit && (
                         <Field label="Custom ID (optional)" hint="Unique URL slug (e.g., math-heist-2026)">
                             <input
@@ -605,6 +628,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                                 <option className="bg-gray-900">Ideathon</option>
                                 <option className="bg-gray-900">Seminar</option>
                                 <option className="bg-gray-900">Placement Series</option>
+                                <option className="bg-gray-900">Quiz</option>
                             </select>
                         </Field>
                         <Field label="Status">
@@ -620,6 +644,102 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                             </select>
                         </Field>
                     </div>
+
+                    <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
+                        <label className="flex items-center gap-3 text-sm text-white/90 font-medium cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={!!event.secureWalkInMode}
+                                onChange={(e) => setField("secureWalkInMode", e.target.checked)}
+                                className="w-4 h-4 accent-emerald-500"
+                            />
+                            <span className="flex items-center gap-2">
+                                Secure Walk-In Mode (Requires Live QR Scan)
+                            </span>
+                        </label>
+                        <p className="text-xs text-white/40 mt-2 pl-7">
+                            If checked, the quiz landing page will require participants to scan the dynamic QR code displayed on the Coordinator Screen to enter the arena. This prevents remote access.
+                        </p>
+                    </div>
+
+                    <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
+                        <label className="flex items-center gap-3 text-sm text-white/90 font-medium cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={!!event.isHidden}
+                                onChange={(e) => setField("isHidden", e.target.checked)}
+                                className="w-4 h-4 accent-teal-500"
+                            />
+                            <span className="flex items-center gap-2">
+                                Hide this event from the public website
+                            </span>
+                        </label>
+                        <p className="text-xs text-white/40 mt-2 pl-7">
+                            If checked, this event will only be accessible via direct link and will not show up on the main events page. Useful for testing.
+                        </p>
+                    </div>
+
+                    {event.eventType === 'Quiz' && (
+                        <div className="p-6 rounded-2xl bg-violet-500/5 border border-violet-500/20 space-y-6">
+                            <div className="flex items-center justify-between border-b border-violet-500/10 pb-4">
+                                <h3 className="text-lg font-semibold text-violet-400 flex items-center gap-2">
+                                    <CheckCircle2 className="w-5 h-5" />
+                                    Quiz Configuration
+                                </h3>
+                                <span className="px-3 py-1 bg-violet-500/20 text-violet-300 text-[10px] font-bold uppercase tracking-wider rounded-full">
+                                    {((event.quizConfig?.easyCount || 0) + (event.quizConfig?.mediumCount || 0) + (event.quizConfig?.hardCount || 0))} QUESTIONS
+                                </span>
+                            </div>
+
+                            <Field label="Total Questions" description="Auto-distributes across difficulty levels">
+                                <input
+                                    readOnly
+                                    value={(event.quizConfig?.easyCount || 0) + (event.quizConfig?.mediumCount || 0) + (event.quizConfig?.hardCount || 0)}
+                                    className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/5 text-white/50 cursor-not-allowed outline-none"
+                                />
+                            </Field>
+
+                            <div className="grid grid-cols-3 gap-4">
+                                <Field label={<span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400" /> Easy</span>} description="1 pt each">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={event.quizConfig?.easyCount || 0}
+                                        onChange={(e) => setField("quizConfig", { ...event.quizConfig, easyCount: parseInt(e.target.value) || 0 })}
+                                        className="w-full px-4 py-3 rounded-xl bg-black/40 border border-emerald-500/20 outline-none focus:border-emerald-400/50 text-center font-bold text-emerald-400"
+                                    />
+                                </Field>
+                                <Field label={<span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-amber-400" /> Medium</span>} description="2 pts each">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={event.quizConfig?.mediumCount || 0}
+                                        onChange={(e) => setField("quizConfig", { ...event.quizConfig, mediumCount: parseInt(e.target.value) || 0 })}
+                                        className="w-full px-4 py-3 rounded-xl bg-black/40 border border-amber-500/20 outline-none focus:border-amber-400/50 text-center font-bold text-amber-400"
+                                    />
+                                </Field>
+                                <Field label={<span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-red-400" /> Hard</span>} description="3 pts each">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={event.quizConfig?.hardCount || 0}
+                                        onChange={(e) => setField("quizConfig", { ...event.quizConfig, hardCount: parseInt(e.target.value) || 0 })}
+                                        className="w-full px-4 py-3 rounded-xl bg-black/40 border border-red-500/20 outline-none focus:border-red-400/50 text-center font-bold text-red-400"
+                                    />
+                                </Field>
+                            </div>
+
+                            <Field label="Duration (minutes)" description="Per participant timer">
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={event.quizConfig?.durationMinutes || 20}
+                                    onChange={(e) => setField("quizConfig", { ...event.quizConfig, durationMinutes: parseInt(e.target.value) || 20 })}
+                                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-violet-400/50"
+                                />
+                            </Field>
+                        </div>
+                    )}
                 </div>
             );
         }
@@ -627,7 +747,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
         // Step 2: Time & Place
         if (currentStep === 2) {
             return (
-                <div className="space-y-6 pb-8 animate-in slide-in-from-right-4 duration-300">
+                <div key="step-2" className="space-y-6 pb-8 animate-in slide-in-from-right-4 duration-300">
                     <Field label="Description">
                         <textarea
                             rows={5}
@@ -763,7 +883,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
         // Step 3: Registration
         if (currentStep === 3) {
             return (
-                <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                <div key="step-3" className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                     {/* Fallback Redirect Section */}
                     <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-4 mb-8">
                         <div className="flex items-center justify-between border-b border-amber-500/20 pb-4 mb-2">
@@ -888,11 +1008,144 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
             );
         }
 
-        // Step 4: Competition Details (only for Hackathon/Ideathon) OR Graphics (for regular events)
+        // Step 4: Competition Details (Hackathon/Ideathon) OR Quiz Config OR Graphics (regular)
         if (currentStep === 4) {
-            if (isHackathon) {
+            const isQuiz = event.eventType === "Quiz";
+            if (isQuiz) {
+                const qc = event.quizConfig || {};
+                const setQuizField = (field, value) => {
+                    const updated = { ...event.quizConfig, [field]: value };
+                    // Auto-default difficulty counts when totalQuestions changes
+                    if (field === 'totalQuestions') {
+                        const total = parseInt(value) || 0;
+                        const base = Math.floor(total / 3);
+                        const remainder = total % 3;
+                        updated.easyCount = base;
+                        updated.mediumCount = base + (remainder >= 1 ? 1 : 0);
+                        updated.hardCount = base + (remainder >= 2 ? 1 : 0);
+                    }
+                    // Recalculate total when individual counts change
+                    if (field === 'easyCount' || field === 'mediumCount' || field === 'hardCount') {
+                        const e = field === 'easyCount' ? (parseInt(value) || 0) : (parseInt(updated.easyCount) || 0);
+                        const m = field === 'mediumCount' ? (parseInt(value) || 0) : (parseInt(updated.mediumCount) || 0);
+                        const h = field === 'hardCount' ? (parseInt(value) || 0) : (parseInt(updated.hardCount) || 0);
+                        updated.totalQuestions = e + m + h;
+                    }
+                    setField('quizConfig', updated);
+                };
+
                 return (
-                    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                    <div key="step-4-quiz" className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                        <div className="p-6 rounded-2xl bg-violet-500/5 border border-violet-500/20 space-y-5">
+                            <div className="flex items-center justify-between border-b border-violet-500/10 pb-4">
+                                <h3 className="text-lg font-semibold text-violet-400 flex items-center gap-2">
+                                    <CheckCircle2 className="w-5 h-5" />
+                                    Quiz Configuration
+                                </h3>
+                                <span className="text-[10px] bg-violet-500/20 text-violet-400 px-2 py-1 rounded-full uppercase font-bold">
+                                    {(parseInt(qc.easyCount) || 0) + (parseInt(qc.mediumCount) || 0) + (parseInt(qc.hardCount) || 0)} Questions
+                                </span>
+                            </div>
+
+                            <Field label="Total Questions" hint="Auto-distributes across difficulty levels">
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={qc.totalQuestions || ""}
+                                    onChange={(e) => setQuizField('totalQuestions', e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-violet-400/50"
+                                    placeholder="15"
+                                />
+                            </Field>
+
+                            <div className="grid grid-cols-3 gap-4">
+                                <Field label="🟢 Easy" hint={`${1} pt each`}>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={qc.easyCount ?? ""}
+                                        onChange={(e) => setQuizField('easyCount', e.target.value)}
+                                        className="w-full px-4 py-3 rounded-xl bg-black/40 border border-emerald-500/20 outline-none focus:border-emerald-400/50 text-center text-lg font-bold text-emerald-400"
+                                    />
+                                </Field>
+                                <Field label="🟡 Medium" hint={`${2} pts each`}>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={qc.mediumCount ?? ""}
+                                        onChange={(e) => setQuizField('mediumCount', e.target.value)}
+                                        className="w-full px-4 py-3 rounded-xl bg-black/40 border border-amber-500/20 outline-none focus:border-amber-400/50 text-center text-lg font-bold text-amber-400"
+                                    />
+                                </Field>
+                                <Field label="🔴 Hard" hint={`${3} pts each`}>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={qc.hardCount ?? ""}
+                                        onChange={(e) => setQuizField('hardCount', e.target.value)}
+                                        className="w-full px-4 py-3 rounded-xl bg-black/40 border border-red-500/20 outline-none focus:border-red-400/50 text-center text-lg font-bold text-red-400"
+                                    />
+                                </Field>
+                            </div>
+
+                            <Field label="Duration (minutes)" hint="Per participant timer">
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={qc.durationMinutes || ""}
+                                    onChange={(e) => setQuizField('durationMinutes', e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-violet-400/50"
+                                    placeholder="20"
+                                />
+                            </Field>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="p-4 rounded-xl bg-black/30 border border-white/5 space-y-3">
+                                    <label className="flex items-center gap-3 text-sm text-white/90 font-medium cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={!!qc.negativeMarking}
+                                            onChange={(e) => setQuizField('negativeMarking', e.target.checked)}
+                                            className="w-4 h-4 accent-violet-400"
+                                        />
+                                        Negative Marking
+                                    </label>
+                                    {qc.negativeMarking && (
+                                        <input
+                                            type="number"
+                                            step="0.25"
+                                            min="0"
+                                            value={qc.negativeMarkValue || ""}
+                                            onChange={(e) => setQuizField('negativeMarkValue', e.target.value)}
+                                            className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 outline-none focus:border-violet-400/50 text-sm"
+                                            placeholder="Deduction per wrong answer (e.g. 0.25)"
+                                        />
+                                    )}
+                                </div>
+                                <div className="p-4 rounded-xl bg-black/30 border border-white/5">
+                                    <label className="flex items-center gap-3 text-sm text-white/90 font-medium cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={qc.showAnswersAfter !== false}
+                                            onChange={(e) => setQuizField('showAnswersAfter', e.target.checked)}
+                                            className="w-4 h-4 accent-violet-400"
+                                        />
+                                        Show correct answers after submission
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="text-xs text-white/30 text-center pt-2 border-t border-white/5">
+                                Max Score: {(parseInt(qc.easyCount) || 0) * 1 + (parseInt(qc.mediumCount) || 0) * 2 + (parseInt(qc.hardCount) || 0) * 3} pts
+                                &nbsp;•&nbsp;
+                                Easy({(parseInt(qc.easyCount) || 0)}×1) + Medium({(parseInt(qc.mediumCount) || 0)}×2) + Hard({(parseInt(qc.hardCount) || 0)}×3)
+                            </div>
+                        </div>
+                    </div>
+                );
+            } else if (isHackathon) {
+                return (
+                    <div key="step-4-hackathon" className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                         <Field label="Themes" hint="Add themes/problem statements">
                             <ThemesBuilder
                                 themes={event.themes || []}
@@ -978,16 +1231,16 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
             } else {
                 // Graphics for regular events at step 4
                 return (
-                    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                    <div key="step-4-graphics" className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                         <Field label="Event Card Image" hint="Square image for lists.">
                             <div className="flex flex-col gap-3">
-                                <input value={event.img ?? ""} onChange={(e) => setField("img", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/img.jpg" />
+                                <input value={event.img || ""} onChange={(e) => setField("img", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/img.jpg" />
                                 <input type="file" accept="image/*" onChange={(e) => setImgFile(e.target.files?.[0])} className="text-sm text-white/60 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-white/10 file:text-white hover:file:bg-white/20" />
                             </div>
                         </Field>
                         <Field label="Desktop Poster" hint="Large banner.">
                             <div className="flex flex-col gap-3">
-                                <input value={event.posterDesktop ?? ""} onChange={(e) => setField("posterDesktop", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/poster-d.jpg" />
+                                <input value={event.posterDesktop || ""} onChange={(e) => setField("posterDesktop", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/poster-d.jpg" />
                                 <input type="file" accept="image/*" onChange={(e) => setPosterDesktopFile(e.target.files?.[0])} className="text-sm text-white/60" />
                             </div>
                         </Field>
@@ -996,27 +1249,28 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
             }
         }
 
-        // Step 5: Graphics (for H/I) OR Security (for regular)
+        // Step 5: Graphics (for H/I/Quiz) OR Security (for regular)
         if (currentStep === 5) {
-            if (isHackathon) {
+            const isQuiz = event.eventType === "Quiz";
+            if (isHackathon || isQuiz) {
                 // Graphics for H/I at step 5
                 return (
-                    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                    <div key="step-5-graphics" className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                         <Field label="Event Card Image" hint="Square image for lists.">
                             <div className="flex flex-col gap-3">
-                                <input value={event.img ?? ""} onChange={(e) => setField("img", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/img.jpg" />
+                                <input value={event.img || ""} onChange={(e) => setField("img", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/img.jpg" />
                                 <input type="file" accept="image/*" onChange={(e) => setImgFile(e.target.files?.[0])} className="text-sm text-white/60 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-white/10 file:text-white hover:file:bg-white/20" />
                             </div>
                         </Field>
                         <Field label="Desktop Poster" hint="Large banner.">
                             <div className="flex flex-col gap-3">
-                                <input value={event.posterDesktop ?? ""} onChange={(e) => setField("posterDesktop", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/poster-d.jpg" />
+                                <input value={event.posterDesktop || ""} onChange={(e) => setField("posterDesktop", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/poster-d.jpg" />
                                 <input type="file" accept="image/*" onChange={(e) => setPosterDesktopFile(e.target.files?.[0])} className="text-sm text-white/60" />
                             </div>
                         </Field>
                         <Field label="Sample Presentation" hint="PPT/PDF format template for participants.">
                             <div className="flex flex-col gap-3">
-                                <input value={event.samplePpt ?? ""} onChange={(e) => setField("samplePpt", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/sample.pptx" />
+                                <input value={event.samplePpt || ""} onChange={(e) => setField("samplePpt", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/sample.pptx" />
                                 <input
                                     type="file"
                                     accept=".ppt,.pptx,.pdf"
@@ -1027,7 +1281,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                         </Field>
                         <Field label="Sample Abstract" hint="Abstract format/template for participants (especially for Ideathon).">
                             <div className="flex flex-col gap-3">
-                                <input value={event.sampleAbstract ?? ""} onChange={(e) => setField("sampleAbstract", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/sample-abstract.pdf" />
+                                <input value={event.sampleAbstract || ""} onChange={(e) => setField("sampleAbstract", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm font-mono focus:border-teal-400/50 outline-none" placeholder="/assets/sample-abstract.pdf" />
                                 <input
                                     type="file"
                                     accept=".pdf,.doc,.docx"
@@ -1041,7 +1295,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
             } else {
                 // Security for regular events at step 5
                 return (
-                    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                    <div key="step-5-security" className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                         <Field label="Coordinator Password" required={!isEdit} hint={isEdit ? "Leave empty to keep existing password" : "Used for coordinator login"}>
                             <div className="relative">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
@@ -1073,9 +1327,9 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
         }
 
         // Step 6: Security (for H/I only)
-        if (currentStep === 6 && isHackathon) {
+        if (currentStep === 6 && (isHackathon || event.eventType === "Quiz")) {
             return (
-                <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                <div key="step-6-security" className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                     <Field label="Coordinator Password" required={!isEdit} hint={isEdit ? "Leave empty to keep existing password" : "Used for coordinator login"}>
                         <div className="relative">
                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />

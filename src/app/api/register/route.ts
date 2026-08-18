@@ -48,8 +48,8 @@ export async function POST(req: NextRequest) {
         const selectedTimeSlot = formData.get('selectedTimeSlot') as string | null;
 
         // --- 1. Validation ---
-        if (!eventId || !eventName || !name || !email || !phone || !rollNo || !department || !utrId || !screenshot) {
-            return NextResponse.json({ error: 'Missing required fields or file.' }, { status: 400 });
+        if (!eventId || !eventName || !name || !email || !phone || !rollNo || !department) {
+            return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
         }
 
         // Validate Phone (10 digits)
@@ -63,17 +63,18 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Roll Number must be exactly 12 digits.' }, { status: 400 });
         }
 
-        // Validate File Size (3MB for Screenshot)
-        if (screenshot.size > 3 * 1024 * 1024) {
-            return NextResponse.json({ error: 'Screenshot file size too large. Max 3MB.' }, { status: 400 });
+        // Validate File Size (3MB for Screenshot) if provided
+        if (screenshot) {
+            if (screenshot.size > 3 * 1024 * 1024) {
+                return NextResponse.json({ error: 'Screenshot file size too large. Max 3MB.' }, { status: 400 });
+            }
+            const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+            if (!validTypes.includes(screenshot.type)) {
+                return NextResponse.json({ error: 'Invalid screenshot file type. Only JPEG, PNG, and PDF allowed.' }, { status: 400 });
+            }
         }
 
-        const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-        if (!validTypes.includes(screenshot.type)) {
-            return NextResponse.json({ error: 'Invalid screenshot file type. Only JPEG, PNG, and PDF allowed.' }, { status: 400 });
-        }
-
-        const normalizedUTR = utrId.trim().toUpperCase();
+        const normalizedUTR = utrId ? utrId.trim().toUpperCase() : '';
 
         // --- 2. Team Parsing & Validation ---
         let teamMembers: Array<{ name?: string; email?: string; rollNo?: string; phone?: string }> = [];
@@ -202,6 +203,11 @@ export async function POST(req: NextRequest) {
             }
         } catch (err) {
             console.warn('Event fetch failed, using client values:', err);
+        }
+
+        // Enforce UTR and screenshot if payment is required
+        if (expectedAmount > 0 && (!utrId || !screenshot)) {
+            return NextResponse.json({ error: 'Payment details (UTR and Screenshot) are required.' }, { status: 400 });
         }
 
         // --- Time Slot Capacity Check & Email Detail Override ---

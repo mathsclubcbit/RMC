@@ -360,6 +360,25 @@ export default async function CoordinatorDashboard() {
                                         <p className="mt-1 text-sm text-white/50 group-hover:text-white/70">Update description, posters, and details.</p>
                                     </div>
                                 </Link>
+
+                                {/* Conditional Action: Secure Walk-In (Quiz Only) */}
+                                {event?.payload?.eventType === 'Quiz' && (
+                                    <Link
+                                        href={`/coordinator/quiz/${event.id}/access`}
+                                        className="group relative h-[200px] rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden hover:border-emerald-400/30 transition-all duration-500"
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                                        <div className="absolute top-6 right-6 p-3 rounded-2xl bg-emerald-400/10 text-emerald-300 border border-emerald-400/20 group-hover:scale-110 transition-transform duration-500">
+                                            <QrCode className="w-6 h-6" />
+                                        </div>
+
+                                        <div className="absolute bottom-6 left-6 right-6">
+                                            <div className="text-[11px] font-mono text-emerald-300/80 uppercase tracking-widest mb-1">Access Control</div>
+                                            <h3 className="text-2xl font-bold text-white group-hover:text-emerald-50 transition-colors">Live QR Screen</h3>
+                                            <p className="mt-1 text-sm text-white/50 group-hover:text-white/70">Display rotating QR code for secure entry.</p>
+                                        </div>
+                                    </Link>
+                                )}
                             </div>
                         </>
                     )}

@@ -18,7 +18,7 @@ export default function EventsClient({ initialEvents }) {
         return matchesFilter && matchesSearch;
     });
 
-    const categories = ["all", "competition", "workshop", "seminar", "guest talk", "hackathon", "ideathon", "placement series"];
+    const categories = ["all", "competition", "workshop", "seminar", "guest talk", "hackathon", "ideathon", "placement series", "quiz"];
 
     return (
         <div className="min-h-screen bg-black selection:bg-teal/20 selection:text-teal font-sans">

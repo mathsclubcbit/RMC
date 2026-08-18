@@ -104,14 +104,16 @@ export const getCachedEvents = unstable_cache(
             return [];
         }
 
-        return (data || []).map((row) => ({
-            ...(row.payload || {}),
-            id: String(row.id),
-            title: row.title,
-            date: row.date,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-        }));
+        return (data || [])
+            .map((row) => ({
+                ...(row.payload || {}),
+                id: String(row.id),
+                title: row.title,
+                date: row.date,
+                createdAt: row.created_at,
+                updatedAt: row.updated_at,
+            }))
+            .filter(event => event.isHidden !== true);
     },
     ['events-list'],
     {

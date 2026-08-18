@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
  * RegistrationStepper - "Tactical Segment" Design
  * A clean, segmented progress bar with clear typographical hierarchy.
  */
-function RegistrationStepper({ currentStep, isHackathonOrIdeathon, requiresTeamStep, hasTimeSlots }) {
+function RegistrationStepper({ currentStep, isHackathonOrIdeathon, requiresTeamStep, hasTimeSlots, isQuiz }) {
     // 1. Determine base steps
     let baseSteps;
     if (isHackathonOrIdeathon) {
@@ -33,7 +33,9 @@ function RegistrationStepper({ currentStep, isHackathonOrIdeathon, requiresTeamS
     // 3. Filter valid steps (removing Team if not needed)
     const validSteps = baseSteps.filter(step => {
         const label = getStepLabel(step);
-        return !(label === 'Team' && !requiresTeamStep);
+        if (label === 'Team' && !requiresTeamStep) return false;
+        if (label === 'Payment' && isQuiz) return false;
+        return true;
     });
 
     return (

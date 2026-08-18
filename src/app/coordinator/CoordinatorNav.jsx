@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, QrCode, Edit3, LogOut, Home, ChevronRight, Users, Database, CalendarDays, Swords, Trophy, Medal, Camera } from "lucide-react";
+import { LayoutDashboard, QrCode, Edit3, LogOut, Home, ChevronRight, Users, Database, CalendarDays, Swords, Trophy, Medal, Camera, HelpCircle } from "lucide-react";
 import { useLoading } from "@/context/LoadingContext";
 
 const baseNavItems = [
@@ -21,11 +21,18 @@ const psNavItems = [
     { href: "/coordinator/leaderboard", label: "Ranks", icon: Trophy },
 ];
 
+const quizNavItems = [
+    { href: "/coordinator/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/coordinator/quiz/questions", label: "Q-Bank", icon: Database },
+    { href: "/coordinator/quiz/sessions", label: "Sessions", icon: Users },
+    { href: "/coordinator/quiz/leaderboard", label: "Ranks", icon: Trophy },
+];
+
 export default function CoordinatorNav({ eventTitle, eventType }) {
     const pathname = usePathname();
     const { startLoading } = useLoading();
     
-    const navItems = eventType === 'Placement Series' ? psNavItems : baseNavItems;
+    const navItems = eventType === 'Placement Series' ? psNavItems : eventType === 'Quiz' ? quizNavItems : baseNavItems;
 
     const handleLogout = async () => {
         try {

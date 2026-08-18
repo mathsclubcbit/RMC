@@ -131,25 +131,28 @@ export default function RegistrationClient({ eventId }) {
      *   General:  1=Personal, 2=TimeSlot, 3=Team, 4=Payment
      *   H/I:     1=Personal, 2=TimeSlot, 3=Team, 4=Submission, 5=Payment
      */
-    const getStepType = useCallback((step) => {
-        if (hasTimeSlots) {
-            if (isHackathonOrIdeathon) {
-                return ['personal', 'timeslot', 'team', 'submission', 'payment'][step - 1] || null;
-            }
-            return ['personal', 'timeslot', 'team', 'payment'][step - 1] || null;
-        }
-        if (isHackathonOrIdeathon) {
-            return ['personal', 'team', 'submission', 'payment'][step - 1] || null;
-        }
-        return ['personal', 'team', 'payment'][step - 1] || null;
-    }, [hasTimeSlots, isHackathonOrIdeathon]);
+    const isQuiz = event?.eventType === 'Quiz';
 
-    const totalSteps = useMemo(() => {
-        let steps = 3; // personal + team + payment
-        if (hasTimeSlots) steps += 1;
-        if (isHackathonOrIdeathon) steps += 1;
-        return steps;
-    }, [hasTimeSlots, isHackathonOrIdeathon]);
+    const getStepType = useCallback((step) => {
+        let steps = ['personal', 'team'];
+        if (hasTimeSlots) steps.splice(1, 0, 'timeslot');
+        if (isHackathonOrIdeathon) steps.push('submission');
+        if (!isQuiz) steps.push('payment');
+        
+        return steps[step - 1] || null;
+    }, [hasTimeSlots, isHackathonOrIdeathon, isQuiz]);
+
+    const isLastStep = useMemo(() => {
+        // Find the highest step number that is valid
+        let highest = 1;
+        for (let i = 1; i <= 5; i++) {
+            const type = getStepType(i);
+            if (!type) continue;
+            if (type === 'team' && !requiresTeamStep) continue;
+            highest = i;
+        }
+        return currentStep >= highest;
+    }, [currentStep, getStepType, requiresTeamStep]);
 
     // Event Highlights Banner - Removed in favor of new Info Grid
 
@@ -230,8 +233,9 @@ export default function RegistrationClient({ eventId }) {
     const handleSubmit = useCallback(async (e) => {
         e?.preventDefault();
 
-        const lastStep = totalSteps;
-        if (!validateStep(lastStep)) return;
+        e?.preventDefault();
+
+        if (!validateStep(currentStep)) return;
 
         setIsSubmitting(true);
         setErrorMessage('');
@@ -295,7 +299,7 @@ export default function RegistrationClient({ eventId }) {
         } finally {
             setIsSubmitting(false);
         }
-    }, [eventId, event, formData, teamMembers, screenshot, pptFile, abstract, amountToPay, currentTeamSize, isHackathonOrIdeathon, validateStep, setErrorMessage, totalSteps, hasTimeSlots, selectedTimeSlot]);
+    }, [eventId, event, formData, teamMembers, screenshot, pptFile, abstract, amountToPay, currentTeamSize, isHackathonOrIdeathon, validateStep, setErrorMessage, isLastStep, hasTimeSlots, selectedTimeSlot, currentStep]);
 
     // Loading state
     if (isLoading) {
@@ -468,17 +472,8 @@ export default function RegistrationClient({ eventId }) {
                         <div className="grid grid-cols-2 gap-4 mb-12">
                             <MetricWrapper icon={Calendar} label="Date" value={event.date} />
                             <MetricWrapper icon={Clock} label="Type" value={event.eventType} />
-                            <MetricWrapper icon={MapPin} label="Location" value={event.location || "Online"} />
-                            <MetricWrapper icon={Banknote} label="Fee" value={amountToPay === 0 ? "Free" : `₹${amountToPay}`} />
                         </div>
 
-                        {/* About */}
-                        <div className="mb-12">
-                            <h3 className="text-sm font-bold text-zinc-200 uppercase tracking-widest mb-4">About Event</h3>
-                            <p className="text-sm text-zinc-400 leading-relaxed">
-                                {event.description || "No description available."}
-                            </p>
-                        </div>
 
                         {/* Rules */}
                         {event.rules?.length > 0 && (
@@ -497,9 +492,6 @@ export default function RegistrationClient({ eventId }) {
 
                         {/* Footer Links */}
                         <div className="mt-auto pt-8 border-t border-white/5 flex gap-6">
-                            <button onClick={() => setShowDetails(true)} className="text-xs text-zinc-500 hover:text-white hover:underline uppercase tracking-widest transition-colors font-mono">
-                                View Full Details
-                            </button>
                             {isHackathonOrIdeathon && (
                                 <div className="flex gap-4 ml-auto">
                                     {event?.sampleAbstract && isIdeathon && (
@@ -564,6 +556,7 @@ export default function RegistrationClient({ eventId }) {
                                                 isHackathonOrIdeathon={isHackathonOrIdeathon}
                                                 requiresTeamStep={requiresTeamStep}
                                                 hasTimeSlots={hasTimeSlots}
+                                                isQuiz={isQuiz}
                                             />
                                         </div>
 
@@ -605,11 +598,11 @@ export default function RegistrationClient({ eventId }) {
                                                 </button>
                                             )}
                                             <button
-                                                onClick={currentStep < totalSteps ? nextStep : handleSubmit}
+                                                onClick={!isLastStep ? nextStep : handleSubmit}
                                                 disabled={isSubmitting}
                                                 className="flex-1 px-6 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                {isSubmitting ? 'Processing...' : (currentStep < totalSteps ? 'Continue' : 'Submit Registration')}
+                                                {isSubmitting ? 'Processing...' : (!isLastStep ? 'Continue' : 'Submit Registration')}
                                             </button>
                                         </div>
                                     </>
@@ -631,11 +624,11 @@ export default function RegistrationClient({ eventId }) {
                                     </button>
                                 )}
                                 <button
-                                    onClick={currentStep < totalSteps ? nextStep : handleSubmit}
+                                    onClick={!isLastStep ? nextStep : handleSubmit}
                                     disabled={isSubmitting}
-                                    className="flex-1 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs rounded-sm"
+                                    className="flex-1 py-4 bg-white text-black font-bold uppercase tracking-widest text-xs rounded-sm disabled:opacity-50"
                                 >
-                                    {isSubmitting ? 'Processing...' : (currentStep < totalSteps ? 'Continue' : 'Submit')}
+                                    {isSubmitting ? 'Processing...' : (!isLastStep ? 'Continue' : 'Submit')}
                                 </button>
                             </div>
                         </div>

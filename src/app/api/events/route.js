@@ -61,14 +61,16 @@ export async function GET() {
             return NextResponse.json({ error: 'Failed to load events' }, { status: 500 });
         }
 
-        const events = (data || []).map((row) => ({
-            ...(row.payload || {}),
-            id: String(row.id),
-            title: row.title,
-            date: row.date,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-        }));
+        const events = (data || [])
+            .map((row) => ({
+                ...(row.payload || {}),
+                id: String(row.id),
+                title: row.title,
+                date: row.date,
+                createdAt: row.created_at,
+                updatedAt: row.updated_at,
+            }))
+            .filter(event => event.isHidden !== true);
 
         return NextResponse.json(events);
     } catch (error) {
