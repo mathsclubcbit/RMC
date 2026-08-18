@@ -220,7 +220,7 @@ export default function QuizPlayClient({ eventId }) {
             {/* Tab Switch Warning */}
             {tabWarning && (
                 <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-2xl bg-red-500/90 backdrop-blur-md text-white font-bold text-sm flex items-center gap-3 animate-in slide-in-from-top-4 shadow-[0_0_40px_rgba(239,68,68,0.5)]">
-                    <AlertOctagon className="w-5 h-5 animate-pulse" /> FOCUS LOST! Return to arena immediately. ({tabSwitchCount}/3)
+                    <AlertOctagon className="w-5 h-5 animate-pulse" /> FOCUS LOST! Return to the quiz immediately. ({tabSwitchCount}/3)
                 </div>
             )}
 

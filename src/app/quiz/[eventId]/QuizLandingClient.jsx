@@ -13,9 +13,30 @@ export default function QuizLandingClient({ eventId, entryCode }) {
     const [error, setError] = useState("");
     const [existingSession, setExistingSession] = useState(null);
 
+    const [fatalError, setFatalError] = useState("");
+
     useEffect(() => {
+        if (entryCode) {
+            claimQR();
+        }
         fetchEvent();
     }, []);
+
+    const claimQR = async () => {
+        try {
+            const res = await fetch("/api/quiz/claim-qr", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ eventId, entryCode })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setFatalError(data.error || "Failed to claim QR code");
+            }
+        } catch (err) {
+            setFatalError("Network error while claiming QR code");
+        }
+    };
 
     const fetchEvent = async () => {
         try {
@@ -37,8 +58,8 @@ export default function QuizLandingClient({ eventId, entryCode }) {
 
     const handleStart = async () => {
         setError("");
-        if (!form.name.trim()) return setError("Please enter your name to enter the arena");
-        if (!form.email.trim()) return setError("Please enter your email to enter the arena");
+        if (!form.name.trim()) return setError("Please enter your name to start the quiz");
+        if (!form.email.trim()) return setError("Please enter your email to start the quiz");
         
         if (entryCode) {
             if (!form.phone.trim()) return setError("Please enter your phone number");
@@ -69,7 +90,7 @@ export default function QuizLandingClient({ eventId, entryCode }) {
             }
 
             if (!res.ok) {
-                setError(data.error || "Failed to enter arena");
+                setError(data.error || "Failed to start quiz");
                 return;
             }
 
@@ -86,7 +107,7 @@ export default function QuizLandingClient({ eventId, entryCode }) {
 
             router.push(`/quiz/${eventId}/play`);
         } catch (err) {
-            setError("Network error. Connection to arena lost.");
+            setError("Network error. Connection to server lost.");
         } finally {
             setIsStarting(false);
         }
@@ -97,7 +118,7 @@ export default function QuizLandingClient({ eventId, entryCode }) {
             <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center relative overflow-hidden">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-violet-600/20 blur-[120px] rounded-full" />
                 <Loader2 className="w-10 h-10 animate-spin text-violet-400 relative z-10" />
-                <p className="mt-4 text-violet-400/60 text-sm tracking-widest uppercase font-mono relative z-10 animate-pulse">Initializing Arena...</p>
+                <p className="mt-4 text-violet-400/60 text-sm tracking-widest uppercase font-mono relative z-10 animate-pulse">Loading Quiz...</p>
             </div>
         );
     }
@@ -113,10 +134,10 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                 {/* Header */}
                 <div className="text-center mb-12 animate-in slide-in-from-bottom-8 duration-700 fade-in fill-mode-both">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-bold uppercase tracking-[0.2em] mb-6 backdrop-blur-md shadow-[0_0_20px_rgba(139,92,246,0.15)]">
-                        <Crosshair className="w-3.5 h-3.5" /> Pre-Match Lobby
+                        <Crosshair className="w-3.5 h-3.5" /> Quiz Registration
                     </div>
                     <h1 className="text-5xl md:text-7xl font-black mb-6 bg-gradient-to-br from-white via-white to-white/40 bg-clip-text text-transparent tracking-tight">
-                        {event?.title || "Classified Operation"}
+                        {event?.title || "Quiz Event"}
                     </h1>
                     {event?.description && (
                         <p className="text-white/50 text-base max-w-xl mx-auto leading-relaxed">{event.description}</p>
@@ -131,29 +152,29 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                             <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-md relative overflow-hidden group hover:border-violet-500/30 transition-colors">
                                 <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                 <div className="text-3xl font-black text-white mb-1">{totalQuestions}</div>
-                                <div className="text-[10px] text-white/40 uppercase tracking-widest font-mono flex items-center gap-1.5"><Shield className="w-3 h-3 text-violet-400" /> Targets</div>
+                                <div className="text-[10px] text-white/40 uppercase tracking-widest font-mono flex items-center gap-1.5"><Shield className="w-3 h-3 text-violet-400" /> Questions</div>
                             </div>
                             <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-md relative overflow-hidden group hover:border-amber-500/30 transition-colors">
                                 <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                 <div className="text-3xl font-black text-white mb-1">{quizConfig.durationMinutes || 20}</div>
-                                <div className="text-[10px] text-white/40 uppercase tracking-widest font-mono flex items-center gap-1.5"><Clock className="w-3 h-3 text-amber-400" /> Mins</div>
+                                <div className="text-[10px] text-white/40 uppercase tracking-widest font-mono flex items-center gap-1.5"><Clock className="w-3 h-3 text-amber-400" /> Minutes</div>
                             </div>
                             <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-md relative overflow-hidden group hover:border-emerald-500/30 transition-colors">
                                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                 <div className="text-3xl font-black text-white mb-1">{maxScore}</div>
-                                <div className="text-[10px] text-white/40 uppercase tracking-widest font-mono flex items-center gap-1.5"><Zap className="w-3 h-3 text-emerald-400" /> Max Pt</div>
+                                <div className="text-[10px] text-white/40 uppercase tracking-widest font-mono flex items-center gap-1.5"><Zap className="w-3 h-3 text-emerald-400" /> Total Points</div>
                             </div>
                         </div>
 
                         {/* Rules of Engagement */}
                         <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-md">
                             <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-5 flex items-center gap-2">
-                                <AlertCircle className="w-4 h-4 text-white/40" /> Rules of Engagement
+                                <AlertCircle className="w-4 h-4 text-white/40" /> Quiz Instructions
                             </h3>
                             <ul className="space-y-4 text-sm text-white/70">
                                 <li className="flex items-start gap-3">
                                     <div className="w-6 h-6 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0 mt-0.5"><Zap className="w-3.5 h-3.5 text-violet-400" /></div>
-                                    <span>Questions are completely randomized. Your arena is unique.</span>
+                                    <span>Your question order and options will be randomized.</span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0 mt-0.5"><Trophy className="w-3.5 h-3.5 text-emerald-400" /></div>
@@ -162,12 +183,12 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                                 {quizConfig.negativeMarking && (
                                     <li className="flex items-start gap-3">
                                         <div className="w-6 h-6 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5"><AlertCircle className="w-3.5 h-3.5 text-red-400" /></div>
-                                        <span><strong className="text-red-400 font-semibold">Lethal Mode:</strong> -{quizConfig.negativeMarkValue} points per incorrect answer.</span>
+                                        <span><strong className="text-red-400 font-semibold">Negative Marking:</strong> -{quizConfig.negativeMarkValue} points per incorrect answer.</span>
                                     </li>
                                 )}
                                 <li className="flex items-start gap-3">
                                     <div className="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0 mt-0.5"><Clock className="w-3.5 h-3.5 text-amber-400" /></div>
-                                    <span>Timer does not pause. Switching tabs is strictly monitored.</span>
+                                    <span>The timer continues running. Do not switch tabs during the quiz.</span>
                                 </li>
                             </ul>
                         </div>
@@ -179,13 +200,13 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                             <div className="p-8 rounded-3xl bg-emerald-500/5 border border-emerald-500/20 backdrop-blur-xl text-center relative overflow-hidden shadow-[0_0_40px_rgba(16,185,129,0.1)]">
                                 <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500" />
                                 <Trophy className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
-                                <h2 className="text-2xl font-bold text-white mb-2">Operation Complete</h2>
+                                <h2 className="text-2xl font-bold text-white mb-2">Quiz Submitted</h2>
                                 <p className="text-white/50 mb-6">Score: {existingSession.score}/{existingSession.totalPossible}</p>
                                 <button
                                     onClick={() => router.push(`/quiz/${eventId}/results?sessionId=${existingSession.id}`)}
                                     className="w-full py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-sm transition-colors"
                                 >
-                                    View After Action Report
+                                    View Results
                                 </button>
                             </div>
                         ) : (
@@ -197,17 +218,23 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                                         <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
                                             <Shield className="w-8 h-8 text-red-500" />
                                         </div>
-                                        <h3 className="text-xl font-bold text-white mb-2">Access Denied</h3>
-                                        <p className="text-sm text-white/60 mb-6">This arena requires a live QR scan. Please scan the QR code displayed at the event venue to enter.</p>
+                                        <h3 className="text-xl font-bold text-white mb-2">Access Restricted</h3>
+                                        <p className="text-sm text-white/60 mb-6">This quiz requires a live QR scan. Please scan the QR code displayed at the event venue to enter.</p>
                                     </div>
                                 ) : (
                                     <>
-                                        <h3 className="text-xl font-bold text-white mb-6">Initialize Agent</h3>
+                                        <h3 className="text-xl font-bold text-white mb-6">Participant Details</h3>
 
                                         {error && (
                                             <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3 text-red-400 text-sm animate-in zoom-in-95 duration-200">
                                                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
                                                 <p>{error}</p>
+                                            </div>
+                                        )}
+                                        {fatalError && (
+                                            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3 text-red-400 text-sm animate-in zoom-in-95 duration-200">
+                                                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                                                <p>{fatalError}</p>
                                             </div>
                                         )}
 
@@ -216,8 +243,8 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                                                 <input
                                                     value={form.name}
                                                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                                                    placeholder="Agent Callsign (Full Name)"
-                                                    className="w-full px-5 py-4 rounded-xl bg-black/60 border border-white/10 outline-none focus:border-violet-500/50 focus:bg-white/[0.02] text-white placeholder:text-white/20 transition-all font-mono text-sm"
+                                                    placeholder="Full Name"
+                                                    className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-violet-500/50 focus:bg-white/10 text-white placeholder:text-white/40 transition-all font-sans text-base"
                                                 />
                                             </div>
                                             <div className="relative">
@@ -225,8 +252,8 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                                                     value={form.email}
                                                     onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                                                     type="email"
-                                                    placeholder="Secure Comms (Email)"
-                                                    className="w-full px-5 py-4 rounded-xl bg-black/60 border border-white/10 outline-none focus:border-violet-500/50 focus:bg-white/[0.02] text-white placeholder:text-white/20 transition-all font-mono text-sm"
+                                                    placeholder="Email Address"
+                                                    className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-violet-500/50 focus:bg-white/10 text-white placeholder:text-white/40 transition-all font-sans text-base"
                                                 />
                                             </div>
                                             {entryCode && (
@@ -236,16 +263,16 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                                                             <input
                                                                 value={form.phone}
                                                                 onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                                                                placeholder="Comm Link (Phone)"
-                                                                className="w-full px-5 py-4 rounded-xl bg-black/60 border border-white/10 outline-none focus:border-violet-500/50 focus:bg-white/[0.02] text-white placeholder:text-white/20 transition-all font-mono text-sm"
+                                                                placeholder="Phone Number"
+                                                                className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-violet-500/50 focus:bg-white/10 text-white placeholder:text-white/40 transition-all font-sans text-base"
                                                             />
                                                         </div>
                                                         <div className="relative">
                                                             <input
                                                                 value={form.rollNo}
                                                                 onChange={e => setForm(f => ({ ...f, rollNo: e.target.value }))}
-                                                                placeholder="Agent ID (Roll No)"
-                                                                className="w-full px-5 py-4 rounded-xl bg-black/60 border border-white/10 outline-none focus:border-violet-500/50 focus:bg-white/[0.02] text-white placeholder:text-white/20 transition-all font-mono text-sm"
+                                                                placeholder="Roll Number"
+                                                                className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-violet-500/50 focus:bg-white/10 text-white placeholder:text-white/40 transition-all font-sans text-base"
                                                             />
                                                         </div>
                                                     </div>
@@ -253,8 +280,8 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                                                         <input
                                                             value={form.department}
                                                             onChange={e => setForm(f => ({ ...f, department: e.target.value }))}
-                                                            placeholder="Division (Department)"
-                                                            className="w-full px-5 py-4 rounded-xl bg-black/60 border border-white/10 outline-none focus:border-violet-500/50 focus:bg-white/[0.02] text-white placeholder:text-white/20 transition-all font-mono text-sm"
+                                                            placeholder="Department"
+                                                            className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-violet-500/50 focus:bg-white/10 text-white placeholder:text-white/40 transition-all font-sans text-base"
                                                         />
                                                     </div>
                                                 </>
@@ -263,24 +290,23 @@ export default function QuizLandingClient({ eventId, entryCode }) {
 
                                         <button
                                             onClick={handleStart}
-                                            disabled={isStarting}
-                                            className="relative w-full py-4 rounded-xl bg-white text-black font-black text-sm uppercase tracking-widest overflow-hidden group/btn hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none disabled:scale-100"
+                                            disabled={isStarting || !!fatalError}
+                                            className="relative w-full py-4 rounded-xl bg-white text-black font-bold text-base transition-all disabled:opacity-50 disabled:pointer-events-none hover:bg-white/90"
                                         >
-                                            <div className="absolute inset-0 bg-gradient-to-r from-violet-400 to-fuchsia-400 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-                                            <div className="relative flex items-center justify-center gap-2 group-hover/btn:text-white transition-colors">
+                                            <div className="relative flex items-center justify-center gap-2">
                                                 {isStarting ? (
                                                     <>
-                                                        <Loader2 className="w-5 h-5 animate-spin" /> Uplinking...
+                                                        <Loader2 className="w-5 h-5 animate-spin" /> Loading...
                                                     </>
                                                 ) : (
                                                     <>
-                                                        Enter Arena <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
+                                                        Start Quiz <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
                                                     </>
                                                 )}
                                             </div>
                                         </button>
-                                        <p className="mt-4 text-[10px] text-white/30 text-center uppercase tracking-widest font-mono">
-                                            Timer deploys immediately upon entry
+                                        <p className="mt-4 text-xs text-white/40 text-center">
+                                            Timer starts immediately after joining
                                         </p>
                                     </>
                                 )}

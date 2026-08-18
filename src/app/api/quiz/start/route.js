@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
 
 export const runtime = 'nodejs';
 
@@ -102,14 +103,12 @@ export async function POST(request) {
         }
 
         if (payload.secureWalkInMode) {
-            if (!entryCode) {
-                return NextResponse.json({ error: 'This arena requires a live QR scan to enter.' }, { status: 401 });
-            }
+            const cookieStore = await cookies();
+            const qrSessionToken = cookieStore.get(`qr_session_${eventId}`)?.value;
             
-            const { data: isValid, error: rpcErr } = await supabase.rpc('increment_qr_scan', { qr_id: entryCode });
-            
-            if (rpcErr || !isValid) {
-                return NextResponse.json({ error: 'QR Code Expired or Invalid. Please scan the current code on the screen.' }, { status: 401 });
+            // Allow if they have a valid QR session cookie OR if they have a valid registrationId
+            if (!qrSessionToken && !registrationId) {
+                return NextResponse.json({ error: 'This arena requires a live QR scan to enter or a valid online registration.' }, { status: 401 });
             }
         }
 
@@ -224,7 +223,11 @@ export async function POST(request) {
         }
 
         // 6.5 Auto-register Walk-In if needed
-        if (entryCode) {
+        // If they have the cookie and NO registrationId, they are a walk-in
+        const cookieStore = await cookies();
+        const hasQrSession = !!cookieStore.get(`qr_session_${eventId}`)?.value;
+
+        if (hasQrSession && !registrationId) {
             const { data: existingReg } = await supabase
                 .from('registrations')
                 .select('id')
