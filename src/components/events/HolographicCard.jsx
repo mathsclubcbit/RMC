@@ -154,7 +154,9 @@ export default function HolographicCard({ event, index }) {
                         </div>
 
                         <div className="flex items-center justify-center w-full mt-4">
-                            {isClosed ? (
+                            {event.eventType?.toLowerCase() === 'quiz' ? (
+                                null
+                            ) : isClosed ? (
                                 <div className="flex items-center gap-2 text-white/25 font-bold uppercase text-xs tracking-widest border border-white/8 px-6 py-2 rounded-full bg-white/[0.02] cursor-not-allowed select-none">
                                     <Lock className="w-3.5 h-3.5" />
                                     <span>Registration Closed</span>

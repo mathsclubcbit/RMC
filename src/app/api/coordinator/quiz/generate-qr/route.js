@@ -20,8 +20,8 @@ export async function POST(request) {
 
         const supabase = createAdminClient();
         
-        // Expiration in 6 seconds
-        const expiresAt = new Date(Date.now() + 6000).toISOString();
+        // Expiration in 20 seconds (allows for network latency even if UI refreshes every 4s)
+        const expiresAt = new Date(Date.now() + 20000).toISOString();
 
         const { data, error } = await supabase
             .from('quiz_entry_qrs')
