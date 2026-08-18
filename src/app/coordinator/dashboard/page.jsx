@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/server";
-import { LogOut, QrCode, Edit3, Users } from "lucide-react";
+import { LogOut, QrCode, Edit3, Users, Trophy, CalendarDays, Layers, ListOrdered, Award, FileQuestion } from "lucide-react";
 import { cookies } from "next/headers";
 import { unstable_noStore as noStore } from "next/cache";
 import { jwtVerify } from "jose";
 
 import { getAllRegistrations } from "@/lib/google";
+import DailyStatsDashboard from "./DailyStatsDashboard";
 
 export const dynamic = 'force-dynamic';
 
@@ -66,6 +67,14 @@ async function getCoordinatorEventAndStats() {
         eventBreakdown: []
     };
 
+    let isPlacementSeries = false;
+    let psStats = {
+        totalParticipants: 0,
+        totalContestSubmissions: 0,
+        totalDailySubmissions: 0,
+        totalBadges: 0
+    };
+
     try {
         // More efficient: Use Supabase to get counts and sums
         const { data: regs, error: statsError } = await admin
@@ -102,6 +111,38 @@ async function getCoordinatorEventAndStats() {
                 }]
             };
         }
+
+        // Detect Placement Series
+        const isPSEventType = event?.payload?.eventType === 'Placement Series' || event?.event_type === 'Placement Series';
+        const { count: pCount } = await admin.from("ps_participants")
+            .select("id", { count: 'exact', head: true })
+            .eq("event_id", eventId);
+            
+        if (pCount !== null && (pCount > 0 || isPSEventType)) {
+            isPlacementSeries = true;
+            psStats.totalParticipants = pCount || 0;
+
+            const { data: contests } = await admin.from("ps_contests").select("id").eq("event_id", eventId);
+            if (contests && contests.length > 0) {
+                const { count: cCount } = await admin.from("ps_contest_submissions")
+                    .select("id", { count: 'exact', head: true })
+                    .in("contest_id", contests.map(c => c.id));
+                psStats.totalContestSubmissions = cCount || 0;
+            }
+
+            const { data: dailies } = await admin.from("ps_daily_questions").select("id").eq("event_id", eventId);
+            if (dailies && dailies.length > 0) {
+                const { count: dCount } = await admin.from("ps_daily_submissions")
+                    .select("id", { count: 'exact', head: true })
+                    .in("daily_question_id", dailies.map(d => d.id));
+                psStats.totalDailySubmissions = dCount || 0;
+            }
+
+            const { count: bCount } = await admin.from("ps_badges")
+                .select("id", { count: 'exact', head: true })
+                .eq("event_id", eventId);
+            psStats.totalBadges = bCount || 0;
+        }
     } catch (e) {
         console.error("Failed to fetch Supabase stats for event:", eventId, e);
         stats.enabled = false;
@@ -109,7 +150,9 @@ async function getCoordinatorEventAndStats() {
 
     return {
         event,
-        stats
+        stats,
+        isPlacementSeries,
+        psStats
     };
 }
 
@@ -120,7 +163,7 @@ export default async function CoordinatorDashboard() {
         redirect("/coordinator/login");
     }
 
-    const { event, stats } = data;
+    const { event, stats, isPlacementSeries, psStats } = data;
 
     return (
         <div className="min-h-[100dvh] bg-black text-white relative overflow-hidden">
@@ -172,65 +215,154 @@ export default async function CoordinatorDashboard() {
                         </div>
                     )}
 
-                    {/* KPI Stats Row (Single Event Context) */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-5 mb-10">
-                        <StatCard label="Registrations" value={stats.totalRegistrations} accent="teal" />
-                        <StatCard label="Checked In" value={stats.totalCheckedIn} accent="emerald" />
-                        <StatCard label="Est. Revenue" value={stats.totalRevenue} isCurrency accent="amber" />
-                    </div>
-
-                    {/* Action Modules */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        {/* Primary Action: Scan */}
-                        <Link
-                            href="/coordinator/participants"
-                            className="group relative h-[200px] rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden hover:border-blue-400/30 transition-all duration-500"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
-                            <div className="absolute top-6 right-6 p-3 rounded-2xl bg-blue-400/10 text-blue-300 border border-blue-400/20 group-hover:scale-110 transition-transform duration-500">
-                                <Users className="w-6 h-6" />
+                    {/* Conditional rendering based on event type */}
+                    {isPlacementSeries ? (
+                        <>
+                            {/* PS KPI Stats Row */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-5 mb-10">
+                                <StatCard label="Participants" value={psStats.totalParticipants} accent="teal" />
+                                <StatCard label="Contest Subms" value={psStats.totalContestSubmissions} accent="violet" />
+                                <StatCard label="Daily Subms" value={psStats.totalDailySubmissions} accent="amber" />
+                                <StatCard label="Badges Earned" value={psStats.totalBadges} accent="emerald" />
                             </div>
 
-                            <div className="absolute bottom-6 left-6 right-6">
-                                <div className="text-[11px] font-mono text-blue-300/80 uppercase tracking-widest mb-1">Data Management</div>
-                                <h3 className="text-2xl font-bold text-white group-hover:text-blue-50 transition-colors">Participants</h3>
-                                <p className="mt-1 text-sm text-white/50 group-hover:text-white/70">View, search and manage all enrollees.</p>
-                            </div>
-                        </Link>
+                            {/* Live Daily Stats Dashboard */}
+                            <DailyStatsDashboard 
+                                eventId={event.id}
+                                initialTotalParticipants={psStats.totalParticipants}
+                            />
 
-                        <Link
-                            href="/coordinator/scan"
-                            className="group relative h-[200px] rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden hover:border-teal-400/30 transition-all duration-500"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-br from-teal-400/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
-                            <div className="absolute top-6 right-6 p-3 rounded-2xl bg-teal-400/10 text-teal-300 border border-teal-400/20 group-hover:scale-110 transition-transform duration-500">
-                                <QrCode className="w-6 h-6" />
+                            {/* PS Action Modules */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                {/* Leaderboard */}
+                                <Link href="/coordinator/leaderboard" className="group relative h-[180px] rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden hover:border-yellow-400/30 transition-all duration-500">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                                    <div className="absolute top-6 right-6 p-3 rounded-2xl bg-yellow-400/10 text-yellow-300 border border-yellow-400/20 group-hover:scale-110 transition-transform duration-500">
+                                        <Trophy className="w-6 h-6" />
+                                    </div>
+                                    <div className="absolute bottom-6 left-6 right-6">
+                                        <div className="text-[11px] font-mono text-yellow-300/80 uppercase tracking-widest mb-1">Global Rankings</div>
+                                        <h3 className="text-2xl font-bold text-white group-hover:text-yellow-50 transition-colors">Leaderboard</h3>
+                                        <p className="mt-1 text-sm text-white/50 group-hover:text-white/70">View overall rankings and badges.</p>
+                                    </div>
+                                </Link>
+
+                                {/* Contests */}
+                                <Link href="/coordinator/contests" className="group relative h-[180px] rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden hover:border-purple-400/30 transition-all duration-500">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                                    <div className="absolute top-6 right-6 p-3 rounded-2xl bg-purple-400/10 text-purple-300 border border-purple-400/20 group-hover:scale-110 transition-transform duration-500">
+                                        <Layers className="w-6 h-6" />
+                                    </div>
+                                    <div className="absolute bottom-6 left-6 right-6">
+                                        <div className="text-[11px] font-mono text-purple-300/80 uppercase tracking-widest mb-1">Assessments</div>
+                                        <h3 className="text-2xl font-bold text-white group-hover:text-purple-50 transition-colors">Manage Contests</h3>
+                                        <p className="mt-1 text-sm text-white/50 group-hover:text-white/70">Create and monitor weekly tests.</p>
+                                    </div>
+                                </Link>
+
+                                {/* Daily Challenges */}
+                                <Link href="/coordinator/daily" className="group relative h-[180px] rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden hover:border-amber-400/30 transition-all duration-500">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-amber-400/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                                    <div className="absolute top-6 right-6 p-3 rounded-2xl bg-amber-400/10 text-amber-300 border border-amber-400/20 group-hover:scale-110 transition-transform duration-500">
+                                        <CalendarDays className="w-6 h-6" />
+                                    </div>
+                                    <div className="absolute bottom-6 left-6 right-6">
+                                        <div className="text-[11px] font-mono text-amber-300/80 uppercase tracking-widest mb-1">Engagement</div>
+                                        <h3 className="text-2xl font-bold text-white group-hover:text-amber-50 transition-colors">Daily Questions</h3>
+                                        <p className="mt-1 text-sm text-white/50 group-hover:text-white/70">Assign and track daily problems.</p>
+                                    </div>
+                                </Link>
+
+                                {/* Question Bank */}
+                                <Link href="/coordinator/questions" className="group relative h-[180px] rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden hover:border-blue-400/30 transition-all duration-500">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                                    <div className="absolute top-6 right-6 p-3 rounded-2xl bg-blue-400/10 text-blue-300 border border-blue-400/20 group-hover:scale-110 transition-transform duration-500">
+                                        <FileQuestion className="w-6 h-6" />
+                                    </div>
+                                    <div className="absolute bottom-6 left-6 right-6">
+                                        <div className="text-[11px] font-mono text-blue-300/80 uppercase tracking-widest mb-1">Repository</div>
+                                        <h3 className="text-2xl font-bold text-white group-hover:text-blue-50 transition-colors">Question Bank</h3>
+                                        <p className="mt-1 text-sm text-white/50 group-hover:text-white/70">Add and edit global questions.</p>
+                                    </div>
+                                </Link>
+                                
+                                {/* Edit Event */}
+                                <Link href="/coordinator/edit" className="group relative h-[180px] rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden hover:border-teal-400/30 transition-all duration-500">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-teal-400/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                                    <div className="absolute top-6 right-6 p-3 rounded-2xl bg-teal-400/10 text-teal-300 border border-teal-400/20 group-hover:scale-110 transition-transform duration-500">
+                                        <Edit3 className="w-6 h-6" />
+                                    </div>
+                                    <div className="absolute bottom-6 left-6 right-6">
+                                        <div className="text-[11px] font-mono text-teal-300/80 uppercase tracking-widest mb-1">Configuration</div>
+                                        <h3 className="text-2xl font-bold text-white group-hover:text-teal-50 transition-colors">Edit Event</h3>
+                                        <p className="mt-1 text-sm text-white/50 group-hover:text-white/70">Update description and details.</p>
+                                    </div>
+                                </Link>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            {/* KPI Stats Row (Single Event Context) */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-5 mb-10">
+                                <StatCard label="Registrations" value={stats.totalRegistrations} accent="teal" />
+                                <StatCard label="Checked In" value={stats.totalCheckedIn} accent="emerald" />
+                                <StatCard label="Est. Revenue" value={stats.totalRevenue} isCurrency accent="amber" />
                             </div>
 
-                            <div className="absolute bottom-6 left-6 right-6">
-                                <div className="text-[11px] font-mono text-teal-300/80 uppercase tracking-widest mb-1">Primary Task</div>
-                                <h3 className="text-2xl font-bold text-white group-hover:text-teal-50 transition-colors">Scan Tickets</h3>
-                                <p className="mt-1 text-sm text-white/50 group-hover:text-white/70">Launch camera to verify attendees.</p>
-                            </div>
-                        </Link>
+                            {/* Action Modules */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                {/* Primary Action: Scan */}
+                                <Link
+                                    href="/coordinator/participants"
+                                    className="group relative h-[200px] rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden hover:border-blue-400/30 transition-all duration-500"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                                    <div className="absolute top-6 right-6 p-3 rounded-2xl bg-blue-400/10 text-blue-300 border border-blue-400/20 group-hover:scale-110 transition-transform duration-500">
+                                        <Users className="w-6 h-6" />
+                                    </div>
 
-                        {/* Secondary Action: Edit */}
-                        <Link
-                            href="/coordinator/edit"
-                            className="group relative h-[200px] rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden hover:border-violet-400/30 transition-all duration-500"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-br from-violet-400/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
-                            <div className="absolute top-6 right-6 p-3 rounded-2xl bg-violet-400/10 text-violet-300 border border-violet-400/20 group-hover:scale-110 transition-transform duration-500">
-                                <Edit3 className="w-6 h-6" />
-                            </div>
+                                    <div className="absolute bottom-6 left-6 right-6">
+                                        <div className="text-[11px] font-mono text-blue-300/80 uppercase tracking-widest mb-1">Data Management</div>
+                                        <h3 className="text-2xl font-bold text-white group-hover:text-blue-50 transition-colors">Participants</h3>
+                                        <p className="mt-1 text-sm text-white/50 group-hover:text-white/70">View, search and manage all enrollees.</p>
+                                    </div>
+                                </Link>
 
-                            <div className="absolute bottom-6 left-6 right-6">
-                                <div className="text-[11px] font-mono text-violet-300/80 uppercase tracking-widest mb-1">Configuration</div>
-                                <h3 className="text-2xl font-bold text-white group-hover:text-violet-50 transition-colors">Edit Event</h3>
-                                <p className="mt-1 text-sm text-white/50 group-hover:text-white/70">Update description, posters, and details.</p>
+                                <Link
+                                    href="/coordinator/scan"
+                                    className="group relative h-[200px] rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden hover:border-teal-400/30 transition-all duration-500"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-br from-teal-400/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                                    <div className="absolute top-6 right-6 p-3 rounded-2xl bg-teal-400/10 text-teal-300 border border-teal-400/20 group-hover:scale-110 transition-transform duration-500">
+                                        <QrCode className="w-6 h-6" />
+                                    </div>
+
+                                    <div className="absolute bottom-6 left-6 right-6">
+                                        <div className="text-[11px] font-mono text-teal-300/80 uppercase tracking-widest mb-1">Primary Task</div>
+                                        <h3 className="text-2xl font-bold text-white group-hover:text-teal-50 transition-colors">Scan Tickets</h3>
+                                        <p className="mt-1 text-sm text-white/50 group-hover:text-white/70">Launch camera to verify attendees.</p>
+                                    </div>
+                                </Link>
+
+                                {/* Secondary Action: Edit */}
+                                <Link
+                                    href="/coordinator/edit"
+                                    className="group relative h-[200px] rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl overflow-hidden hover:border-violet-400/30 transition-all duration-500"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-br from-violet-400/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+                                    <div className="absolute top-6 right-6 p-3 rounded-2xl bg-violet-400/10 text-violet-300 border border-violet-400/20 group-hover:scale-110 transition-transform duration-500">
+                                        <Edit3 className="w-6 h-6" />
+                                    </div>
+
+                                    <div className="absolute bottom-6 left-6 right-6">
+                                        <div className="text-[11px] font-mono text-violet-300/80 uppercase tracking-widest mb-1">Configuration</div>
+                                        <h3 className="text-2xl font-bold text-white group-hover:text-violet-50 transition-colors">Edit Event</h3>
+                                        <p className="mt-1 text-sm text-white/50 group-hover:text-white/70">Update description, posters, and details.</p>
+                                    </div>
+                                </Link>
                             </div>
-                        </Link>
-                    </div>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

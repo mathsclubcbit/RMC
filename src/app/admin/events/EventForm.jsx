@@ -604,6 +604,7 @@ export default function EventForm({ mode, initialEvent, backLink = "/admin/event
                                 <option className="bg-gray-900">Hackathon</option>
                                 <option className="bg-gray-900">Ideathon</option>
                                 <option className="bg-gray-900">Seminar</option>
+                                <option className="bg-gray-900">Placement Series</option>
                             </select>
                         </Field>
                         <Field label="Status">

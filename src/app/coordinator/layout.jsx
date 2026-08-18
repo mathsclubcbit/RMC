@@ -31,13 +31,14 @@ async function getEventInfo() {
         const admin = createAdminClient();
         const { data: event } = await admin
             .from("events")
-            .select("title")
+            .select("title, payload")
             .eq("id", payload.eventId)
             .single();
 
         return {
             eventId: payload.eventId,
-            eventTitle: event?.title || null
+            eventTitle: event?.title || null,
+            eventType: event?.payload?.eventType || null
         };
     } catch {
         return null;
@@ -50,7 +51,7 @@ export default async function CoordinatorLayout({ children }) {
     return (
         <CoordinatorLayoutClient
             eventInfo={eventInfo}
-            nav={eventInfo ? <CoordinatorNav eventTitle={eventInfo.eventTitle} /> : null}
+            nav={eventInfo ? <CoordinatorNav eventTitle={eventInfo.eventTitle} eventType={eventInfo.eventType} /> : null}
         >
             {children}
         </CoordinatorLayoutClient>

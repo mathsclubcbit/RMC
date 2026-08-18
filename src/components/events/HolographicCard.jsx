@@ -161,10 +161,10 @@ export default function HolographicCard({ event, index }) {
                                 </div>
                             ) : (
                                 <Link
-                                    href={`/register/${event.id}`}
+                                    href={event.eventType === 'Placement Series' ? `/placement-series/${event.id}` : `/register/${event.id}`}
                                     className="flex items-center gap-2 text-white font-bold uppercase text-xs tracking-widest hover:text-teal transition-colors border border-white/20 hover:border-teal/50 px-6 py-2 rounded-full bg-white/5"
                                 >
-                                    <span>Register</span>
+                                    <span>{event.eventType === 'Placement Series' ? 'View Series' : 'Register'}</span>
                                     <ArrowRight className="w-4 h-4" />
                                 </Link>
                             )}

@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient, findUserByEmail } from "@/lib/supabase/server";
 
 /**
  * Updates a team member's password.
@@ -104,24 +104,11 @@ export async function createTeamMember(teamId, email, password, fullName) {
 
         if (createError) {
             // Check if user already exists
-            if (createError.message?.includes("already registered") || createError.status === 422) {
-                // User exists -> Fetch their ID to ensure we can add them
-                // We cannot search by email easily without listUsers (which requires permission), 
-                // but we can try to find them in PROFILES.
-                // If they are not in profiles, we are in a tough spot if we can't search Auth.
-                // However, createClient() (service role) can list users.
-
-                const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
-                const existingUser = users?.find(u => u.email?.toLowerCase() === cleanEmail);
+            if (createError.message?.includes("already registered") || createError.code === "email_exists" || createError.status === 422) {
+                const existingUser = await findUserByEmail(supabaseAdmin, cleanEmail);
 
                 if (existingUser) {
                     targetUserId = existingUser.id;
-                    // If password was provided, we MIGHT want to update it? 
-                    // No, "Add Member" shouldn't overwrite password of existing user unless explicit.
-                    // But user asked "set the password...".
-                    // If the user ALREADY exists, we assume we just add them. 
-                    // Overwriting password here might be unexpected if they are an old user.
-                    // Let's NOT update password for existing users.
                 } else {
                     throw new Error("User exists but could not be retrieved. Contact admin.");
                 }
