@@ -133,13 +133,45 @@ export async function POST(request) {
             }
         }
 
-        // 3. Check for existing session
-        const { data: existing } = await supabase
+        // 3. Check for existing session by email
+        const { data: existingByEmail } = await supabase
             .from('quiz_sessions')
             .select('id, submitted_at, score, total_possible, started_at')
             .eq('event_id', eventId)
             .eq('participant_email', participantEmail.toLowerCase().trim())
-            .single();
+            .maybeSingle();
+
+        let existing = existingByEmail;
+
+        // Check by registrationId
+        if (!existing && registrationId) {
+            const { data: existingByReg } = await supabase
+                .from('quiz_sessions')
+                .select('id, submitted_at, score, total_possible, started_at')
+                .eq('registration_id', registrationId)
+                .maybeSingle();
+            if (existingByReg) existing = existingByReg;
+        }
+
+        // Check by rollNo (walk-ins)
+        if (!existing && rollNo) {
+            const { data: existingReg } = await supabase
+                .from('registrations')
+                .select('id')
+                .eq('event_id', eventId)
+                .ilike('roll_no', rollNo.trim())
+                .maybeSingle();
+
+            if (existingReg) {
+                const { data: existingByRollNoReg } = await supabase
+                    .from('quiz_sessions')
+                    .select('id, submitted_at, score, total_possible, started_at')
+                    .eq('registration_id', existingReg.id)
+                    .maybeSingle();
+                
+                if (existingByRollNoReg) existing = existingByRollNoReg;
+            }
+        }
 
         if (existing) {
             if (existing.submitted_at) {
@@ -198,12 +230,47 @@ export async function POST(request) {
 
         const totalPossible = assigned.reduce((sum, q) => sum + q.points, 0);
 
-        // 6. Create quiz session
+        // 6. Auto-register Walk-In if needed
+        let finalRegistrationId = registrationId;
+        const cookieStore = await cookies();
+        const hasQrSession = !!cookieStore.get(`qr_session_${eventId}`)?.value;
+
+        if (hasQrSession && !finalRegistrationId) {
+            const { data: existingReg } = await supabase
+                .from('registrations')
+                .select('id')
+                .eq('event_id', eventId)
+                .eq('email', participantEmail.toLowerCase().trim())
+                .maybeSingle();
+            
+            if (!existingReg) {
+                const ticketCode = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
+                const { data: newReg, error: regErr } = await supabase.from('registrations').insert({
+                    event_id: eventId,
+                    name: participantName.trim(),
+                    email: participantEmail.toLowerCase().trim(),
+                    phone: phone?.trim() || null,
+                    roll_no: rollNo?.trim() || null,
+                    department: department?.trim() || null,
+                    ticket_code: ticketCode,
+                    amount: 0,
+                    status: 'completed',
+                    payment_status: 'completed',
+                    utr_id: 'WALKIN_QUIZ'
+                }).select('id').single();
+                
+                if (newReg) finalRegistrationId = newReg.id;
+            } else {
+                finalRegistrationId = existingReg.id;
+            }
+        }
+
+        // 6.5 Create quiz session
         const { data: session, error: sessErr } = await supabase
             .from('quiz_sessions')
             .insert({
                 event_id: eventId,
-                registration_id: registrationId || null,
+                registration_id: finalRegistrationId || null,
                 participant_name: participantName.trim(),
                 participant_email: participantEmail.toLowerCase().trim(),
                 assigned_questions: assigned,
@@ -220,37 +287,6 @@ export async function POST(request) {
             }
             console.error('Error creating quiz session:', sessErr);
             return NextResponse.json({ error: 'Failed to start quiz' }, { status: 500 });
-        }
-
-        // 6.5 Auto-register Walk-In if needed
-        // If they have the cookie and NO registrationId, they are a walk-in
-        const cookieStore = await cookies();
-        const hasQrSession = !!cookieStore.get(`qr_session_${eventId}`)?.value;
-
-        if (hasQrSession && !registrationId) {
-            const { data: existingReg } = await supabase
-                .from('registrations')
-                .select('id')
-                .eq('event_id', eventId)
-                .eq('email', participantEmail.toLowerCase().trim())
-                .maybeSingle();
-            
-            if (!existingReg) {
-                const ticketCode = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
-                await supabase.from('registrations').insert({
-                    event_id: eventId,
-                    name: participantName.trim(),
-                    email: participantEmail.toLowerCase().trim(),
-                    phone: phone?.trim() || null,
-                    roll_no: rollNo?.trim() || null,
-                    department: department?.trim() || null,
-                    ticket_code: ticketCode,
-                    amount: 0,
-                    status: 'completed',
-                    payment_status: 'completed',
-                    utr_id: 'WALKIN_QUIZ'
-                });
-            }
         }
 
         // 7. Return questions to client (WITHOUT correct answers or option mapping)

@@ -116,24 +116,24 @@ export default function QuizLandingClient({ eventId, entryCode }) {
     if (loading) {
         return (
             <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center relative overflow-hidden">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-violet-600/20 blur-[120px] rounded-full" />
-                <Loader2 className="w-10 h-10 animate-spin text-violet-400 relative z-10" />
-                <p className="mt-4 text-violet-400/60 text-sm tracking-widest uppercase font-mono relative z-10 animate-pulse">Loading Quiz...</p>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-teal-600/20 blur-[120px] rounded-full" />
+                <Loader2 className="w-10 h-10 animate-spin text-teal-400 relative z-10" />
+                <p className="mt-4 text-teal-400/60 text-sm tracking-widest uppercase font-mono relative z-10 animate-pulse">Loading Quiz...</p>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white relative overflow-hidden selection:bg-violet-500/30">
+        <div className="min-h-screen bg-[#050505] text-white relative overflow-hidden selection:bg-teal-500/30">
             {/* Animated Background Orbs */}
-            <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-violet-600/10 blur-[120px] rounded-full animate-pulse duration-1000" />
+            <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-teal-600/10 blur-[120px] rounded-full animate-pulse duration-1000" />
             <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-emerald-600/10 blur-[150px] rounded-full animate-pulse duration-700" style={{ animationDelay: '1s' }} />
             <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay pointer-events-none" />
 
             <div className="relative max-w-3xl mx-auto px-4 py-16 flex flex-col min-h-screen justify-center">
                 {/* Header */}
                 <div className="text-center mb-12 animate-in slide-in-from-bottom-8 duration-700 fade-in fill-mode-both">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-bold uppercase tracking-[0.2em] mb-6 backdrop-blur-md shadow-[0_0_20px_rgba(139,92,246,0.15)]">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-bold uppercase tracking-[0.2em] mb-6 backdrop-blur-md shadow-[0_0_20px_rgba(139,92,246,0.15)]">
                         <Crosshair className="w-3.5 h-3.5" /> Quiz Registration
                     </div>
                     <h1 className="text-5xl md:text-7xl font-black mb-6 bg-gradient-to-br from-white via-white to-white/40 bg-clip-text text-transparent tracking-tight">
@@ -148,11 +148,11 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                     {/* Left Column: Stats & Rules */}
                     <div className="space-y-6 animate-in slide-in-from-left-8 duration-700 delay-150 fade-in fill-mode-both">
                         {/* HUD Stats */}
-                        <div className="grid grid-cols-3 gap-3">
-                            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-md relative overflow-hidden group hover:border-violet-500/30 transition-colors">
-                                <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-md relative overflow-hidden group hover:border-teal-500/30 transition-colors">
+                                <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                 <div className="text-3xl font-black text-white mb-1">{totalQuestions}</div>
-                                <div className="text-[10px] text-white/40 uppercase tracking-widest font-mono flex items-center gap-1.5"><Shield className="w-3 h-3 text-violet-400" /> Questions</div>
+                                <div className="text-[10px] text-white/40 uppercase tracking-widest font-mono flex items-center gap-1.5"><Shield className="w-3 h-3 text-teal-400" /> Questions</div>
                             </div>
                             <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-md relative overflow-hidden group hover:border-amber-500/30 transition-colors">
                                 <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -173,7 +173,7 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                             </h3>
                             <ul className="space-y-4 text-sm text-white/70">
                                 <li className="flex items-start gap-3">
-                                    <div className="w-6 h-6 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0 mt-0.5"><Zap className="w-3.5 h-3.5 text-violet-400" /></div>
+                                    <div className="w-6 h-6 rounded-lg bg-teal-500/10 flex items-center justify-center flex-shrink-0 mt-0.5"><Zap className="w-3.5 h-3.5 text-teal-400" /></div>
                                     <span>Your question order and options will be randomized.</span>
                                 </li>
                                 <li className="flex items-start gap-3">
@@ -211,7 +211,7 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                             </div>
                         ) : (
                             <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5 backdrop-blur-xl relative overflow-hidden group shadow-2xl">
-                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-500 to-fuchsia-500 opacity-50" />
+                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 to-teal-500 opacity-50" />
                                 
                                 {event?.payload?.secureWalkInMode && !entryCode ? (
                                     <div className="text-center py-8">
@@ -244,7 +244,7 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                                                     value={form.name}
                                                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                                                     placeholder="Full Name"
-                                                    className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-violet-500/50 focus:bg-white/10 text-white placeholder:text-white/40 transition-all font-sans text-base"
+                                                    className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-teal-500/50 focus:bg-white/10 text-white placeholder:text-white/40 transition-all font-sans text-base"
                                                 />
                                             </div>
                                             <div className="relative">
@@ -253,7 +253,7 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                                                     onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                                                     type="email"
                                                     placeholder="Email Address"
-                                                    className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-violet-500/50 focus:bg-white/10 text-white placeholder:text-white/40 transition-all font-sans text-base"
+                                                    className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-teal-500/50 focus:bg-white/10 text-white placeholder:text-white/40 transition-all font-sans text-base"
                                                 />
                                             </div>
                                             {entryCode && (
@@ -264,7 +264,7 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                                                                 value={form.phone}
                                                                 onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
                                                                 placeholder="Phone Number"
-                                                                className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-violet-500/50 focus:bg-white/10 text-white placeholder:text-white/40 transition-all font-sans text-base"
+                                                                className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-teal-500/50 focus:bg-white/10 text-white placeholder:text-white/40 transition-all font-sans text-base"
                                                             />
                                                         </div>
                                                         <div className="relative">
@@ -272,7 +272,7 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                                                                 value={form.rollNo}
                                                                 onChange={e => setForm(f => ({ ...f, rollNo: e.target.value }))}
                                                                 placeholder="Roll Number"
-                                                                className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-violet-500/50 focus:bg-white/10 text-white placeholder:text-white/40 transition-all font-sans text-base"
+                                                                className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-teal-500/50 focus:bg-white/10 text-white placeholder:text-white/40 transition-all font-sans text-base"
                                                             />
                                                         </div>
                                                     </div>
@@ -281,7 +281,7 @@ export default function QuizLandingClient({ eventId, entryCode }) {
                                                             value={form.department}
                                                             onChange={e => setForm(f => ({ ...f, department: e.target.value }))}
                                                             placeholder="Department"
-                                                            className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-violet-500/50 focus:bg-white/10 text-white placeholder:text-white/40 transition-all font-sans text-base"
+                                                            className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-teal-500/50 focus:bg-white/10 text-white placeholder:text-white/40 transition-all font-sans text-base"
                                                         />
                                                     </div>
                                                 </>

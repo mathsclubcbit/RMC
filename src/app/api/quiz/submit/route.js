@@ -47,15 +47,25 @@ export async function POST(request) {
         const negativeMarkValue = parseFloat(quizConfig.negativeMarkValue) || 0;
         const durationMinutes = quizConfig.durationMinutes || 20;
 
-        // 4. Check timer — allow 30-second grace period
+        // 4. Check timer — allow 60-second grace period for network latency
         const startedAt = new Date(session.started_at);
         const now = new Date();
         const elapsedSeconds = Math.floor((now - startedAt) / 1000);
-        const maxSeconds = durationMinutes * 60 + 30; // 30s grace
+        const maxSeconds = durationMinutes * 60 + 60; // 60s grace
 
         if (elapsedSeconds > maxSeconds) {
-            // Auto-submit with whatever was answered before timeout
-            console.warn(`Quiz session ${sessionId} submitted ${elapsedSeconds - maxSeconds + 30}s late, accepting with grace period.`);
+            console.error(`Quiz session ${sessionId} submitted ${elapsedSeconds - durationMinutes * 60}s late. Rejecting due to time limit.`);
+            // Update session as submitted with 0 score to prevent retries
+            await supabase
+                .from('quiz_sessions')
+                .update({
+                    submitted_at: now.toISOString(),
+                    score: 0,
+                    time_taken_seconds: elapsedSeconds
+                })
+                .eq('id', sessionId);
+                
+            return NextResponse.json({ error: 'Time limit exceeded. Submission rejected.' }, { status: 403 });
         }
 
         // 5. Process each answer using the option mapping

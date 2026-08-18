@@ -81,7 +81,7 @@ export default function QuizResultClient({ eventId }) {
     }
 
     if (loading && !result) {
-        return <div className="min-h-screen bg-black text-white flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-violet-400" /></div>;
+        return <div className="min-h-screen bg-black text-white flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-teal-400" /></div>;
     }
 
     const { session = {}, summary = {}, rank, totalParticipants, review } = result || {};
@@ -91,27 +91,21 @@ export default function QuizResultClient({ eventId }) {
     return (
         <div className="min-h-screen bg-black text-white px-4 py-8">
             <div className="max-w-4xl mx-auto">
-                <div className="mb-6">
-                    <Link href={`/quiz/${eventId}`} className="inline-flex items-center gap-2 text-sm text-white/50 hover:text-white transition">
-                        <ChevronLeft className="w-4 h-4" /> Back to Quiz Home
-                    </Link>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     {/* Main Score Card */}
-                    <div className="md:col-span-2 p-8 rounded-3xl bg-gradient-to-br from-violet-500/20 to-violet-900/10 border border-violet-500/20 text-center relative overflow-hidden">
-                        <div className="absolute inset-0 bg-violet-500/5 backdrop-blur-3xl" />
+                    <div className="md:col-span-2 p-8 rounded-3xl bg-gradient-to-br from-teal-500/20 to-teal-900/10 border border-teal-500/20 text-center relative overflow-hidden">
+                        <div className="absolute inset-0 bg-teal-500/5 backdrop-blur-3xl" />
                         <div className="relative z-10">
                             {result?.autoSubmitted && (
                                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold mb-4 border border-amber-500/30">
                                     <Clock className="w-3.5 h-3.5" /> Auto-submitted (Time's Up)
                                 </div>
                             )}
-                            <h2 className="text-sm uppercase tracking-widest text-violet-300/70 font-bold mb-2">Final Score</h2>
+                            <h2 className="text-sm uppercase tracking-widest text-teal-300/70 font-bold mb-2">Final Score</h2>
                             <div className="text-7xl font-black text-white mb-2 tracking-tighter drop-shadow-2xl">
                                 {score}<span className="text-3xl text-white/30 font-bold tracking-normal">/{totalPossible}</span>
                             </div>
-                            <p className="text-violet-200/60 font-medium">Great effort, {participantName}!</p>
+                            <p className="text-teal-200/60 font-medium">Great effort, {participantName}!</p>
                         </div>
                     </div>
 
@@ -136,7 +130,7 @@ export default function QuizResultClient({ eventId }) {
                         { label: "Questions", value: totalQuestions, icon: Target, color: "text-white" },
                         { label: "Correct", value: correct, icon: CheckCircle2, color: "text-emerald-400" },
                         { label: "Incorrect", value: incorrect, icon: XCircle, color: "text-red-400" },
-                        { label: "Accuracy", value: `${accuracy}%`, icon: Target, color: "text-violet-400" },
+                        { label: "Accuracy", value: `${accuracy}%`, icon: Target, color: "text-teal-400" },
                         { label: "Time Taken", value: formatTime(timeTakenSeconds), icon: Clock, color: "text-amber-400" },
                     ].map((s, idx) => (
                         <div key={idx} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col items-center justify-center text-center">
@@ -151,7 +145,7 @@ export default function QuizResultClient({ eventId }) {
                 {review && review.length > 0 && (
                     <div>
                         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                            <CheckCircle2 className="w-5 h-5 text-violet-400" />
+                            <CheckCircle2 className="w-5 h-5 text-teal-400" />
                             Question Review
                         </h3>
                         <div className="space-y-4">

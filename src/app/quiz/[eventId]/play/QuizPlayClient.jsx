@@ -197,7 +197,7 @@ export default function QuizPlayClient({ eventId }) {
     if (!sessionData) {
         return (
             <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center relative overflow-hidden">
-                <Loader2 className="w-10 h-10 animate-spin text-violet-400 relative z-10" />
+                <Loader2 className="w-10 h-10 animate-spin text-teal-400 relative z-10" />
             </div>
         );
     }
@@ -212,7 +212,7 @@ export default function QuizPlayClient({ eventId }) {
         <div className={`min-h-screen bg-[#050505] text-white flex flex-col relative overflow-hidden transition-colors duration-1000 ${isTimeCritical ? 'shadow-[inset_0_0_150px_rgba(239,68,68,0.15)]' : ''}`}>
             
             {/* Background Effects */}
-            <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-violet-600/5 to-transparent pointer-events-none" />
+            <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-teal-600/5 to-transparent pointer-events-none" />
             {isTimeCritical && (
                 <div className="absolute inset-0 bg-red-500/5 pointer-events-none animate-pulse duration-1000" />
             )}
@@ -228,14 +228,14 @@ export default function QuizPlayClient({ eventId }) {
             <div className="relative z-40 bg-black/40 backdrop-blur-xl border-b border-white/5">
                 <div className="h-1 bg-white/5 w-full">
                     <div
-                        className={`h-full transition-all duration-1000 ease-linear ${isTimeCritical ? "bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]" : "bg-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.8)]"}`}
+                        className={`h-full transition-all duration-1000 ease-linear ${isTimeCritical ? "bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]" : "bg-teal-500 shadow-[0_0_10px_rgba(139,92,246,0.8)]"}`}
                         style={{ width: `${timerPercent}%` }}
                     />
                 </div>
                 <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-6">
                         <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.02] border border-white/5">
-                            <Crosshair className="w-4 h-4 text-violet-400" />
+                            <Crosshair className="w-4 h-4 text-teal-400" />
                             <span className="text-xs font-bold tracking-widest uppercase">{sessionData.participantName}</span>
                         </div>
                         <div className="flex items-center gap-3">
@@ -271,7 +271,7 @@ export default function QuizPlayClient({ eventId }) {
                         <div key={animationKey} className="flex-1 flex flex-col animate-in slide-in-from-right-8 duration-500 fade-in fill-mode-both">
                             
                             <div className="mb-10 p-8 rounded-3xl bg-white/[0.02] border border-white/5 shadow-2xl relative">
-                                <div className="absolute top-0 left-8 w-16 h-1 bg-violet-500/50 rounded-b-full" />
+                                <div className="absolute top-0 left-8 w-16 h-1 bg-teal-500/50 rounded-b-full" />
                                 <h2 className="text-2xl md:text-3xl font-medium text-white/95 leading-relaxed tracking-tight">
                                     {question.questionText}
                                 </h2>
@@ -286,16 +286,16 @@ export default function QuizPlayClient({ eventId }) {
                                             onClick={() => selectAnswer(question.questionId, oi)}
                                             disabled={isSubmitting}
                                             className={`w-full text-left p-5 rounded-2xl border transition-all duration-200 flex items-center gap-5 group disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99] relative overflow-hidden ${isSelected
-                                                    ? "bg-violet-500/10 border-violet-500/40 shadow-[0_0_30px_rgba(139,92,246,0.15)]"
+                                                    ? "bg-teal-500/10 border-teal-500/40 shadow-[0_0_30px_rgba(139,92,246,0.15)]"
                                                     : "bg-white/[0.02] border-white/5 hover:bg-white/[0.04] hover:border-white/10"
                                                 }`}
                                         >
                                             {isSelected && (
-                                                <div className="absolute inset-0 bg-gradient-to-r from-violet-500/5 to-transparent pointer-events-none" />
+                                                <div className="absolute inset-0 bg-gradient-to-r from-teal-500/5 to-transparent pointer-events-none" />
                                             )}
                                             
                                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black border transition-all duration-300 ${isSelected
-                                                    ? "bg-violet-500 border-violet-400 text-white shadow-[0_0_15px_rgba(139,92,246,0.5)] scale-110"
+                                                    ? "bg-teal-500 border-teal-400 text-white shadow-[0_0_15px_rgba(139,92,246,0.5)] scale-110"
                                                     : "bg-black/50 border-white/10 text-white/30 group-hover:border-white/20 group-hover:text-white/60"
                                                 }`}>
                                                 {oi + 1}
@@ -305,7 +305,7 @@ export default function QuizPlayClient({ eventId }) {
                                             
                                             {isSelected && (
                                                 <div className="ml-auto animate-in zoom-in-50 duration-300">
-                                                    <CheckCircle2 className="w-6 h-6 text-violet-400 drop-shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
+                                                    <CheckCircle2 className="w-6 h-6 text-teal-400 drop-shadow-[0_0_8px_rgba(139,92,246,0.5)]" />
                                                 </div>
                                             )}
                                         </button>
@@ -350,7 +350,7 @@ export default function QuizPlayClient({ eventId }) {
                             <button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting}
-                                className="px-8 py-3 rounded-xl bg-violet-500 hover:bg-violet-400 text-white text-sm font-black uppercase tracking-widest flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 shadow-[0_0_25px_rgba(139,92,246,0.4)]"
+                                className="px-8 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-white text-sm font-black uppercase tracking-widest flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 shadow-[0_0_25px_rgba(139,92,246,0.4)]"
                             >
                                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> Complete</>}
                             </button>
@@ -377,7 +377,7 @@ export default function QuizPlayClient({ eventId }) {
                                         onClick={() => changeQuestion(idx)}
                                         disabled={isSubmitting}
                                         className={`w-full aspect-square rounded-xl text-xs font-black flex items-center justify-center border transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110 active:scale-95 ${isCurrent
-                                                ? "bg-violet-500 border-violet-400 text-white shadow-[0_0_15px_rgba(139,92,246,0.6)] scale-110 z-10"
+                                                ? "bg-teal-500 border-teal-400 text-white shadow-[0_0_15px_rgba(139,92,246,0.6)] scale-110 z-10"
                                                 : isAnswered
                                                     ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
                                                     : isFlagged
@@ -413,7 +413,7 @@ export default function QuizPlayClient({ eventId }) {
                             <button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting}
-                                className="w-full py-4 rounded-xl bg-violet-500/10 border border-violet-500/30 hover:bg-violet-500/20 text-violet-300 hover:text-violet-200 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                                className="w-full py-4 rounded-xl bg-teal-500/10 border border-teal-500/30 hover:bg-teal-500/20 text-teal-300 hover:text-teal-200 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                             >
                                 <Send className="w-4 h-4" /> Abort & Submit
                             </button>
@@ -427,10 +427,10 @@ export default function QuizPlayClient({ eventId }) {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowConfirm(false)} />
                     <div className="relative w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 text-center shadow-[0_0_50px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-300">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-500 to-emerald-500" />
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 to-emerald-500" />
                         
-                        <div className="w-20 h-20 rounded-2xl bg-violet-500/10 border border-violet-500/20 mx-auto flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(139,92,246,0.2)]">
-                            <Send className="w-10 h-10 text-violet-400" />
+                        <div className="w-20 h-20 rounded-2xl bg-teal-500/10 border border-teal-500/20 mx-auto flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(139,92,246,0.2)]">
+                            <Send className="w-10 h-10 text-teal-400" />
                         </div>
                         
                         <h2 className="text-2xl font-black mb-2 uppercase tracking-tight">Initiate Extraction?</h2>
@@ -458,7 +458,7 @@ export default function QuizPlayClient({ eventId }) {
                             <button
                                 onClick={confirmSubmit}
                                 disabled={isSubmitting}
-                                className="flex-1 py-4 rounded-xl bg-violet-500 hover:bg-violet-400 text-white font-black text-sm uppercase tracking-wider transition-all disabled:opacity-50 active:scale-95 shadow-[0_0_20px_rgba(139,92,246,0.3)] flex items-center justify-center gap-2"
+                                className="flex-1 py-4 rounded-xl bg-teal-500 hover:bg-teal-400 text-white font-black text-sm uppercase tracking-wider transition-all disabled:opacity-50 active:scale-95 shadow-[0_0_20px_rgba(139,92,246,0.3)] flex items-center justify-center gap-2"
                             >
                                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirm"}
                             </button>
