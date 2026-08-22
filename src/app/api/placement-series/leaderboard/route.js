@@ -2,15 +2,35 @@ export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
+import { requireParticipant, requireCoordinator } from '@/lib/ps-auth';
+
+// BUG-8 FIX: Mask roll number for non-authenticated or non-coordinator viewers.
+// Shows first 4 characters and replaces the rest with ****
+function maskRollNo(rollNo) {
+    if (!rollNo || rollNo.length <= 4) return '****';
+    return rollNo.substring(0, 4) + '****';
+}
 
 export async function GET(request) {
     try {
         const { searchParams } = new URL(request.url);
         const eventId = searchParams.get('eventId');
-        
+
         if (!eventId) {
             return NextResponse.json({ error: 'eventId is required' }, { status: 400 });
         }
+
+        // BUG-8 FIX: Require authentication. Check for coordinator first, then participant.
+        // Unauthenticated callers are rejected — leaderboard exposes names + roll numbers.
+        const coordinator = await requireCoordinator(request, eventId);
+        const participant = coordinator ? null : await requireParticipant(request, false);
+
+        if (!coordinator && participant?.error) {
+            return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+        }
+
+        // Coordinators see full roll numbers; participants see masked roll numbers
+        const isCoordinator = Boolean(coordinator);
 
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '50');
@@ -74,9 +94,6 @@ export async function GET(request) {
 
         // 3. Format response with computed ranks
         const formattedLeaderboard = (leaderboard || []).map((p, index) => {
-            // Daily points: attempt (5) + correct bonus is tracked in total_points.
-            // We compute daily pts as: total_points - contest_score - participation_bonus
-            // Since we can't know exact daily points from the view, expose raw fields.
             const contestScore = p.contest_score || 0;
             const totalPoints = p.total_points || 0;
 
@@ -84,7 +101,8 @@ export async function GET(request) {
                 rank: offset + index + 1,
                 participantId: p.participant_id,
                 name: p.name,
-                rollNo: p.roll_no,
+                // BUG-8 FIX: Mask roll number for non-coordinator viewers to protect PII
+                rollNo: isCoordinator ? p.roll_no : maskRollNo(p.roll_no),
                 totalPoints,
                 contestScore,
                 contestsParticipated: p.contests_participated,

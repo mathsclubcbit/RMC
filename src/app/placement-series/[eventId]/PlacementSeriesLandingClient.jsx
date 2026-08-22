@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 import toast from "react-hot-toast";
 import { createClient } from "@/lib/supabase/client";
+import MathText from "@/components/MathText";
 
 export default function PlacementSeriesLandingClient({ eventId }) {
     const router = useRouter();
@@ -260,7 +261,9 @@ export default function PlacementSeriesLandingClient({ eventId }) {
                                                     'bg-gradient-to-r from-green-500/20 to-green-600/20 border-green-500/30 text-green-300'
                                                 }`}>{q.difficulty}</span>
                                             </div>
-                                            <h3 className="text-base sm:text-lg md:text-xl font-semibold leading-relaxed text-white">{q.questionText}</h3>
+                                            <h3 className="text-base sm:text-lg md:text-xl font-semibold leading-relaxed text-white">
+                                                <MathText text={q.questionText} />
+                                            </h3>
                                         </div>
                                     </div>
 
@@ -294,17 +297,17 @@ export default function PlacementSeriesLandingClient({ eventId }) {
                                                     onClick={() => submitAnswer(q.id, oIdx)}
                                                     className={`p-4 rounded-xl border text-left flex items-center gap-3 transition-all duration-200 transform ${btnClass}`}
                                                 >
-                                                    <span className={`w-6 h-6 shrink-0 rounded-full border flex items-center justify-center text-xs font-bold font-mono ${
+                                                    <span className={`w-6 h-6 shrink-0 rounded-full border flex items-center justify-center text-xs font-bold font-mono pointer-events-none ${
                                                         isExplanationDay && oIdx === q.correctOption 
                                                             ? 'bg-emerald-500 border-emerald-500 text-black' 
                                                             : 'bg-white/5 border-white/10 text-white/70'
                                                     }`}>
                                                         {isExplanationDay && oIdx === q.correctOption ? <Check className="w-3.5 h-3.5" /> : String.fromCharCode(65 + oIdx)}
                                                     </span>
-                                                    <span className="font-medium">{opt}</span>
+                                                    <span className="font-medium pointer-events-none"><MathText text={opt} /></span>
                                                     
                                                     {!isExplanationDay && isSubmitted && isSelected && (
-                                                        <div className="ml-auto">
+                                                        <div className="ml-auto pointer-events-none">
                                                             {q.submission?.isCorrect ? <CheckCircle2 className="w-5 h-5 text-green-400" /> : <XCircle className="w-5 h-5 text-red-400" />}
                                                         </div>
                                                     )}
@@ -321,7 +324,7 @@ export default function PlacementSeriesLandingClient({ eventId }) {
                                                     <Lightbulb className="w-4 h-4" /> Explanation &amp; Solution
                                                 </p>
                                                 <p className="text-white/80 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
-                                                    {q.submission?.explanation || q.explanation}
+                                                    <MathText text={q.submission?.explanation || q.explanation} />
                                                 </p>
                                             </div>
                                         </div>

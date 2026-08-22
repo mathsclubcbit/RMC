@@ -4,6 +4,9 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { signParticipantToken, setParticipantCookie } from '@/lib/ps-auth';
 
+// BUG-7 FIX: Simple RFC-compliant email format regex for server-side validation
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function POST(request) {
     try {
         const body = await request.json();
@@ -15,6 +18,11 @@ export async function POST(request) {
 
         const trimmedRollNo = rollNo.trim().toUpperCase();
         const trimmedEmail = email.trim().toLowerCase();
+
+        // BUG-7 FIX: Validate email format before touching the database
+        if (!EMAIL_REGEX.test(trimmedEmail)) {
+            return NextResponse.json({ error: 'Invalid email address format.' }, { status: 400 });
+        }
 
         const admin = createAdminClient();
 

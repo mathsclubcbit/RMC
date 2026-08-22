@@ -195,21 +195,33 @@ export async function GET(request) {
             const sourceDate = prevDq[0].question_date;
             const sameDateItems = prevDq.filter(d => d.question_date === sourceDate);
 
+            // BUG-10 FIX: Only include correctOption and explanation if the caller is authenticated.
+            // Previously, any unauthenticated user could hit this endpoint after question-day
+            // and get all correct answers, which they could then use to farm the daily submit
+            // endpoint within the ±24h tolerance window.
+            const isAuthenticated = !participant.error;
+
             const solutionQuestions = sameDateItems.map(dq => {
                 const q = dq.question;
-                return {
+                const base = {
                     id: dq.id,
                     questionNumber: dq.question_number,
                     questionText: q?.question_text || '',
                     options: q?.options || [],
-                    correctOption: q?.correct_option ?? 0,
                     category: q?.category || 'Aptitude',
                     difficulty: q?.difficulty || 'medium',
                     tags: q?.tags || [],
-                    explanation: q?.explanation || '',
                     isExplanationOnly: true,
                     sourceDate: sourceDate
                 };
+
+                if (isAuthenticated) {
+                    // Authenticated participants may see the answers for learning
+                    base.correctOption = q?.correct_option ?? 0;
+                    base.explanation = q?.explanation || '';
+                }
+
+                return base;
             });
 
             return NextResponse.json({

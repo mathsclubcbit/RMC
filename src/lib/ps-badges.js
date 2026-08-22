@@ -255,7 +255,10 @@ export async function processDailyBadges({ participantId, eventId }) {
     }
 
     // ── 50 Answers milestone badge ──
-    if (totalAnswers === 50) {
+    // BUG-11 FIX: Use >= 50 instead of === 50 so the badge is never skipped
+    // if the count jumps from 49 to 51+ in a single batch.
+    // upsertBadge uses ignoreDuplicates: true so it's safe to call multiple times.
+    if (totalAnswers >= 50) {
         const badge = await upsertBadge(supabase, {
             participantId,
             eventId,
@@ -366,18 +369,14 @@ export async function awardPoints(participantId, points) {
         p_points: points,
     });
     if (error) {
-        // Fallback: manual read-modify-write if RPC not available
-        console.warn('[ps-badges] RPC not available, using fallback:', error.message);
-        const { data: p } = await supabase
-            .from('ps_participants')
-            .select('total_points')
-            .eq('id', participantId)
-            .single();
-        if (p) {
-            await supabase
-                .from('ps_participants')
-                .update({ total_points: (p.total_points || 0) + points })
-                .eq('id', participantId);
-        }
+        // BUG-5 FIX: Removed the non-atomic read-modify-write fallback.
+        // That fallback was a race condition — two concurrent calls would both
+        // read the same total_points value and write the same incremented result,
+        // effectively awarding points only once while appearing to award twice.
+        // If the RPC fails, we log a hard error. Fix the RPC — don't silently degrade.
+        console.error(
+            '[ps-badges] CRITICAL: increment_participant_points RPC failed. Points NOT awarded.',
+            { participantId, points, error: error.message }
+        );
     }
 }

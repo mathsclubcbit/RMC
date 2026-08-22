@@ -14,6 +14,17 @@ export async function POST(request) {
 
         const trimmedRollNo = rollNo.trim().toUpperCase();
 
+        // GAP-2 FIX: Server-side validation — mirrors client-side isValid checks
+        if (trimmedRollNo.length < 5) {
+            return NextResponse.json({ error: 'Roll number must be at least 5 characters.' }, { status: 400 });
+        }
+        if (!bodyName || bodyName.trim().length < 2) {
+            return NextResponse.json({ error: 'Name must be at least 2 characters.' }, { status: 400 });
+        }
+        if (!college || college.trim().length < 2) {
+            return NextResponse.json({ error: 'College name must be at least 2 characters.' }, { status: 400 });
+        }
+
         // 1. Get current logged-in Google user from Supabase session
         const supabase = await createClient();
         const { data: { user }, error: authError } = await supabase.auth.getUser();

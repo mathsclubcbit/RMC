@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 import toast from 'react-hot-toast';
+import MathText from "@/components/MathText";
 
 export default function ParticipantContestPlayClient({ eventId, contestId }) {
     const router = useRouter();
@@ -289,7 +290,9 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
                                 <span className="text-teal-400 font-bold bg-teal-500/10 px-3 py-1 rounded-lg text-sm">{currentQ?.points} Points</span>
                             </div>
                             
-                            <h2 className="text-2xl leading-relaxed font-medium mb-10">{currentQ?.question_text}</h2>
+                            <h2 className="text-2xl leading-relaxed font-medium mb-10">
+                                <MathText text={currentQ?.question_text} />
+                            </h2>
 
                             <div className="grid grid-cols-1 gap-4">
                                 {currentQ?.options.map((opt, i) => {
@@ -309,7 +312,7 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
                                             }`}>
                                                 <span className="font-bold text-sm">{String.fromCharCode(65 + i)}</span>
                                             </div>
-                                            <span className="text-lg">{opt}</span>
+                                            <span className="text-lg"><MathText text={opt} /></span>
                                         </button>
                                     );
                                 })}
@@ -416,7 +419,7 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
                                         <div className="flex gap-4">
                                             <div className="font-bold text-white/50">{i + 1}.</div>
                                             <div className="flex-1">
-                                                <p className="mb-4 font-medium">{q.question_text}</p>
+                                                <p className="mb-4 font-medium"><MathText text={q.question_text} /></p>
                                                 <div className="grid grid-cols-1 gap-2 text-sm">
                                                     {q.options.map((opt, oIdx) => {
                                                         const isUserSelection = oIdx === uAns;
@@ -432,7 +435,7 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
                                                                     <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold font-mono shrink-0 ${isActualCorrect ? 'bg-green-500/30 text-green-300' : isUserSelection ? 'bg-red-500/30 text-red-300' : 'bg-white/10'}`}>
                                                                         {String.fromCharCode(65 + oIdx)}
                                                                     </span>
-                                                                    <span className="font-medium text-base">{opt}</span>
+                                                                    <span className="font-medium text-base"><MathText text={opt} /></span>
                                                                 </div>
                                                                 {isUserSelection && (
                                                                     <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-black/50 border border-white/10 w-fit shrink-0 text-white">

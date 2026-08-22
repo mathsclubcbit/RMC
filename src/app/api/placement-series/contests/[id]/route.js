@@ -97,7 +97,15 @@ export async function GET(request, { params }) {
             }
         }
 
-        return NextResponse.json({ contest, questions: formattedQuestions, submission });
+        // BUG-9 FIX: Strip correct_option and question_bank_id from the GET response.
+        // These are server-side grading fields — coordinators don't need them in the browser.
+        // They are still fetched above for coordinator preview purposes (question structure),
+        // but sending them in the HTTP response unnecessarily increases exposure.
+        const sanitizedQuestions = coordinator
+            ? formattedQuestions.map(({ correct_option, question_bank_id, ...rest }) => rest)
+            : formattedQuestions;
+
+        return NextResponse.json({ contest, questions: sanitizedQuestions, submission });
 
     } catch (error) {
         console.error('Contest Detail GET API Error:', error);

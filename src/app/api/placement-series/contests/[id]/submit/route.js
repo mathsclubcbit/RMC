@@ -14,7 +14,9 @@ export async function POST(request, { params }) {
         }
 
         const body = await request.json();
-        const { answers = {}, tabSwitchCount = 0 } = body;
+        const { answers = {} } = body;
+        // GAP-3 FIX: Sanitize tabSwitchCount — must be a non-negative integer
+        const tabSwitchCount = Math.max(0, parseInt(body.tabSwitchCount, 10) || 0);
 
         const admin = createAdminClient();
 
@@ -32,16 +34,33 @@ export async function POST(request, { params }) {
             return NextResponse.json({ error: 'Already submitted' }, { status: 409 });
         }
 
-        // 2. Timing validation
+        // 2. Timing validation — BUG-1 FIX: actually enforce the deadline
         const now = Date.now();
         const startedAtMs = new Date(submission.started_at).getTime();
         const durationMs = contestRes.data.duration_minutes * 60 * 1000;
         const contestEndsAtMs = new Date(contestRes.data.ends_at).getTime();
-        
+
         // 15 seconds grace period for network latency
         const maxAllowedTime = Math.min(startedAtMs + durationMs, contestEndsAtMs) + 15000;
-        
-        // If they submit extremely late, we still accept it but they might get flagged.
+
+        if (now > maxAllowedTime) {
+            // BUG-1 FIX: Reject late submissions. Mark as submitted with 0 score to prevent retries.
+            console.warn(`[Contest Submit] Late submission rejected for participant ${participant.participantId}, contest ${id}. Overdue by ${Math.round((now - maxAllowedTime) / 1000)}s`);
+            await admin
+                .from('ps_contest_submissions')
+                .update({
+                    submitted_at: new Date().toISOString(),
+                    score: 0,
+                    total_points: 0,
+                    time_taken_seconds: Math.floor((now - startedAtMs) / 1000),
+                    tab_switch_count: tabSwitchCount
+                })
+                .eq('id', submission.id)
+                .is('submitted_at', null); // atomic guard
+
+            return NextResponse.json({ error: 'Time limit exceeded. Submission rejected.' }, { status: 403 });
+        }
+
         const timeTakenSeconds = Math.floor((now - startedAtMs) / 1000);
 
         // 3. Fetch questions (with correct_option)
@@ -53,23 +72,24 @@ export async function POST(request, { params }) {
         // 4. Grade answers
         let score = 0;
         let totalPoints = 0;
-        
+
         for (const q of (questions || [])) {
             totalPoints += q.points || 10;
-            
+
             const selectedShuffledIndex = answers[q.id];
             if (selectedShuffledIndex !== undefined && selectedShuffledIndex !== null) {
                 const { mapping } = deterministicShuffle(q.options, participant.participantId + q.id);
                 const actualIndex = mapping[selectedShuffledIndex];
-                
+
                 if (actualIndex === q.correct_option) {
                     score += q.points || 10;
                 }
             }
         }
 
-        // 5. Update submission
-        const { error: updateErr } = await admin
+        // 5. Update submission — BUG-4 FIX: .is('submitted_at', null) makes this atomic.
+        // If two concurrent requests race here, only one will match rows (the other gets count=0).
+        const { data: updateData, error: updateErr } = await admin
             .from('ps_contest_submissions')
             .update({
                 answers,
@@ -79,9 +99,16 @@ export async function POST(request, { params }) {
                 time_taken_seconds: timeTakenSeconds,
                 tab_switch_count: tabSwitchCount
             })
-            .eq('id', submission.id);
+            .eq('id', submission.id)
+            .is('submitted_at', null) // BUG-4: atomic guard — only one concurrent request wins
+            .select('id');
 
         if (updateErr) throw updateErr;
+
+        // If no rows were updated, another concurrent request already submitted
+        if (!updateData || updateData.length === 0) {
+            return NextResponse.json({ error: 'Already submitted' }, { status: 409 });
+        }
 
         // 6. Award points: +20 participation flat + raw score
         const participationBonus = 20;
@@ -90,8 +117,8 @@ export async function POST(request, { params }) {
 
         // 7. Check for perfect score badge
         if (score === totalPoints && totalPoints > 0) {
-            await checkPerfectScore({ 
-                participantId: participant.participantId, 
+            await checkPerfectScore({
+                participantId: participant.participantId,
                 eventId: participant.eventId,
                 contestId: id,
                 score,

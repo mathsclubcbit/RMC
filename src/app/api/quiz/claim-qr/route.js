@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
+import { randomBytes } from 'crypto';
 
 export async function POST(request) {
     try {
@@ -14,7 +15,7 @@ export async function POST(request) {
         const supabase = createAdminClient();
 
         const cookieStore = await cookies();
-        
+
         // If they already have an active session for this event, no need to claim again
         const hasSession = !!cookieStore.get(`qr_session_${eventId}`)?.value;
         if (hasSession) {
@@ -23,14 +24,14 @@ export async function POST(request) {
 
         // Validate the QR code using the RPC
         const { data: isValid, error: rpcErr } = await supabase.rpc('increment_qr_scan', { qr_id: entryCode });
-        
+
         if (rpcErr || !isValid) {
             return NextResponse.json({ error: 'QR Code Expired or Invalid. Please scan the current code on the screen.' }, { status: 401 });
         }
 
-        // Generate a simple token for cookie
-        const claimToken = Math.random().toString(36).substring(2, 15);
-        
+        // BUG-3 FIX: Use cryptographically secure random token instead of Math.random()
+        const claimToken = randomBytes(32).toString('hex');
+
         // Set HTTP-only cookie valid for 10 minutes (600 seconds)
         cookieStore.set(`qr_session_${eventId}`, claimToken, {
             httpOnly: true,
