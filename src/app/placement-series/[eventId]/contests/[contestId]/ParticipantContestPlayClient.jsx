@@ -19,6 +19,9 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
     const [submission, setSubmission] = useState(null);
     const [results, setResults] = useState(null);
     const [showInstructions, setShowInstructions] = useState(false);
+    
+    // Device detection
+    const [isMobile, setIsMobile] = useState(false);
 
     // Play state
     const [timeRemaining, setTimeRemaining] = useState(null);
@@ -32,8 +35,40 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
     const hasAutoSubmittedRef = useRef(false);
 
     useEffect(() => {
+        const checkDevice = () => {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            
+            // 1. Regex UA Check
+            const isMobileUA = /android|ipad|playbook|silk|Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/i.test(userAgent);
+            
+            // 2. iPadOS / Mac Spoofing Check
+            const isIPadOS = userAgent.includes("Mac") && typeof document !== 'undefined' && 'ontouchend' in document;
+            
+            // 3. Screen Width Check (Blocks generic mobile browsers requesting desktop sites)
+            const isSmallScreen = window.innerWidth < 800;
+            
+            // 4. Hardware Touch Check (Optional aggressive catch)
+            const isTouchHardware = navigator.maxTouchPoints > 0;
+
+            if (isMobileUA || isIPadOS || isSmallScreen || (isTouchHardware && isSmallScreen)) {
+                setIsMobile(true);
+            } else {
+                setIsMobile(false);
+            }
+        };
+
+        // Run immediately
+        checkDevice();
+        
+        // Listen for resizes (e.g. flipping phone orientation or resizing dev tools)
+        window.addEventListener('resize', checkDevice);
+
         fetchContestInit();
-        return () => clearInterval(timerRef.current);
+        
+        return () => {
+            clearInterval(timerRef.current);
+            window.removeEventListener('resize', checkDevice);
+        };
     }, []);
 
     // Tab visibility tracking
@@ -193,6 +228,23 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
         const s = (seconds % 60).toString().padStart(2, '0');
         return `${m}:${s}`;
     };
+
+    if (isMobile) {
+        return (
+            <div className="min-h-[100dvh] bg-black flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-20 h-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mb-6">
+                    <AlertTriangle className="w-10 h-10" />
+                </div>
+                <h1 className="text-3xl font-bold mb-4">Desktop Required</h1>
+                <p className="text-white/60 max-w-md mx-auto mb-8">
+                    To maintain fairness and ensure the anti-cheat system functions correctly, this contest can only be taken on a Desktop or Laptop computer.
+                </p>
+                <Link href={`/placement-series/${eventId}/contests`} className="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-xl font-bold transition-all">
+                    Back to Contests
+                </Link>
+            </div>
+        );
+    }
 
     if (loading) return <div className="min-h-screen bg-black flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-teal-400" /></div>;
     if (!contest) return null;
