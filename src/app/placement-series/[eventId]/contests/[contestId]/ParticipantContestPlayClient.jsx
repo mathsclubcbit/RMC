@@ -215,14 +215,6 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
                         <div className="flex items-center gap-2"><span>{contest.total_questions} Questions</span></div>
                     </div>
                     
-                    <div className="bg-orange-500/10 border border-orange-500/30 text-orange-200 text-sm p-5 rounded-2xl mb-8 text-left flex items-start gap-4 relative overflow-hidden backdrop-blur-md shadow-[0_0_20px_rgba(249,115,22,0.15)]">
-                        <div className="absolute top-0 left-0 w-1.5 h-full bg-orange-500" />
-                        <AlertTriangle className="w-6 h-6 shrink-0 mt-0.5 text-orange-400 drop-shadow-[0_0_8px_rgba(249,115,22,0.8)]" />
-                        <div>
-                            <p className="font-bold text-orange-300 uppercase tracking-widest text-xs mb-1">Anti-Cheat Active</p>
-                            <p className="leading-relaxed text-orange-200/80">Switching tabs or leaving the contest window will be recorded and may result in disqualification. Keep this tab active.</p>
-                        </div>
-                    </div>
 
                     {isUpcoming ? (
                         <button disabled className="w-full py-4 rounded-xl bg-white/5 text-white/50 font-bold border border-white/10 cursor-not-allowed">
