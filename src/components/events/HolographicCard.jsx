@@ -45,7 +45,8 @@ export default function HolographicCard({ event, index }) {
     const hasPoster = !!posterSrc;
 
     // Registration state
-    const isClosed = isEventRegistrationClosed(event);
+    const isPlacementSeries = event.eventType?.toLowerCase() === 'placement series';
+    const isClosed = !isPlacementSeries && isEventRegistrationClosed(event);
 
     // Compute both motion backgrounds unconditionally (hooks can't be called conditionally)
     const closedBg = useMotionTemplate`radial-gradient(650px circle at ${mouseX}px ${mouseY}px, rgba(255,255,255,0.04), transparent 80%)`;
@@ -163,10 +164,10 @@ export default function HolographicCard({ event, index }) {
                                 </div>
                             ) : (
                                 <Link
-                                    href={event.eventType === 'Placement Series' ? `/placement-series/${event.id}` : `/register/${event.id}`}
+                                    href={isPlacementSeries ? `/placement-series/${event.id}` : `/register/${event.id}`}
                                     className="flex items-center gap-2 text-white font-bold uppercase text-xs tracking-widest hover:text-teal transition-colors border border-white/20 hover:border-teal/50 px-6 py-2 rounded-full bg-white/5"
                                 >
-                                    <span>{event.eventType === 'Placement Series' ? 'View Series' : 'Register'}</span>
+                                    <span>{isPlacementSeries ? 'View Series' : 'Register'}</span>
                                     <ArrowRight className="w-4 h-4" />
                                 </Link>
                             )}

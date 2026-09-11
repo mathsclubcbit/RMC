@@ -15,6 +15,39 @@ export default function ContestDetailClient({ contestId, eventId }) {
     const [submissions, setSubmissions] = useState([]);
     const [submissionsLoading, setSubmissionsLoading] = useState(false);
 
+    // Sorting State
+    const [sortConfig, setSortConfig] = useState([
+        { key: 'score', dir: 'desc' },
+        { key: 'time_taken_seconds', dir: 'asc' }
+    ]);
+
+    const sortOptions = [
+        { label: 'Score', value: 'score' },
+        { label: 'Time Taken', value: 'time_taken_seconds' },
+        { label: 'Tab Switches', value: 'tab_switch_count' },
+        { label: 'Questions Answered', value: 'answered_count' },
+        { label: 'Participant Name', value: 'name' },
+        { label: 'Submitted At', value: 'submitted_at' }
+    ];
+
+    const sortedSubmissions = [...submissions].sort((a, b) => {
+        const getVal = (obj, key) => {
+            if (key === 'name') return obj.ps_participants?.name?.toLowerCase() || '';
+            if (key === 'submitted_at') return obj.submitted_at ? new Date(obj.submitted_at).getTime() : 0;
+            return obj[key] ?? 0;
+        };
+
+        for (const config of sortConfig) {
+            const valA = getVal(a, config.key);
+            const valB = getVal(b, config.key);
+
+            if (valA < valB) return config.dir === 'asc' ? -1 : 1;
+            if (valA > valB) return config.dir === 'asc' ? 1 : -1;
+        }
+
+        return 0;
+    });
+
     // Bank Modal
     const [isBankOpen, setIsBankOpen] = useState(false);
     const [bankQuestions, setBankQuestions] = useState([]);
@@ -284,19 +317,87 @@ export default function ContestDetailClient({ contestId, eventId }) {
                                 <p className="text-white/50">No submissions yet.</p>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
+                            <div className="flex flex-col">
+                                {/* Sorting Controls */}
+                                <div className="p-4 border-b border-white/10 bg-black/20 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                                    <div className="flex flex-wrap items-center gap-4">
+                                        {sortConfig.map((config, index) => (
+                                            <div key={index} className="flex items-center gap-2">
+                                                <span className="text-xs text-white/50 uppercase tracking-wider font-bold">
+                                                    {index === 0 ? 'Sort By' : 'Then By'}
+                                                </span>
+                                                <select 
+                                                    value={config.key}
+                                                    onChange={e => {
+                                                        const newConfig = [...sortConfig];
+                                                        newConfig[index].key = e.target.value;
+                                                        setSortConfig(newConfig);
+                                                    }}
+                                                    className="bg-[#0a0a0a] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:border-teal-500 outline-none"
+                                                >
+                                                    {sortOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                                </select>
+                                                <button 
+                                                    onClick={() => {
+                                                        const newConfig = [...sortConfig];
+                                                        newConfig[index].dir = newConfig[index].dir === 'asc' ? 'desc' : 'asc';
+                                                        setSortConfig(newConfig);
+                                                    }}
+                                                    className="px-2 py-1.5 bg-white/5 hover:bg-white/10 text-xs font-mono font-bold border border-white/10 rounded-lg transition-colors"
+                                                    title={`Change to ${config.dir === 'asc' ? 'Descending' : 'Ascending'}`}
+                                                >
+                                                    {config.dir === 'asc' ? 'ASC ↑' : 'DESC ↓'}
+                                                </button>
+                                                {index > 0 && (
+                                                    <button 
+                                                        onClick={() => {
+                                                            const newConfig = [...sortConfig];
+                                                            newConfig.splice(index, 1);
+                                                            setSortConfig(newConfig);
+                                                        }}
+                                                        className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors"
+                                                        title="Remove sort condition"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                                {index < sortConfig.length - 1 && (
+                                                    <div className="hidden sm:block w-px h-6 bg-white/10 ml-2"></div>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {sortConfig.length < sortOptions.length && (
+                                            <button 
+                                                onClick={() => {
+                                                    const availableKeys = sortOptions.map(o => o.value).filter(k => !sortConfig.some(c => c.key === k));
+                                                    if (availableKeys.length > 0) {
+                                                        setSortConfig([...sortConfig, { key: availableKeys[0], dir: 'desc' }]);
+                                                    }
+                                                }}
+                                                className="flex items-center gap-1 text-xs font-bold text-teal-400 hover:bg-teal-500/10 px-3 py-1.5 rounded-lg border border-teal-500/30 transition-colors"
+                                            >
+                                                <Plus className="w-3 h-3" /> Add Sort
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="text-sm font-medium text-teal-400 bg-teal-500/10 px-3 py-1 rounded-full shrink-0">
+                                        {submissions.length} Total
+                                    </div>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left">
                                     <thead>
                                         <tr className="border-b border-white/10 bg-black/40">
                                             <th className="px-6 py-4 font-semibold text-white/70">Participant</th>
                                             <th className="px-6 py-4 font-semibold text-white/70">Score</th>
+                                            <th className="px-6 py-4 font-semibold text-white/70">Questions</th>
                                             <th className="px-6 py-4 font-semibold text-white/70">Time Taken</th>
                                             <th className="px-6 py-4 font-semibold text-white/70">Tab Switches</th>
                                             <th className="px-6 py-4 font-semibold text-white/70">Submitted At</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/10">
-                                        {submissions.map((sub) => (
+                                        {sortedSubmissions.map((sub) => (
                                             <tr key={sub.id} className="hover:bg-white/5 transition-colors">
                                                 <td className="px-6 py-4">
                                                     <div className="font-medium">{sub.ps_participants?.name}</div>
@@ -304,6 +405,36 @@ export default function ContestDetailClient({ contestId, eventId }) {
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="font-bold text-teal-400">{sub.score} / {sub.total_points}</div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="text-sm">
+                                                        <span className="text-white">{sub.answered_count || 0} Ans</span>
+                                                        <span className="text-white/40 mx-2">|</span>
+                                                        <span className="text-white/50">{sub.unanswered_count || 0} Skip</span>
+                                                    </div>
+                                                    {sub.detailed_results && Object.keys(sub.detailed_results).length > 0 && (
+                                                        <div className="flex flex-wrap gap-1 mt-2 max-w-[220px]">
+                                                            {questions.map((q, idx) => {
+                                                                const res = sub.detailed_results[q.id];
+                                                                const isAns = res?.status === 'answered';
+                                                                const isCorrect = res?.is_correct;
+                                                                const num = q.questionNumber || q.question_number || (idx + 1);
+                                                                return (
+                                                                    <div 
+                                                                        key={q.id || idx} 
+                                                                        title={isAns ? (isCorrect ? "Correct" : "Incorrect") : "Skipped"} 
+                                                                        className={`w-5 h-5 flex items-center justify-center text-[10px] rounded font-bold transition-all hover:scale-110 cursor-help ${
+                                                                            isAns 
+                                                                                ? (isCorrect ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30') 
+                                                                                : 'bg-white/5 text-white/30 border border-white/10 border-dashed'
+                                                                        }`}
+                                                                    >
+                                                                        {num}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     {sub.time_taken_seconds ? `${Math.floor(sub.time_taken_seconds / 60)}m ${sub.time_taken_seconds % 60}s` : 'N/A'}
@@ -321,6 +452,7 @@ export default function ContestDetailClient({ contestId, eventId }) {
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
                         )}
                     </div>
                 )}

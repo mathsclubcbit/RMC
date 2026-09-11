@@ -69,21 +69,41 @@ export async function POST(request, { params }) {
             .select('id, options, correct_option, points')
             .eq('contest_id', id);
 
-        // 4. Grade answers
+        // 4. Grade answers and detailed tracking
         let score = 0;
         let totalPoints = 0;
+        let answeredCount = 0;
+        let unansweredCount = 0;
+        const detailedResults = {};
 
         for (const q of (questions || [])) {
             totalPoints += q.points || 10;
 
             const selectedShuffledIndex = answers[q.id];
             if (selectedShuffledIndex !== undefined && selectedShuffledIndex !== null) {
+                answeredCount++;
                 const { mapping } = deterministicShuffle(q.options, participant.participantId + q.id);
                 const actualIndex = mapping[selectedShuffledIndex];
+                const isCorrect = actualIndex === q.correct_option;
 
-                if (actualIndex === q.correct_option) {
+                if (isCorrect) {
                     score += q.points || 10;
                 }
+
+                detailedResults[q.id] = {
+                    status: 'answered',
+                    selected_actual_index: actualIndex,
+                    is_correct: isCorrect,
+                    points_awarded: isCorrect ? (q.points || 10) : 0
+                };
+            } else {
+                unansweredCount++;
+                detailedResults[q.id] = {
+                    status: 'not_answered',
+                    selected_actual_index: null,
+                    is_correct: false,
+                    points_awarded: 0
+                };
             }
         }
 
@@ -95,6 +115,9 @@ export async function POST(request, { params }) {
                 answers,
                 score,
                 total_points: totalPoints,
+                answered_count: answeredCount,
+                unanswered_count: unansweredCount,
+                detailed_results: detailedResults,
                 submitted_at: new Date().toISOString(),
                 time_taken_seconds: timeTakenSeconds,
                 tab_switch_count: tabSwitchCount
@@ -131,6 +154,8 @@ export async function POST(request, { params }) {
             score,
             totalPoints,
             totalQuestions: questions?.length || 0,
+            answeredCount,
+            unansweredCount,
             percentage: totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0,
             timeTakenSeconds,
             pointsAwarded: totalPointsToAward

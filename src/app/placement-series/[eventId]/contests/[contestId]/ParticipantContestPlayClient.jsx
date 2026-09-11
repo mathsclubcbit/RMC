@@ -18,6 +18,7 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
     const [stage, setStage] = useState('intro');
     const [submission, setSubmission] = useState(null);
     const [results, setResults] = useState(null);
+    const [showInstructions, setShowInstructions] = useState(false);
 
     // Play state
     const [timeRemaining, setTimeRemaining] = useState(null);
@@ -232,8 +233,8 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
                             Contest Ended
                         </button>
                     ) : (
-                        <button onClick={startContest} className="w-full bg-teal-500 hover:bg-teal-400 text-black py-4 rounded-xl font-extrabold text-lg transition-all transform hover:scale-[1.02] shadow-[0_0_20px_rgba(45,212,191,0.3)]">
-                            START CONTEST NOW
+                        <button onClick={() => setShowInstructions(true)} className="w-full bg-teal-500 hover:bg-teal-400 text-black py-4 rounded-xl font-extrabold text-lg transition-all transform hover:scale-[1.02] shadow-[0_0_20px_rgba(45,212,191,0.3)]">
+                            PROCEED
                         </button>
                     )}
                     
@@ -242,6 +243,58 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
                             ← Back to Contests
                         </Link>
                     </div>
+
+                    {showInstructions && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm text-left">
+                            <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                                <div className="p-6 border-b border-white/10">
+                                    <h2 className="text-2xl font-bold flex items-center gap-2"><Flag className="w-6 h-6 text-teal-400" /> Contest Instructions</h2>
+                                </div>
+                                <div className="p-6 space-y-6 text-white/80">
+                                    <div>
+                                        <h3 className="font-bold text-white mb-2 text-lg">1. Timing & Submission</h3>
+                                        <ul className="list-disc list-inside space-y-1 ml-2 text-sm text-white/70">
+                                            <li>The contest will automatically submit when the timer reaches zero.</li>
+                                            <li>You can manually submit at any time by clicking "Submit All".</li>
+                                            <li>Once submitted, you cannot re-enter the contest or change your answers.</li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-orange-400 mb-2 text-lg flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> 2. Anti-Cheat Monitoring</h3>
+                                        <ul className="list-disc list-inside space-y-1 ml-2 text-sm text-white/70">
+                                            <li>Tab switching, minimizing the browser, or leaving the window is strictly monitored.</li>
+                                            <li>Each violation is recorded as a "Warning" against your submission.</li>
+                                            <li>Excessive warnings may result in automatic disqualification by the coordinator.</li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-white mb-2 text-lg">3. Navigation & Scoring</h3>
+                                        <ul className="list-disc list-inside space-y-1 ml-2 text-sm text-white/70">
+                                            <li>You can freely navigate between questions using the "Question Map" or "Previous/Next" buttons.</li>
+                                            <li>Unanswered questions will not award points.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div className="p-6 border-t border-white/10 bg-white/5 flex flex-col-reverse sm:flex-row justify-end gap-4">
+                                    <button 
+                                        onClick={() => setShowInstructions(false)} 
+                                        className="px-6 py-3 rounded-xl font-bold border border-white/10 hover:bg-white/10 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        onClick={() => {
+                                            setShowInstructions(false);
+                                            startContest();
+                                        }} 
+                                        className="px-6 py-3 bg-teal-500 hover:bg-teal-400 text-black rounded-xl font-extrabold transition-transform hover:scale-105 shadow-[0_0_15px_rgba(45,212,191,0.3)]"
+                                    >
+                                        I Understand, Start Contest
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         );
