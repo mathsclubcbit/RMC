@@ -85,7 +85,7 @@ export async function GET(request, { params }) {
                     };
 
                     // Include correct_option and user's answer only if results are published
-                    if (isEnded && contest.results_published) {
+                    if (contest.results_published) {
                         returnQ.correct_option = shuffleResult.mapping.indexOf(q.correct_option); // Shuffled index
                         if (submission?.answers?.[q.id] !== undefined) {
                             returnQ.user_answer = submission.answers[q.id]; // Shuffled index from client

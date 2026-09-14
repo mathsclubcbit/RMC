@@ -503,6 +503,14 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
                         </>
                     ) : (
                         <div className="text-left space-y-6 mt-8">
+                            {submission && (
+                                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center max-w-md mx-auto mb-10">
+                                    <p className="text-sm text-white/50 uppercase tracking-widest font-bold mb-2">Final Score</p>
+                                    <div className="text-5xl font-mono font-bold text-teal-400">
+                                        {submission.score}<span className="text-2xl text-white/30">/{submission.total_points}</span>
+                                    </div>
+                                </div>
+                            )}
                             <p className="text-center text-white/50 mb-8">Results have been published. Here is how you did:</p>
                             
                             {questions.map((q, i) => {
@@ -534,9 +542,14 @@ export default function ParticipantContestPlayClient({ eventId, contestId }) {
                                                                     </span>
                                                                     <span className="font-medium text-base"><MathText text={opt} /></span>
                                                                 </div>
-                                                                {isUserSelection && (
-                                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-black/50 border border-white/10 w-fit shrink-0 text-white">
-                                                                        Your Answer
+                                                                {isUserSelection && isActualCorrect && (
+                                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-green-500/20 text-green-300 border border-green-500/30 w-fit shrink-0">
+                                                                        Your Answer (Correct)
+                                                                    </div>
+                                                                )}
+                                                                {isUserSelection && !isActualCorrect && (
+                                                                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 w-fit shrink-0">
+                                                                        Your Answer (Incorrect)
                                                                     </div>
                                                                 )}
                                                                 {isActualCorrect && !isUserSelection && (
