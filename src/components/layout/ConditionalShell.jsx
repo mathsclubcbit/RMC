@@ -14,7 +14,8 @@ export default function ConditionalShell({ children }) {
     const isCoordinatorRoute = pathname?.startsWith("/coordinator");
     const isAdminRoute = pathname?.startsWith("/admin");
     const isPlacementSeriesRoute = pathname?.startsWith("/placement-series");
-    const isSpecialRoute = isNetworkRoute || isCoordinatorRoute || isAdminRoute || isPlacementSeriesRoute;
+    const isMPLRoute = pathname?.startsWith("/mpl");
+    const isSpecialRoute = isNetworkRoute || isCoordinatorRoute || isAdminRoute || isPlacementSeriesRoute || isMPLRoute;
 
     // For these routes, render without public header/footer/smooth scroll
     if (isSpecialRoute) {
