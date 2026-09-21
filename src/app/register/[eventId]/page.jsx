@@ -71,5 +71,9 @@ export default async function RegistrationPage({ params }) {
         redirect(targetUrl);
     }
 
+    if (eventId === 'mpl-2026') {
+        redirect('/mpl/register');
+    }
+
     return <RegistrationClient eventId={eventId} />;
 }
