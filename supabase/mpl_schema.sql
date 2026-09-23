@@ -21,9 +21,13 @@ CREATE TABLE IF NOT EXISTS public.mpl_players (
     section TEXT,
     branch TEXT,
     year TEXT,
+    preferred_ipl_team TEXT,
     phone_number TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
+
+ALTER TABLE public.mpl_players
+    ADD COLUMN IF NOT EXISTS preferred_ipl_team TEXT;
 
 -- Enable RLS (Row Level Security)
 ALTER TABLE public.mpl_teams ENABLE ROW LEVEL SECURITY;

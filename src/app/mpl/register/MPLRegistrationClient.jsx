@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Users, UserPlus, CheckCircle, Copy, Search, X, MessageCircle } from 'lucide-react';
 import { PremiumInput } from '@/components/events/registration/components';
 import UserProfileMenu from '../components/UserProfileMenu';
+import { IPL_TEAMS_2026 } from '@/constants/mpl';
 
 import { createClient } from '@/lib/supabase/client';
 
@@ -29,6 +30,7 @@ export default function MPLRegistrationClient() {
         section: '',
         branch: '',
         year: '1st',
+        preferredIplTeam: '',
         teamName: '',
         teamCode: urlCode || '',
         consent: true
@@ -43,6 +45,7 @@ export default function MPLRegistrationClient() {
     const [isSearching, setIsSearching] = useState(false);
     const [showTeamDropdown, setShowTeamDropdown] = useState(false);
     const [searchQuery, setSearchQuery] = useState(urlCode || '');
+    const whatsappGroupLink = process.env.NEXT_PUBLIC_WHATSAPP_GROUP_LINK;
 
     useEffect(() => {
         const checkSession = async () => {
@@ -87,7 +90,7 @@ export default function MPLRegistrationClient() {
     };
 
     const validateStep1 = () => {
-        if (!formData.name || !formData.phone || !formData.rollNo || !formData.section || !formData.branch || !formData.year) {
+        if (!formData.name || !formData.phone || !formData.rollNo || !formData.section || !formData.branch || !formData.year || !formData.preferredIplTeam) {
             setErrorMessage('Please fill in all personal details to continue.');
             return false;
         }
@@ -182,20 +185,6 @@ export default function MPLRegistrationClient() {
     const copyToClipboard = () => {
         navigator.clipboard.writeText(teamMode === 'create' ? teamCodeResult : formData.teamCode);
         alert('Team Code copied to clipboard!');
-    };
-
-    const shareOnWhatsApp = () => {
-        const code = teamMode === 'create' ? teamCodeResult : formData.teamCode;
-        const name = teamMode === 'create' ? formData.teamName : (selectedTeamData?.teamName || 'our team');
-        const origin = window.location.origin;
-        const link = `${origin}/mpl/register?code=${code}`;
-        
-        const text = teamMode === 'create'
-            ? `Hey! I've created a team for the Mathematics Premier League 2026. Join my team "${name}" using Team Code: ${code}. Click here to join directly: ${link}`
-            : `Hey! I just joined team "${name}" for the Mathematics Premier League 2026! Join us using Team Code: ${code}. Click here to join directly: ${link}`;
-            
-        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-        window.open(whatsappUrl, '_blank');
     };
 
     const selectedTeamData = availableTeams.find(t => t.registrationId === formData.teamCode);
@@ -403,6 +392,23 @@ export default function MPLRegistrationClient() {
                                                 placeholder="CSE, AIML, AIDS..."
                                                 variant="minimal"
                                             />
+
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-white uppercase tracking-widest ml-1 block">Preferred IPL Team</label>
+                                                <select
+                                                    value={formData.preferredIplTeam}
+                                                    onChange={e => updateField('preferredIplTeam', e.target.value)}
+                                                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-white/40 transition-colors"
+                                                    required
+                                                >
+                                                    <option value="" className="bg-zinc-900">Select your team</option>
+                                                    {IPL_TEAMS_2026.map(team => (
+                                                        <option key={team.name} value={team.name} className="bg-zinc-900">
+                                                            {team.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
 
                                             <div className="mt-8 pt-6 border-t border-white/10">
                                                 <label className="flex items-start gap-4 cursor-pointer group">
@@ -675,13 +681,17 @@ export default function MPLRegistrationClient() {
                                 )}
 
                                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                    <button
-                                        onClick={shareOnWhatsApp}
-                                        className="flex items-center justify-center gap-3 px-8 py-4 bg-[#25D366] text-white rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-[#1ebd5a] transition-all shadow-[0_0_20px_rgba(37,211,102,0.3)] hover:shadow-[0_0_30px_rgba(37,211,102,0.4)]"
-                                    >
-                                        <MessageCircle className="w-5 h-5" />
-                                        Share on WhatsApp
-                                    </button>
+                                    {whatsappGroupLink && (
+                                        <a
+                                            href={whatsappGroupLink}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#25D366] text-white rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-[#20bd5a] transition-all shadow-[0_0_24px_rgba(37,211,102,0.28)]"
+                                        >
+                                            <MessageCircle className="w-5 h-5" />
+                                            Join WhatsApp Group
+                                        </a>
+                                    )}
                                     
                                     <Link
                                         href="/mpl/dashboard"

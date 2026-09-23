@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, Search, LogOut, ChevronDown, ChevronUp } from 'lucide-react';
 import { logoutFromMplAdmin } from './actions';
 import { useRouter } from 'next/navigation';
+import { getIplTeam } from '@/constants/mpl';
 
 export default function MPLAdminClient({ initialTeamsWithPlayers, totalTeams, totalPlayers }) {
     const [searchQuery, setSearchQuery] = useState('');
@@ -43,7 +44,8 @@ export default function MPLAdminClient({ initialTeamsWithPlayers, totalTeams, to
         return team.players.some(player => 
             player.name.toLowerCase().includes(query) ||
             player.roll_number.toLowerCase().includes(query) ||
-            player.branch.toLowerCase().includes(query)
+            player.branch.toLowerCase().includes(query) ||
+            player.preferred_ipl_team?.toLowerCase().includes(query)
         );
     });
 
@@ -163,6 +165,7 @@ export default function MPLAdminClient({ initialTeamsWithPlayers, totalTeams, to
                                                     <th className="px-4 py-3">Phone</th>
                                                     <th className="px-4 py-3">Branch/Year</th>
                                                     <th className="px-4 py-3 rounded-r-lg">Section</th>
+                                                    <th className="px-4 py-3">IPL Team</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -181,6 +184,9 @@ export default function MPLAdminClient({ initialTeamsWithPlayers, totalTeams, to
                                                         <td className="px-4 py-3 font-mono text-xs">{player.phone_number}</td>
                                                         <td className="px-4 py-3 text-xs">{player.branch} ({player.year})</td>
                                                         <td className="px-4 py-3 text-xs">{player.section || '-'}</td>
+                                                        <td className="px-4 py-3 text-xs">
+                                                            {getIplTeam(player.preferred_ipl_team)?.name || '-'}
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
