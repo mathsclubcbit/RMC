@@ -7,9 +7,9 @@ const EVENT_ID = 'mpl-2026';
 export async function POST(req) {
     try {
         const body = await req.json();
-        const { teamCode, name, email, avatar_url, phone, rollNo, section, branch, year, preferredIplTeam, consent } = body;
+        const { teamCode, name, email, avatar_url, phone, rollNo, section, branch, year, consent } = body;
 
-        if (!teamCode || !name || !email || !phone || !rollNo || !branch || !year || !preferredIplTeam) {
+        if (!teamCode || !name || !email || !phone || !rollNo || !branch || !year) {
             return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
         }
 
@@ -82,7 +82,6 @@ export async function POST(req) {
                 section: section || null,
                 branch,
                 year,
-                preferred_ipl_team: preferredIplTeam,
                 phone_number: phone
             });
 

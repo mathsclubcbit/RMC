@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Users, UserPlus, CheckCircle, Copy, Search, X, MessageCircle } from 'lucide-react';
 import { PremiumInput } from '@/components/events/registration/components';
 import UserProfileMenu from '../components/UserProfileMenu';
-import { IPL_TEAMS_2026 } from '@/constants/mpl';
 
 import { createClient } from '@/lib/supabase/client';
 
@@ -30,7 +29,6 @@ export default function MPLRegistrationClient() {
         section: '',
         branch: '',
         year: '1st',
-        preferredIplTeam: '',
         teamName: '',
         teamCode: urlCode || '',
         consent: true
@@ -90,7 +88,7 @@ export default function MPLRegistrationClient() {
     };
 
     const validateStep1 = () => {
-        if (!formData.name || !formData.phone || !formData.rollNo || !formData.section || !formData.branch || !formData.year || !formData.preferredIplTeam) {
+        if (!formData.name || !formData.phone || !formData.rollNo || !formData.section || !formData.branch || !formData.year) {
             setErrorMessage('Please fill in all personal details to continue.');
             return false;
         }
@@ -392,23 +390,6 @@ export default function MPLRegistrationClient() {
                                                 placeholder="CSE, AIML, AIDS..."
                                                 variant="minimal"
                                             />
-
-                                            <div className="space-y-1">
-                                                <label className="text-xs font-bold text-white uppercase tracking-widest ml-1 block">Preferred IPL Team</label>
-                                                <select
-                                                    value={formData.preferredIplTeam}
-                                                    onChange={e => updateField('preferredIplTeam', e.target.value)}
-                                                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-white/40 transition-colors"
-                                                    required
-                                                >
-                                                    <option value="" className="bg-zinc-900">Select your team</option>
-                                                    {IPL_TEAMS_2026.map(team => (
-                                                        <option key={team.name} value={team.name} className="bg-zinc-900">
-                                                            {team.name}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
 
                                             <div className="mt-8 pt-6 border-t border-white/10">
                                                 <label className="flex items-start gap-4 cursor-pointer group">

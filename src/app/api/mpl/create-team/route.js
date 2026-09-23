@@ -10,9 +10,9 @@ const EVENT_NAME = 'Mathematics Premier League 2026';
 export async function POST(req) {
     try {
         const body = await req.json();
-        const { teamName, name, email, avatar_url, phone, rollNo, section, branch, year, preferredIplTeam, consent } = body;
+        const { teamName, name, email, avatar_url, phone, rollNo, section, branch, year, consent } = body;
 
-        if (!teamName || !name || !email || !phone || !rollNo || !branch || !year || !preferredIplTeam) {
+        if (!teamName || !name || !email || !phone || !rollNo || !branch || !year) {
             return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
         }
 
@@ -85,7 +85,6 @@ export async function POST(req) {
                 section: section || null,
                 branch,
                 year,
-                preferred_ipl_team: preferredIplTeam,
                 phone_number: phone
             });
 
