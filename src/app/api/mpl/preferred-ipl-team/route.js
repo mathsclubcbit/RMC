@@ -21,12 +21,16 @@ export async function PATCH(request) {
         const admin = createAdminClient();
         const { data: player, error: lookupError } = await admin
             .from('mpl_players')
-            .select('id')
+            .select('id, is_leader')
             .eq('email', session.user.email)
             .single();
 
         if (lookupError || !player) {
             return NextResponse.json({ error: 'MPL participant record not found.' }, { status: 404 });
+        }
+
+        if (!player.is_leader) {
+            return NextResponse.json({ error: 'Only the team leader can choose the preferred IPL team.' }, { status: 403 });
         }
 
         const { error: updateError } = await admin

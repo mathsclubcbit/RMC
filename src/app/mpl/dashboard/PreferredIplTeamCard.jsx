@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Check, Shield } from 'lucide-react';
 import { IPL_TEAMS_2026 } from '@/constants/mpl';
 
-export default function PreferredIplTeamCard() {
+export default function PreferredIplTeamCard({ isLeader }) {
     const router = useRouter();
     const [selectedTeam, setSelectedTeam] = useState('');
     const [isSaving, setIsSaving] = useState(false);
@@ -47,36 +47,42 @@ export default function PreferredIplTeamCard() {
                     <Shield className="w-6 h-6 text-amber-300" />
                 </div>
                 <div>
-                    <p className="text-[10px] font-mono text-amber-200/70 uppercase tracking-widest mb-1">Complete your profile</p>
-                    <h2 className="text-lg font-bold text-white">Choose your preferred IPL team</h2>
-                    <p className="text-xs text-zinc-400 mt-1">This helps us personalise your participant profile.</p>
+                    <p className="text-[10px] font-mono text-amber-200/70 uppercase tracking-widest mb-1">Team preference</p>
+                    <h2 className="text-lg font-bold text-white">
+                        {isLeader ? 'Choose your preferred IPL team' : 'Waiting for team preference'}
+                    </h2>
+                    <p className="text-xs text-zinc-400 mt-1">
+                        {isLeader ? 'Your selection will be shown to every team member.' : 'Your team leader has not selected an IPL team yet.'}
+                    </p>
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-3">
-                <select
-                    value={selectedTeam}
-                    onChange={event => setSelectedTeam(event.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-amber-300/50 transition-colors"
-                    required
-                >
-                    <option value="" className="bg-zinc-900">Select an IPL team</option>
-                    {IPL_TEAMS_2026.map(team => (
-                        <option key={team.name} value={team.name} className="bg-zinc-900">
-                            {team.name}
-                        </option>
-                    ))}
-                </select>
-                <button
-                    type="submit"
-                    disabled={!selectedTeam || isSaving}
-                    className="w-full flex items-center justify-center gap-2 py-3 bg-amber-300 text-black text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-amber-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <Check className="w-4 h-4" />
-                    {isSaving ? 'Saving...' : 'Save Preferred Team'}
-                </button>
-                {errorMessage && <p className="text-xs text-red-300">{errorMessage}</p>}
-            </form>
+            {isLeader && (
+                <form onSubmit={handleSubmit} className="space-y-3">
+                    <select
+                        value={selectedTeam}
+                        onChange={event => setSelectedTeam(event.target.value)}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-amber-300/50 transition-colors"
+                        required
+                    >
+                        <option value="" className="bg-zinc-900">Select an IPL team</option>
+                        {IPL_TEAMS_2026.map(team => (
+                            <option key={team.name} value={team.name} className="bg-zinc-900">
+                                {team.name}
+                            </option>
+                        ))}
+                    </select>
+                    <button
+                        type="submit"
+                        disabled={!selectedTeam || isSaving}
+                        className="w-full flex items-center justify-center gap-2 py-3 bg-amber-300 text-black text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-amber-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <Check className="w-4 h-4" />
+                        {isSaving ? 'Saving...' : 'Save Preferred Team'}
+                    </button>
+                    {errorMessage && <p className="text-xs text-red-300">{errorMessage}</p>}
+                </form>
+            )}
         </div>
     );
 }

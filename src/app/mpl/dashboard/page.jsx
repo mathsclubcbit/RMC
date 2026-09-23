@@ -73,7 +73,8 @@ export default async function MPLDashboard() {
         .eq('team_id', playerRecord.team_id);
 
     const isLeader = playerRecord.is_leader;
-    const preferredIplTeam = getIplTeam(playerRecord.preferred_ipl_team);
+    const leaderRecord = allPlayers.find(player => player.is_leader);
+    const preferredIplTeam = getIplTeam(leaderRecord?.preferred_ipl_team);
     
     // Construct roster
     const roster = allPlayers.map(p => ({
@@ -200,7 +201,7 @@ export default async function MPLDashboard() {
                                 </div>
                             </div>
                         ) : (
-                            <PreferredIplTeamCard />
+                            <PreferredIplTeamCard isLeader={isLeader} />
                         )}
 
                         <div className="bg-gradient-to-br from-indigo-500/10 to-teal-500/10 border border-white/10 rounded-3xl p-8 relative overflow-hidden">
