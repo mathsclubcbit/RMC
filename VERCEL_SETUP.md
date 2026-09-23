@@ -10,6 +10,7 @@ In your Vercel Project Settings > Environment Variables, add the following:
 | :--- | :--- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase Project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase Anon Key |
+| `NEXT_PUBLIC_WHATSAPP_GROUP_LINK` | Official WhatsApp group invite link shown after MPL registration and on the MPL dashboard |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase Service Role Key (Critical for RLS) |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Web Push Public Key (Generated) |
 | `VAPID_PRIVATE_KEY` | Web Push Private Key (Generated) |
@@ -24,6 +25,8 @@ In your Vercel Project Settings > Environment Variables, add the following:
 
 > [!TIP]
 > **Locally**, you can add these to a `.env.local` file in your root directory to test before deploying.
+
+The `NEXT_PUBLIC_WHATSAPP_GROUP_LINK` value is used by the MPL registration success screen and dashboard. Set it to the official WhatsApp group invite URL before deploying.
 
 ## 2. Google & Email Setup
 
