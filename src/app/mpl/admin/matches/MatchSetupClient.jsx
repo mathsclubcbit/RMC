@@ -6,11 +6,32 @@ import Link from 'next/link';
 
 const defaultCount = (slug) => slug === 'normal_1' ? 1 : 0;
 
+function parseCsvLine(line) {
+    const values = [];
+    let value = '';
+    let quoted = false;
+    for (let index = 0; index < line.length; index += 1) {
+        const character = line[index];
+        if (character === '"') {
+            if (quoted && line[index + 1] === '"') { value += '"'; index += 1; }
+            else quoted = !quoted;
+        } else if (character === ',' && !quoted) {
+            values.push(value.trim()); value = '';
+        } else value += character;
+    }
+    values.push(value.trim());
+    return values;
+}
+
 export default function MatchSetupClient({ teams, ballTypes }) {
     const [selectedTeams, setSelectedTeams] = useState(['', '']);
     const [totalQuestions, setTotalQuestions] = useState(10);
     const [baseTimerSeconds, setBaseTimerSeconds] = useState(60);
     const [timerAdjustment, setTimerAdjustment] = useState(0);
+    const [mentors, setMentors] = useState([{ name: '', email: '' }, { name: '', email: '' }]);
+    const [streakThreshold, setStreakThreshold] = useState(3);
+    const [battingStreakBonusRuns, setBattingStreakBonusRuns] = useState(2);
+    const [bowlingStreakDeductionRuns, setBowlingStreakDeductionRuns] = useState(2);
     const [distribution, setDistribution] = useState(() => Object.fromEntries(ballTypes.map((type) => [type.slug, defaultCount(type.slug)])));
     const [submitting, setSubmitting] = useState(false);
     const [message, setMessage] = useState('');
@@ -21,6 +42,18 @@ export default function MatchSetupClient({ teams, ballTypes }) {
 
     const updateTeam = (index, value) => setSelectedTeams((current) => current.map((teamId, teamIndex) => teamIndex === index ? value : teamId));
     const updateCount = (slug, value) => setDistribution((current) => ({ ...current, [slug]: value }));
+    const updateMentor = (index, field, value) => setMentors((current) => current.map((mentor, mentorIndex) => mentorIndex === index ? { ...mentor, [field]: value } : mentor));
+
+    const importRoster = async (index, file) => {
+        if (!file || !selectedTeams[index]) return;
+        const lines = (await file.text()).split(/\r?\n/).filter(Boolean).map(parseCsvLine);
+        if (lines.length < 2) { setMessage('CSV must contain a header row and at least one player.'); return; }
+        const headers = lines[0].map((header) => header.toLowerCase().replace(/\s+/g, '_'));
+        const players = lines.slice(1).map((values) => Object.fromEntries(headers.map((header, valueIndex) => [header, values[valueIndex] || ''])));
+        const response = await fetch('/api/mpl/import-players', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ teamId: selectedTeams[index], players }) });
+        const data = await response.json();
+        setMessage(response.ok ? `Imported ${data.count} player(s) into Team ${index === 0 ? 'A' : 'B'}.` : (data.error || 'Unable to import players.'));
+    };
 
     const createMatch = async (event) => {
         event.preventDefault();
@@ -35,7 +68,17 @@ export default function MatchSetupClient({ teams, ballTypes }) {
             const response = await fetch('/api/mpl/matches', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ teamIds: selectedTeams, totalQuestionsPerInnings: Number(totalQuestions), baseTimerSeconds: Number(baseTimerSeconds), timerAdjustmentSeconds: Number(timerAdjustment), questionDistribution: distribution })
+                body: JSON.stringify({
+                    teamIds: selectedTeams,
+                    mentors,
+                    totalQuestionsPerInnings: Number(totalQuestions),
+                    baseTimerSeconds: Number(baseTimerSeconds),
+                    timerAdjustmentSeconds: Number(timerAdjustment),
+                    streakThreshold: Number(streakThreshold),
+                    battingStreakBonusRuns: Number(battingStreakBonusRuns),
+                    bowlingStreakDeductionRuns: Number(bowlingStreakDeductionRuns),
+                    questionDistribution: distribution
+                })
             });
             const data = await response.json();
             if (!response.ok) {
@@ -69,11 +112,15 @@ export default function MatchSetupClient({ teams, ballTypes }) {
                                 <option value="">Select team</option>
                                 {availableTeams(index).map((team) => <option key={team.id} value={team.id}>{team.team_name} ({team.team_code})</option>)}
                             </select>
+                            <input type="file" accept=".csv,text/csv" onChange={(event) => importRoster(index, event.target.files?.[0])} className="mt-2 w-full text-xs text-zinc-500" />
+                            <span className="mt-1 block text-[10px] text-zinc-600">CSV headers: name, roll_number, email, phone_number</span>
                         </label>)}
                         <label className="block text-sm text-zinc-300">Questions per innings
                             <input required min="1" type="number" value={totalQuestions} onChange={(event) => setTotalQuestions(event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white" />
                         </label>
                         <div className="grid grid-cols-2 gap-3"><label className="text-sm text-zinc-300">Base seconds<input min="10" type="number" value={baseTimerSeconds} onChange={(event) => setBaseTimerSeconds(event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white" /></label><label className="text-sm text-zinc-300">Adjustment<select value={timerAdjustment} onChange={(event) => setTimerAdjustment(event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white"><option value={-30}>-30 seconds</option><option value={0}>No adjustment</option><option value={30}>+30 seconds</option></select></label></div>
+                        <div className="border-t border-white/10 pt-4"><p className="mb-3 text-xs uppercase tracking-widest text-zinc-400">RMC Mentors</p><div className="space-y-3">{[0, 1].map((index) => <div key={index} className="grid grid-cols-2 gap-3"><input required value={mentors[index].name} onChange={(event) => updateMentor(index, 'name', event.target.value)} placeholder={`Team ${index === 0 ? 'A' : 'B'} mentor name`} className="rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white" /><input required type="email" value={mentors[index].email} onChange={(event) => updateMentor(index, 'email', event.target.value)} placeholder="Mentor email" className="rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white" /></div>)}</div></div>
+                        <div className="border-t border-white/10 pt-4"><p className="mb-3 text-xs uppercase tracking-widest text-zinc-400">Streak settings</p><div className="grid grid-cols-3 gap-3"><label className="text-xs text-zinc-300">Threshold<input min="1" type="number" value={streakThreshold} onChange={(event) => setStreakThreshold(event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white" /></label><label className="text-xs text-zinc-300">Correct bonus<input min="0" type="number" value={battingStreakBonusRuns} onChange={(event) => setBattingStreakBonusRuns(event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white" /></label><label className="text-xs text-zinc-300">Failure deduction<input min="0" type="number" value={bowlingStreakDeductionRuns} onChange={(event) => setBowlingStreakDeductionRuns(event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white" /></label></div></div>
                     </section>
 
                     <section className="rounded-2xl border border-white/10 bg-white/5 p-5">

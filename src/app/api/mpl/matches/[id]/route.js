@@ -10,7 +10,7 @@ export async function GET(request, { params }) {
     const [{ data: match, error: matchError }, { data: teams, error: teamsError }, { data: deliveries, error: deliveriesError }] = await Promise.all([
         admin.from('mpl_matches').select('*').eq('id', id).single(),
         admin.from('mpl_match_teams').select('*, mpl_teams(id, team_code, team_name), batting_order, bowling_order').eq('match_id', id).order('innings_number'),
-        admin.from('mpl_match_deliveries').select('*, mpl_questions(question_text, options, explanation), mpl_players!mpl_match_deliveries_batter_id_fkey(id, name), mpl_players!mpl_match_deliveries_bowler_id_fkey(id, name)').eq('match_id', id).order('innings_number').order('delivery_number')
+        admin.from('mpl_match_deliveries').select('*, mpl_questions(question_text, options, explanation), batter:mpl_players!mpl_match_deliveries_batter_id_fkey(id, name), bowler:mpl_players!mpl_match_deliveries_bowler_id_fkey(id, name)').eq('match_id', id).order('innings_number').order('delivery_number')
     ]);
 
     if (matchError) return Response.json({ error: matchError.message }, { status: 404 });

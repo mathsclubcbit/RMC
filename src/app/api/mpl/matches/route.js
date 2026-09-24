@@ -40,6 +40,10 @@ export async function POST(request) {
     const baseTimerSeconds = Number(body.baseTimerSeconds ?? 60);
     const timerAdjustment = Number(body.timerAdjustmentSeconds ?? 0);
     const distribution = normalizeDistribution(body.questionDistribution);
+    const mentors = Array.isArray(body.mentors) ? body.mentors : [];
+    const streakThreshold = Number(body.streakThreshold ?? 3);
+    const battingStreakBonusRuns = Number(body.battingStreakBonusRuns ?? 2);
+    const bowlingStreakDeductionRuns = Number(body.bowlingStreakDeductionRuns ?? 2);
 
     if (teamIds.length !== 2 || !teamIds.every(Boolean)) {
         return Response.json({ error: 'Select exactly two different teams.' }, { status: 400 });
@@ -54,6 +58,13 @@ export async function POST(request) {
     }
     if (!distribution || Object.values(distribution).reduce((sum, count) => sum + count, 0) !== totalQuestions) {
         return Response.json({ error: 'Question type counts must add up to the innings total.' }, { status: 400 });
+    }
+    if (mentors.length !== 2 || mentors.some((mentor) => !mentor || !String(mentor.name || '').trim() || !String(mentor.email || '').trim())) {
+        return Response.json({ error: 'Each team must have an RMC Mentor name and email before the match can be created.' }, { status: 400 });
+    }
+    if (![streakThreshold, battingStreakBonusRuns, bowlingStreakDeductionRuns].every(Number.isInteger) ||
+        streakThreshold < 1 || battingStreakBonusRuns < 0 || bowlingStreakDeductionRuns < 0) {
+        return Response.json({ error: 'Streak settings must be valid non-negative integers, with a positive threshold.' }, { status: 400 });
     }
 
     const admin = createAdminClient();
@@ -95,10 +106,13 @@ export async function POST(request) {
     const playerError = playerResults.find((result) => result.error);
     if (playerError) return Response.json({ error: playerError.error.message }, { status: 500 });
 
-    const lineups = playerResults.map((result) => (result.data || []).map((player) => player.id));
-    if (lineups.some((lineup) => lineup.length === 0)) {
-        return Response.json({ error: 'Both selected teams must have at least one registered player.' }, { status: 400 });
+    // The finalized batting order is the virtual draw for this match; bowling
+    // order is derived from it in reverse.
+    const lineups = playerResults.map((result) => shuffle((result.data || []).map((player) => player.id)));
+    if (lineups.some((lineup) => lineup.length < 1)) {
+        return Response.json({ error: 'Both selected teams must have at least 1 registered player.' }, { status: 400 });
     }
+
 
     const questionPlan = shuffle(Object.entries(distribution).flatMap(([slug, count]) => Array(count).fill(slug)));
     const matchPayload = {
@@ -111,7 +125,10 @@ export async function POST(request) {
             innings_end: 'delivery_limit_or_all_batters_out',
             player_rescue_attempt: true,
             power_shot: { enabled: true, doubles: 'base_runs_only', uses_per_innings: 1 },
-            wide_no_ball: false
+            wide_no_ball: true,
+            streak_threshold: streakThreshold,
+            batting_streak_bonus_runs: battingStreakBonusRuns,
+            bowling_streak_deduction_runs: bowlingStreakDeductionRuns
         },
         created_by: 'mpl_admin'
     };
@@ -124,7 +141,9 @@ export async function POST(request) {
         team_id: teamId,
         innings_number: index + 1,
         batting_order: lineups[index],
-        bowling_order: [...lineups[index]].reverse()
+        bowling_order: [...lineups[index]].reverse(),
+        mentor_name: String(mentors[index].name).trim(),
+        mentor_email: String(mentors[index].email).trim()
     }));
     const { error: matchTeamsError } = await admin.from('mpl_match_teams').insert(matchTeams);
     if (matchTeamsError) {

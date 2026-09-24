@@ -65,10 +65,14 @@ export async function POST(request) {
 
     const admin = createAdminClient();
     const slugs = [...new Set(questions.map((question) => question.ball_type_slug))];
-    const { data: ballTypes, error: ballTypeError } = await admin.from('mpl_ball_types').select('slug').in('slug', slugs);
+    const { data: ballTypes, error: ballTypeError } = await admin.from('mpl_ball_types').select('slug, default_runs').in('slug', slugs);
     if (ballTypeError) return Response.json({ error: ballTypeError.message }, { status: 500 });
     if ((ballTypes || []).length !== slugs.length) {
         return Response.json({ error: 'One or more ball type slugs are not supported by MPL.' }, { status: 400 });
+    }
+    const defaultRuns = new Map((ballTypes || []).map((ballType) => [ballType.slug, ballType.default_runs]));
+    if (questions.some((question) => question.runs == null && defaultRuns.get(question.ball_type_slug) == null)) {
+        return Response.json({ error: 'Bouncer and Yorker questions must define a run value; Full Toss uses its configured higher-score default unless overridden.' }, { status: 400 });
     }
 
     const { data, error } = await admin.from('mpl_questions').insert(questions).select();

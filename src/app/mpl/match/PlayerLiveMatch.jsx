@@ -1,11 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Radio, Timer } from 'lucide-react';
+import { ArrowLeft, Radio, Timer, Trophy, Swords, Target, Hourglass, Zap } from 'lucide-react';
+import MatchCelebration from '../components/MatchCelebration';
 
 export default function PlayerLiveMatch() {
-    const [state, setState] = useState({ loading: true, match: null, teams: [], activeDelivery: null, error: '' });
+    const [state, setState] = useState({ loading: true, player: null, match: null, teams: [], activeDelivery: null, pendingDelivery: null, questionTypes: [], teamScores: [], dismissedPlayerIds: [], powerShotUsed: false, celebration: null, error: '' });
+    const [clockNow, setClockNow] = useState(() => Date.now());
+    const [submittingChoice, setSubmittingChoice] = useState(false);
+    const [submittingAnswer, setSubmittingAnswer] = useState(false);
+    const [usePowerShot, setUsePowerShot] = useState(false);
+    const lastDeliveryCelebration = useRef(null);
+    const tossCelebrationSeen = useRef(false);
+    const matchCompletionSeen = useRef(false);
 
     useEffect(() => {
         let mounted = true;
@@ -13,7 +21,27 @@ export default function PlayerLiveMatch() {
             try {
                 const response = await fetch('/api/mpl/player/match', { cache: 'no-store' });
                 const data = await response.json();
-                if (mounted) setState({ loading: false, match: data.match || null, teams: data.teams || [], activeDelivery: data.activeDelivery || null, error: response.ok ? '' : (data.error || 'Unable to load the live match.') });
+                if (mounted) {
+                    const scoringEvent = data.celebrationEvent;
+                    const isOwnTeamScoring = scoringEvent && data.player?.team?.id === scoringEvent.celebration_team_id;
+                    let celebration = null;
+                    if (scoringEvent && lastDeliveryCelebration.current === null) lastDeliveryCelebration.current = scoringEvent.id;
+                    else if (scoringEvent && scoringEvent.id !== lastDeliveryCelebration.current && isOwnTeamScoring) { lastDeliveryCelebration.current = scoringEvent.id; celebration = scoringEvent; }
+                    if (data.match?.status === 'toss_won' && !tossCelebrationSeen.current) {
+                        tossCelebrationSeen.current = true;
+                        if (data.match.toss_winner_team_id === data.player?.team?.id) celebration = {
+                            id: `toss-${data.match.id}`,
+                            type: 'toss_won',
+                            title: 'TOSS WON!',
+                            subtitle: `${data.player.team.team_name} gets first choice.`
+                        };
+                    }
+                    if (data.match?.status === 'completed' && !matchCompletionSeen.current) {
+                        matchCompletionSeen.current = true;
+                        if (data.matchResult) celebration = { ...data.matchResult, type: 'match_winner', id: `match-complete-${data.match.id}` };
+                    }
+                    setState((current) => ({ ...current, loading: false, player: data.player || null, match: data.match || null, teams: data.teams || [], activeDelivery: data.activeDelivery || null, pendingDelivery: data.pendingDelivery || null, questionTypes: data.questionTypes || [], teamScores: data.teamScores || [], dismissedPlayerIds: data.dismissedPlayerIds || [], powerShotUsed: data.powerShotUsed === true, scoreState: data.scoreState || null, error: response.ok ? '' : (data.error || 'Unable to load the live match.'), celebration: celebration || current.celebration }));
+                }
             } catch {
                 if (mounted) setState((current) => ({ ...current, loading: false, error: 'Unable to connect to the live match.' }));
             }
@@ -23,21 +51,135 @@ export default function PlayerLiveMatch() {
         return () => { mounted = false; clearInterval(interval); };
     }, []);
 
+    const clearCelebration = useCallback(() => setState((current) => ({ ...current, celebration: null })), []);
+
+    useEffect(() => {
+        if (!state.activeDelivery) return undefined;
+        const updateClock = () => setClockNow(Date.now());
+        updateClock();
+        const interval = setInterval(updateClock, 250);
+        return () => clearInterval(interval);
+    }, [state.activeDelivery]);
+
+    const ownTeamBatting = state.match?.batting_team_id === state.match?.team_id;
+    const ownTeamWonToss = state.match?.toss_winner_team_id === state.match?.team_id;
+    const matchStatusLabel = state.match?.status === 'toss_pending'
+        ? 'Toss in progress'
+        : state.match?.status === 'toss_won'
+            ? (ownTeamWonToss ? 'Toss won' : 'Toss lost')
+            : state.match?.status?.replaceAll('_', ' ');
+    const currentAction = !state.match
+        ? 'Waiting for the toss decision'
+        : state.match.status === 'toss_pending'
+            ? 'Toss in progress'
+            : state.match.status === 'toss_won' && ownTeamWonToss
+                ? 'You won the toss — choose bat or bowl'
+                : state.match.status === 'toss_won'
+                    ? 'Toss lost — waiting for the winner'
+        : state.activeDelivery?.can_answer
+            ? 'You are batting — select your answer'
+            : state.activeDelivery?.can_rescue
+                ? 'You are bowling — answer the rescue attempt'
+                : state.pendingDelivery?.can_select_question
+                    ? 'You are bowling — choose the question type'
+                    : state.pendingDelivery?.batter_id === state.player?.id
+                        ? 'You are the selected batter — waiting for the bowler'
+                        : ownTeamBatting
+                            ? 'Your team is batting — waiting for the next question'
+                            : 'Your team is bowling — waiting for the next delivery';
+
+    const submitAnswer = async (answerOption) => {
+        if (!state.activeDelivery?.can_answer && !state.activeDelivery?.can_rescue) return;
+        setSubmittingAnswer(true);
+        const answerPhase = state.activeDelivery.can_rescue ? 'bowler' : 'batter';
+        const response = await fetch('/api/mpl/player/submit-answer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deliveryId: state.activeDelivery.id, phase: answerPhase, answerOption, powerShot: state.activeDelivery.can_rescue ? false : usePowerShot })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            setState((current) => ({ ...current, error: data.error || 'Unable to submit the answer.' }));
+        } else {
+            const delivery = data.delivery;
+            const scored = answerPhase === 'batter' && delivery?.status === 'answered' && Number(delivery.runs_awarded || 0) > 0;
+            const savedWicket = answerPhase === 'bowler' && delivery?.status === 'wicket';
+            const teamName = state.player?.team?.team_name || 'Your team';
+            if (scored || savedWicket) {
+                lastDeliveryCelebration.current = delivery.id;
+                setState((current) => ({ ...current, celebration: {
+                    id: delivery.id,
+                    type: savedWicket ? 'wicket' : delivery.metadata?.power_shot === true ? 'power_shot' : 'runs',
+                    title: savedWicket ? 'WICKET!' : delivery.metadata?.power_shot === true ? 'POWER SHOT!' : `+${delivery.runs_awarded} runs`,
+                    subtitle: savedWicket ? `${teamName} gets the wicket!` : `${teamName} scores!`
+                } }));
+            }
+            setUsePowerShot(false);
+            setState((current) => ({ ...current, activeDelivery: null, powerShotUsed: current.powerShotUsed || (answerPhase === 'batter' && usePowerShot), error: '' }));
+        }
+        setSubmittingAnswer(false);
+    };
+
     if (state.loading) return <main className="min-h-screen bg-[#050505] p-8 text-sm text-zinc-400">Loading live match...</main>;
 
     return (
-        <main className="min-h-screen bg-[#050505] px-4 py-20 text-white">
-            <div className="mx-auto max-w-3xl">
-                <Link href="/mpl/dashboard" className="mb-8 flex items-center gap-2 text-xs text-zinc-400 hover:text-white"><ArrowLeft className="h-4 w-4" /> Team dashboard</Link>
+        <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#123b3b_0,_#050505_42rem)] px-3 py-6 text-white sm:px-6 sm:py-10 lg:py-16">
+            <MatchCelebration event={state.celebration} onComplete={clearCelebration} />
+            <div className="mx-auto max-w-4xl">
+                <Link href="/mpl/dashboard" className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs text-zinc-300 transition hover:border-teal-300/40 hover:text-white sm:mb-8"><ArrowLeft className="h-4 w-4" /> Team dashboard</Link>
                 {state.error && <div className="rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">{state.error}</div>}
                 {!state.error && !state.match && <section className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center"><Radio className="mx-auto h-10 w-10 text-zinc-600" /><h1 className="mt-4 text-2xl font-bold">No live match yet</h1><p className="mt-2 text-sm text-zinc-500">When your organiser starts a match involving your team, it will appear here.</p></section>}
                 {!state.error && state.match && <>
-                    <div className="mb-6 flex items-center justify-between"><div><p className="text-xs uppercase tracking-[0.25em] text-teal-300">MPL live room</p><h1 className="mt-2 text-3xl font-bold">Your match is live</h1></div><span className="flex items-center gap-2 rounded-full border border-teal-400/30 bg-teal-400/10 px-3 py-2 text-xs uppercase tracking-widest text-teal-200"><Radio className="h-3.5 w-3.5" /> {state.match.status.replaceAll('_', ' ')}</span></div>
+                    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs uppercase tracking-[0.25em] text-teal-300">MPL live room</p><h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Your match is live</h1><p className="mt-2 text-sm text-zinc-400">Follow the delivery, answer quickly, and back your team.</p></div><div className="flex items-center gap-2"><span className={`inline-block h-2 w-2 rounded-full ${state.match.status === 'toss_won' && !ownTeamWonToss ? 'bg-zinc-500' : 'bg-teal-400'}`}></span><span className={`text-xs font-bold uppercase tracking-widest ${state.match.status === 'toss_won' && !ownTeamWonToss ? 'text-zinc-400' : 'text-teal-300'}`}>{matchStatusLabel}</span></div></div>
+                    <section className="mb-6 overflow-hidden rounded-2xl border border-teal-400/30 bg-gradient-to-br from-teal-400/15 via-teal-950/30 to-black p-5 shadow-[0_18px_60px_rgba(20,184,166,0.08)]"><div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs uppercase tracking-widest text-teal-300">Your team</p><h2 className="mt-1 text-2xl font-black">{state.player?.team?.team_name || 'Team'}</h2><p className="mt-1 text-sm text-zinc-400">{state.player?.name} <span className="text-zinc-600">·</span> {ownTeamBatting ? 'Batting' : state.match.status === 'toss_pending' ? 'Toss pending' : state.match.status === 'toss_won' ? (ownTeamWonToss ? 'Toss winner' : 'Toss loser') : 'Bowling'}</p></div><div className="rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm font-semibold text-white shadow-inner"><span className="mb-1 block text-[10px] uppercase tracking-widest text-zinc-500">Your status</span>{currentAction}</div></div></section>
+                    {state.scoreState && state.match.status !== 'toss_pending' && (
+                        <div className="mb-6 rounded-2xl border border-teal-400/20 bg-gradient-to-r from-teal-900/40 to-black p-5 sm:p-6">
+                            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <p className="text-xs uppercase tracking-widest text-teal-400">Current Score</p>
+                                    <div className="mt-1 flex items-baseline gap-2">
+                                        <span className="text-5xl font-black text-white">{state.scoreState.runs}</span>
+                                        <span className="text-xl font-bold text-zinc-400">/ {state.scoreState.wickets}</span>
+                                    </div>
+                                </div>
+                                <div className="flex gap-5 text-left sm:text-right">
+                                    <p className="text-sm text-zinc-400">Legal Deliveries: <span className="font-bold text-white">{state.scoreState.totalLegal}</span> / {state.match.total_questions_per_innings}</p>
+                                    <p className="text-sm text-zinc-400">Boundaries: <span className="font-bold text-white">{state.scoreState.boundaries}</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {state.teamScores?.length > 0 && state.match.status !== 'toss_pending' && state.match.status !== 'toss_won' && <section className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-5"><p className="text-xs uppercase tracking-widest text-zinc-400">{state.match.status === 'completed' ? 'Final score' : 'Team scorecard'}</p><div className="mt-4 grid gap-3 sm:grid-cols-2">{state.teamScores.map((score) => <div key={score.team_id} className="rounded-xl border border-white/10 bg-black/20 p-4"><div className="flex items-center justify-between gap-3"><span className="font-semibold">{score.team_name}</span><span className="text-2xl font-black text-teal-300">{score.runs}</span></div><p className="mt-1 text-xs text-zinc-500">{score.wickets} wickets · {score.legal_deliveries} legal deliveries</p></div>)}</div></section>}
                     <div className="mb-6 grid gap-4 md:grid-cols-2">
-                        {state.teams.map((team) => <section key={team.team_id} className={`rounded-2xl border p-5 ${team.is_batting ? 'border-teal-400/40 bg-teal-400/10' : 'border-white/10 bg-white/5'}`}><div className="flex items-start justify-between gap-3"><div><p className="text-xs uppercase tracking-widest text-zinc-400">{team.is_batting ? 'Batting team' : 'Bowling team'}</p><h2 className="mt-1 text-xl font-bold">{team.team_name}</h2><p className="text-xs text-zinc-500">{team.team_code}</p></div><span className="rounded-full bg-black/30 px-2 py-1 text-[10px] uppercase tracking-widest text-zinc-400">{team.players.length} joined</span></div><div className="mt-4 space-y-2">{team.players.map((player) => <div key={player.id} className="flex items-center justify-between rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm"><span>{player.name}{player.is_leader ? ' (Captain)' : ''}</span><span className="text-xs text-zinc-500">{player.roll_number}</span></div>)}{team.players.length === 0 && <p className="text-sm text-zinc-500">No players registered.</p>}</div></section>)}
+                        {state.teams.map((team) => <section key={team.team_id} className={`rounded-2xl border p-5 ${team.is_batting ? 'border-teal-400/40 bg-teal-400/10' : 'border-white/10 bg-white/5'}`}><div className="flex items-start justify-between gap-3"><div><p className="text-xs uppercase tracking-widest text-zinc-400">{team.is_batting ? 'Batting team' : state.match.status === 'toss_won' ? (team.team_id === state.match.toss_winner_team_id ? 'Toss winner' : 'Toss loser') : state.match.status === 'toss_pending' ? 'Awaiting toss' : 'Bowling team'}</p><h2 className="mt-1 text-xl font-bold">{team.team_name}</h2><p className="text-xs text-zinc-500">{team.team_code}</p></div><span className="rounded-full bg-black/30 px-2 py-1 text-[10px] uppercase tracking-widest text-zinc-400">{team.players.length} joined</span></div><div className="mt-4 space-y-2">{team.players.map((player) => { const isOut = state.dismissedPlayerIds?.includes(player.id); return <div key={player.id} className={`flex items-center justify-between rounded-lg border bg-black/20 px-3 py-2 text-sm ${isOut ? 'border-red-400/30 opacity-60' : 'border-white/10'}`}><span>{player.name}{player.is_leader ? ' (Captain)' : ''}<span className={`ml-2 text-[10px] uppercase tracking-wider ${isOut ? 'text-red-300' : 'text-zinc-500'}`}>{isOut ? 'OUT' : ''}</span></span><span className="text-xs text-zinc-500">{player.roll_number}</span></div>; })}{team.players.length === 0 && <p className="text-sm text-zinc-500">No players registered.</p>}</div></section>)}
                     </div>
-                    {!state.activeDelivery && <section className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center"><Timer className="mx-auto h-9 w-9 text-zinc-500" /><h2 className="mt-4 text-xl font-bold">Waiting for the next question</h2><p className="mt-2 text-sm text-zinc-500">Stay on this screen. The organiser will display the next question.</p></section>}
-                    {state.activeDelivery && <section className="rounded-2xl border border-teal-400/30 bg-teal-400/10 p-6"><div className="flex items-center justify-between text-xs uppercase tracking-widest text-teal-200"><span>Question {state.activeDelivery.delivery_number}</span><span>{state.activeDelivery.timer_seconds}s</span></div><h2 className="mt-6 text-2xl font-bold leading-relaxed">{state.activeDelivery.question?.question_text}</h2><div className="mt-6 grid gap-3">{(state.activeDelivery.question?.options || []).map((option, index) => <div key={index} className="rounded-xl border border-white/10 bg-black/30 p-4 text-sm"><span className="mr-3 text-teal-300">{index + 1}</span>{option}</div>)}</div><p className="mt-6 text-xs text-zinc-400">Answer verbally when the organiser asks. Do not submit answers from this screen.</p></section>}
+                    <div className="mb-6">
+                        {state.teams.filter((team) => team.team_id === state.match.team_id).map((team) => <div key={`${team.team_id}-mentor`} className="rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm"><span className="text-xs uppercase tracking-widest text-amber-300">Your RMC Mentor</span><p className="mt-1 font-semibold">{team.mentor_name || 'Assigned by organiser'}</p><p className="text-xs text-zinc-500">{team.mentor_email || 'Contact details held by organisers'}</p></div>)}
+                    </div>
+                    {!state.activeDelivery && state.match.status === 'toss_pending' && <section className="rounded-2xl border border-teal-400/30 bg-teal-400/10 p-12 text-center"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-teal-400 text-2xl font-bold text-teal-300 shadow-[0_0_15px_rgba(45,212,191,0.5)]">?</div><h2 className="mt-6 text-2xl font-bold text-teal-100">Virtual Toss in Progress</h2><p className="mt-3 text-sm text-teal-200/70">The organiser is flipping the coin to determine the toss winner.</p></section>}
+                    {!state.activeDelivery && state.match.status === 'toss_won' && state.match.toss_winner_team_id === state.match.team_id && (
+                        <section className="rounded-2xl border border-teal-400/40 bg-teal-400/10 p-10 text-center">
+                            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-teal-400 bg-teal-400/20 text-teal-300 shadow-[0_0_20px_rgba(45,212,191,0.6)]"><Trophy className="h-8 w-8" /></div>
+                            <h2 className="mt-6 text-2xl font-bold text-teal-100">You Won the Toss!</h2>
+                            <p className="mt-2 text-sm text-teal-200/70">Choose whether your team will bat or bowl first.</p>
+                            <div className="mt-8 grid grid-cols-2 gap-4">
+                                <button disabled={submittingChoice} onClick={async () => { setSubmittingChoice(true); const res = await fetch('/api/mpl/player/choose-batting', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ matchId: state.match.id, choice: 'bat' }) }); if(res.ok) { const data = await res.json(); setState(s => ({...s, match: data.match})); } setSubmittingChoice(false); }} className="flex flex-col items-center justify-center rounded-xl border-2 border-teal-400 bg-teal-400/20 p-6 font-bold text-teal-200 hover:bg-teal-400/40 transition-colors disabled:opacity-50">
+                                    <Swords className="h-8 w-8 mb-2" />
+                                    Bat First
+                                </button>
+                                <button disabled={submittingChoice} onClick={async () => { setSubmittingChoice(true); const res = await fetch('/api/mpl/player/choose-batting', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ matchId: state.match.id, choice: 'bowl' }) }); if(res.ok) { const data = await res.json(); setState(s => ({...s, match: data.match})); } setSubmittingChoice(false); }} className="flex flex-col items-center justify-center rounded-xl border-2 border-white/20 bg-white/5 p-6 font-bold text-zinc-300 hover:bg-white/10 transition-colors disabled:opacity-50">
+                                    <Target className="h-8 w-8 mb-2" />
+                                    Bowl First
+                                </button>
+                            </div>
+                        </section>
+                    )}
+                    {!state.activeDelivery && state.match.status === 'toss_won' && state.match.toss_winner_team_id !== state.match.team_id && <section className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-white/20 text-zinc-400"><Hourglass className="h-6 w-6 animate-pulse" /></div><h2 className="mt-4 text-xl font-bold">Toss decided</h2><p className="mt-2 text-sm text-zinc-500">The other team won the toss. Waiting for them to choose bat or bowl...</p></section>}
+                    {!state.activeDelivery && state.pendingDelivery?.can_select_question && <section className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-6"><p className="text-xs uppercase tracking-widest text-amber-300">Bowler decision</p><h2 className="mt-2 text-2xl font-bold">Choose the question type</h2><p className="mt-2 text-sm text-zinc-400">The organiser has selected the batter and you. Choose the variation you want to throw.</p><div className="mt-6 grid gap-3 sm:grid-cols-2">{state.questionTypes.filter((type) => type.remaining > 0).map((type) => <button key={type.slug} disabled={submittingChoice} onClick={async () => { setSubmittingChoice(true); const res = await fetch('/api/mpl/player/choose-question', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ matchId: state.match.id, requestId: state.pendingDelivery.id, ballTypeSlug: type.slug }) }); if (!res.ok) { const data = await res.json(); setState((current) => ({ ...current, error: data.error || 'Unable to choose the question type.' })); } setSubmittingChoice(false); }} className="rounded-xl border border-white/15 bg-black/25 p-4 text-left hover:border-amber-300 hover:bg-amber-300/10 disabled:opacity-50"><span className="block font-bold text-amber-200">{type.name}</span><span className="mt-1 block text-xs text-zinc-400">{type.description}</span><span className="mt-3 block text-xs text-zinc-500">{type.remaining} remaining</span></button>)}</div></section>}
+                    {!state.activeDelivery && state.pendingDelivery && !state.pendingDelivery.can_select_question && <section className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center"><Hourglass className="mx-auto h-9 w-9 animate-pulse text-zinc-500" /><h2 className="mt-4 text-xl font-bold">Waiting for the selected bowler</h2><p className="mt-2 text-sm text-zinc-500">The organiser assigned the delivery. The selected bowler will choose the question type.</p></section>}
+                    {!state.activeDelivery && !state.pendingDelivery && state.match.status !== 'toss_pending' && state.match.status !== 'toss_won' && <section className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center"><Timer className="mx-auto h-9 w-9 text-zinc-500" /><h2 className="mt-4 text-xl font-bold">Waiting for the next question</h2><p className="mt-2 text-sm text-zinc-500">Stay on this screen. The organiser will display the next question.</p></section>}
+                    {state.activeDelivery && <p className="mb-2 text-xs uppercase tracking-widest text-teal-300">Variation: {state.activeDelivery.ball_type_slug}</p>}
+                    {state.activeDelivery && <section className="rounded-2xl border border-teal-300/40 bg-gradient-to-br from-teal-400/15 via-teal-950/30 to-black p-4 shadow-[0_20px_70px_rgba(20,184,166,0.1)] sm:p-6"><div className="flex items-center justify-between text-xs uppercase tracking-widest text-teal-200"><span>Question {state.activeDelivery.delivery_number}</span><span className="rounded-full bg-black/30 px-3 py-1.5 font-bold">{Math.max(0, Math.ceil((new Date(state.activeDelivery.answer_started_at).getTime() + (state.activeDelivery.timer_seconds * 1000) - clockNow) / 1000))}s</span></div><h2 className="mt-6 text-2xl font-black leading-tight sm:text-3xl">{state.activeDelivery.question?.question_text}</h2>{state.activeDelivery.can_answer && !state.powerShotUsed && <label className={`mt-6 flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-sm transition ${usePowerShot ? 'border-amber-300/70 bg-amber-300/15 text-amber-100 shadow-[0_0_25px_rgba(251,191,36,0.12)]' : 'border-amber-300/25 bg-amber-300/5 text-amber-200 hover:border-amber-300/50'}`}><input type="checkbox" className="sr-only" checked={usePowerShot} onChange={(event) => setUsePowerShot(event.target.checked)} /><span className={`flex h-8 w-8 items-center justify-center rounded-lg ${usePowerShot ? 'bg-amber-300 text-black' : 'bg-amber-300/15 text-amber-200'}`}><Zap className="h-4 w-4" /></span><span><span className="block font-bold">{usePowerShot ? 'Power Shot armed' : 'Use Power Shot'}</span><span className="mt-0.5 block text-xs text-amber-200/70">Double the runs if your answer is correct</span></span></label>}<div className="mt-6 grid gap-3 sm:grid-cols-2">{(state.activeDelivery.question?.options || []).map((option, index) => (state.activeDelivery.can_answer || state.activeDelivery.can_rescue) ? <button key={index} disabled={submittingAnswer} onClick={() => submitAnswer(index)} className="rounded-xl border border-white/10 bg-black/30 p-4 text-left text-sm transition hover:-translate-y-0.5 hover:border-teal-300/70 hover:bg-teal-300/10 disabled:opacity-50"><span className="mr-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-teal-300/15 text-xs font-bold text-teal-200">{index + 1}</span>{option}</button> : <div key={index} className="rounded-xl border border-white/10 bg-black/30 p-4 text-sm"><span className="mr-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-teal-300/15 text-xs font-bold text-teal-200">{index + 1}</span>{option}</div>)}</div><p className="mt-6 text-xs text-zinc-400">{state.activeDelivery.can_answer ? 'Select your answer before the timer expires.' : state.activeDelivery.can_rescue ? 'The batter was incorrect. Select the answer for the bowler rescue attempt.' : 'Waiting for the selected player to answer.'}</p></section>}
                 </>}
             </div>
         </main>

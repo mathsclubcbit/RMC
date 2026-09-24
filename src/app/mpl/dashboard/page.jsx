@@ -98,34 +98,34 @@ export default async function MPLDashboard() {
     }));
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white selection:bg-white/20 relative overflow-hidden py-24 px-4 font-sans">
+        <div className="relative min-h-screen overflow-hidden bg-[#050505] px-3 py-20 text-white selection:bg-white/20 font-sans sm:px-6 sm:py-24">
             {/* Background elements */}
             <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-900/10 blur-[120px] pointer-events-none" />
             <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-teal-900/10 blur-[120px] pointer-events-none" />
 
             <Link
                 href="/events"
-                className="fixed top-8 left-8 z-50 flex items-center gap-3 px-5 py-2.5 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full hover:bg-white/10 transition-all group pointer-events-auto"
+                className="group pointer-events-auto fixed left-3 top-4 z-50 flex items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-2.5 backdrop-blur-xl transition-all hover:bg-white/10 sm:left-8 sm:top-8 sm:gap-3 sm:px-5"
             >
                 <ArrowLeft className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
-                <span className="text-[10px] font-bold tracking-widest uppercase text-zinc-300 group-hover:text-white">Home</span>
+                <span className="hidden text-[10px] font-bold uppercase tracking-widest text-zinc-300 group-hover:text-white sm:inline">Home</span>
             </Link>
-            <div style={{ position: 'fixed', top: '2rem', right: '2rem', zIndex: 50 }} className="pointer-events-auto">
+            <div className="pointer-events-auto fixed right-3 top-4 z-50 sm:right-8 sm:top-8">
                 <UserProfileMenu 
                     avatarUrl={session.user.user_metadata?.avatar_url} 
                     email={session.user.email} 
                 />
             </div>
 
-            <div className="max-w-5xl mx-auto relative z-10">
+            <div className="relative z-10 mx-auto max-w-6xl">
                 
                 {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
-                    <div>
-                        <span className="inline-block px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-[10px] font-mono text-zinc-400 uppercase tracking-widest mb-4">
+                <div className="mb-8 flex flex-col items-start justify-between gap-5 sm:mb-12 md:flex-row md:items-end">
+                    <div className="min-w-0">
+                        <span className="mb-3 inline-block rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-zinc-400 sm:mb-4 sm:px-4">
                             Team Dashboard
                         </span>
-                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-zinc-500 mb-2">
+                        <h1 className="mb-2 break-words bg-gradient-to-r from-white via-zinc-200 to-zinc-500 bg-clip-text text-3xl font-extrabold tracking-tight text-transparent sm:text-4xl md:text-5xl">
                             {team.team_name || 'Unnamed Squad'}
                         </h1>
                         <p className="text-zinc-400 flex items-center gap-2 text-sm">
@@ -134,32 +134,32 @@ export default async function MPLDashboard() {
                         </p>
                     </div>
 
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-6">
+                    <div className="flex w-full items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:gap-6 md:w-auto md:justify-start">
                         <div>
                             <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-1">Invite Code</p>
-                            <p className="text-2xl font-mono tracking-widest text-white">{team.team_code}</p>
+                            <p className="text-xl font-mono tracking-[0.2em] text-white sm:text-2xl">{team.team_code}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex flex-col-reverse md:grid md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
                     {/* Main Roster Panel */}
-                    <div className="md:col-span-2 space-y-6">
+                    <div className="order-1 space-y-6 lg:col-span-2">
                         {activeMatch && (
-                            <div className="rounded-3xl border border-teal-400/30 bg-teal-400/10 p-6">
+                            <div className="rounded-3xl border border-teal-400/30 bg-teal-400/10 p-5 sm:p-6">
                                 <div className="flex flex-wrap items-center justify-between gap-4">
                                     <div>
                                         <p className="text-[10px] font-mono uppercase tracking-widest text-teal-200">Match control room</p>
                                         <h2 className="mt-2 text-2xl font-bold text-white">Your match is live</h2>
                                         <p className="mt-2 text-sm text-zinc-300">Follow the organiser&apos;s current question and options here.</p>
                                     </div>
-                                    <Link href="/mpl/match" className="rounded-xl bg-teal-300 px-5 py-3 text-xs font-bold uppercase tracking-widest text-black hover:bg-teal-200">Join live match</Link>
+                                    <Link href="/mpl/match" className="w-full rounded-xl bg-teal-300 px-5 py-3 text-center text-xs font-bold uppercase tracking-widest text-black hover:bg-teal-200 sm:w-auto">Join live match</Link>
                                 </div>
                             </div>
                         )}
-                        <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8">
-                            <div className="flex justify-between items-center mb-8 pb-6 border-b border-white/5">
-                                <h2 className="text-xl font-bold flex items-center gap-3">
+                        <div className="rounded-3xl border border-white/10 bg-black/40 p-4 backdrop-blur-xl sm:p-6 lg:p-8">
+                            <div className="mb-6 flex items-start justify-between gap-3 border-b border-white/5 pb-5 sm:mb-8 sm:items-center sm:pb-6">
+                                <h2 className="flex items-center gap-2 text-lg font-bold sm:gap-3 sm:text-xl">
                                     <Users className="w-5 h-5 text-indigo-400" />
                                     Active Roster
                                 </h2>
@@ -170,8 +170,8 @@ export default async function MPLDashboard() {
 
                             <div className="space-y-4">
                                 {roster.map((member, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
-                                        <div className="flex items-center gap-4">
+                                    <div key={idx} className="flex min-w-0 items-center justify-between gap-3 rounded-2xl border border-white/5 bg-white/5 p-3 transition-colors hover:bg-white/10 sm:p-4">
+                                        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                                             {member.avatar_url ? (
                                                 <img src={member.avatar_url} alt={member.name} referrerPolicy="no-referrer" className="w-12 h-12 rounded-full border border-white/20 object-cover" />
                                             ) : (
@@ -184,15 +184,15 @@ export default async function MPLDashboard() {
                                                 </div>
                                             )}
                                             <div>
-                                                <div className="flex items-center gap-3 mb-1">
-                                                    <p className="font-bold text-zinc-200">{member.name}</p>
+                                                <div className="mb-1 flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+                                                    <p className="max-w-[11rem] truncate font-bold text-zinc-200 sm:max-w-none">{member.name}</p>
                                                     {member.isLeader && (
                                                         <span className="text-[9px] bg-white text-black px-2 py-0.5 rounded-sm uppercase tracking-widest font-bold">
                                                             Team Lead
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-3 text-[10px] font-mono text-zinc-500 uppercase">
+                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-mono uppercase text-zinc-500 sm:gap-3">
                                                     <span>{member.rollNo}</span>
                                                     <span>•</span>
                                                     <span>{member.department}</span>
@@ -212,9 +212,9 @@ export default async function MPLDashboard() {
                     </div>
 
                     {/* Side Panel */}
-                    <div className="space-y-6">
+                    <div className="order-2 space-y-6 lg:col-span-1">
                         {preferredIplTeam ? (
-                            <div className="bg-white/5 border border-white/10 rounded-3xl p-6 flex items-center gap-4">
+                            <div className="flex items-center gap-4 rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6">
                                 <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center shrink-0">
                                     <img src={preferredIplTeam.logo} alt={preferredIplTeam.name} className="w-12 h-12 object-contain" />
                                 </div>
@@ -227,7 +227,7 @@ export default async function MPLDashboard() {
                             <PreferredIplTeamCard isLeader={isLeader} />
                         )}
 
-                        <div className="bg-gradient-to-br from-indigo-500/10 to-teal-500/10 border border-white/10 rounded-3xl p-8 relative overflow-hidden">
+                        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-500/10 to-teal-500/10 p-5 sm:p-8">
                             <div className="absolute top-[-50%] right-[-50%] w-full h-full bg-indigo-500/20 blur-[60px] rounded-full pointer-events-none" />
                             
                             <h3 className="text-sm font-bold uppercase tracking-widest mb-6 relative z-10">Your Role</h3>
