@@ -72,6 +72,17 @@ export default async function MPLDashboard() {
         .select('*')
         .eq('team_id', playerRecord.team_id);
 
+    const { data: activeMatchTeam } = await admin
+        .from('mpl_match_teams')
+        .select('match_id, mpl_matches!inner(id, status, total_questions_per_innings)')
+        .eq('team_id', playerRecord.team_id)
+        .not('mpl_matches.status', 'in', '(completed,abandoned)')
+        .order('created_at', { foreignTable: 'mpl_matches', ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    const activeMatch = activeMatchTeam?.mpl_matches || null;
+
     const isLeader = playerRecord.is_leader;
     const leaderRecord = allPlayers.find(player => player.is_leader);
     const preferredIplTeam = getIplTeam(leaderRecord?.preferred_ipl_team);
@@ -134,6 +145,18 @@ export default async function MPLDashboard() {
                 <div className="flex flex-col-reverse md:grid md:grid-cols-3 gap-8">
                     {/* Main Roster Panel */}
                     <div className="md:col-span-2 space-y-6">
+                        {activeMatch && (
+                            <div className="rounded-3xl border border-teal-400/30 bg-teal-400/10 p-6">
+                                <div className="flex flex-wrap items-center justify-between gap-4">
+                                    <div>
+                                        <p className="text-[10px] font-mono uppercase tracking-widest text-teal-200">Match control room</p>
+                                        <h2 className="mt-2 text-2xl font-bold text-white">Your match is live</h2>
+                                        <p className="mt-2 text-sm text-zinc-300">Follow the organiser&apos;s current question and options here.</p>
+                                    </div>
+                                    <Link href="/mpl/match" className="rounded-xl bg-teal-300 px-5 py-3 text-xs font-bold uppercase tracking-widest text-black hover:bg-teal-200">Join live match</Link>
+                                </div>
+                            </div>
+                        )}
                         <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8">
                             <div className="flex justify-between items-center mb-8 pb-6 border-b border-white/5">
                                 <h2 className="text-xl font-bold flex items-center gap-3">

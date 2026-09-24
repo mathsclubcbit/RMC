@@ -27,6 +27,12 @@ export default async function MPLAdminDashboard() {
         .from('mpl_players')
         .select('*');
 
+    const { data: matchesData } = await admin
+        .from('mpl_matches')
+        .select('id, status, total_questions_per_innings, created_at, started_at, mpl_match_teams(innings_number, mpl_teams(team_name, team_code))')
+        .not('status', 'in', '(completed,abandoned)')
+        .order('created_at', { ascending: false });
+
     if (teamsError || playersError) {
         return <div className="p-8 text-red-500">Error loading data. Make sure the database tables exist.</div>;
     }
@@ -50,6 +56,7 @@ export default async function MPLAdminDashboard() {
             initialTeamsWithPlayers={teamsWithPlayers}
             totalTeams={totalTeams}
             totalPlayers={totalPlayers}
+            liveMatches={matchesData || []}
         />
     );
 }
