@@ -35,7 +35,12 @@ export async function POST(request) {
         return Response.json({ error: 'Request body must be valid JSON.' }, { status: 400 });
     }
 
-    const teamIds = Array.isArray(body.teamIds) ? [...new Set(body.teamIds.map(String))] : [];
+    const requestedSides = Array.isArray(body.sideTeamIds)
+        ? body.sideTeamIds.map((side) => [...new Set((Array.isArray(side) ? side : []).map(String).filter(Boolean))])
+        : [];
+    const sideTeamIds = requestedSides.length === 2 ? requestedSides : [body.teamIds?.[0] ? [String(body.teamIds[0])] : [], body.teamIds?.[1] ? [String(body.teamIds[1])] : []];
+    const teamIds = [...new Set(sideTeamIds.flat())];
+    const sideNames = Array.isArray(body.sideNames) ? body.sideNames.map((name, index) => String(name || `Team ${index + 1}`).trim()) : ['Team A', 'Team B'];
     const totalQuestions = Number(body.totalQuestionsPerInnings);
     const baseTimerSeconds = Number(body.baseTimerSeconds ?? 60);
     const timerAdjustment = Number(body.timerAdjustmentSeconds ?? 0);
@@ -45,8 +50,11 @@ export async function POST(request) {
     const battingStreakBonusRuns = Number(body.battingStreakBonusRuns ?? 2);
     const bowlingStreakDeductionRuns = Number(body.bowlingStreakDeductionRuns ?? 2);
 
-    if (teamIds.length !== 2 || !teamIds.every(Boolean)) {
-        return Response.json({ error: 'Select exactly two different teams.' }, { status: 400 });
+    if (sideTeamIds.length !== 2 || sideTeamIds.some((side) => side.length < 1) || teamIds.length < 2) {
+        return Response.json({ error: 'Select at least one registered team for each side.' }, { status: 400 });
+    }
+    if (sideNames.length !== 2 || sideNames.some((name) => !name)) {
+        return Response.json({ error: 'Both match sides need a final name.' }, { status: 400 });
     }
     if (!Number.isInteger(totalQuestions) || totalQuestions < 1) {
         return Response.json({ error: 'Total questions per innings must be a positive integer.' }, { status: 400 });
@@ -76,7 +84,7 @@ export async function POST(request) {
     if (teamsError || ballTypesError) {
         return Response.json({ error: teamsError?.message || ballTypesError?.message }, { status: 500 });
     }
-    if ((teams || []).length !== 2) {
+    if ((teams || []).length !== teamIds.length) {
         return Response.json({ error: 'One or more selected teams do not exist.' }, { status: 400 });
     }
     if ((ballTypes || []).length !== Object.keys(distribution).length) {
@@ -108,7 +116,8 @@ export async function POST(request) {
 
     // The finalized batting order is the virtual draw for this match; bowling
     // order is derived from it in reverse.
-    const lineups = playerResults.map((result) => shuffle((result.data || []).map((player) => player.id)));
+    const playersByTeam = new Map(teamIds.map((teamId, index) => [teamId, playerResults[index].data || []]));
+    const lineups = sideTeamIds.map((side) => shuffle(side.flatMap((teamId) => (playersByTeam.get(teamId) || []).map((player) => player.id))));
     if (lineups.some((lineup) => lineup.length < 1)) {
         return Response.json({ error: 'Both selected teams must have at least 1 registered player.' }, { status: 400 });
     }
@@ -136,15 +145,16 @@ export async function POST(request) {
     const { data: match, error: matchError } = await admin.from('mpl_matches').insert(matchPayload).select().single();
     if (matchError) return Response.json({ error: matchError.message }, { status: 500 });
 
-    const matchTeams = teamIds.map((teamId, index) => ({
+    const matchTeams = sideTeamIds.flatMap((side, sideIndex) => side.map((teamId) => ({
         match_id: match.id,
         team_id: teamId,
-        innings_number: index + 1,
-        batting_order: lineups[index],
-        bowling_order: [...lineups[index]].reverse(),
-        mentor_name: String(mentors[index].name).trim(),
-        mentor_email: String(mentors[index].email).trim()
-    }));
+        innings_number: sideIndex + 1,
+        side_name: sideNames[sideIndex],
+        batting_order: lineups[sideIndex],
+        bowling_order: [...lineups[sideIndex]].reverse(),
+        mentor_name: String(mentors[sideIndex].name).trim(),
+        mentor_email: String(mentors[sideIndex].email).trim()
+    })));
     const { error: matchTeamsError } = await admin.from('mpl_match_teams').insert(matchTeams);
     if (matchTeamsError) {
         await admin.from('mpl_matches').delete().eq('id', match.id);
@@ -154,7 +164,7 @@ export async function POST(request) {
     return Response.json({
         match: {
             ...match,
-            teams: teams.map((team, index) => ({ ...team, innings_number: index + 1, player_ids: lineups[index] }))
+            teams: sideTeamIds.flatMap((side, sideIndex) => side.map((teamId) => ({ ...teams.find((team) => team.id === teamId), side_name: sideNames[sideIndex], innings_number: sideIndex + 1, player_ids: lineups[sideIndex] })))
         }
     }, { status: 201 });
 }
