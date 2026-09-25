@@ -17,6 +17,10 @@ export default function MatchCelebration({ event, onComplete }) {
         overlayType = 'toss';
     } else if (event.type === 'runs' && Number(event.runs_awarded || 0) >= 6) {
         overlayType = 'six';
+    } else if (event.type === 'dot') {
+        overlayType = 'four'; // Or 'dot' if supported, but 'four' is fallback
+    } else if (event.type === 'streak_bonus') {
+        overlayType = 'six';
     } else {
         // Normal scoring events use the four-style team celebration.
         overlayType = 'four';

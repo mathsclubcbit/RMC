@@ -6,7 +6,6 @@ import "./globals.css";
 const montserrat = Montserrat({
     variable: "--font-montserrat",
     subsets: ["latin"],
-    weight: ["400", "500", "600", "700", "800"],
     display: "swap",
     preload: true, // Preload critical font
     adjustFontFallback: true, // Better fallback matching
@@ -15,7 +14,6 @@ const montserrat = Montserrat({
 const inter = Inter({
     variable: "--font-inter",
     subsets: ["latin"],
-    weight: ["300", "400", "500", "600"],
     display: "swap",
     preload: true, // Preload critical font
     adjustFontFallback: true,
@@ -33,7 +31,6 @@ const cormorant = Cormorant_Garamond({
 const cinzel = Cinzel({
     variable: "--font-cinzel",
     subsets: ["latin"],
-    weight: ["400", "700"],  // Reduced from 4 weights to 2
     display: "optional",
     adjustFontFallback: true,
 });
@@ -41,7 +38,6 @@ const cinzel = Cinzel({
 const jetbrains = JetBrains_Mono({
     variable: "--font-jetbrains",
     subsets: ["latin"],
-    weight: ["400", "500"],
     display: "optional", // Changed from swap
     adjustFontFallback: true,
 });
