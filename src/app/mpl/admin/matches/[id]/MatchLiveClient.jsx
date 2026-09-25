@@ -56,7 +56,7 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
             if (d.status === 'wicket') wickets += 1;
             if (d.runs_awarded >= 4) boundaries += 1;
         });
-        const totalLegal = currentDeliveries.filter(d => !['wide', 'no_ball', 'cancelled'].includes(d.status)).length;
+        const totalLegal = currentDeliveries.filter(d => !['no_ball', 'cancelled'].includes(d.status)).length;
         return { runs, wickets, boundaries, totalLegal };
     }, [currentInningsDeliveries]);
     const allBattersOut = scoreState.wickets >= (inningsTeam?.batting_order?.length || 10);

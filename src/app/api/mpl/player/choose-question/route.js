@@ -9,14 +9,14 @@ export async function POST(request) {
     try { body = await request.json(); } catch { return Response.json({ error: 'Request body must be valid JSON.' }, { status: 400 }); }
     const matchId = String(body.matchId || '').trim();
     const requestId = String(body.requestId || '').trim();
-    const ballTypeSlug = String(body.ballTypeSlug || '').trim();
-    if (!matchId || !requestId || !ballTypeSlug) return Response.json({ error: 'Match, delivery request, and question type are required.' }, { status: 400 });
+    const ballNumber = Number(body.ballNumber);
+    if (!matchId || !requestId || !Number.isInteger(ballNumber)) return Response.json({ error: 'Match, delivery request, and ball selection are required.' }, { status: 400 });
 
     const admin = createAdminClient();
     const [{ data: player, error: playerError }, { data: pending, error: requestError }, { data: match, error: matchError }] = await Promise.all([
         admin.from('mpl_players').select('id, team_id').eq('email', user.email).single(),
         admin.from('mpl_match_delivery_requests').select('*').eq('id', requestId).eq('match_id', matchId).single(),
-        admin.from('mpl_matches').select('id, status, total_questions_per_innings, question_distribution, timer_config').eq('id', matchId).single()
+        admin.from('mpl_matches').select('id, status, total_questions_per_innings, question_distribution, timer_config, rules_config').eq('id', matchId).single()
     ]);
     if (playerError || !player) return Response.json({ error: 'No MPL player record found.' }, { status: 404 });
     if (requestError || !pending) return Response.json({ error: 'Delivery request not found.' }, { status: 404 });
@@ -24,10 +24,47 @@ export async function POST(request) {
     if (pending.bowler_id !== player.id) return Response.json({ error: 'Only the selected bowler can choose this question type.' }, { status: 403 });
     if (pending.status !== 'pending') return Response.json({ error: 'This delivery is no longer awaiting question selection.' }, { status: 409 });
     if (match.status !== `innings_${pending.innings_number}`) return Response.json({ error: 'This innings is not currently active.' }, { status: 409 });
+    if (pending.delivery_number !== ballNumber) return Response.json({ error: 'Select the current ball.' }, { status: 409 });
 
     const distribution = match.question_distribution && typeof match.question_distribution === 'object' ? match.question_distribution : {};
+    const plan = Array.isArray(match.rules_config?.question_plan) ? match.rules_config.question_plan : [];
+    const plannedBall = plan[pending.delivery_number - 1];
+    const ballTypeSlug = typeof plannedBall === 'string' ? plannedBall : plannedBall?.slug;
+    const isWide = (typeof plannedBall === 'object' && plannedBall?.kind === 'wide') || ballTypeSlug === 'wide';
+    if (!isWide && !ballTypeSlug) return Response.json({ error: 'This match does not have a valid hidden ball plan.' }, { status: 409 });
+    if (isWide) {
+        const { error: lockError } = await admin
+            .from('mpl_match_delivery_requests')
+            .update({ status: 'selecting' })
+            .eq('id', pending.id)
+            .eq('status', 'pending');
+        if (lockError) return Response.json({ error: lockError.message }, { status: 500 });
+        const { data: delivery, error: deliveryError } = await admin
+            .from('mpl_match_deliveries')
+            .insert({
+                match_id: matchId,
+                innings_number: pending.innings_number,
+                delivery_number: pending.delivery_number,
+                question_id: null,
+                ball_type_slug: 'wide',
+                batter_id: pending.batter_id,
+                bowler_id: pending.bowler_id,
+                timer_seconds: 1,
+                status: 'wide',
+                runs_awarded: 1,
+                answer_submitted_at: new Date().toISOString(),
+                metadata: { automatic_wide: true }
+            })
+            .select()
+            .single();
+        if (deliveryError) {
+            await admin.from('mpl_match_delivery_requests').update({ status: 'pending' }).eq('id', pending.id);
+            return Response.json({ error: deliveryError.message }, { status: 409 });
+        }
+        await admin.from('mpl_match_delivery_requests').update({ status: 'selected', delivery_id: delivery.id, selected_at: new Date().toISOString() }).eq('id', pending.id).eq('status', 'selecting');
+        return Response.json({ delivery, wide: true });
+    }
     const targetCount = Number(distribution[ballTypeSlug] || 0);
-    if (!Number.isInteger(targetCount) || targetCount < 1) return Response.json({ error: 'That question type is not part of this match distribution.' }, { status: 400 });
 
     const [{ data: ballType, error: ballTypeError }, { data: deliveries, error: deliveriesError }] = await Promise.all([
         admin.from('mpl_ball_types').select('slug, default_timer_seconds, timer_adjustment_seconds').eq('slug', ballTypeSlug).single(),

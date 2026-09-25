@@ -27,7 +27,7 @@ export async function POST(request, { params }) {
         if (teamError || deliveriesError || !inningsTeam) {
             return Response.json({ error: teamError?.message || deliveriesError?.message || 'Unable to verify innings completion.' }, { status: 500 });
         }
-        const legalDeliveries = (deliveries || []).filter((delivery) => !['wide', 'no_ball', 'cancelled'].includes(delivery.status)).length;
+        const legalDeliveries = (deliveries || []).filter((delivery) => !['no_ball', 'cancelled'].includes(delivery.status)).length;
         const wickets = (deliveries || []).filter((delivery) => delivery.status === 'wicket').length;
         const allOut = wickets >= (Array.isArray(inningsTeam.batting_order) ? inningsTeam.batting_order.length : 10);
         if (legalDeliveries < match.total_questions_per_innings && !allOut) {

@@ -106,20 +106,13 @@ export async function GET() {
         .maybeSingle();
     if (pendingError) return Response.json({ error: pendingError.message }, { status: 500 });
 
-    let questionTypes = [];
+    let ballChoices = [];
     if (pendingDelivery) {
-        const distribution = match.question_distribution && typeof match.question_distribution === 'object' ? match.question_distribution : {};
-        const slugs = Object.keys(distribution);
-        const [{ data: ballTypes, error: ballTypeError }, { data: usedDeliveries, error: usedError }] = await Promise.all([
-            admin.from('mpl_ball_types').select('slug, name, description, default_timer_seconds, timer_adjustment_seconds, is_special').in('slug', slugs).order('slug'),
-            admin.from('mpl_match_deliveries').select('ball_type_slug, status').eq('match_id', match.id).eq('innings_number', pendingDelivery.innings_number)
-        ]);
-        if (ballTypeError || usedError) return Response.json({ error: ballTypeError?.message || usedError?.message }, { status: 500 });
-        const usedCounts = (usedDeliveries || []).reduce((counts, delivery) => {
-            if (!['wide', 'no_ball', 'cancelled'].includes(delivery.status)) counts[delivery.ball_type_slug] = (counts[delivery.ball_type_slug] || 0) + 1;
-            return counts;
-        }, {});
-        questionTypes = (ballTypes || []).map((type) => ({ ...type, remaining: Math.max(0, Number(distribution[type.slug] || 0) - (usedCounts[type.slug] || 0)) }));
+        const totalBalls = Number(match.total_questions_per_innings || 20);
+        ballChoices = Array.from({ length: Math.max(0, totalBalls - pendingDelivery.delivery_number + 1) }, (_, index) => ({
+            ballNumber: pendingDelivery.delivery_number + index,
+            label: `Ball ${pendingDelivery.delivery_number + index}`
+        }));
     }
 
     const { data: deliveries } = await admin
@@ -135,7 +128,7 @@ export async function GET() {
             innings_number: team.innings_number,
             runs: teamDeliveries.reduce((total, delivery) => total + (delivery.runs_awarded || 0) + (delivery.score_adjustment || 0), 0),
             wickets: teamDeliveries.filter((delivery) => delivery.status === 'wicket').length,
-            legal_deliveries: teamDeliveries.filter((delivery) => !['wide', 'no_ball', 'cancelled'].includes(delivery.status)).length
+            legal_deliveries: teamDeliveries.filter((delivery) => !['no_ball', 'cancelled'].includes(delivery.status)).length
         };
     });
     const dismissedPlayerIds = (deliveries || []).filter((delivery) => delivery.status === 'wicket').map((delivery) => delivery.batter_id);
@@ -201,7 +194,7 @@ export async function GET() {
             if (d.status === 'wicket') wickets += 1;
             if (d.runs_awarded >= 4) boundaries += 1;
         });
-        const totalLegal = currentDeliveries.filter(d => !['wide', 'no_ball', 'cancelled'].includes(d.status)).length;
+        const totalLegal = currentDeliveries.filter(d => !['no_ball', 'cancelled'].includes(d.status)).length;
         scoreState = { runs, wickets, boundaries, totalLegal };
     }
 
@@ -220,7 +213,8 @@ export async function GET() {
         } : null,
         powerShotUsed: (deliveries || []).some((delivery) => delivery.metadata?.power_shot === true && delivery.innings_number === activeDelivery?.innings_number),
         pendingDelivery: pendingDelivery ? { ...pendingDelivery, can_select_question: pendingDelivery.bowler_id === player.id } : null,
-        questionTypes,
+        questionTypes: [],
+        ballChoices,
         dismissedPlayerIds,
         scoreState,
         teamScores,
