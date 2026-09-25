@@ -15,7 +15,7 @@ export async function GET() {
 
     const { data: matchTeam, error: matchTeamError } = await admin
         .from('mpl_match_teams')
-        .select('match_id, innings_number, side_name, mpl_matches!inner(id, status, total_questions_per_innings, question_distribution, timer_config, first_batting_team_id, toss_winner_team_id, created_at)')
+        .select('match_id, innings_number, side_name, mpl_matches!inner(id, status, total_questions_per_innings, question_distribution, timer_config, first_batting_team_id, toss_winner_team_id, toss_calling_team_id, toss_choice, toss_result, created_at)')
         .eq('team_id', player.team_id)
         .not('mpl_matches.status', 'eq', 'abandoned')
         .order('created_at', { foreignTable: 'mpl_matches', ascending: false })
@@ -119,6 +119,7 @@ export async function GET() {
         .from('mpl_match_deliveries')
         .select('id, innings_number, status, runs_awarded, score_adjustment, metadata, batter_id, created_at, answer_started_at, answer_submitted_at')
         .eq('match_id', match.id);
+    const latestDelivery = [...(deliveries || [])].sort((first, second) => new Date(second.created_at || 0).getTime() - new Date(first.created_at || 0).getTime())[0] || null;
 
     const teamScores = orderedTeams.map((team) => {
         const teamDeliveries = (deliveries || []).filter((delivery) => delivery.innings_number === team.innings_number);
@@ -200,7 +201,7 @@ export async function GET() {
 
     return Response.json({
         player: { id: player.id, name: player.name, is_leader: player.is_leader, team: player.team },
-        match: { ...match, team_id: player.team_id, innings_number: matchTeam.innings_number, batting_team_id: (matchTeams || []).find((team) => team.innings_number === battingInnings)?.team_id, batting_innings_number: battingInnings },
+        match: { ...match, team_id: player.team_id, innings_number: matchTeam.innings_number, is_toss_captain: player.is_leader && match.toss_calling_team_id === player.team_id, batting_team_id: (matchTeams || []).find((team) => team.innings_number === battingInnings)?.team_id, batting_innings_number: battingInnings },
         teams: orderedTeams,
         activeDelivery: activeDelivery ? {
             ...activeDelivery,
@@ -215,6 +216,7 @@ export async function GET() {
         pendingDelivery: pendingDelivery ? { ...pendingDelivery, can_select_question: pendingDelivery.bowler_id === player.id } : null,
         questionTypes: [],
         ballChoices,
+        latestDelivery,
         dismissedPlayerIds,
         scoreState,
         teamScores,

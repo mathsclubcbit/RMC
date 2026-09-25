@@ -10,6 +10,7 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
     const [liveMatchTeams, setLiveMatchTeams] = useState(matchTeams);
     const [deliveries, setDeliveries] = useState(initialDeliveries);
     const [tossWinner, setTossWinner] = useState('');
+    const [tossCallingTeamId, setTossCallingTeamId] = useState(initialMatch.toss_calling_team_id || '');
     const [isFlipping, setIsFlipping] = useState(false);
     const [batter, setBatter] = useState('');
     const [bowler, setBowler] = useState('');
@@ -37,7 +38,6 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
     }, [initialMatch.id]);
 
     const currentInnings = match.status === 'innings_2' ? 2 : 1;
-    const inningsTeam = liveMatchTeams.find((team) => team.innings_number === currentInnings);
     const battingSideTeams = liveMatchTeams.filter((team) => team.innings_number === currentInnings);
     const bowlingSideTeams = liveMatchTeams.filter((team) => team.innings_number !== currentInnings);
     const currentPlayers = battingSideTeams.flatMap((team) => team.players || []);
@@ -59,7 +59,6 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
         const totalLegal = currentDeliveries.filter(d => !['no_ball', 'cancelled'].includes(d.status)).length;
         return { runs, wickets, boundaries, totalLegal };
     }, [currentInningsDeliveries]);
-    const allBattersOut = scoreState.wickets >= (inningsTeam?.batting_order?.length || 10);
 
     const deliveryNumber = scoreState.totalLegal + 1;
     const teamName = (teamId) => liveMatchTeams.find((team) => team.team_id === teamId)?.mpl_teams?.team_name || 'Team';
@@ -106,12 +105,22 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
         return { winner: null, reason: 'tie' };
     }, [match.status, deliveries, orderedTeams]);
 
+    const assignTossCaptain = async () => {
+        setBusy(true); setMessage('');
+        const response = await fetch(`/api/mpl/matches/${match.id}/record-toss-winner`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tossCallingTeamId }) });
+        const data = await response.json();
+        if (response.ok) setMatch(data.match);
+        else setMessage(data.error || 'Unable to assign toss captain.');
+        setBusy(false);
+    };
+
     const recordTossWinner = async () => {
         setBusy(true); setMessage('');
-        const response = await fetch(`/api/mpl/matches/${match.id}/record-toss-winner`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tossWinnerTeamId: tossWinner }) });
+        const response = await fetch(`/api/mpl/matches/${match.id}/record-toss-winner`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ flip: true }) });
         const data = await response.json();
         if (response.ok) {
             setMatch(data.match);
+            setTossWinner(data.match.toss_winner_team_id);
             const winningTeam = matchTeams.find((team) => team.team_id === tossWinner);
             setCelebration({ id: `toss-${match.id}`, type: 'toss_won', title: 'TOSS WON!', subtitle: `${winningTeam?.mpl_teams?.team_name || 'The team'} gets first choice.` });
         } else setMessage(data.error || 'Unable to record toss winner.');
@@ -120,10 +129,8 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
 
     const handleFlipCoin = () => {
         setIsFlipping(true);
-        setTossWinner('');
-        setTimeout(() => {
-            const winner = matchTeams[Math.floor(Math.random() * matchTeams.length)];
-            setTossWinner(winner.team_id);
+        window.setTimeout(async () => {
+            await recordTossWinner();
             setIsFlipping(false);
         }, 1500);
     };
@@ -313,26 +320,20 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
                 {match.status === 'toss_pending' && (
                     <div className="max-w-xl space-y-6 rounded-2xl border border-white/10 bg-white/5 p-6">
                         <h2 className="text-xl font-bold">Virtual Toss</h2>
-                        {!tossWinner ? (
-                            <div className="flex flex-col items-center justify-center space-y-4 py-8">
-                                <div className={`flex h-24 w-24 items-center justify-center rounded-full border-4 border-teal-400 bg-teal-400/20 text-3xl font-bold text-teal-300 shadow-[0_0_15px_rgba(45,212,191,0.5)] transition-transform duration-700 ${isFlipping ? 'animate-spin' : ''}`}>
-                                    ?
-                                </div>
-                                <button type="button" onClick={handleFlipCoin} disabled={isFlipping} className="mt-4 rounded-lg bg-teal-400 px-6 py-3 font-bold text-black hover:bg-teal-300 disabled:opacity-50">
-                                    {isFlipping ? 'Flipping...' : 'Flip Coin'}
-                                </button>
+                        {!match.toss_calling_team_id ? (
+                            <div className="space-y-4">
+                                <p className="text-sm text-zinc-400">Choose the team whose captain will call heads or tails.</p>
+                                <select value={tossCallingTeamId} onChange={(event) => setTossCallingTeamId(event.target.value)} className="w-full rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white">
+                                    <option value="">Select toss team</option>
+                                    {matchTeams.map((team) => <option key={team.team_id} value={team.team_id}>{team.side_name || team.mpl_teams?.team_name} captain</option>)}
+                                </select>
+                                <button type="button" disabled={busy || !tossCallingTeamId} onClick={assignTossCaptain} className="w-full rounded-lg bg-teal-400 px-6 py-3 font-bold text-black disabled:opacity-50">Assign Toss Captain</button>
                             </div>
                         ) : (
-                            <div className="space-y-4">
-                                <div className="rounded-xl border border-teal-400/30 bg-teal-400/10 p-4 text-center">
-                                    <p className="text-sm text-teal-200">Toss Winner</p>
-                                    <p className="mt-1 text-2xl font-bold text-teal-400">{teamName(tossWinner)}</p>
-                                </div>
-                                <p className="text-sm text-zinc-400">Confirm the winner. They will choose bat or bowl from their own screen.</p>
-                                <div className="flex gap-3">
-                                    <button type="button" onClick={() => setTossWinner('')} className="flex-1 rounded-lg border border-white/10 bg-black/50 px-4 py-3 text-sm font-semibold text-zinc-400 hover:border-white/30">Re-flip</button>
-                                    <button type="button" disabled={busy} onClick={recordTossWinner} className="flex-1 rounded-lg bg-teal-400 px-4 py-3 text-sm font-bold text-black disabled:opacity-50">Confirm Winner</button>
-                                </div>
+                            <div className="space-y-4 text-center">
+                                <div className={`mx-auto flex h-24 w-24 items-center justify-center rounded-full border-4 border-teal-400 bg-teal-400/20 text-3xl font-bold text-teal-300 shadow-[0_0_15px_rgba(45,212,191,0.5)] transition-transform duration-700 ${isFlipping ? 'animate-spin' : ''}`}>{isFlipping ? '?' : match.toss_result || match.toss_choice || '?'}</div>
+                                <p className="text-sm text-zinc-400">{match.toss_choice ? `Captain selected ${match.toss_choice}.` : 'Waiting for the selected captain to choose heads or tails.'}</p>
+                                <button type="button" onClick={handleFlipCoin} disabled={isFlipping || !match.toss_choice} className="rounded-lg bg-teal-400 px-6 py-3 font-bold text-black hover:bg-teal-300 disabled:opacity-50">{isFlipping ? 'Flipping...' : 'Flip Coin'}</button>
                             </div>
                         )}
                     </div>
@@ -352,8 +353,6 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
                     </div>
                 )}
 
-                {allBattersOut && match.status !== 'completed' && match.status !== 'innings_break' && <div className="mb-6 max-w-xl rounded-2xl border border-amber-400/30 bg-amber-400/10 p-6"><h2 className="text-lg font-bold text-amber-200">All batters are out</h2><p className="mt-2 text-sm text-amber-100/70">The innings may end before the fixed delivery count.</p><button disabled={busy} onClick={advancePhase} className="mt-4 rounded-lg bg-amber-300 px-5 py-3 text-sm font-bold text-black">Advance innings</button></div>}
-
                 {match.status !== 'toss_pending' && match.status !== 'toss_won' && match.status !== 'draft' && match.status !== 'completed' && (
                     <div className="grid gap-6 lg:grid-cols-[1fr_1.3fr]">
                         <section className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6">
@@ -362,7 +361,7 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
                                 <span className="flex items-center gap-2 text-xs text-zinc-400"><Timer className="h-4 w-4" /> {activeDelivery ? `Question active · ${remainingSeconds}s remaining` : 'Bowler chooses question type'}</span>
                             </div>
                             {!activeDelivery ? (
-                                scoreState.totalLegal >= match.total_questions_per_innings || allBattersOut ? (
+                                scoreState.totalLegal >= match.total_questions_per_innings ? (
                                     <div className="rounded-xl border border-teal-400/20 bg-teal-400/5 p-6 text-center">
                                         <h3 className="mb-4 text-lg font-bold text-teal-300">Innings Complete</h3>
                                         <button disabled={busy} onClick={advancePhase} className="rounded-lg bg-white px-6 py-3 font-bold text-black hover:bg-zinc-200">Advance Match Phase</button>
