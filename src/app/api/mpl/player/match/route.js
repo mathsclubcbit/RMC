@@ -84,7 +84,7 @@ export async function GET() {
 
     const { data: activeDelivery, error: deliveryError } = await admin
         .from('mpl_match_deliveries')
-        .select('id, innings_number, delivery_number, ball_type_slug, batter_id, bowler_id, timer_seconds, status, answer_started_at, metadata, mpl_questions(question_text, options)')
+        .select('id, innings_number, delivery_number, ball_type_slug, batter_id, bowler_id, timer_seconds, status, answer_started_at, metadata, mpl_questions(question_text, options, runs), mpl_ball_types(default_runs)')
         .eq('match_id', match.id)
         .eq('status', 'active')
         .order('created_at', { ascending: false })
@@ -109,7 +109,7 @@ export async function GET() {
 
     let ballChoices = [];
     if (pendingDelivery) {
-        const totalBalls = Number(match.total_questions_per_innings || 20);
+        const totalBalls = 20; // Ensure 20 balls are displayed as requested
         ballChoices = Array.from({ length: Math.max(0, totalBalls - pendingDelivery.delivery_number + 1) }, (_, index) => ({
             ballNumber: pendingDelivery.delivery_number + index,
             label: `Ball ${pendingDelivery.delivery_number + index}`
@@ -130,7 +130,7 @@ export async function GET() {
             innings_number: team.innings_number,
             runs: teamDeliveries.reduce((total, delivery) => total + (delivery.runs_awarded || 0) + (delivery.score_adjustment || 0), 0),
             wickets: teamDeliveries.filter((delivery) => delivery.status === 'wicket').length,
-            legal_deliveries: teamDeliveries.filter((delivery) => !['no_ball', 'cancelled'].includes(delivery.status)).length
+            legal_deliveries: teamDeliveries.filter((delivery) => !['wide', 'no_ball', 'cancelled'].includes(delivery.status)).length
         };
     });
     const dismissedPlayerIds = (deliveries || []).filter((delivery) => delivery.status === 'wicket').map((delivery) => delivery.batter_id);
@@ -144,16 +144,47 @@ export async function GET() {
         ? (matchTeams || []).find((team) => team.team_id !== celebrationBattingTeam?.team_id)
         : celebrationBattingTeam;
     const wrongAnswerHandoff = latestCelebrationDelivery?.metadata?.rescue_available === true && latestCelebrationDelivery?.metadata?.answer_correct === false;
+    const streakAdjustment = Number(latestCelebrationDelivery?.metadata?.streak_adjustment || 0);
+    let eventType = latestCelebrationDelivery?.status === 'wide' ? 'wide' 
+                  : latestCelebrationDelivery?.status === 'wicket' ? 'wicket' 
+                  : latestCelebrationDelivery?.status === 'dot' ? 'dot' 
+                  : wrongAnswerHandoff ? 'wrong_answer' 
+                  : latestCelebrationDelivery?.metadata?.power_shot === true ? 'power_shot' 
+                  : 'runs';
+
+    let eventTitle = latestCelebrationDelivery?.status === 'wide' ? 'WIDE BALL · +1' 
+                   : latestCelebrationDelivery?.status === 'wicket' ? 'WICKET!' 
+                   : latestCelebrationDelivery?.status === 'dot' ? 'DOT BALL' 
+                   : wrongAnswerHandoff ? 'WRONG ANSWER' 
+                   : latestCelebrationDelivery?.metadata?.power_shot === true ? 'POWER SHOT!' 
+                   : `+${latestCelebrationDelivery?.runs_awarded} runs`;
+
+    let eventSubtitle = latestCelebrationDelivery?.status === 'wide' ? `${celebrationBattingTeam?.mpl_teams?.team_name || 'Batting team'} gets 1 run` 
+                      : latestCelebrationDelivery?.status === 'wicket' ? `${celebrationTeam?.mpl_teams?.team_name || 'Bowling team'} gets the wicket!` 
+                      : latestCelebrationDelivery?.status === 'dot' ? 'No runs scored' 
+                      : wrongAnswerHandoff ? 'Question passed to the bowler' 
+                      : `${celebrationTeam?.mpl_teams?.team_name || 'Batting team'} scores!`;
+
+    if (streakAdjustment > 0) {
+        eventType = 'streak_bonus';
+        eventTitle = `STREAK BONUS!`;
+        eventSubtitle = `+${streakAdjustment} runs for ${celebrationBattingTeam?.mpl_teams?.team_name || 'Batting team'}!`;
+    } else if (streakAdjustment < 0) {
+        eventType = 'streak_bonus';
+        eventTitle = `STREAK PENALTY!`;
+        eventSubtitle = `${streakAdjustment} runs for ${celebrationBattingTeam?.mpl_teams?.team_name || 'Batting team'}!`;
+    }
+
     const celebrationEvent = latestCelebrationDelivery && celebrationTeam ? {
         id: latestCelebrationDelivery.id,
-        type: latestCelebrationDelivery.status === 'wide' ? 'wide' : latestCelebrationDelivery.status === 'dot' ? 'dot' : wrongAnswerHandoff ? 'wrong_answer' : latestCelebrationDelivery.status === 'wicket' ? 'wicket' : latestCelebrationDelivery.metadata?.power_shot === true ? 'power_shot' : 'runs',
+        type: eventType,
         innings_number: latestCelebrationDelivery.innings_number,
         celebration_team_id: celebrationTeam.team_id,
         batting_team_id: celebrationBattingTeam?.team_id || null,
         batting_team_name: celebrationBattingTeam?.mpl_teams?.team_name || 'Batting team',
         runs_awarded: latestCelebrationDelivery.runs_awarded,
-        title: latestCelebrationDelivery.status === 'wide' ? 'WIDE BALL · +1' : latestCelebrationDelivery.status === 'dot' ? 'DOT BALL' : wrongAnswerHandoff ? 'WRONG ANSWER' : latestCelebrationDelivery.status === 'wicket' ? 'WICKET!' : latestCelebrationDelivery.metadata?.power_shot === true ? 'POWER SHOT!' : `+${latestCelebrationDelivery.runs_awarded} runs`,
-        subtitle: latestCelebrationDelivery.status === 'wide' ? `${celebrationBattingTeam?.mpl_teams?.team_name || 'Batting team'} gets 1 run` : latestCelebrationDelivery.status === 'dot' ? 'No runs scored' : wrongAnswerHandoff ? 'Question passed to the bowler' : latestCelebrationDelivery.status === 'wicket' ? `${celebrationTeam.mpl_teams?.team_name || 'Bowling team'} gets the wicket!` : `${celebrationTeam.mpl_teams?.team_name || 'Batting team'} scores!`
+        title: eventTitle,
+        subtitle: eventSubtitle
     } : null;
 
     let matchResult = null;
@@ -197,13 +228,14 @@ export async function GET() {
             if (d.status === 'wicket') wickets += 1;
             if (d.runs_awarded >= 4) boundaries += 1;
         });
-        const totalLegal = currentDeliveries.filter(d => !['no_ball', 'cancelled'].includes(d.status)).length;
+        const totalLegal = currentDeliveries.filter(d => !['wide', 'no_ball', 'cancelled'].includes(d.status)).length;
         scoreState = { runs, wickets, boundaries, totalLegal };
     }
 
     return Response.json({
         player: { id: player.id, name: player.name, is_leader: player.is_leader, team: player.team },
         match: { ...match, team_id: player.team_id, innings_number: matchTeam.innings_number, is_toss_captain: player.is_leader && match.toss_calling_team_id === player.team_id, toss_captain_name: tossCaptain?.name || null, batting_team_id: (matchTeams || []).find((team) => team.innings_number === battingInnings)?.team_id, batting_innings_number: battingInnings },
+        isPowerShotArmed: match.rules_config?.[`power_shot_armed_${battingInnings}`] === true,
         teams: orderedTeams,
         activeDelivery: activeDelivery ? {
             ...activeDelivery,
@@ -211,10 +243,11 @@ export async function GET() {
             can_rescue: playerCanRescue,
             batter_name: batter?.name || 'Assigned batter',
             bowler_name: bowler?.name || 'Assigned bowler',
+            assigned_score: activeDelivery.mpl_questions?.runs ?? activeDelivery.mpl_ball_types?.default_runs ?? 0,
             question: activeDelivery.mpl_questions,
             mpl_questions: undefined
         } : null,
-        powerShotUsed: (deliveries || []).some((delivery) => delivery.metadata?.power_shot === true && delivery.innings_number === activeDelivery?.innings_number),
+        powerShotUsed: (deliveries || []).some((delivery) => delivery.metadata?.power_shot === true && delivery.innings_number === battingInnings),
         pendingDelivery: pendingDelivery ? { ...pendingDelivery, can_select_question: pendingDelivery.bowler_id === player.id } : null,
         questionTypes: [],
         ballChoices,

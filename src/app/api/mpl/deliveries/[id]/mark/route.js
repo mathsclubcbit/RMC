@@ -22,5 +22,26 @@ export async function POST(request, { params }) {
     });
 
     if (error) return Response.json({ error: error.message }, { status: 409 });
+
+    if (data && data.innings_number === 2 && data.status !== 'active') {
+        const admin = createAdminClient();
+        const { data: allDeliveries } = await admin
+            .from('mpl_match_deliveries')
+            .select('innings_number, runs_awarded, score_adjustment')
+            .eq('match_id', data.match_id);
+        
+        let innings1Runs = 0;
+        let innings2Runs = 0;
+        
+        for (const d of (allDeliveries || [])) {
+            if (d.innings_number === 1) innings1Runs += (Number(d.runs_awarded) || 0) + (Number(d.score_adjustment) || 0);
+            if (d.innings_number === 2) innings2Runs += (Number(d.runs_awarded) || 0) + (Number(d.score_adjustment) || 0);
+        }
+        
+        if (innings2Runs > innings1Runs) {
+            await admin.from('mpl_matches').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('id', data.match_id);
+        }
+    }
+
     return Response.json({ delivery: data });
 }

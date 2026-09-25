@@ -83,6 +83,23 @@ export async function POST(request) {
             await admin.from('mpl_match_delivery_requests').update({ status: 'pending' }).eq('id', pending.id);
             return Response.json({ error: deliveryError.message }, { status: 409 });
         }
+        
+        if (pending.innings_number === 2) {
+            const { data: allDeliveries } = await admin
+                .from('mpl_match_deliveries')
+                .select('innings_number, runs_awarded, score_adjustment')
+                .eq('match_id', matchId);
+            let innings1Runs = 0;
+            let innings2Runs = 0;
+            for (const d of (allDeliveries || [])) {
+                if (d.innings_number === 1) innings1Runs += (Number(d.runs_awarded) || 0) + (Number(d.score_adjustment) || 0);
+                if (d.innings_number === 2) innings2Runs += (Number(d.runs_awarded) || 0) + (Number(d.score_adjustment) || 0);
+            }
+            if (innings2Runs > innings1Runs) {
+                await admin.from('mpl_matches').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('id', matchId);
+            }
+        }
+        
         await admin.from('mpl_match_delivery_requests').update({ status: 'selected', delivery_id: delivery.id, selected_at: new Date().toISOString() }).eq('id', pending.id).eq('status', 'selecting');
         return Response.json({ delivery, wide: true });
     }
@@ -134,6 +151,16 @@ export async function POST(request) {
             .single();
         if (timerError) return Response.json({ error: timerError.message }, { status: 500 });
         selectedDelivery = adjustedDelivery;
+    }
+
+    const isPowerShotArmed = match.rules_config?.[`power_shot_armed_${pending.innings_number}`] === true;
+    if (isPowerShotArmed) {
+        // Apply power shot to delivery and un-arm it
+        await admin.from('mpl_match_deliveries').update({ metadata: { power_shot: true } }).eq('id', selectedDelivery.id);
+        const newRules = { ...match.rules_config };
+        delete newRules[`power_shot_armed_${pending.innings_number}`];
+        await admin.from('mpl_matches').update({ rules_config: newRules }).eq('id', matchId);
+        selectedDelivery.metadata = { ...selectedDelivery.metadata, power_shot: true };
     }
 
     const { error: completeError } = await admin

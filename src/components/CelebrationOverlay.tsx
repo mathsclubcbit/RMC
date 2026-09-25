@@ -1,11 +1,12 @@
 // src/components/CelebrationOverlay.tsx
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import confetti from "canvas-confetti";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Zap, Star, Sparkles, Crown } from "lucide-react";
 
 interface CelebrationOverlayProps {
-  type: "four" | "six" | "wicket" | "toss" | "win" | null;
+  type: "four" | "six" | "wicket" | "toss" | "win" | "dot" | null;
   visible: boolean;
   onDone: () => void;
   winnerName?: string;
@@ -156,6 +157,17 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
           glow: "shadow-[0_0_100px_rgba(244,63,94,0.85)]",
           ringColor: "rgba(244,63,94,0.7)",
         };
+      case "dot":
+        return {
+          icon: <span className="text-[5rem] sm:text-[7rem] leading-none text-zinc-300">•</span>,
+          title: customTitle || "DOT BALL!",
+          subtitle: customSubtitle || "No runs scored",
+          emoji: "⚪",
+          gradient: "from-zinc-400 via-gray-400 to-zinc-500",
+          bgGradient: "from-zinc-500/20 via-gray-500/20 to-zinc-600/20",
+          glow: "shadow-[0_0_100px_rgba(161,161,170,0.85)]",
+          ringColor: "rgba(161,161,170,0.7)",
+        };
       case "toss":
         return {
           icon: <Sparkles className="h-20 w-20 sm:h-28 sm:w-28" />,
@@ -192,9 +204,15 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
   };
 
   const content = getContent();
-  if (!content) return null;
+  
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  return (
+  if (!content || !mounted) return null;
+
+  return createPortal(
     <AnimatePresence mode="wait">
       {visible && (
         <motion.div
@@ -546,6 +564,7 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };

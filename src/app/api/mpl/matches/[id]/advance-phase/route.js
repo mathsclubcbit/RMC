@@ -28,7 +28,7 @@ export async function POST(request, { params }) {
         if (deliveriesError) {
             return Response.json({ error: deliveriesError.message || 'Unable to verify innings completion.' }, { status: 500 });
         }
-        const legalDeliveries = (deliveries || []).filter((delivery) => !['no_ball', 'cancelled'].includes(delivery.status)).length;
+        const legalDeliveries = (deliveries || []).filter((delivery) => !['wide', 'no_ball', 'cancelled'].includes(delivery.status)).length;
         if (legalDeliveries < match.total_questions_per_innings) {
             return Response.json({ error: 'The innings can advance only after all 20 balls are complete.' }, { status: 409 });
         }
