@@ -15,7 +15,7 @@ export async function GET() {
 
     const { data: matchTeam, error: matchTeamError } = await admin
         .from('mpl_match_teams')
-        .select('match_id, innings_number, mpl_matches!inner(id, status, total_questions_per_innings, question_distribution, timer_config, first_batting_team_id, toss_winner_team_id, created_at)')
+        .select('match_id, innings_number, side_name, mpl_matches!inner(id, status, total_questions_per_innings, question_distribution, timer_config, first_batting_team_id, toss_winner_team_id, created_at)')
         .eq('team_id', player.team_id)
         .not('mpl_matches.status', 'eq', 'abandoned')
         .order('created_at', { foreignTable: 'mpl_matches', ascending: false })
@@ -34,7 +34,7 @@ export async function GET() {
 
     const { data: matchTeams, error: teamsError } = await admin
         .from('mpl_match_teams')
-        .select('team_id, innings_number, mentor_name, mentor_email, mpl_teams(id, team_name, team_code)')
+        .select('team_id, innings_number, side_name, mentor_name, mentor_email, mpl_teams(id, team_name, team_code)')
         .eq('match_id', match.id)
         .order('innings_number');
     if (teamsError) return Response.json({ error: teamsError.message }, { status: 500 });
@@ -57,19 +57,28 @@ export async function GET() {
     if (presenceListError) return Response.json({ error: presenceListError.message }, { status: 500 });
     const joinedPlayerIds = new Set((presence || []).map((entry) => entry.player_id));
 
-    const otherTeamId = teamIds.find((teamId) => teamId !== match.first_batting_team_id);
-    const battingTeamId = match.status === 'innings_2' ? otherTeamId : match.first_batting_team_id;
-    const orderedTeams = [...(matchTeams || [])].sort((first, second) => {
-        if (first.team_id === battingTeamId) return -1;
-        if (second.team_id === battingTeamId) return 1;
-        return first.innings_number - second.innings_number;
-    }).map((team) => ({
-        ...team.mpl_teams,
-        team_id: team.team_id,
-        mentor_name: team.team_id === player.team_id ? team.mentor_name : null,
-        mentor_email: team.team_id === player.team_id ? team.mentor_email : null,
-        is_batting: team.team_id === battingTeamId,
-        players: (players || []).filter((player) => player.team_id === team.team_id && joinedPlayerIds.has(player.id))
+    const sideRows = [...(matchTeams || [])].reduce((sides, row) => {
+        const side = sides.get(row.innings_number) || { innings_number: row.innings_number, side_name: row.side_name || row.mpl_teams?.team_name || `Team ${row.innings_number}`, team_ids: [], mentor_name: null, mentor_email: null };
+        side.team_ids.push(row.team_id);
+        if (row.team_id === player.team_id) {
+            side.mentor_name = row.mentor_name;
+            side.mentor_email = row.mentor_email;
+        }
+        sides.set(row.innings_number, side);
+        return sides;
+    }, new Map());
+    const firstBattingSide = (matchTeams || []).find((team) => team.team_id === match.first_batting_team_id)?.innings_number || 1;
+    const battingInnings = match.status === 'innings_2' ? (firstBattingSide === 1 ? 2 : 1) : firstBattingSide;
+    const orderedTeams = [...sideRows.values()].sort((first, second) => first.innings_number - second.innings_number).map((side) => ({
+        team_id: side.team_ids[0],
+        team_ids: side.team_ids,
+        team_name: side.side_name,
+        team_code: side.team_ids.length > 1 ? `${side.team_ids.length} teams` : (matchTeams || []).find((team) => team.team_id === side.team_ids[0])?.mpl_teams?.team_code,
+        innings_number: side.innings_number,
+        mentor_name: side.mentor_name,
+        mentor_email: side.mentor_email,
+        is_batting: side.innings_number === battingInnings,
+        players: (players || []).filter((entry) => side.team_ids.includes(entry.team_id) && joinedPlayerIds.has(entry.id))
     }));
 
     const { data: activeDelivery, error: deliveryError } = await admin
@@ -81,6 +90,11 @@ export async function GET() {
         .limit(1)
         .maybeSingle();
     if (deliveryError) return Response.json({ error: deliveryError.message }, { status: 500 });
+
+    const playerCanAnswer = activeDelivery?.batter_id === player.id;
+    const playerCanRescue = activeDelivery?.bowler_id === player.id && activeDelivery.metadata?.rescue_available === true;
+    const batter = (players || []).find((entry) => entry.id === activeDelivery?.batter_id);
+    const bowler = (players || []).find((entry) => entry.id === activeDelivery?.bowler_id);
 
     const { data: pendingDelivery, error: pendingError } = await admin
         .from('mpl_match_delivery_requests')
@@ -113,11 +127,11 @@ export async function GET() {
         .select('id, innings_number, status, runs_awarded, score_adjustment, metadata, batter_id, created_at, answer_started_at, answer_submitted_at')
         .eq('match_id', match.id);
 
-    const teamScores = (matchTeams || []).map((team) => {
+    const teamScores = orderedTeams.map((team) => {
         const teamDeliveries = (deliveries || []).filter((delivery) => delivery.innings_number === team.innings_number);
         return {
             team_id: team.team_id,
-            team_name: team.mpl_teams?.team_name || 'Team',
+            team_name: team.team_name || 'Team',
             innings_number: team.innings_number,
             runs: teamDeliveries.reduce((total, delivery) => total + (delivery.runs_awarded || 0) + (delivery.score_adjustment || 0), 0),
             wickets: teamDeliveries.filter((delivery) => delivery.status === 'wicket').length,
@@ -193,12 +207,14 @@ export async function GET() {
 
     return Response.json({
         player: { id: player.id, name: player.name, is_leader: player.is_leader, team: player.team },
-        match: { ...match, team_id: player.team_id, innings_number: matchTeam.innings_number, batting_team_id: battingTeamId },
+        match: { ...match, team_id: player.team_id, innings_number: matchTeam.innings_number, batting_team_id: (matchTeams || []).find((team) => team.innings_number === battingInnings)?.team_id, batting_innings_number: battingInnings },
         teams: orderedTeams,
         activeDelivery: activeDelivery ? {
             ...activeDelivery,
-            can_answer: activeDelivery.batter_id === player.id,
-            can_rescue: activeDelivery.bowler_id === player.id && activeDelivery.metadata?.rescue_available === true,
+            can_answer: playerCanAnswer,
+            can_rescue: playerCanRescue,
+            batter_name: batter?.name || 'Assigned batter',
+            bowler_name: bowler?.name || 'Assigned bowler',
             question: activeDelivery.mpl_questions,
             mpl_questions: undefined
         } : null,
