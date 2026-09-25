@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { revalidatePath, revalidateTag } from 'next/cache';
+import { isMplRegistrationClosed } from '@/lib/mpl/registration';
 
 const EVENT_ID = 'mpl-2026';
 
@@ -21,6 +22,13 @@ export async function POST(req) {
             .select('payload')
             .eq('id', EVENT_ID)
             .single();
+
+        if (isMplRegistrationClosed(eventData?.payload)) {
+            return NextResponse.json(
+                { error: 'Registration for MPL 2026 is closed.' },
+                { status: 400 }
+            );
+        }
 
         if (eventData?.payload) {
             const payload = eventData.payload;

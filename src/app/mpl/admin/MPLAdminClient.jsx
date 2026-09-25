@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Search, LogOut, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Search, LogOut, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { logoutFromMplAdmin } from './actions';
 import { useRouter } from 'next/navigation';
 import { getIplTeam } from '@/constants/mpl';
 
-export default function MPLAdminClient({ initialTeamsWithPlayers, totalTeams, totalPlayers }) {
+export default function MPLAdminClient({ initialTeamsWithPlayers, totalTeams, totalPlayers, liveMatches }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedTeams, setExpandedTeams] = useState(new Set());
     const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -94,6 +94,18 @@ export default function MPLAdminClient({ initialTeamsWithPlayers, totalTeams, to
                             />
                         </div>
                     </div>
+                    <Link
+                        href="/mpl/admin/questions"
+                        className="flex items-center gap-2 px-4 py-3 bg-teal-500 text-black rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-teal-400 transition-colors"
+                    >
+                        Manage Questions
+                    </Link>
+                    <Link
+                        href="/mpl/admin/matches"
+                        className="flex items-center gap-2 px-4 py-3 bg-white text-black rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-zinc-200 transition-colors"
+                    >
+                        Create Match
+                    </Link>
                     
                     <div className="flex gap-4">
                         <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center min-w-[100px]">
@@ -106,6 +118,34 @@ export default function MPLAdminClient({ initialTeamsWithPlayers, totalTeams, to
                         </div>
                     </div>
                 </div>
+
+                <section className="mb-10 rounded-2xl border border-teal-400/20 bg-teal-400/5 p-5">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <p className="text-[10px] font-mono uppercase tracking-widest text-teal-300">Match control</p>
+                            <h2 className="mt-1 text-xl font-bold">Live matches</h2>
+                        </div>
+                        <Link href="/mpl/admin/matches" className="rounded-lg bg-white px-3 py-2 text-xs font-bold uppercase tracking-widest text-black hover:bg-zinc-200">Create match</Link>
+                    </div>
+                    {liveMatches.length === 0 ? (
+                        <p className="rounded-lg border border-white/10 bg-black/20 px-4 py-5 text-sm text-zinc-500">No live matches yet. Create a match to begin the organiser workflow.</p>
+                    ) : (
+                        <div className="grid gap-3 lg:grid-cols-2">
+                            {liveMatches.map((match) => {
+                                const matchTeams = [...(match.mpl_match_teams || [])].sort((first, second) => first.innings_number - second.innings_number);
+                                return (
+                                    <div key={match.id} className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-black/30 p-4">
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-bold text-white">{matchTeams.map((entry) => entry.mpl_teams?.team_name).filter(Boolean).join(' vs ') || 'Teams pending'}</p>
+                                            <p className="mt-1 text-xs text-zinc-500">{match.total_questions_per_innings} questions/innings · {match.status.replaceAll('_', ' ')}</p>
+                                        </div>
+                                        <Link href={`/mpl/admin/matches/${match.id}`} className="flex shrink-0 items-center gap-2 rounded-lg bg-teal-400 px-3 py-2 text-xs font-bold text-black hover:bg-teal-300"><ExternalLink className="h-3.5 w-3.5" /> Open match</Link>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </section>
 
                 <div className="space-y-4">
                     {filteredTeams.length === 0 ? (

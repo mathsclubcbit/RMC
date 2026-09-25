@@ -10,7 +10,7 @@ import UserProfileMenu from '../components/UserProfileMenu';
 
 import { createClient } from '@/lib/supabase/client';
 
-export default function MPLRegistrationClient() {
+export default function MPLRegistrationClient({ registrationClosed = false }) {
     const searchParams = useSearchParams();
     const urlCode = searchParams.get('code');
     const supabase = createClient();
@@ -221,6 +221,32 @@ export default function MPLRegistrationClient() {
                         </svg>
                         Sign in with Google
                     </button>
+                    <Link href="/events" className="mt-6 inline-block text-xs font-mono text-zinc-500 hover:text-white transition-colors uppercase tracking-widest">
+                        Return to Events
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
+    if (registrationClosed) {
+        return (
+            <div className="min-h-screen bg-[#050505] flex items-center justify-center py-20 px-4 text-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none" />
+                <div className="w-full max-w-md relative z-10">
+                    <span className="inline-block px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-[10px] font-mono text-zinc-400 uppercase tracking-widest mb-6">
+                        MPL 2026 Registration
+                    </span>
+                    <h1 className="text-3xl font-extrabold text-white mb-4">Registration Closed</h1>
+                    <p className="text-sm text-zinc-400 mb-8 leading-relaxed">
+                        Registration for the Mathematics Premier League is currently closed. Already registered players can access their squad dashboard.
+                    </p>
+                    <Link
+                        href="/mpl/dashboard"
+                        className="inline-flex items-center justify-center gap-2 w-full py-4 bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-zinc-200 transition-colors rounded-xl"
+                    >
+                        Open My Dashboard <ArrowRight className="w-4 h-4" />
+                    </Link>
                     <Link href="/events" className="mt-6 inline-block text-xs font-mono text-zinc-500 hover:text-white transition-colors uppercase tracking-widest">
                         Return to Events
                     </Link>

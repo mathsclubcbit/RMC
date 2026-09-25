@@ -1,8 +1,6 @@
 // Force Rebuild
-import { Montserrat, Inter, Playfair_Display, JetBrains_Mono, Cormorant_Garamond, Cinzel, Julius_Sans_One } from "next/font/google"; // [NEW IMPORTS]
+import { Montserrat, Inter, JetBrains_Mono, Cormorant_Garamond, Cinzel, Julius_Sans_One } from "next/font/google";
 import "./globals.css";
-
-// ... existing fonts ...
 
 // Critical fonts - preloaded for above-the-fold content
 const montserrat = Montserrat({
@@ -34,14 +32,6 @@ const cormorant = Cormorant_Garamond({
 
 const cinzel = Cinzel({
     variable: "--font-cinzel",
-    subsets: ["latin"],
-    weight: ["400", "700"],  // Reduced from 4 weights to 2
-    display: "optional",
-    adjustFontFallback: true,
-});
-
-const playfair = Playfair_Display({
-    variable: "--font-playfair",
     subsets: ["latin"],
     weight: ["400", "700"],  // Reduced from 4 weights to 2
     display: "optional",
@@ -93,7 +83,7 @@ export default function RootLayout({ children }) {
     return (
         <html lang="en" className="scroll-smooth" suppressHydrationWarning data-scroll-behavior="smooth">
             <body
-                className={`${montserrat.variable} ${inter.variable} ${playfair.variable} ${jetbrains.variable} ${cormorant.variable} ${cinzel.variable} ${julius.variable} antialiased min-h-screen flex flex-col bg-[#020617] text-foreground`}
+                className={`${montserrat.variable} ${inter.variable} ${jetbrains.variable} ${cormorant.variable} ${cinzel.variable} ${julius.variable} antialiased min-h-screen flex flex-col bg-[#020617] text-foreground`}
             >
                 {/* Skip to main content link for accessibility */}
                 <a

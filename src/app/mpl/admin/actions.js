@@ -12,7 +12,7 @@ export async function loginToMplAdmin(password) {
         cookieStore.set('mpl_admin_auth', 'true', { 
             secure: process.env.NODE_ENV === 'production', 
             httpOnly: true,
-            path: '/mpl/admin',
+            path: '/',
             maxAge: 60 * 60 * 24 // 1 day
         });
         return { success: true };
@@ -23,5 +23,6 @@ export async function loginToMplAdmin(password) {
 
 export async function logoutFromMplAdmin() {
     const cookieStore = await cookies();
-    cookieStore.delete('mpl_admin_auth');
+    cookieStore.delete({ name: 'mpl_admin_auth', path: '/mpl/admin' });
+    cookieStore.delete({ name: 'mpl_admin_auth', path: '/' });
 }
