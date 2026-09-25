@@ -26,7 +26,8 @@ function parseCsvLine(line) {
 export default function MatchSetupClient({ teams, ballTypes }) {
     const [sideTeams, setSideTeams] = useState([[''], ['']]);
     const [sideNames, setSideNames] = useState(['Team A', 'Team B']);
-    const [totalQuestions, setTotalQuestions] = useState(10);
+    const [totalQuestions] = useState(20);
+    const wideBallCount = 4;
     const [baseTimerSeconds, setBaseTimerSeconds] = useState(60);
     const [timerAdjustment, setTimerAdjustment] = useState(0);
     const [mentors, setMentors] = useState([{ name: '', email: '' }, { name: '', email: '' }]);
@@ -64,8 +65,9 @@ export default function MatchSetupClient({ teams, ballTypes }) {
         event.preventDefault();
         setMessage('');
         setCreatedMatch(null);
-        if (distributionTotal !== Number(totalQuestions)) {
-            setMessage(`Question counts total ${distributionTotal}; set them to ${totalQuestions}.`);
+        const validBallCount = Number(totalQuestions) - wideBallCount;
+        if (distributionTotal !== validBallCount) {
+            setMessage(`Question distribution must total ${validBallCount}; the remaining ${wideBallCount} balls are automatic wides.`);
             return;
         }
         setSubmitting(true);
@@ -78,6 +80,7 @@ export default function MatchSetupClient({ teams, ballTypes }) {
                     sideNames,
                     mentors,
                     totalQuestionsPerInnings: Number(totalQuestions),
+                    wideBallCount,
                     baseTimerSeconds: Number(baseTimerSeconds),
                     timerAdjustmentSeconds: Number(timerAdjustment),
                     streakThreshold: Number(streakThreshold),
@@ -114,8 +117,8 @@ export default function MatchSetupClient({ teams, ballTypes }) {
                     <section className="space-y-5 rounded-2xl border border-white/10 bg-white/5 p-5">
                         <h2 className="font-bold">Teams and timer</h2>
                         {[0, 1].map((sideIndex) => <div key={sideIndex} className="space-y-3 rounded-xl border border-white/10 bg-black/20 p-4"><label className="block text-sm text-zinc-300">{sideIndex === 0 ? 'Team A side name' : 'Team B side name'}<input required value={sideNames[sideIndex]} onChange={(event) => updateSideName(sideIndex, event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white" /></label>{sideTeams[sideIndex].map((teamId, teamIndex) => <div key={`${sideIndex}-${teamIndex}`} className="flex gap-2"><select required value={teamId} onChange={(event) => updateTeam(sideIndex, teamIndex, event.target.value)} className="mt-2 min-w-0 flex-1 rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white"><option value="">Select registered team</option>{availableTeams(sideIndex).map((team) => <option key={team.id} value={team.id}>{team.team_name} ({team.team_code})</option>)}</select>{sideTeams[sideIndex].length > 1 && <button type="button" onClick={() => removeTeam(sideIndex, teamIndex)} className="mt-2 rounded-lg border border-red-400/20 px-3 text-red-300" aria-label="Remove team"><X className="h-4 w-4" /></button>}</div>)}<button type="button" onClick={() => addTeam(sideIndex)} className="flex items-center gap-2 text-xs font-semibold text-teal-300"><Plus className="h-4 w-4" /> Add team to this side</button><input type="file" accept=".csv,text/csv" onChange={(event) => importRoster(sideIndex, event.target.files?.[0])} className="w-full text-xs text-zinc-500" /><span className="block text-[10px] text-zinc-600">CSV import adds players to the first team on this side.</span></div>)}
-                        <label className="block text-sm text-zinc-300">Questions per innings
-                            <input required min="1" type="number" value={totalQuestions} onChange={(event) => setTotalQuestions(event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white" />
+                        <label className="block text-sm text-zinc-300">Balls per innings
+                            <input required readOnly type="number" value={totalQuestions} className="mt-2 w-full rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white" />
                         </label>
                         <div className="grid grid-cols-2 gap-3"><label className="text-sm text-zinc-300">Base seconds<input min="10" type="number" value={baseTimerSeconds} onChange={(event) => setBaseTimerSeconds(event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white" /></label><label className="text-sm text-zinc-300">Adjustment<select value={timerAdjustment} onChange={(event) => setTimerAdjustment(event.target.value)} className="mt-2 w-full rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white"><option value={-30}>-30 seconds</option><option value={0}>No adjustment</option><option value={30}>+30 seconds</option></select></label></div>
                         <div className="border-t border-white/10 pt-4"><p className="mb-3 text-xs uppercase tracking-widest text-zinc-400">RMC Mentors</p><div className="space-y-3">{[0, 1].map((index) => <div key={index} className="grid grid-cols-2 gap-3"><input required value={mentors[index].name} onChange={(event) => updateMentor(index, 'name', event.target.value)} placeholder={`Team ${index === 0 ? 'A' : 'B'} mentor name`} className="rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white" /><input required type="email" value={mentors[index].email} onChange={(event) => updateMentor(index, 'email', event.target.value)} placeholder="Mentor email" className="rounded-lg border border-white/10 bg-black/50 p-3 text-sm text-white" /></div>)}</div></div>
@@ -123,9 +126,9 @@ export default function MatchSetupClient({ teams, ballTypes }) {
                     </section>
 
                     <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                        <div className="mb-4 flex items-center justify-between"><div><h2 className="font-bold">Question distribution</h2><p className="mt-1 text-xs text-zinc-500">Counts must equal {totalQuestions}.</p></div><span className={`text-sm font-bold ${distributionTotal === Number(totalQuestions) ? 'text-teal-300' : 'text-amber-300'}`}>{distributionTotal} / {totalQuestions}</span></div>
+                        <div className="mb-4 flex items-center justify-between"><div><h2 className="font-bold">Question distribution</h2><p className="mt-1 text-xs text-zinc-500">16 question balls + 4 automatic wides (+1 each).</p></div><span className={`text-sm font-bold ${distributionTotal === Number(totalQuestions) - wideBallCount ? 'text-teal-300' : 'text-amber-300'}`}>{distributionTotal} / {Number(totalQuestions) - wideBallCount}</span></div>
                         <div className="space-y-3">{ballTypes.map((type) => { const Icon = type.metadata?.icon === 'in_swinger' ? Wind : type.metadata?.icon === 'out_swinger' ? Crosshair : type.metadata?.icon === 'leg_cutter' || type.metadata?.icon === 'off_cutter' ? Scissors : CircleDot; return <label key={type.slug} className="flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-black/20 p-3"><span className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-400/10 text-teal-300"><Icon className="h-4 w-4" /></span><span><span className="block text-sm">{type.name}</span><span className="block text-xs text-zinc-500">{type.description}</span></span></span><input min="0" type="number" value={distribution[type.slug] ?? 0} onChange={(event) => updateCount(type.slug, event.target.value)} className="w-20 rounded-lg border border-white/10 bg-black/50 p-2 text-center text-sm text-white" /></label>; })}</div>
-                        <button disabled={submitting || distributionTotal !== Number(totalQuestions)} className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-teal-400 px-4 py-3 text-sm font-bold text-black disabled:cursor-not-allowed disabled:opacity-40"><Play className="h-4 w-4" />{submitting ? 'Creating...' : 'Create match'}</button>
+                        <button disabled={submitting || distributionTotal !== Number(totalQuestions) - wideBallCount} className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-teal-400 px-4 py-3 text-sm font-bold text-black disabled:cursor-not-allowed disabled:opacity-40"><Play className="h-4 w-4" />{submitting ? 'Creating...' : 'Create match'}</button>
                         {message && <p className="mt-3 text-sm text-teal-200">{message}</p>}
                         {createdMatch && <div className="mt-3 rounded-lg border border-teal-400/20 bg-teal-400/5 p-3"><p className="text-xs text-zinc-400">Match created. The organiser controls the live game while teams answer on screen.</p><Link href={`/mpl/admin/matches/${createdMatch.id}`} className="mt-2 inline-flex rounded-lg bg-teal-400 px-3 py-2 text-xs font-bold text-black">Open live match</Link></div>}
                     </section>

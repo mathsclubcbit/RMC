@@ -42,6 +42,7 @@ export async function POST(request) {
     const teamIds = [...new Set(sideTeamIds.flat())];
     const sideNames = Array.isArray(body.sideNames) ? body.sideNames.map((name, index) => String(name || `Team ${index + 1}`).trim()) : ['Team A', 'Team B'];
     const totalQuestions = Number(body.totalQuestionsPerInnings);
+    const wideBallCount = Number(body.wideBallCount ?? 4);
     const baseTimerSeconds = Number(body.baseTimerSeconds ?? 60);
     const timerAdjustment = Number(body.timerAdjustmentSeconds ?? 0);
     const distribution = normalizeDistribution(body.questionDistribution);
@@ -56,16 +57,16 @@ export async function POST(request) {
     if (sideNames.length !== 2 || sideNames.some((name) => !name)) {
         return Response.json({ error: 'Both match sides need a final name.' }, { status: 400 });
     }
-    if (!Number.isInteger(totalQuestions) || totalQuestions < 1) {
-        return Response.json({ error: 'Total questions per innings must be a positive integer.' }, { status: 400 });
+    if (totalQuestions !== 20 || wideBallCount !== 4) {
+        return Response.json({ error: 'MPL matches must contain exactly 20 balls, including 4 automatic wides.' }, { status: 400 });
     }
     if (!Number.isInteger(baseTimerSeconds) || baseTimerSeconds < MIN_TIMER_SECONDS ||
         !Number.isInteger(timerAdjustment) || !ALLOWED_TIMER_ADJUSTMENTS.has(timerAdjustment) ||
         baseTimerSeconds + timerAdjustment < MIN_TIMER_SECONDS) {
         return Response.json({ error: `Timer must be at least ${MIN_TIMER_SECONDS} seconds and adjustment must be -30, 0, or 30 seconds.` }, { status: 400 });
     }
-    if (!distribution || Object.values(distribution).reduce((sum, count) => sum + count, 0) !== totalQuestions) {
-        return Response.json({ error: 'Question type counts must add up to the innings total.' }, { status: 400 });
+    if (!distribution || Object.values(distribution).reduce((sum, count) => sum + count, 0) !== totalQuestions - wideBallCount) {
+        return Response.json({ error: `Question type counts must add up to ${totalQuestions - wideBallCount}; the remaining balls are wides.` }, { status: 400 });
     }
     if (mentors.length !== 2 || mentors.some((mentor) => !mentor || !String(mentor.name || '').trim() || !String(mentor.email || '').trim())) {
         return Response.json({ error: 'Each team must have an RMC Mentor name and email before the match can be created.' }, { status: 400 });
@@ -123,7 +124,10 @@ export async function POST(request) {
     }
 
 
-    const questionPlan = shuffle(Object.entries(distribution).flatMap(([slug, count]) => Array(count).fill(slug)));
+    const questionPlan = shuffle([
+        ...Object.entries(distribution).flatMap(([slug, count]) => Array(count).fill({ kind: 'question', slug })),
+        ...Array(wideBallCount).fill({ kind: 'wide' })
+    ]);
     const matchPayload = {
         status: 'toss_pending',
         total_questions_per_innings: totalQuestions,
@@ -135,6 +139,7 @@ export async function POST(request) {
             player_rescue_attempt: true,
             power_shot: { enabled: true, doubles: 'base_runs_only', uses_per_innings: 1 },
             wide_no_ball: true,
+            wide_ball_count: wideBallCount,
             streak_threshold: streakThreshold,
             batting_streak_bonus_runs: battingStreakBonusRuns,
             bowling_streak_deduction_runs: bowlingStreakDeductionRuns

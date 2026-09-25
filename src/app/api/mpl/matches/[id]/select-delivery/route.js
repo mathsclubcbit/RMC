@@ -30,7 +30,7 @@ export async function POST(request, { params }) {
     const bowlingTeamIds = (matchTeams || []).filter((team) => team.innings_number !== inningsNumber).map((team) => team.team_id);
     if (!battingTeamIds.length || !bowlingTeamIds.length) return Response.json({ error: 'Match sides are incomplete.' }, { status: 409 });
     const inningsDeliveries = existingDeliveries || [];
-    const legalDeliveryCount = inningsDeliveries.filter((delivery) => !['wide', 'no_ball', 'cancelled'].includes(delivery.status)).length;
+    const legalDeliveryCount = inningsDeliveries.filter((delivery) => !['no_ball', 'cancelled'].includes(delivery.status)).length;
     if (deliveryNumber !== legalDeliveryCount + 1) return Response.json({ error: `The next legal delivery is ${legalDeliveryCount + 1}.` }, { status: 409 });
     if (legalDeliveryCount >= match.total_questions_per_innings) return Response.json({ error: 'The innings delivery limit has been reached.' }, { status: 409 });
 
