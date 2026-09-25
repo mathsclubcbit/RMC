@@ -26,35 +26,27 @@ export async function POST(request, { params }) {
 
     const expectedStatus = inningsNumber === 1 ? 'innings_1' : 'innings_2';
     if (match.status !== expectedStatus) return Response.json({ error: 'This innings is not currently active.' }, { status: 409 });
-    const inningsTeam = (matchTeams || []).find((team) => team.innings_number === inningsNumber);
-    const bowlingTeam = (matchTeams || []).find((team) => team.innings_number !== inningsNumber);
-    if (!inningsTeam || !bowlingTeam) return Response.json({ error: 'Match lineups are incomplete.' }, { status: 409 });
-
+    const battingTeamIds = (matchTeams || []).filter((team) => team.innings_number === inningsNumber).map((team) => team.team_id);
+    const bowlingTeamIds = (matchTeams || []).filter((team) => team.innings_number !== inningsNumber).map((team) => team.team_id);
+    if (!battingTeamIds.length || !bowlingTeamIds.length) return Response.json({ error: 'Match sides are incomplete.' }, { status: 409 });
     const inningsDeliveries = existingDeliveries || [];
     const legalDeliveryCount = inningsDeliveries.filter((delivery) => !['wide', 'no_ball', 'cancelled'].includes(delivery.status)).length;
     if (deliveryNumber !== legalDeliveryCount + 1) return Response.json({ error: `The next legal delivery is ${legalDeliveryCount + 1}.` }, { status: 409 });
     if (legalDeliveryCount >= match.total_questions_per_innings) return Response.json({ error: 'The innings delivery limit has been reached.' }, { status: 409 });
 
-    const { data: activePresence, error: presenceError } = await admin
-        .from('mpl_match_player_presence')
-        .select('player_id')
-        .eq('match_id', id)
-        .is('left_at', null)
-        .gte('last_seen_at', new Date(Date.now() - 15000).toISOString());
-    if (presenceError) return Response.json({ error: presenceError.message }, { status: 500 });
-    const joinedIds = new Set((activePresence || []).map((entry) => entry.player_id));
-    const usePresence = joinedIds.size > 0;
-    const dismissedPlayers = new Set(inningsDeliveries.filter((delivery) => delivery.status === 'wicket').map((delivery) => delivery.batter_id));
-    const availableBatters = (Array.isArray(inningsTeam.batting_order) ? inningsTeam.batting_order : [])
-        .filter((playerId) => !dismissedPlayers.has(playerId) && (!usePresence || joinedIds.has(playerId)));
-    const lastDelivery = inningsDeliveries[inningsDeliveries.length - 1];
-    const expectedBatterId = !lastDelivery || lastDelivery.status === 'wicket' ? availableBatters[0] : lastDelivery.batter_id;
-    if (!expectedBatterId || batterId !== expectedBatterId) return Response.json({ error: 'The selected batter does not follow the finalized batting lineup.' }, { status: 409 });
-
-    const availableBowlers = (Array.isArray(bowlingTeam.bowling_order) ? bowlingTeam.bowling_order : [])
-        .filter((playerId) => !usePresence || joinedIds.has(playerId));
-    const expectedBowlerId = availableBowlers.length ? availableBowlers[inningsDeliveries.length % availableBowlers.length] : null;
-    if (!expectedBowlerId || bowlerId !== expectedBowlerId) return Response.json({ error: 'The selected bowler does not follow the reverse-order bowling system.' }, { status: 409 });
+    const { data: selectedPlayers, error: selectedPlayersError } = await admin
+        .from('mpl_players')
+        .select('id, team_id')
+        .in('id', [batterId, bowlerId]);
+    if (selectedPlayersError) return Response.json({ error: selectedPlayersError.message }, { status: 500 });
+    const selectedBatter = selectedPlayers?.find((player) => player.id === batterId);
+    const selectedBowler = selectedPlayers?.find((player) => player.id === bowlerId);
+    if (!selectedBatter || !battingTeamIds.includes(selectedBatter.team_id)) {
+        return Response.json({ error: 'The selected batter must belong to the batting side.' }, { status: 409 });
+    }
+    if (!selectedBowler || !bowlingTeamIds.includes(selectedBowler.team_id)) {
+        return Response.json({ error: 'The selected bowler must belong to the bowling side.' }, { status: 409 });
+    }
 
     const { data: existingRequest } = await admin
         .from('mpl_match_delivery_requests')

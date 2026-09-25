@@ -38,11 +38,13 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
 
     const currentInnings = match.status === 'innings_2' ? 2 : 1;
     const inningsTeam = liveMatchTeams.find((team) => team.innings_number === currentInnings);
-    const livePlayers = liveMatchTeams.flatMap((team) => team.players || []);
-    const currentPlayers = inningsTeam?.players || [];
+    const battingSideTeams = liveMatchTeams.filter((team) => team.innings_number === currentInnings);
+    const bowlingSideTeams = liveMatchTeams.filter((team) => team.innings_number !== currentInnings);
+    const currentPlayers = battingSideTeams.flatMap((team) => team.players || []);
+    const bowlingPlayers = bowlingSideTeams.flatMap((team) => team.players || []);
     const anyPlayerOnline = liveMatchTeams.some((team) => (team.online_count || 0) > 0);
     const selectableBatters = anyPlayerOnline ? currentPlayers.filter((player) => player.is_online) : currentPlayers;
-    const selectableBowlers = anyPlayerOnline ? livePlayers.filter((player) => player.team_id !== inningsTeam?.team_id && player.is_online) : livePlayers.filter((player) => player.team_id !== inningsTeam?.team_id);
+    const selectableBowlers = anyPlayerOnline ? bowlingPlayers.filter((player) => player.is_online) : bowlingPlayers;
     const dismissedPlayerIds = new Set(deliveries.filter((delivery) => delivery.status === 'wicket').map((delivery) => delivery.batter_id));
     const currentInningsDeliveries = deliveries.filter((delivery) => delivery.innings_number === currentInnings);
 
