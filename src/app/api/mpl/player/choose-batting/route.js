@@ -24,6 +24,7 @@ export async function POST(request) {
         .eq('email', user.email)
         .single();
     if (playerError || !player) return Response.json({ error: 'No MPL player record found.' }, { status: 404 });
+    if (!player.is_leader) return Response.json({ error: 'Only the winning team captain can choose bat or bowl.' }, { status: 403 });
 
     // Verify the match is in toss_won state and this player's team won the toss
     const { data: match, error: matchError } = await admin

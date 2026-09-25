@@ -12,7 +12,7 @@ function normalizeQuestion(input) {
     const correctOption = Number(input.correctOption ?? input.correct_option);
     const questionText = String(input.questionText ?? input.question_text ?? '').trim();
     const ballTypeSlug = String(input.ballTypeSlug ?? input.ball_type_slug ?? '').trim();
-    const runs = parseNullableInteger(input.runs, 0);
+    const runs = ballTypeSlug === 'yorker' ? 4 : parseNullableInteger(input.runs, 0);
     const timerSeconds = parseNullableInteger(input.timerSeconds ?? input.timer_seconds, 1);
 
     if (!questionText || !ballTypeSlug || options.length < 2 || options.some((option) => !option) ||

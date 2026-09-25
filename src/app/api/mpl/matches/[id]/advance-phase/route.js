@@ -20,18 +20,17 @@ export async function POST(request, { params }) {
     
     if (match.status === 'innings_1' || match.status === 'innings_2') {
         const inningsNumber = match.status === 'innings_1' ? 1 : 2;
-        const [{ data: inningsTeam, error: teamError }, { data: deliveries, error: deliveriesError }] = await Promise.all([
-            admin.from('mpl_match_teams').select('batting_order').eq('match_id', id).eq('innings_number', inningsNumber).single(),
-            admin.from('mpl_match_deliveries').select('status').eq('match_id', id).eq('innings_number', inningsNumber)
-        ]);
-        if (teamError || deliveriesError || !inningsTeam) {
-            return Response.json({ error: teamError?.message || deliveriesError?.message || 'Unable to verify innings completion.' }, { status: 500 });
+        const { data: deliveries, error: deliveriesError } = await admin
+            .from('mpl_match_deliveries')
+            .select('status')
+            .eq('match_id', id)
+            .eq('innings_number', inningsNumber);
+        if (deliveriesError) {
+            return Response.json({ error: deliveriesError.message || 'Unable to verify innings completion.' }, { status: 500 });
         }
         const legalDeliveries = (deliveries || []).filter((delivery) => !['no_ball', 'cancelled'].includes(delivery.status)).length;
-        const wickets = (deliveries || []).filter((delivery) => delivery.status === 'wicket').length;
-        const allOut = wickets >= (Array.isArray(inningsTeam.batting_order) ? inningsTeam.batting_order.length : 10);
-        if (legalDeliveries < match.total_questions_per_innings && !allOut) {
-            return Response.json({ error: 'The innings can advance only after the legal delivery limit or all-out condition is reached.' }, { status: 409 });
+        if (legalDeliveries < match.total_questions_per_innings) {
+            return Response.json({ error: 'The innings can advance only after all 20 balls are complete.' }, { status: 409 });
         }
     }
 
