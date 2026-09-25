@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import MPLRegistrationClient from "./MPLRegistrationClient";
+import { isMplRegistrationClosed } from '@/lib/mpl/registration';
 
 export const metadata = {
     title: "MPL 2026 Registration | RMC",
@@ -12,10 +13,16 @@ export default async function MPLRegistrationPage() {
     // Check session on the server
     const supabase = await createClient();
     const { data: { session } } = await supabase.auth.getSession();
+    const admin = createAdminClient();
+
+    const { data: eventData } = await admin
+        .from('events')
+        .select('payload')
+        .eq('id', 'mpl-2026')
+        .single();
 
     if (session) {
         const userEmail = session.user.email;
-        const admin = createAdminClient();
         
         // Fetch to see if user is in any MPL team
         const { data: playerRecord } = await admin
@@ -32,7 +39,7 @@ export default async function MPLRegistrationPage() {
 
     return (
         <Suspense fallback={<div className="min-h-screen bg-[#050505] flex items-center justify-center text-white font-mono">Loading Interface...</div>}>
-            <MPLRegistrationClient />
+            <MPLRegistrationClient registrationClosed={isMplRegistrationClosed(eventData?.payload)} />
         </Suspense>
     );
 }
