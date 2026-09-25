@@ -38,12 +38,16 @@ export async function POST(request) {
     // Get both teams to determine who bats first
     const { data: matchTeams, error: teamsError } = await admin
         .from('mpl_match_teams')
-        .select('team_id, innings_number')
+        .select('team_id, innings_number, side_name')
         .eq('match_id', matchId);
     if (teamsError || !matchTeams || matchTeams.length < 2) return Response.json({ error: 'Match teams not configured.' }, { status: 500 });
 
-    const otherTeamId = matchTeams.find((t) => t.team_id !== player.team_id)?.team_id;
-    const firstBattingTeamId = choice === 'bat' ? player.team_id : otherTeamId;
+    const playerSide = matchTeams.find((team) => team.team_id === player.team_id);
+    const opponentSide = matchTeams.find((team) => team.innings_number !== playerSide?.innings_number);
+    const firstBattingTeamId = choice === 'bat' ? player.team_id : opponentSide?.team_id;
+    if (!playerSide || !opponentSide || !firstBattingTeamId) {
+        return Response.json({ error: 'Match sides are not configured correctly.' }, { status: 500 });
+    }
 
     // Re-assign innings numbers via mpl_record_toss RPC
     const { data: updatedMatch, error: rpcError } = await admin.rpc('mpl_record_toss', {
