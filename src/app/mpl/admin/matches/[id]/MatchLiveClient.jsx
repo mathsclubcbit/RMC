@@ -151,7 +151,7 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
             if (!response.ok || !mounted) return;
             const data = await response.json();
             const completedDeliveries = (data.deliveries || [])
-                .filter((delivery) => (delivery.status === 'answered' && Number(delivery.runs_awarded || 0) > 0) || (delivery.status === 'wicket' && delivery.metadata?.rescue_saved === true))
+                .filter((delivery) => delivery.status === 'answered' || delivery.status === 'wicket' || delivery.status === 'wide' || delivery.status === 'dot' || delivery.metadata?.rescue_available === true)
                 .sort((first, second) => new Date(second.created_at || 0).getTime() - new Date(first.created_at || 0).getTime());
             const latestCelebration = completedDeliveries[0];
             if (latestCelebration && lastCelebrationDelivery.current === null) lastCelebrationDelivery.current = latestCelebration.id;
@@ -161,9 +161,9 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
                 const celebrationTeam = latestCelebration.status === 'wicket' ? (data.teams || []).find((team) => team.team_id !== battingTeam?.team_id) : battingTeam;
                 if (celebrationTeam) setCelebration({
                     id: latestCelebration.id,
-                    type: latestCelebration.status === 'wicket' ? 'wicket' : latestCelebration.metadata?.power_shot === true ? 'power_shot' : 'runs',
-                    title: latestCelebration.status === 'wicket' ? 'WICKET!' : latestCelebration.metadata?.power_shot === true ? 'POWER SHOT!' : `+${latestCelebration.runs_awarded} runs`,
-                    subtitle: latestCelebration.status === 'wicket' ? `${celebrationTeam.mpl_teams?.team_name || 'Bowling team'} gets the wicket!` : `${celebrationTeam.mpl_teams?.team_name || 'Batting team'} scores!`
+                    type: latestCelebration.status === 'wide' ? 'wide' : latestCelebration.status === 'dot' ? 'dot' : latestCelebration.metadata?.rescue_available === true && latestCelebration.metadata?.answer_correct === false ? 'wrong_answer' : latestCelebration.status === 'wicket' ? 'wicket' : latestCelebration.metadata?.power_shot === true ? 'power_shot' : 'runs',
+                    title: latestCelebration.status === 'wide' ? 'WIDE BALL · +1' : latestCelebration.status === 'dot' ? 'DOT BALL' : latestCelebration.metadata?.rescue_available === true && latestCelebration.metadata?.answer_correct === false ? 'WRONG ANSWER' : latestCelebration.status === 'wicket' ? 'WICKET!' : latestCelebration.metadata?.power_shot === true ? 'POWER SHOT!' : `+${latestCelebration.runs_awarded} runs`,
+                    subtitle: latestCelebration.status === 'wide' ? 'Batting team gets 1 run' : latestCelebration.status === 'dot' ? 'No runs scored' : latestCelebration.metadata?.rescue_available === true && latestCelebration.metadata?.answer_correct === false ? 'Question passed to the bowler' : latestCelebration.status === 'wicket' ? `${celebrationTeam.mpl_teams?.team_name || 'Bowling team'} gets the wicket!` : `${celebrationTeam.mpl_teams?.team_name || 'Batting team'} scores!`
                 });
             }
             const active = (data.deliveries || []).find((delivery) => delivery.status === 'active');

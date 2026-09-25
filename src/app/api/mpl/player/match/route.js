@@ -46,6 +46,7 @@ export async function GET() {
         .in('team_id', teamIds)
         .order('created_at');
     if (playersError) return Response.json({ error: playersError.message }, { status: 500 });
+    const tossCaptain = (players || []).find((entry) => entry.team_id === match.toss_calling_team_id && entry.is_leader);
 
     const activeSince = new Date(Date.now() - 15000).toISOString();
     const { data: presence, error: presenceListError } = await admin
@@ -134,7 +135,7 @@ export async function GET() {
     });
     const dismissedPlayerIds = (deliveries || []).filter((delivery) => delivery.status === 'wicket').map((delivery) => delivery.batter_id);
     const latestCelebrationDelivery = [...(deliveries || [])]
-        .filter((delivery) => (delivery.status === 'answered' && Number(delivery.runs_awarded || 0) > 0) || (delivery.status === 'wicket' && delivery.metadata?.rescue_saved === true))
+        .filter((delivery) => delivery.status === 'answered' || delivery.status === 'wicket' || delivery.status === 'wide' || delivery.status === 'dot' || delivery.metadata?.rescue_available === true)
         .sort((first, second) => new Date(second.created_at || 0).getTime() - new Date(first.created_at || 0).getTime())[0];
     const celebrationBattingTeam = latestCelebrationDelivery
         ? (matchTeams || []).find((team) => team.innings_number === latestCelebrationDelivery.innings_number)
@@ -142,16 +143,17 @@ export async function GET() {
     const celebrationTeam = latestCelebrationDelivery?.status === 'wicket'
         ? (matchTeams || []).find((team) => team.team_id !== celebrationBattingTeam?.team_id)
         : celebrationBattingTeam;
+    const wrongAnswerHandoff = latestCelebrationDelivery?.metadata?.rescue_available === true && latestCelebrationDelivery?.metadata?.answer_correct === false;
     const celebrationEvent = latestCelebrationDelivery && celebrationTeam ? {
         id: latestCelebrationDelivery.id,
-        type: latestCelebrationDelivery.status === 'wicket' ? 'wicket' : latestCelebrationDelivery.metadata?.power_shot === true ? 'power_shot' : 'runs',
+        type: latestCelebrationDelivery.status === 'wide' ? 'wide' : latestCelebrationDelivery.status === 'dot' ? 'dot' : wrongAnswerHandoff ? 'wrong_answer' : latestCelebrationDelivery.status === 'wicket' ? 'wicket' : latestCelebrationDelivery.metadata?.power_shot === true ? 'power_shot' : 'runs',
         innings_number: latestCelebrationDelivery.innings_number,
         celebration_team_id: celebrationTeam.team_id,
         batting_team_id: celebrationBattingTeam?.team_id || null,
         batting_team_name: celebrationBattingTeam?.mpl_teams?.team_name || 'Batting team',
         runs_awarded: latestCelebrationDelivery.runs_awarded,
-        title: latestCelebrationDelivery.status === 'wicket' ? 'WICKET!' : latestCelebrationDelivery.metadata?.power_shot === true ? 'POWER SHOT!' : `+${latestCelebrationDelivery.runs_awarded} runs`,
-        subtitle: latestCelebrationDelivery.status === 'wicket' ? `${celebrationTeam.mpl_teams?.team_name || 'Bowling team'} gets the wicket!` : `${celebrationTeam.mpl_teams?.team_name || 'Batting team'} scores!`
+        title: latestCelebrationDelivery.status === 'wide' ? 'WIDE BALL · +1' : latestCelebrationDelivery.status === 'dot' ? 'DOT BALL' : wrongAnswerHandoff ? 'WRONG ANSWER' : latestCelebrationDelivery.status === 'wicket' ? 'WICKET!' : latestCelebrationDelivery.metadata?.power_shot === true ? 'POWER SHOT!' : `+${latestCelebrationDelivery.runs_awarded} runs`,
+        subtitle: latestCelebrationDelivery.status === 'wide' ? `${celebrationBattingTeam?.mpl_teams?.team_name || 'Batting team'} gets 1 run` : latestCelebrationDelivery.status === 'dot' ? 'No runs scored' : wrongAnswerHandoff ? 'Question passed to the bowler' : latestCelebrationDelivery.status === 'wicket' ? `${celebrationTeam.mpl_teams?.team_name || 'Bowling team'} gets the wicket!` : `${celebrationTeam.mpl_teams?.team_name || 'Batting team'} scores!`
     } : null;
 
     let matchResult = null;
@@ -201,7 +203,7 @@ export async function GET() {
 
     return Response.json({
         player: { id: player.id, name: player.name, is_leader: player.is_leader, team: player.team },
-        match: { ...match, team_id: player.team_id, innings_number: matchTeam.innings_number, is_toss_captain: player.is_leader && match.toss_calling_team_id === player.team_id, batting_team_id: (matchTeams || []).find((team) => team.innings_number === battingInnings)?.team_id, batting_innings_number: battingInnings },
+        match: { ...match, team_id: player.team_id, innings_number: matchTeam.innings_number, is_toss_captain: player.is_leader && match.toss_calling_team_id === player.team_id, toss_captain_name: tossCaptain?.name || null, batting_team_id: (matchTeams || []).find((team) => team.innings_number === battingInnings)?.team_id, batting_innings_number: battingInnings },
         teams: orderedTeams,
         activeDelivery: activeDelivery ? {
             ...activeDelivery,
