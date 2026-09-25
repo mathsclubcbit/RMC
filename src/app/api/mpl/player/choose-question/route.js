@@ -24,14 +24,36 @@ export async function POST(request) {
     if (pending.bowler_id !== player.id) return Response.json({ error: 'Only the selected bowler can choose this question type.' }, { status: 403 });
     if (pending.status !== 'pending') return Response.json({ error: 'This delivery is no longer awaiting question selection.' }, { status: 409 });
     if (match.status !== `innings_${pending.innings_number}`) return Response.json({ error: 'This innings is not currently active.' }, { status: 409 });
-    if (pending.delivery_number !== ballNumber) return Response.json({ error: 'Select the current ball.' }, { status: 409 });
 
     const distribution = match.question_distribution && typeof match.question_distribution === 'object' ? match.question_distribution : {};
     const plan = Array.isArray(match.rules_config?.question_plan) ? match.rules_config.question_plan : [];
-    const plannedBall = plan[pending.delivery_number - 1];
-    const ballTypeSlug = typeof plannedBall === 'string' ? plannedBall : plannedBall?.slug;
-    const isWide = (typeof plannedBall === 'object' && plannedBall?.kind === 'wide') || ballTypeSlug === 'wide';
-    if (!isWide && !ballTypeSlug) return Response.json({ error: 'This match does not have a valid hidden ball plan.' }, { status: 409 });
+    const { data: deliveries, error: deliveriesError } = await admin
+        .from('mpl_match_deliveries')
+        .select('ball_type_slug, status')
+        .eq('match_id', matchId)
+        .eq('innings_number', pending.innings_number);
+    if (deliveriesError) return Response.json({ error: deliveriesError.message }, { status: 500 });
+
+    const usedCounts = (deliveries || []).reduce((counts, delivery) => {
+        if (!['no_ball', 'cancelled'].includes(delivery.status)) counts[delivery.ball_type_slug] = (counts[delivery.ball_type_slug] || 0) + 1;
+        return counts;
+    }, {});
+    const plannedCounts = plan.reduce((counts, item) => {
+        const kind = typeof item === 'string' ? 'question' : item?.kind;
+        const slug = typeof item === 'string' ? item : item?.slug;
+        const key = kind === 'wide' ? 'wide' : slug;
+        if (key) counts[key] = (counts[key] || 0) + 1;
+        return counts;
+    }, {});
+    if (!Object.keys(plannedCounts).length) {
+        Object.assign(plannedCounts, distribution, { wide: Number(match.rules_config?.wide_ball_count || 4) });
+    }
+    const availableTypes = Object.entries(plannedCounts).flatMap(([slug, count]) =>
+        Array.from({ length: Math.max(0, Number(count) - Number(usedCounts[slug] || 0)) }, () => slug)
+    );
+    if (!availableTypes.length) return Response.json({ error: 'No balls remain in this innings.' }, { status: 409 });
+    const ballTypeSlug = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+    const isWide = ballTypeSlug === 'wide';
     if (isWide) {
         const { error: lockError } = await admin
             .from('mpl_match_delivery_requests')
@@ -64,16 +86,12 @@ export async function POST(request) {
         await admin.from('mpl_match_delivery_requests').update({ status: 'selected', delivery_id: delivery.id, selected_at: new Date().toISOString() }).eq('id', pending.id).eq('status', 'selecting');
         return Response.json({ delivery, wide: true });
     }
-    const targetCount = Number(distribution[ballTypeSlug] || 0);
-
-    const [{ data: ballType, error: ballTypeError }, { data: deliveries, error: deliveriesError }] = await Promise.all([
-        admin.from('mpl_ball_types').select('slug, default_timer_seconds, timer_adjustment_seconds').eq('slug', ballTypeSlug).single(),
-        admin.from('mpl_match_deliveries').select('ball_type_slug, status').eq('match_id', matchId).eq('innings_number', pending.innings_number)
-    ]);
+    const { data: ballType, error: ballTypeError } = await admin
+        .from('mpl_ball_types')
+        .select('slug, default_timer_seconds, timer_adjustment_seconds')
+        .eq('slug', ballTypeSlug)
+        .single();
     if (ballTypeError || !ballType) return Response.json({ error: 'Question type not found.' }, { status: 404 });
-    if (deliveriesError) return Response.json({ error: deliveriesError.message }, { status: 500 });
-    const usedCount = (deliveries || []).filter((delivery) => !['wide', 'no_ball', 'cancelled'].includes(delivery.status) && delivery.ball_type_slug === ballTypeSlug).length;
-    if (usedCount >= targetCount) return Response.json({ error: 'That question type has already reached its match distribution limit.' }, { status: 409 });
 
     const { error: lockError } = await admin
         .from('mpl_match_delivery_requests')
