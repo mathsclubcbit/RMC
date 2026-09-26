@@ -61,6 +61,21 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
     }, [currentInningsDeliveries]);
 
     const deliveryNumber = currentInningsDeliveries.length + 1;
+
+    const teamScores = useMemo(() => {
+        return orderedTeams.map((team) => {
+            const teamDeliveries = deliveries.filter((delivery) => delivery.innings_number === team.innings_number);
+            return {
+                team_id: team.team_id,
+                team_name: team.mpl_teams?.team_name || 'Team',
+                innings_number: team.innings_number,
+                runs: teamDeliveries.reduce((total, delivery) => total + (delivery.runs_awarded || 0) + (delivery.score_adjustment || 0), 0),
+                wickets: teamDeliveries.filter((delivery) => delivery.status === 'wicket').length,
+                legal_deliveries: teamDeliveries.filter((delivery) => !['wide', 'no_ball', 'cancelled'].includes(delivery.status)).length
+            };
+        });
+    }, [deliveries, orderedTeams]);
+
     const teamName = (teamId) => liveMatchTeams.find((team) => team.team_id === teamId)?.mpl_teams?.team_name || 'Team';
     const battingTeamId = match.status === 'innings_2'
         ? liveMatchTeams.find((team) => team.team_id !== match.first_batting_team_id)?.team_id
@@ -312,6 +327,23 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
                             </div>
                         </div>
                     </div>
+                )}
+
+                {teamScores?.length > 0 && match.status !== 'toss_pending' && match.status !== 'toss_won' && match.status !== 'draft' && match.status !== 'completed' && (
+                    <section className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-5">
+                        <p className="text-xs uppercase tracking-widest text-zinc-400">Team scorecard</p>
+                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                            {teamScores.map((score) => (
+                                <div key={score.team_id} className="rounded-xl border border-white/10 bg-black/20 p-4">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="font-semibold">{score.team_name}</span>
+                                        <span className="text-2xl font-black text-teal-300">{score.runs}</span>
+                                    </div>
+                                    <p className="mt-1 text-xs text-zinc-500">{score.wickets} wickets · {score.legal_deliveries} legal deliveries</p>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
                 )}
 
                 <div className="mb-6 grid gap-4 md:grid-cols-2">
