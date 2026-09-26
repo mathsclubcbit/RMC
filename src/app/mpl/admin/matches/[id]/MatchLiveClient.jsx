@@ -62,6 +62,16 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
 
     const deliveryNumber = currentInningsDeliveries.length + 1;
 
+    const teamName = (teamId) => liveMatchTeams.find((team) => team.team_id === teamId)?.mpl_teams?.team_name || 'Team';
+    const battingTeamId = match.status === 'innings_2'
+        ? liveMatchTeams.find((team) => team.team_id !== match.first_batting_team_id)?.team_id
+        : match.first_batting_team_id;
+    const orderedTeams = [...liveMatchTeams].sort((first, second) => {
+        if (first.team_id === battingTeamId) return -1;
+        if (second.team_id === battingTeamId) return 1;
+        return first.innings_number - second.innings_number;
+    });
+
     const teamScores = useMemo(() => {
         return orderedTeams.map((team) => {
             const teamDeliveries = deliveries.filter((delivery) => delivery.innings_number === team.innings_number);
@@ -75,16 +85,6 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
             };
         });
     }, [deliveries, orderedTeams]);
-
-    const teamName = (teamId) => liveMatchTeams.find((team) => team.team_id === teamId)?.mpl_teams?.team_name || 'Team';
-    const battingTeamId = match.status === 'innings_2'
-        ? liveMatchTeams.find((team) => team.team_id !== match.first_batting_team_id)?.team_id
-        : match.first_batting_team_id;
-    const orderedTeams = [...liveMatchTeams].sort((first, second) => {
-        if (first.team_id === battingTeamId) return -1;
-        if (second.team_id === battingTeamId) return 1;
-        return first.innings_number - second.innings_number;
-    });
 
     const powerShotUsed = useMemo(() => {
         return deliveries.some(d => d.innings_number === currentInnings && d.metadata?.power_shot === true);

@@ -168,6 +168,7 @@ BEGIN
         WHERE d.match_id = selected_delivery.match_id
           AND d.innings_number = selected_delivery.innings_number
           AND COALESCE((d.metadata->>'power_shot')::boolean, false) = true
+          AND d.id <> p_delivery_id
     ) THEN
         RAISE EXCEPTION 'The Power Shot has already been used in this innings';
     END IF;
