@@ -156,7 +156,7 @@ export async function POST(request) {
     const isPowerShotArmed = match.rules_config?.[`power_shot_armed_${pending.innings_number}`] === true;
     if (isPowerShotArmed) {
         // Apply power shot to delivery and un-arm it
-        await admin.from('mpl_match_deliveries').update({ metadata: { power_shot: true } }).eq('id', selectedDelivery.id);
+        await admin.from('mpl_match_deliveries').update({ metadata: { ...(selectedDelivery.metadata || {}), power_shot: true } }).eq('id', selectedDelivery.id);
         const newRules = { ...match.rules_config };
         delete newRules[`power_shot_armed_${pending.innings_number}`];
         await admin.from('mpl_matches').update({ rules_config: newRules }).eq('id', matchId);
