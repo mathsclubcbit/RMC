@@ -1,0 +1,220 @@
+MPL QUIZ QUESTIONS — FINAL ROUND
+1 RUN — 20–25 seconds
+1. A team scores 160 runs in their 20 overs and the opposition scores 140 runs in their 20 overs. What is the team's Net Run Rate (NRR) for this match?
+A) 1.0
+B) 0.5
+C) 2.0
+D) 1.5
+Answer: A) 1.0
+Solution:
+Run rate scored = 160 ÷ 20 = 8.0.
+Run rate conceded = 140 ÷ 20 = 7.0.
+NRR = 8.0 − 7.0 = 1.0.
+2. A bowler's figures read 4-0-24-2 (overs–maidens–runs–wickets). What is his economy rate?
+A) 5.0
+B) 6.0
+C) 7.0
+D) 8.0
+Answer: B) 6.0
+Solution:
+Economy rate = runs conceded ÷ overs bowled.
+Economy = 24 ÷ 4 = 6.0.
+3. A batter's strike rate for an innings is 150, from 40 balls faced. How many runs did he score?
+A) 50
+B) 55
+C) 60
+D) 65
+Answer: C) 60
+Solution:
+Runs = (Strike rate ÷ 100) × Balls faced.
+Runs = 1.5 × 40 = 60.
+4. A chasing team needs a run rate of 8 per over with 10 overs remaining. How many runs do they still need?
+A) 70
+B) 75
+C) 85
+D) 80
+Answer: D) 80
+Solution:
+Runs needed = Required run rate × Overs remaining.
+Runs needed = 8 × 10 = 80.
+5. A bowler has an economy rate of 6 across his full 8-over spell. How many runs did he concede in total?
+A) 48
+B) 42
+C) 54
+D) 45
+Answer: A) 48
+Solution:
+Total runs conceded = Economy rate × Overs bowled.
+Runs = 6 × 8 = 48.
+2 RUNS — 30–40 seconds
+6. Team A scores 280 runs in their 50 overs. The opposition scores 240 runs in their 50 overs. What is Team A's NRR for this match?
+A) 0.6
+B) 0.8
+C) 1.0
+D) 0.4
+Answer: B) 0.8
+Solution:
+Run rate scored = 280 ÷ 50 = 5.6.
+Run rate conceded = 240 ÷ 50 = 4.8.
+NRR = 5.6 − 4.8 = 0.8.
+7. A batter has played 22 innings, remaining not out 2 times, for a total of 1000 runs. What is his batting average?
+A) 45.0
+B) 48.0
+C) 50.0
+D) 55.0
+Answer: C) 50.0
+Solution:
+Batting average = Total runs ÷ Number of times out (dismissals).
+Dismissals = 22 − 2 = 20.
+Average = 1000 ÷ 20 = 50.0.
+8. A bowler's bowling average in a tournament is 25, and he has taken 40 wickets. How many runs has he conceded in total?
+A) 900
+B) 1200
+C) 1100
+D) 1000
+Answer: D) 1000
+Solution:
+Total runs conceded = Bowling average × Wickets taken.
+Runs = 25 × 40 = 1000.
+9. A team needs 300 to win in 50 overs. They are 200/4 after 40 overs. What run rate must they maintain for the remaining overs to win?
+A) 10.0
+B) 9.0
+C) 8.0
+D) 11.0
+Answer: A) 10.0
+Solution:
+Runs still needed = 300 − 200 = 100.
+Overs remaining = 50 − 40 = 10.
+Required run rate = 100 ÷ 10 = 10.0.
+10. A player's strike rate across a tournament is 140, from a total of 150 balls faced. How many total runs did he score?
+A) 200
+B) 210
+C) 220
+D) 230
+Answer: B) 210
+Solution:
+Total runs = (Strike rate ÷ 100) × Total balls faced.
+Runs = 1.4 × 150 = 210.
+3 RUNS — 45–60 seconds
+11. A rain-hit match: the team batting first scores 160 runs in 20 overs. The chasing team's innings is reduced to 15 overs. Using the simplified method: Target = (First innings run rate × Revised overs) + 1, what is the target for the chasing team?
+A) 115
+B) 120
+C) 121
+D) 125
+Answer: C) 121
+Solution:
+First innings run rate = 160 ÷ 20 = 8.0.
+Target = (8.0 × 15) + 1 = 120 + 1 = 121.
+12. A batter has 5730 career runs and averages 40 runs per innings. If he scores exactly 40 in each future innings, how many more complete innings will he need to reach or cross 6000 runs?
+A) 5
+B) 6
+C) 8
+D) 7
+Answer: D) 7
+Solution:
+Runs still needed = 6000 − 5730 = 270.
+Innings needed = 270 ÷ 40 = 6.75.
+A part-innings doesn't count, so he needs 7 full innings.
+4 RUNS — 65–80 seconds
+13. After 2 matches, a team's combined figures are: 540 runs scored in 100 overs, and 480 runs conceded in 100 overs. What is their current Net Run Rate?
+A) 0.6
+B) 0.5
+C) 0.8
+D) 0.4
+Answer: A) 0.6
+Solution:
+Run rate scored = 540 ÷ 100 = 5.4.
+Run rate conceded = 480 ÷ 100 = 4.8.
+NRR = 5.4 − 4.8 = 0.6.
+14. A bowler has bowled 10 overs in a tournament at an economy rate of 6.0. He has one final spell of 2 overs left. What is the maximum number of runs he can concede in those 2 overs so that his overall economy rate does not exceed 7.0?
+A) 20
+B) 24
+C) 26
+D) 28
+Answer: B) 24
+Solution:
+Runs conceded so far = 10 × 6 = 60.
+Total overs after the final spell = 10 + 2 = 12.
+Maximum total runs allowed = 12 × 7 = 84.
+Maximum runs in the final 2 overs = 84 − 60 = 24.
+15. A batter has 1200 runs from 30 innings, with 6 not outs, giving an average of 50. He is then dismissed for a duck (0 runs) in his 31st innings. What is his new career average?
+A) 46
+B) 47
+C) 48
+D) 50
+Answer: C) 48
+Solution:
+Dismissals before = 30 − 6 = 24; average = 1200 ÷ 24 = 50.
+After the duck: total runs = 1200 (unchanged); dismissals = 24 + 1 = 25.
+New average = 1200 ÷ 25 = 48.
+16. A team needs 12 runs to win off the last 4 balls of the match. How many runs per ball must they score to win?
+A) 3.0
+B) 2.0
+C) 4.0
+D) 6.0
+Answer: A) 3.0
+Solution:
+Required rate per ball = Runs needed ÷ Balls remaining.
+Rate = 12 ÷ 4 = 3.0 runs per ball.
+17. Before their final league match, Team X have scored 600 runs in 100 overs and conceded 500 runs in 100 overs. In the final match they score 300 in 50 overs and the opposition scores 250 in 50 overs. What is Team X's final tournament NRR?
+A) 0.5
+B) 0.8
+C) 1.0
+D) 1.2
+Answer: C) 1.0
+Solution:
+Total runs scored = 600 + 300 = 900 in 150 overs; scoring rate = 900 ÷ 150 = 6.0.
+Total runs conceded = 500 + 250 = 750 in 150 overs; conceding rate = 750 ÷ 150 = 5.0.
+Final NRR = 6.0 − 5.0 = 1.0.
+6 RUNS — 100–130 seconds
+18. Two teams finish level on points. Team A: 1500 runs scored in 300 overs, 1350 runs conceded in 300 overs. Team B: 1560 runs scored in 300 overs, 1440 runs conceded in 300 overs. Which team has the better NRR, and what is it?
+A) Team B, 0.4
+B) Team A, 0.5
+C) Team A, 0.4
+D) Team B, 0.5
+Answer: B) Team A, 0.5
+Solution:
+Team A: 1500 ÷ 300 = 5.0 scored; 1350 ÷ 300 = 4.5 conceded; NRR = 0.5.
+Team B: 1560 ÷ 300 = 5.2 scored; 1440 ÷ 300 = 4.8 conceded; NRR = 0.4.
+Team A has the higher (better) NRR at 0.5.
+19. A bowler concedes 1, 4, 0, 6, 1, and a wicket (0 runs) off the 6 balls of a death over. Combined with his earlier figures of 3 overs for 18 runs, what is his overall economy rate after 4 overs?
+A) 7.0
+B) 7.5
+C) 8.0
+D) 6.5
+Answer: B) 7.5
+Solution:
+Runs conceded in the over = 1 + 4 + 0 + 6 + 1 + 0 = 12.
+Total runs after 4 overs = 18 + 12 = 30.
+Overall economy rate = 30 ÷ 4 = 7.5.
+20. A team is chasing 250 in 50 overs and is 190/5 after 40 overs. What is the required run rate for the last 10 overs?
+A) 5.0
+B) 5.5
+C) 6.0
+D) 6.5
+Answer: C) 6.0
+Solution:
+Runs still needed = 250 − 190 = 60.
+Overs remaining = 50 − 40 = 10.
+Required run rate = 60 ÷ 10 = 6.0.
+21. A bowler's 5 overs in a rain-shortened match go for 6, 4, 9, 5 and 6 runs. What is his economy rate for the match?
+A) 6.0
+B) 5.5
+C) 6.5
+D) 7.0
+Answer: A) 6.0
+Solution:
+Total runs conceded = 6 + 4 + 9 + 5 + 6 = 30.
+Overs bowled = 5.
+Economy rate = 30 ÷ 5 = 6.0.
+22. A team is chasing 180 in 20 overs. Commentators call a chase 'under control' only while the required run rate is 10.0 or lower. Their score is 120/3 after 15 overs. What is the required run rate, and is the chase under control?
+A) 10.0, under control
+B) 12.0, not under control
+C) 12.0, under control
+D) 11.0, not under control
+Answer: B) 12.0, not under control
+Solution:
+Runs still needed = 180 − 120 = 60.
+Overs remaining = 20 − 15 = 5.
+Required run rate = 60 ÷ 5 = 12.0.
+12.0 is above 10.0, so the chase is NOT under control.

@@ -1,0 +1,312 @@
+{
+  "questions": [
+    {
+      "questionText": "A team needs 17 runs to win and scores 9 runs from the next over. How many runs are still required?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "6",
+        "8",
+        "7",
+        "9"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Runs remaining = 17 \u2212 9 = 8"
+    },
+    {
+      "questionText": "An IPL team scores 9 runs in each of the first 2 overs. What is their score after 2 overs?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "16",
+        "20",
+        "21",
+        "18"
+      ],
+      "correctOption": 3,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "9 \u00d7 2 = 18 runs"
+    },
+    {
+      "questionText": "A bowler gives away 6 runs in an over. How many runs does he concede in 2 overs if he maintains the same rate?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "12",
+        "10",
+        "14",
+        "16"
+      ],
+      "correctOption": 0,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "6 \u00d7 2 = 12 runs"
+    },
+    {
+      "questionText": "A batter hits 3 fours and no other boundaries. How many runs come from those fours?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "10",
+        "14",
+        "12",
+        "16"
+      ],
+      "correctOption": 2,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "3 \u00d7 4 = 12 runs"
+    },
+    {
+      "questionText": "A team scores 15 runs in an over. If 6 of those runs came from boundaries, how many runs came from other shots?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "7",
+        "9",
+        "8",
+        "10"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "15 \u2212 6 = 9 runs"
+    },
+    {
+      "questionText": "A batter scores 24 runs from 16 balls. What is his strike rate?",
+      "ballTypeSlug": "normal_2",
+      "options": [
+        "125",
+        "140",
+        "160",
+        "150"
+      ],
+      "correctOption": 3,
+      "runs": 2,
+      "timerSeconds": 30,
+      "explanation": "Strike Rate = (24 \u00f7 16) \u00d7 100 = 150"
+    },
+    {
+      "questionText": "A team scores 42 runs in 7 overs. At the same run rate, how many runs would they score in 10 overs?",
+      "ballTypeSlug": "normal_2",
+      "options": [
+        "60",
+        "54",
+        "64",
+        "70"
+      ],
+      "correctOption": 0,
+      "runs": 2,
+      "timerSeconds": 30,
+      "explanation": "Run rate = 42 \u00f7 7 = 6 runs/over.\nFor 10 overs = 6 \u00d7 10 = 60 runs"
+    },
+    {
+      "questionText": "A batter scores 18 runs from boundaries and 22 runs through other shots. What percentage of his runs came from boundaries?",
+      "ballTypeSlug": "normal_2",
+      "options": [
+        "35%",
+        "40%",
+        "45%",
+        "50%"
+      ],
+      "correctOption": 2,
+      "runs": 2,
+      "timerSeconds": 30,
+      "explanation": "Total runs = 18 + 22 = 40.\nPercentage = (18 \u00f7 40) \u00d7 100 = 45%"
+    },
+    {
+      "questionText": "Two IPL batters score runs in the ratio 2 : 3. Together they score 75 runs. How many runs does the second batter score?",
+      "ballTypeSlug": "normal_2",
+      "options": [
+        "30",
+        "45",
+        "40",
+        "50"
+      ],
+      "correctOption": 1,
+      "runs": 2,
+      "timerSeconds": 30,
+      "explanation": "Total ratio = 2 + 3 = 5.\nOne part = 75 \u00f7 5 = 15.\nSecond batter = 3 \u00d7 15 = 45 runs"
+    },
+    {
+      "questionText": "A bowler concedes 18 runs in 3 overs. If he maintains the same economy rate, how many runs will he concede in 5 overs?",
+      "ballTypeSlug": "normal_2",
+      "options": [
+        "30",
+        "25",
+        "28",
+        "32"
+      ],
+      "correctOption": 0,
+      "runs": 2,
+      "timerSeconds": 30,
+      "explanation": "Economy rate = 18 \u00f7 3 = 6.\nFor 5 overs = 6 \u00d7 5 = 30 runs"
+    },
+    {
+      "questionText": "A team is 96/3 after 12 overs and wants to finish on 176 after 20 overs. What run rate must they maintain in the remaining 8 overs?",
+      "ballTypeSlug": "full_toss",
+      "options": [
+        "8",
+        "9",
+        "11",
+        "10"
+      ],
+      "correctOption": 3,
+      "runs": 3,
+      "timerSeconds": 40,
+      "explanation": "Runs required = 176 \u2212 96 = 80.\nOvers remaining = 8.\nRequired run rate = 80 \u00f7 8 = 10 runs/over"
+    },
+    {
+      "questionText": "A batter has scored 36 runs from 24 balls. He then scores another 24 runs from 12 balls. What is his overall strike rate?",
+      "ballTypeSlug": "full_toss",
+      "options": [
+        "150",
+        "166.67",
+        "160",
+        "175"
+      ],
+      "correctOption": 1,
+      "runs": 3,
+      "timerSeconds": 40,
+      "explanation": "Total runs = 36 + 24 = 60.\nTotal balls = 24 + 12 = 36.\nStrike rate = (60 \u00f7 36) \u00d7 100 = 166.67"
+    },
+    {
+      "questionText": "An IPL team scores 162 runs, of which 18 are extras. The remaining runs are scored by three batters in the ratio 3 : 4 : 5. How many runs did the highest-scoring batter make?",
+      "ballTypeSlug": "normal_4",
+      "options": [
+        "50",
+        "55",
+        "60",
+        "65"
+      ],
+      "correctOption": 2,
+      "runs": 4,
+      "timerSeconds": 50,
+      "explanation": "Runs scored by batters = 162 \u2212 18 = 144.\nTotal ratio = 3 + 4 + 5 = 12.\nOne part = 144 \u00f7 12 = 12.\nHighest scorer = 5 \u00d7 12 = 60 runs"
+    },
+    {
+      "questionText": "A batter has an average of 38 runs after 7 innings. In his next two innings, he scores 51 and 42. What is his new average after 9 innings, approximately?",
+      "ballTypeSlug": "normal_4",
+      "options": [
+        "39.89",
+        "38.89",
+        "40.89",
+        "41.89"
+      ],
+      "correctOption": 0,
+      "runs": 4,
+      "timerSeconds": 50,
+      "explanation": "Runs after 7 innings = 7 \u00d7 38 = 266.\nNew total = 266 + 51 + 42 = 359.\nNew average = 359 \u00f7 9 = 39.89"
+    },
+    {
+      "questionText": "A team scores 48 runs in its first 6 overs. During the next 9 overs, it scores at a rate 2 runs per over higher than its first-6-over rate. What is its total score after 15 overs?",
+      "ballTypeSlug": "normal_4",
+      "options": [
+        "126",
+        "132",
+        "144",
+        "138"
+      ],
+      "correctOption": 3,
+      "runs": 4,
+      "timerSeconds": 50,
+      "explanation": "First 6-over run rate = 48 \u00f7 6 = 8.\nNext 9-over run rate = 8 + 2 = 10.\nRuns in next 9 overs = 10 \u00d7 9 = 90.\nTotal = 48 + 90 = 138 runs"
+    },
+    {
+      "questionText": "A bowler has conceded 35 runs in 5 overs. He concedes 7 runs in his next over. What is his economy rate after 6 overs?",
+      "ballTypeSlug": "normal_4",
+      "options": [
+        "6.5",
+        "7.5",
+        "7.0",
+        "8.0"
+      ],
+      "correctOption": 2,
+      "runs": 4,
+      "timerSeconds": 50,
+      "explanation": "Total runs after 6 overs = 35 + 7 = 42.\nEconomy rate = 42 \u00f7 6 = 7.0"
+    },
+    {
+      "questionText": "A batter scores 72 runs. He hits 4 sixes and 6 fours. What percentage of his runs came from boundaries?",
+      "ballTypeSlug": "normal_4",
+      "options": [
+        "58.33%",
+        "66.67%",
+        "62.50%",
+        "72.00%"
+      ],
+      "correctOption": 1,
+      "runs": 4,
+      "timerSeconds": 50,
+      "explanation": "Runs from sixes = 4 \u00d7 6 = 24.\nRuns from fours = 6 \u00d7 4 = 24.\nBoundary runs = 48.\nPercentage = (48 \u00f7 72) \u00d7 100 = 66.67%"
+    },
+    {
+      "questionText": "An IPL team needs 196 runs to win. After 14 overs, they are 121/4. They score 31 runs in the next 3 overs. What run rate must they maintain in the final 3 overs to win?",
+      "ballTypeSlug": "normal_6",
+      "options": [
+        "14.67",
+        "12.67",
+        "13.33",
+        "15.00"
+      ],
+      "correctOption": 0,
+      "runs": 6,
+      "timerSeconds": 60,
+      "explanation": "Score after 17 overs = 121 + 31 = 152.\nRuns required = 196 \u2212 152 = 44.\nOvers remaining = 3.\nRequired run rate = 44 \u00f7 3 = 14.67 runs/over"
+    },
+    {
+      "questionText": "A stadium has 50,000 seats. On match day, 80% are occupied. Of the occupied seats, 30% are priced at \u20b91,500 each and the rest at \u20b92,500 each. What is the total ticket revenue?",
+      "ballTypeSlug": "normal_6",
+      "options": [
+        "\u20b97.0 crore",
+        "\u20b98.0 crore",
+        "\u20b99.2 crore",
+        "\u20b98.8 crore"
+      ],
+      "correctOption": 3,
+      "runs": 6,
+      "timerSeconds": 60,
+      "explanation": "Occupied seats = 50,000 \u00d7 80% = 40,000.\n\u20b91,500 tickets = 30% of 40,000 = 12,000. Revenue = 12,000 \u00d7 \u20b91,500 = \u20b91.8 crore.\n\u20b92,500 tickets = 28,000. Revenue = 28,000 \u00d7 \u20b92,500 = \u20b97 crore.\nTotal revenue = \u20b98.8 crore"
+    },
+    {
+      "questionText": "A batter scores 45 runs from 30 balls. In his next 20 balls, he scores 32 runs. What is his overall strike rate after facing all 50 balls?",
+      "ballTypeSlug": "normal_6",
+      "options": [
+        "144",
+        "150",
+        "154",
+        "160"
+      ],
+      "correctOption": 2,
+      "runs": 6,
+      "timerSeconds": 60,
+      "explanation": "Total runs = 45 + 32 = 77.\nTotal balls = 30 + 20 = 50.\nStrike rate = (77 \u00f7 50) \u00d7 100 = 154"
+    },
+    {
+      "questionText": "A team scores 52 runs in the Powerplay. During the next 8 overs, its run rate is 25% higher than its Powerplay run rate. Approximately how many runs does the team score in the first 14 overs?",
+      "ballTypeSlug": "normal_6",
+      "options": [
+        "138.67",
+        "136.67",
+        "140.67",
+        "142.67"
+      ],
+      "correctOption": 0,
+      "runs": 6,
+      "timerSeconds": 60,
+      "explanation": "Powerplay run rate = 52 \u00f7 6 = 8.67 runs/over.\nNext-over rate = 8.67 \u00d7 1.25 = 10.83 runs/over.\nRuns in next 8 overs = 10.83 \u00d7 8 = 86.67.\nTotal = 52 + 86.67 = 138.67 runs"
+    },
+    {
+      "questionText": "A team requires 72 runs from 48 balls. After scoring 28 runs from the next 18 balls, how many runs must they score from the remaining 18 balls, and what strike rate is required during those balls?",
+      "ballTypeSlug": "normal_6",
+      "options": [
+        "40 runs, 222.22",
+        "44 runs, 244.44",
+        "42 runs, 233.33",
+        "46 runs, 255.56"
+      ],
+      "correctOption": 1,
+      "runs": 6,
+      "timerSeconds": 60,
+      "explanation": "Runs still required = 72 \u2212 28 = 44.\nRequired strike rate = (44 \u00f7 18) \u00d7 100 = 244.44"
+    }
+  ]
+}
