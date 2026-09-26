@@ -9,7 +9,6 @@ import { Mail, Lock, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function LoginClient() {
-    if (typeof window === 'undefined') return null;
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");

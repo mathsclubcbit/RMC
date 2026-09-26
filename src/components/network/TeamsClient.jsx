@@ -21,7 +21,6 @@ import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { CreateTeamModal, ManageTeamMembersModal } from "./TeamModals";
 
 export default function TeamsClient() {
-    if (typeof window === 'undefined') return null;
 
     const { profile, canManageTeams } = useAuth();
     const [teams, setTeams] = useState([]);

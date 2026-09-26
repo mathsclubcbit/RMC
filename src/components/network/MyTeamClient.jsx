@@ -226,7 +226,6 @@ function UpdatePasswordModal({ isOpen, onClose, teamId, memberId, memberName }) 
 }
 
 export default function MyTeamClient() {
-    if (typeof window === 'undefined') return null;
     const { profile } = useAuth();
     const [invites, setInvites] = useState({});
     const [showAddModal, setShowAddModal] = useState(false);

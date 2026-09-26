@@ -30,6 +30,13 @@ export function LoadingProvider({ children }) {
     );
 }
 
+const defaultLoadingContext = {
+    isPageLoading: false,
+    startLoading: () => {},
+    stopLoading: () => {},
+};
+
 export function useLoading() {
-    return useContext(LoadingContext);
+    const context = useContext(LoadingContext);
+    return context || defaultLoadingContext;
 }

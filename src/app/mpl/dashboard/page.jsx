@@ -15,7 +15,7 @@ export default async function MPLDashboard() {
     const supabaseSessionClient = await createClient();
     
     // 1. Get Session using the client that reads cookies
-    const { data: { session } } = await supabaseSessionClient.auth.getSession();
+    const { data: { user } } = await supabaseSessionClient.auth.getUser();
 
     const headersList = await headers();
     const host = headersList.get('host') || 'localhost:3000';
@@ -23,11 +23,11 @@ export default async function MPLDashboard() {
     const baseUrl = `${protocol}://${host}`;
     const whatsappGroupLink = process.env.NEXT_PUBLIC_WHATSAPP_GROUP_LINK;
     
-    if (!session) {
+    if (!user) {
         redirect('/mpl/register');
     }
 
-    const userEmail = session.user.email;
+    const userEmail = user.email;
 
     // 2. Fetch Registration
     const admin = createAdminClient();
@@ -112,8 +112,8 @@ export default async function MPLDashboard() {
             </Link>
             <div className="pointer-events-auto fixed right-3 top-4 z-50 sm:right-8 sm:top-8">
                 <UserProfileMenu 
-                    avatarUrl={session.user.user_metadata?.avatar_url} 
-                    email={session.user.email} 
+                    avatarUrl={user.user_metadata?.avatar_url} 
+                    email={user.email} 
                 />
             </div>
 

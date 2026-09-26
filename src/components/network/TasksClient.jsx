@@ -28,7 +28,6 @@ const STATUS_CONFIG = {
 };
 
 export default function TasksClient() {
-    if (typeof window === 'undefined') return null;
 
     const { profile, isPresident, isCoreCouncil } = useAuth();
     const [tasks, setTasks] = useState([]);

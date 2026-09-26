@@ -6,7 +6,7 @@ export const metadata = { title: 'MPL Live Match | RMC' };
 
 export default async function PlayerLiveMatchPage() {
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) redirect('/mpl/register');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) redirect('/mpl/register');
     return <PlayerLiveMatch />;
 }

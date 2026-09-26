@@ -374,7 +374,6 @@ function AddEventModal({ initialDate, myTeams, onClose, onSuccess }) {
 }
 
 export default function CalendarClient() {
-    if (typeof window === 'undefined') return null;
     const { profile, isPresident } = useAuth();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [events, setEvents] = useState([]);
