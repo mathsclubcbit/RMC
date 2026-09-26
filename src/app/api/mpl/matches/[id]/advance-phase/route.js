@@ -30,13 +30,13 @@ export async function POST(request, { params }) {
         }
         const legalDeliveries = (deliveries || []).filter((delivery) => !['wide', 'no_ball', 'cancelled'].includes(delivery.status)).length;
         if (legalDeliveries < match.total_questions_per_innings) {
-            return Response.json({ error: 'The innings can advance only after all 20 balls are complete.' }, { status: 409 });
+            return Response.json({ error: `The innings can advance only after all ${match.total_questions_per_innings} balls are complete.` }, { status: 409 });
         }
     }
 
     let newStatus = match.status;
     let completedAt = null;
-    if (match.status === 'innings_1') newStatus = 'innings_break';
+    if (match.status === 'innings_1') newStatus = 'innings_2';
     else if (match.status === 'innings_break') newStatus = 'innings_2';
     else if (match.status === 'innings_2') {
         newStatus = 'completed';

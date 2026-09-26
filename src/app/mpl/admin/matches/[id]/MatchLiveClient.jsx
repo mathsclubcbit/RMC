@@ -56,7 +56,7 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
             if (d.status === 'wicket') wickets += 1;
             if (d.runs_awarded >= 4) boundaries += 1;
         });
-        const totalLegal = currentDeliveries.filter(d => !['no_ball', 'cancelled'].includes(d.status)).length;
+        const totalLegal = currentDeliveries.filter(d => !['wide', 'no_ball', 'cancelled'].includes(d.status)).length;
         return { runs, wickets, boundaries, totalLegal };
     }, [currentInningsDeliveries]);
 
@@ -204,9 +204,10 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
         return () => clearInterval(interval);
     }, [activeDelivery]);
 
-    const submitAnswer = async (answerOption, powerShot = false) => {
+    const submitAnswer = async (answerOption, isPowerShotChecked = false) => {
         setBusy(true); setMessage('');
-        const response = await fetch(`/api/mpl/deliveries/${activeDelivery.id}/submit-answer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phase, answerOption, powerShot }) });
+        const finalPowerShot = isPowerShotChecked || activeDelivery.metadata?.power_shot === true;
+        const response = await fetch(`/api/mpl/deliveries/${activeDelivery.id}/submit-answer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phase, answerOption, powerShot: finalPowerShot }) });
         const data = await response.json();
         if (response.ok) {
             const scored = phase === 'batter' && data.delivery?.status === 'answered' && Number(data.delivery.runs_awarded || 0) > 0;
@@ -379,6 +380,17 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
                                         <p className="text-xs uppercase tracking-widest text-teal-300">{phase === 'batter' ? 'Batter attempt' : 'Bowler rescue attempt'} · {activeDelivery.ball_type_slug}</p>
                                         <p className="mt-3 text-lg font-semibold">{activeDelivery.question?.question_text}</p>
                                     </div>
+                                    {activeDelivery.metadata?.power_shot === true && (
+                                        <div className="mt-3 flex items-center gap-3 rounded-xl border border-amber-300/70 bg-amber-300/15 p-3 text-amber-100">
+                                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-300 text-black">
+                                                <Zap className="h-4 w-4" />
+                                            </span>
+                                            <span>
+                                                <span className="block font-bold">Power Shot is Active!</span>
+                                                <span className="mt-0.5 block text-xs text-amber-200/70">Correct answer runs will be doubled</span>
+                                            </span>
+                                        </div>
+                                    )}
                                     {phase === 'batter' && !powerShotUsed && <label className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-xs transition ${powerShot ? 'border-amber-300/70 bg-amber-300/15 text-amber-100' : 'border-amber-300/25 bg-amber-300/5 text-amber-200 hover:border-amber-300/50'}`}><input type="checkbox" className="sr-only" checked={powerShot} onChange={(event) => setPowerShot(event.target.checked)} /><span className={`flex h-8 w-8 items-center justify-center rounded-lg ${powerShot ? 'bg-amber-300 text-black' : 'bg-amber-300/15 text-amber-200'}`}><Zap className="h-4 w-4" /></span><span><span className="block font-bold">{powerShot ? 'Power Shot armed' : 'Use Power Shot'}</span><span className="mt-0.5 block text-amber-200/70">Double the runs if the batter answers correctly</span></span></label>}
                                     <div className="grid gap-3 sm:grid-cols-2">{answerOptions.map((option, index) => <button key={index} disabled={busy} onClick={() => submitAnswer(index, phase === 'batter' && powerShot)} className="rounded-xl border border-white/10 bg-black/20 p-3 text-left text-sm transition hover:-translate-y-0.5 hover:border-teal-400/50 hover:bg-teal-400/5">{index + 1}. {option}</button>)}</div>
                                     <div className="border-t border-white/10 pt-4"><p className="mb-3 text-xs uppercase tracking-widest text-zinc-400">Manual Scoring Overrides</p><div className="flex flex-wrap gap-2"><button type="button" disabled={busy} onClick={() => markDelivery('dot')} className="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-semibold hover:bg-zinc-700">Mark Dot Ball</button><button type="button" disabled={busy} onClick={() => markDelivery('wide')} className="rounded-lg bg-amber-900/50 px-3 py-2 text-xs font-semibold text-amber-200 hover:bg-amber-900">Mark Wide</button><button type="button" disabled={busy} onClick={() => markDelivery('no_ball')} className="rounded-lg bg-red-900/50 px-3 py-2 text-xs font-semibold text-red-200 hover:bg-red-900">Mark No Ball</button><button type="button" disabled={busy} onClick={() => markDelivery('wicket')} className="rounded-lg bg-red-600/20 px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-600/40">Mark Wicket</button></div></div>
