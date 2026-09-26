@@ -60,7 +60,7 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
         return { runs, wickets, boundaries, totalLegal };
     }, [currentInningsDeliveries]);
 
-    const deliveryNumber = scoreState.totalLegal + 1;
+    const deliveryNumber = currentInningsDeliveries.length + 1;
     const teamName = (teamId) => liveMatchTeams.find((team) => team.team_id === teamId)?.mpl_teams?.team_name || 'Team';
     const battingTeamId = match.status === 'innings_2'
         ? liveMatchTeams.find((team) => team.team_id !== match.first_batting_team_id)?.team_id

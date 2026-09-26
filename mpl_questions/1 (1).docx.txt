@@ -1,0 +1,150 @@
+                                                                        MPL QUIZ QUESTIONS
+1 RUN
+1. A batter scores 18 runs from 12 balls. If he maintains the same strike rate, how many runs will he score from 30 balls?
+A) 40B) 42C) 45D) 48
+Answer: C) 45
+Solution:Strike rate = 18/12 × 100 = 150For 30 balls = 30 × 150/100 = 45 runs
+2. A bowler concedes 19 runs in 3 overs. In his fourth over, he concedes 5 runs. What is his economy rate after 4 overs?
+A) 5.5B) 6C) 6.25D) 6.5
+Answer: C) 6
+Correction:Total runs = 19 + 5 = 24Economy = 24/4 = 6
+ Correct Answer: B) 6
+3. A team is chasing 173. They are 98/3 after 14 overs. How many runs must they score in the remaining 6 overs to win?
+A) 74B) 75C) 76D) 77
+Answer: B) 75
+Solution:173 − 98 = 75 runs
+4. A batter has scored 45 runs from 30 balls. He then scores 12 runs from the next 6 balls. What is his new strike rate?
+A) 135B) 140C) 158.33D) 145
+Answer: B) 158.33
+Solution:Total runs = 45 + 12 = 57Total balls = 30 + 6 = 36
+Strike rate = (57 ÷ 36) × 100= 158.33
+5. A bowler concedes 8 runs in his first over. His economy after 3 overs is 6. How many runs did he concede in the next two overs combined?
+A) 8B) 10C) 12D) 14
+Answer: B) 10
+Solution:Total after 3 overs = 6 × 3 = 18 runs.
+First over = 8 runs.
+Next two overs = 18 − 8 = 10 runs.
+2 RUNS
+6. A batter scores 80 runs. 35% of his runs are scored through boundaries. How many runs did he score through non-boundary shots?
+A) 48B) 50C) 52D) 54
+Answer: C) 52
+Solution:Boundary runs = 35% of 80 = 28Non-boundary runs = 80 − 28 = 52
+7.A batter scores 32, 46 and 58 in three matches. How many runs must he score in the fourth match to have an average of 50?
+A) 54B) 60C) 64D) 68
+Answer: c) 64
+Solution:Required total = 50 × 4 = 200
+Current total = 32 + 46 + 58 = 136
+Fourth score = 200 − 136 = 64
+✅ Correct answer: C) 64
+8.A box contains 4 cricket balls, 3 tennis balls and 5 table-tennis balls. One ball is selected randomly. What is the probability that it is not a cricket ball?
+A) 1/3B) 2/3C) 3/4D) 5/8
+Answer: B) 2/3
+Solution:Total balls = 4 + 3 + 5 = 12
+Non-cricket balls = 3 + 5 = 8
+Probability = 8/12 = 2/3.
+9. In a partnership, A and B score runs in the ratio 4 : 7. If B scores 27 more runs than A, what is the partnership total?
+A) 81B) 88C) 99D) 108
+Answer: C) 99
+Solution:Difference in ratio = 7 − 4 = 3 parts3 parts = 271 part = 9
+Total parts = 4 + 7 = 11Total runs = 11 × 9 = 99
+10Q.A batter has an average of 42 runs after 6 innings. In the 7th innings, he scores 66. In the 8th innings, his average becomes 45. What did he score in the 8th innings?
+A) 72B) 78C) 42D) 90
+Answer: C) 42
+Solution:Total after 6 innings = 6 × 42 = 252
+After 7th = 252 + 66 = 318
+Required total after 8 innings = 8 × 45 = 360
+8th score = 360 − 318 = 42
+3 RUNS
+11.A team has 5 players available to choose from. In how many different ways can they select 2 players for a batting partnership?
+A) 5B) 8C) 10D) 12
+Answer: C) 10
+Solution:
+Number of ways = ⁵C₂
+= 5 × 4 / (2 × 1)= 10 ways.
+12.A scoreboard displays the number 45 in decimal. What is its equivalent in binary?
+A) 101011B) 101101C) 110101D) 111001
+Answer: B) 101101
+Solution:45 = 32 + 8 + 4 + 1= 2⁵ + 2³ + 2² + 2⁰
+Therefore, 45₁₀ = 101101₂.
+4 RUNS
+13Q. The first row of a stadium stand has 20 seats. Each successive row has 4 more seats than the previous row. If there are 10 rows, how many seats are there in total?
+A) 360B) 380C) 400D) 420
+Answer: B) 380
+5-line solution:
+First term = 20 and common difference = 4. 
+Number of rows = 10. 
+Last row = 20 + 9(4) = 56. 
+Sum = 10/2 × (20 + 56) = 380. 
+Therefore, total seats = 380. 
+14. A stadium sells 80% of its tickets. After selling 20% of the sold tickets, 9,600 tickets remain unsold from the originally available tickets.
+How many tickets were originally available?
+A) 48,000B) 15,000C) 60,000D) 64,000
+Answer: B) 
+Solution:80% were sold.
+20% of sold tickets = 20% × 80% = 16% of total
+Remaining after this = 80% − 16% = 64% of total
+64% = 9,600
+Total = 9,600 ÷ 0.64= 15,000
+15Q.A box contains 5 red, 4 blue and 3 green cricket balls. Two balls are drawn without replacement.
+What is the probability that both balls are of different colours?
+A) 47/66B) 49/66C) 51/66D) 53/66
+Answer: A) 47/66
+Solution:Total ways to choose 2 balls:
+¹²C₂ = 66
+Same-colour pairs:
+Red: ⁵C₂ = 10Blue: ⁴C₂ = 6Green: ³C₂ = 3
+Total same-colour = 19
+Different-colour pairs = 66 − 19 = 47
+Probability = 47/66.
+16Q. There are 9 teams in a tournament. Each team plays every other team exactly once. If 5 matches end in a draw, how many matches have a winner?
+A) 31B) 32C) 36D) 41
+Answer: A) 31
+Solution:Total matches = ⁹C₂
+= 9 × 8 / 2= 36
+Draws = 5.
+Matches with winner = 36 − 5 = 31.
+17Q. In a 20-over match, Team A scores 174 runs. Team B starts its chase and scores 42 runs in the first 6 overs. During overs 7–12, Team B scores at a run rate of 8.5 runs per over. In the remaining overs, they improve their scoring rate to 10.5 runs per over.
+How many runs will Team B score in total, and will they win the match?
+A) 168, lose by 6 runsB) 171, lose by 3 runsC) 177, win by 3 runsD) 180, win by 6 runs
+Answer: C) 177, win by 3 runs
+Solution:First 6 overs = 42Next 6 overs = Remaining 8 overs = 
+Total:
+Team B wins by:
+177-174=3 RUNS
+6 RUNS
+18.In a 20-over match, Team A scores 192 runs. Team B begins the chase slowly and scores 45 runs in the first 6 overs. During overs 7–12, they score 8 runs per over. In overs 13–16, they increase their scoring rate to 10.5 runs per over.
+With 4 overs remaining, how many runs must Team B score per over to win the match?
+A) 12.00B) 12.25C) 14.50D) 13.75
+Answer: B) 14.50
+Solution:First 6 overs = 45 runsNext 6 overs:
+Next 4 overs:
+Score after 16 overs:
+To win:
+Required run rate:
+19Q. A stadium has 60,000 seats. For a cricket final, 90% of the seats are occupied. Of the spectators, 28% are in the North Stand and 22% are in the South Stand. The remaining spectators are equally divided between the East and West Stands. How many spectators are in the East Stand?
+A) 13,500B) 13,750C) 14,000D) 14,250
+Answer: A) 13,500
+Solution:Occupied = 60,000 × 90% = 54,000North + South = 50% of 54,000 = 27,000Remaining = 27,000East = 27,000 ÷ 2 = 13,500
+20Q. A stadium has 36,000 spectators attending a cricket match.40% purchased ₹300 tickets, 35% purchased ₹500 tickets, and the remaining purchased ₹800 tickets.
+What is the total ticket revenue?
+A) ₹1.65 croreB) ₹1.72 croreC) ₹1.78 croreD) ₹1.84 crore
+Answer: C) ₹1.78 crore
+Solution:14,400 × ₹300 = ₹43.2 lakh12,600 × ₹500 = ₹63 lakh9,000 × ₹800 = ₹72 lakh
+Total = ₹178.2 lakh = ₹1.782 crore
+21Q. A rectangular cricket ground is 140 m long and 100 m wide. A uniform 5 m-wide walking track is constructed inside the boundary on all four sides.
+What is the area occupied by the walking track?
+A) 2,100 m²B) 2,300 m²C) 2,500 m²D) 2,700 m²
+Answer: B) 2,300 m²
+Solution:Original area = 140 × 100 = 14,000 m²
+Inner dimensions:Length = 140 − 10 = 130 mWidth = 100 − 10 = 90 m
+Inner area = 130 × 90 = 11,700 m²
+Track area = 14,000 − 11,700 = 2,300 m²
+22Q. A stadium has 40,000 spectators. 25% are in North Stand, 20% in South Stand, and 30% in East Stand. The rest are in West Stand. How many spectators are in West Stand?
+A) 8,000B) 9,000C) 10,000D) 12,000
+Answer: C) 10,000
+Solution — 5 lines:
+Total spectators = 40,000. 
+North = 25% = 10,000. 
+South = 20% = 8,000. 
+East = 30% = 12,000. 
+West = 40,000 − 30,000 = 10,000. 

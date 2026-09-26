@@ -1,0 +1,326 @@
+{
+  "questions": [
+    {
+      "questionText": "A team scores 160 runs in their 20 overs and the opposition scores 140 runs in their 20 overs. What is the team's Net Run Rate (NRR) for this match?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "1.0",
+        "0.5",
+        "2.0",
+        "1.5"
+      ],
+      "correctOption": 0,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Run rate scored = 160 \u00f7 20 = 8.0.\nRun rate conceded = 140 \u00f7 20 = 7.0.\nNRR = 8.0 \u2212 7.0 = 1.0."
+    },
+    {
+      "questionText": "A bowler's figures read 4-0-24-2 (overs\u2013maidens\u2013runs\u2013wickets). What is his economy rate?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "5.0",
+        "6.0",
+        "7.0",
+        "8.0"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Economy rate = runs conceded \u00f7 overs bowled.\nEconomy = 24 \u00f7 4 = 6.0."
+    },
+    {
+      "questionText": "A batter's strike rate for an innings is 150, from 40 balls faced. How many runs did he score?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "50",
+        "55",
+        "60",
+        "65"
+      ],
+      "correctOption": 2,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Runs = (Strike rate \u00f7 100) \u00d7 Balls faced.\nRuns = 1.5 \u00d7 40 = 60."
+    },
+    {
+      "questionText": "A chasing team needs a run rate of 8 per over with 10 overs remaining. How many runs do they still need?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "70",
+        "75",
+        "85",
+        "80"
+      ],
+      "correctOption": 3,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Runs needed = Required run rate \u00d7 Overs remaining.\nRuns needed = 8 \u00d7 10 = 80."
+    },
+    {
+      "questionText": "A bowler has an economy rate of 6 across his full 8-over spell. How many runs did he concede in total?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "48",
+        "42",
+        "54",
+        "45"
+      ],
+      "correctOption": 0,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Total runs conceded = Economy rate \u00d7 Overs bowled.\nRuns = 6 \u00d7 8 = 48."
+    },
+    {
+      "questionText": "Team A scores 280 runs in their 50 overs. The opposition scores 240 runs in their 50 overs. What is Team A's NRR for this match?",
+      "ballTypeSlug": "normal_2",
+      "options": [
+        "0.6",
+        "0.8",
+        "1.0",
+        "0.4"
+      ],
+      "correctOption": 1,
+      "runs": 2,
+      "timerSeconds": 30,
+      "explanation": "Run rate scored = 280 \u00f7 50 = 5.6.\nRun rate conceded = 240 \u00f7 50 = 4.8.\nNRR = 5.6 \u2212 4.8 = 0.8."
+    },
+    {
+      "questionText": "A batter has played 22 innings, remaining not out 2 times, for a total of 1000 runs. What is his batting average?",
+      "ballTypeSlug": "normal_2",
+      "options": [
+        "45.0",
+        "48.0",
+        "50.0",
+        "55.0"
+      ],
+      "correctOption": 2,
+      "runs": 2,
+      "timerSeconds": 30,
+      "explanation": "Batting average = Total runs \u00f7 Number of times out (dismissals).\nDismissals = 22 \u2212 2 = 20.\nAverage = 1000 \u00f7 20 = 50.0."
+    },
+    {
+      "questionText": "A bowler's bowling average in a tournament is 25, and he has taken 40 wickets. How many runs has he conceded in total?",
+      "ballTypeSlug": "normal_2",
+      "options": [
+        "900",
+        "1200",
+        "1100",
+        "1000"
+      ],
+      "correctOption": 3,
+      "runs": 2,
+      "timerSeconds": 30,
+      "explanation": "Total runs conceded = Bowling average \u00d7 Wickets taken.\nRuns = 25 \u00d7 40 = 1000."
+    },
+    {
+      "questionText": "A team needs 300 to win in 50 overs. They are 200/4 after 40 overs. What run rate must they maintain for the remaining overs to win?",
+      "ballTypeSlug": "normal_2",
+      "options": [
+        "10.0",
+        "9.0",
+        "8.0",
+        "11.0"
+      ],
+      "correctOption": 0,
+      "runs": 2,
+      "timerSeconds": 30,
+      "explanation": "Runs still needed = 300 \u2212 200 = 100.\nOvers remaining = 50 \u2212 40 = 10.\nRequired run rate = 100 \u00f7 10 = 10.0."
+    },
+    {
+      "questionText": "A player's strike rate across a tournament is 140, from a total of 150 balls faced. How many total runs did he score?",
+      "ballTypeSlug": "normal_2",
+      "options": [
+        "200",
+        "210",
+        "220",
+        "230"
+      ],
+      "correctOption": 1,
+      "runs": 2,
+      "timerSeconds": 30,
+      "explanation": "Total runs = (Strike rate \u00f7 100) \u00d7 Total balls faced.\nRuns = 1.4 \u00d7 150 = 210."
+    },
+    {
+      "questionText": "A rain-hit match: the team batting first scores 160 runs in 20 overs. The chasing team's innings is reduced to 15 overs. Using the simplified method: Target = (First innings run rate \u00d7 Revised overs) + 1, what is the target for the chasing team?",
+      "ballTypeSlug": "yorker",
+      "options": [
+        "115",
+        "120",
+        "121",
+        "125"
+      ],
+      "correctOption": 2,
+      "runs": 3,
+      "timerSeconds": 40,
+      "explanation": "First innings run rate = 160 \u00f7 20 = 8.0.\nTarget = (8.0 \u00d7 15) + 1 = 120 + 1 = 121."
+    },
+    {
+      "questionText": "A batter has 5730 career runs and averages 40 runs per innings. If he scores exactly 40 in each future innings, how many more complete innings will he need to reach or cross 6000 runs?",
+      "ballTypeSlug": "yorker",
+      "options": [
+        "5",
+        "6",
+        "8",
+        "7"
+      ],
+      "correctOption": 3,
+      "runs": 3,
+      "timerSeconds": 40,
+      "explanation": "Runs still needed = 6000 \u2212 5730 = 270.\nInnings needed = 270 \u00f7 40 = 6.75.\nA part-innings doesn't count, so he needs 7 full innings."
+    },
+    {
+      "questionText": "After 2 matches, a team's combined figures are: 540 runs scored in 100 overs, and 480 runs conceded in 100 overs. What is their current Net Run Rate?",
+      "ballTypeSlug": "normal_4",
+      "options": [
+        "0.6",
+        "0.5",
+        "0.8",
+        "0.4"
+      ],
+      "correctOption": 0,
+      "runs": 4,
+      "timerSeconds": 50,
+      "explanation": "Run rate scored = 540 \u00f7 100 = 5.4.\nRun rate conceded = 480 \u00f7 100 = 4.8.\nNRR = 5.4 \u2212 4.8 = 0.6."
+    },
+    {
+      "questionText": "A bowler has bowled 10 overs in a tournament at an economy rate of 6.0. He has one final spell of 2 overs left. What is the maximum number of runs he can concede in those 2 overs so that his overall economy rate does not exceed 7.0?",
+      "ballTypeSlug": "normal_4",
+      "options": [
+        "20",
+        "24",
+        "26",
+        "28"
+      ],
+      "correctOption": 1,
+      "runs": 4,
+      "timerSeconds": 50,
+      "explanation": "Runs conceded so far = 10 \u00d7 6 = 60.\nTotal overs after the final spell = 10 + 2 = 12.\nMaximum total runs allowed = 12 \u00d7 7 = 84.\nMaximum runs in the final 2 overs = 84 \u2212 60 = 24."
+    },
+    {
+      "questionText": "A batter has 1200 runs from 30 innings, with 6 not outs, giving an average of 50. He is then dismissed for a duck (0 runs) in his 31st innings. What is his new career average?",
+      "ballTypeSlug": "normal_4",
+      "options": [
+        "46",
+        "47",
+        "48",
+        "50"
+      ],
+      "correctOption": 2,
+      "runs": 4,
+      "timerSeconds": 50,
+      "explanation": "Dismissals before = 30 \u2212 6 = 24; average = 1200 \u00f7 24 = 50.\nAfter the duck: total runs = 1200 (unchanged); dismissals = 24 + 1 = 25.\nNew average = 1200 \u00f7 25 = 48."
+    },
+    {
+      "questionText": "A team needs 12 runs to win off the last 4 balls of the match. How many runs per ball must they score to win?",
+      "ballTypeSlug": "normal_4",
+      "options": [
+        "3.0",
+        "2.0",
+        "4.0",
+        "6.0"
+      ],
+      "correctOption": 0,
+      "runs": 4,
+      "timerSeconds": 50,
+      "explanation": "Required rate per ball = Runs needed \u00f7 Balls remaining.\nRate = 12 \u00f7 4 = 3.0 runs per ball."
+    },
+    {
+      "questionText": "Before their final league match, Team X have scored 600 runs in 100 overs and conceded 500 runs in 100 overs. In the final match they score 300 in 50 overs and the opposition scores 250 in 50 overs. What is Team X's final tournament NRR?",
+      "ballTypeSlug": "normal_4",
+      "options": [
+        "0.5",
+        "0.8",
+        "1.0",
+        "1.2"
+      ],
+      "correctOption": 2,
+      "runs": 4,
+      "timerSeconds": 50,
+      "explanation": "Total runs scored = 600 + 300 = 900 in 150 overs; scoring rate = 900 \u00f7 150 = 6.0.\nTotal runs conceded = 500 + 250 = 750 in 150 overs; conceding rate = 750 \u00f7 150 = 5.0.\nFinal NRR = 6.0 \u2212 5.0 = 1.0."
+    },
+    {
+      "questionText": "Two teams finish level on points. Team A: 1500 runs scored in 300 overs, 1350 runs conceded in 300 overs. Team B: 1560 runs scored in 300 overs, 1440 runs conceded in 300 overs. Which team has the better NRR, and what is it?",
+      "ballTypeSlug": "normal_6",
+      "options": [
+        "Team B, 0.4",
+        "Team A, 0.5",
+        "Team A, 0.4",
+        "Team B, 0.5"
+      ],
+      "correctOption": 1,
+      "runs": 6,
+      "timerSeconds": 60,
+      "explanation": "Team A: 1500 \u00f7 300 = 5.0 scored; 1350 \u00f7 300 = 4.5 conceded; NRR = 0.5.\nTeam B: 1560 \u00f7 300 = 5.2 scored; 1440 \u00f7 300 = 4.8 conceded; NRR = 0.4.\nTeam A has the higher (better) NRR at 0.5."
+    },
+    {
+      "questionText": "A bowler concedes 1, 4, 0, 6, 1, and a wicket (0 runs) off the 6 balls of a death over. Combined with his earlier figures of 3 overs for 18 runs, what is his overall economy rate after 4 overs?",
+      "ballTypeSlug": "normal_6",
+      "options": [
+        "7.0",
+        "7.5",
+        "8.0",
+        "6.5"
+      ],
+      "correctOption": 1,
+      "runs": 6,
+      "timerSeconds": 60,
+      "explanation": "Runs conceded in the over = 1 + 4 + 0 + 6 + 1 + 0 = 12.\nTotal runs after 4 overs = 18 + 12 = 30.\nOverall economy rate = 30 \u00f7 4 = 7.5."
+    },
+    {
+      "questionText": "A team is chasing 250 in 50 overs and is 190/5 after 40 overs. What is the required run rate for the last 10 overs?",
+      "ballTypeSlug": "normal_6",
+      "options": [
+        "5.0",
+        "5.5",
+        "6.0",
+        "6.5"
+      ],
+      "correctOption": 2,
+      "runs": 6,
+      "timerSeconds": 60,
+      "explanation": "Runs still needed = 250 \u2212 190 = 60.\nOvers remaining = 50 \u2212 40 = 10.\nRequired run rate = 60 \u00f7 10 = 6.0."
+    },
+    {
+      "questionText": "A bowler's 5 overs in a rain-shortened match go for 6, 4, 9, 5 and 6 runs. What is his economy rate for the match?",
+      "ballTypeSlug": "normal_6",
+      "options": [
+        "6.0",
+        "5.5",
+        "6.5",
+        "7.0"
+      ],
+      "correctOption": 0,
+      "runs": 6,
+      "timerSeconds": 60,
+      "explanation": "Total runs conceded = 6 + 4 + 9 + 5 + 6 = 30.\nOvers bowled = 5.\nEconomy rate = 30 \u00f7 5 = 6.0."
+    },
+    {
+      "questionText": "A team is chasing 180 in 20 overs. Commentators call a chase 'under control' only while the required run rate is 10.0 or lower. Their score is 120/3 after 15 overs. What is the required run rate, and is the chase under control?",
+      "ballTypeSlug": "normal_6",
+      "options": [
+        "10.0, under control",
+        "12.0, not under control",
+        "12.0, under control",
+        "11.0, not under control"
+      ],
+      "correctOption": 1,
+      "runs": 6,
+      "timerSeconds": 60,
+      "explanation": "Runs still needed = 180 \u2212 120 = 60.\nOvers remaining = 20 \u2212 15 = 5.\nRequired run rate = 60 \u00f7 5 = 12.0."
+    },
+    {
+      "questionText": "0 is above 10.0, so the chase is NOT under control.",
+      "ballTypeSlug": "normal_6",
+      "options": [
+        "Option A",
+        "Option B",
+        "Option C",
+        "Option D"
+      ],
+      "correctOption": 0,
+      "runs": 6,
+      "timerSeconds": 60,
+      "explanation": ""
+    }
+  ]
+}

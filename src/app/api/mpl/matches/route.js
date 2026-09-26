@@ -130,7 +130,7 @@ export async function POST(request) {
     ]);
     const matchPayload = {
         status: 'toss_pending',
-        total_questions_per_innings: totalQuestions,
+        total_questions_per_innings: 15,
         question_distribution: distribution,
         timer_config: { base_seconds: baseTimerSeconds, adjustment_seconds: timerAdjustment, minimum_seconds: MIN_TIMER_SECONDS },
         rules_config: {
