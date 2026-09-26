@@ -131,7 +131,6 @@ function NavContent({
 }
 
 export default function NetworkSidebar() {
-    if (typeof window === 'undefined') return null;
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const pathname = usePathname();

@@ -10,9 +10,9 @@ export const metadata = {
 };
 
 export default async function MPLRegistrationPage() {
-    // Check session on the server
+    // Check user on the server
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
     const admin = createAdminClient();
 
     const { data: eventData } = await admin
@@ -21,8 +21,8 @@ export default async function MPLRegistrationPage() {
         .eq('id', 'mpl-2026')
         .single();
 
-    if (session) {
-        const userEmail = session.user.email;
+    if (user) {
+        const userEmail = user.email;
         
         // Fetch to see if user is in any MPL team
         const { data: playerRecord } = await admin

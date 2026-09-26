@@ -407,7 +407,6 @@ function CredentialsModal({ member, onClose }) {
 }
 
 export default function PersonnelClient() {
-    if (typeof window === 'undefined') return null;
     const { profile, canManageMembers, isPresident } = useAuth();
     const [members, setMembers] = useState([]);
     const [teams, setTeams] = useState([]);

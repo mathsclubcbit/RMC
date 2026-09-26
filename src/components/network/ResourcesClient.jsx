@@ -256,7 +256,6 @@ function AddResourceModal({ folderId, onClose, onSuccess }) {
 }
 
 export default function ResourcesClient() {
-    if (typeof window === 'undefined') return null;
     const { profile, isPresident } = useAuth();
 
     const [folders, setFolders] = useState([]);

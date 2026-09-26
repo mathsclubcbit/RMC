@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Radio, Timer, Trophy, Swords, Target, Hourglass, Zap } from 'lucide-react';
 import MatchCelebration from '../components/MatchCelebration';
+import { createClient as createBrowserSupabase } from '@/lib/supabase/client';
 
 export default function PlayerLiveMatch() {
     const [state, setState] = useState({ loading: true, player: null, match: null, teams: [], activeDelivery: null, pendingDelivery: null, questionTypes: [], ballChoices: [], latestDelivery: null, teamScores: [], dismissedPlayerIds: [], powerShotUsed: false, celebration: null, error: '' });
@@ -16,39 +17,165 @@ export default function PlayerLiveMatch() {
     const tossCelebrationSeen = useRef(false);
     const matchCompletionSeen = useRef(false);
 
+    // Shared: detect and deduplicate celebration events from any poll response.
+    const processCelebration = useCallback((data) => {
+        const scoringEvent = data.celebrationEvent;
+        let celebration = null;
+        if (scoringEvent && lastDeliveryCelebration.current === null) {
+            lastDeliveryCelebration.current = scoringEvent.id;
+        } else if (scoringEvent && scoringEvent.id !== lastDeliveryCelebration.current) {
+            lastDeliveryCelebration.current = scoringEvent.id;
+            celebration = scoringEvent;
+        }
+        if (data.match?.status === 'toss_won' && !tossCelebrationSeen.current) {
+            tossCelebrationSeen.current = true;
+            if (data.match.toss_winner_team_id === data.player?.team?.id) celebration = {
+                id: `toss-${data.match.id}`,
+                type: 'toss_won',
+                title: 'TOSS WON!',
+                subtitle: `${data.player.team.team_name} gets first choice.`
+            };
+        }
+        if (data.match?.status === 'completed' && !matchCompletionSeen.current) {
+            matchCompletionSeen.current = true;
+            if (data.matchResult) celebration = { ...data.matchResult, type: 'match_winner', id: `match-complete-${data.match.id}` };
+        }
+        return celebration;
+    }, []);
+
+    // ── FULL POLL (every 30 s + random jitter) — roster, teams, scores ──
+    // Jitter spreads players across 30 s so they don't all hit the DB at once
+    // (the load test showed P99 spikes of 7 s when 400 players fired simultaneously).
     useEffect(() => {
-        let mounted = true;
+        let active = true;
         const load = async () => {
             try {
                 const response = await fetch('/api/mpl/player/match', { cache: 'no-store' });
                 const data = await response.json();
-                if (mounted) {
-                    const scoringEvent = data.celebrationEvent;
-                    let celebration = null;
-                    if (scoringEvent && lastDeliveryCelebration.current === null) lastDeliveryCelebration.current = scoringEvent.id;
-                    else if (scoringEvent && scoringEvent.id !== lastDeliveryCelebration.current) { lastDeliveryCelebration.current = scoringEvent.id; celebration = scoringEvent; }
-                    if (data.match?.status === 'toss_won' && !tossCelebrationSeen.current) {
-                        tossCelebrationSeen.current = true;
-                        if (data.match.toss_winner_team_id === data.player?.team?.id) celebration = {
-                            id: `toss-${data.match.id}`,
-                            type: 'toss_won',
-                            title: 'TOSS WON!',
-                            subtitle: `${data.player.team.team_name} gets first choice.`
-                        };
-                    }
-                    if (data.match?.status === 'completed' && !matchCompletionSeen.current) {
-                        matchCompletionSeen.current = true;
-                        if (data.matchResult) celebration = { ...data.matchResult, type: 'match_winner', id: `match-complete-${data.match.id}` };
-                    }
-                    setState((current) => ({ ...current, loading: false, player: data.player || null, match: data.match || null, teams: data.teams || [], activeDelivery: data.activeDelivery || null, pendingDelivery: data.pendingDelivery || null, questionTypes: data.questionTypes || [], ballChoices: data.ballChoices || [], latestDelivery: data.latestDelivery || null, teamScores: data.teamScores || [], dismissedPlayerIds: data.dismissedPlayerIds || [], powerShotUsed: data.powerShotUsed === true, isPowerShotArmed: data.isPowerShotArmed === true, scoreState: data.scoreState || null, error: response.ok ? '' : (data.error || 'Unable to load the live match.'), celebration: celebration || current.celebration }));
-                }
+                if (!active) return;
+                const celebration = processCelebration(data);
+                setState((current) => ({
+                    ...current,
+                    loading: false,
+                    player: data.player || null,
+                    match: data.match || null,
+                    teams: data.teams || current.teams,
+                    activeDelivery: data.activeDelivery !== undefined ? data.activeDelivery : current.activeDelivery,
+                    pendingDelivery: data.pendingDelivery !== undefined ? data.pendingDelivery : current.pendingDelivery,
+                    questionTypes: data.questionTypes || [],
+                    ballChoices: data.ballChoices ?? current.ballChoices,
+                    latestDelivery: data.latestDelivery !== undefined ? data.latestDelivery : current.latestDelivery,
+                    teamScores: data.teamScores || current.teamScores,
+                    dismissedPlayerIds: data.dismissedPlayerIds || current.dismissedPlayerIds,
+                    powerShotUsed: data.powerShotUsed === true,
+                    isPowerShotArmed: data.isPowerShotArmed === true,
+                    scoreState: data.scoreState || null,
+                    error: response.ok ? '' : (data.error || 'Unable to load the live match.'),
+                    celebration: celebration || current.celebration,
+                }));
             } catch {
-                if (mounted) setState((current) => ({ ...current, loading: false, error: 'Unable to connect to the live match.' }));
+                if (active) setState((current) => ({ ...current, loading: false, error: 'Unable to connect to the live match.' }));
             }
         };
-        load();
-        const interval = setInterval(load, 3000);
-        return () => { mounted = false; clearInterval(interval); };
+        // Random jitter 0–15 s so players don't all fire the full poll at the same moment.
+        // Initial load fires immediately; subsequent polls are staggered per-client.
+        const jitter = Math.floor(Math.random() * 15000);
+        load(); // initial load — no jitter, needed for first render
+        let interval;
+        const jitterTimeout = setTimeout(() => {
+            if (!active) return;
+            load();
+            interval = setInterval(load, 30000);
+        }, 30000 + jitter);
+        return () => { active = false; clearTimeout(jitterTimeout); clearInterval(interval); };
+    }, [processCelebration]);
+
+    // ── REALTIME (Level 3) — subscribe once per match; fire lite fetch only on real DB change ──
+    // Falls back to a 10 s safety-net poll in case the Realtime connection drops.
+    useEffect(() => {
+        const matchId = state.match?.id;
+        if (!matchId) return; // not in a match yet — full poll will populate state.match
+
+        const supabase = createBrowserSupabase();
+        if (!supabase) return;
+
+        let active = true;
+        let safetyInterval = null;
+        let realtimeConnected = false;
+
+        const loadLite = async () => {
+            try {
+                const response = await fetch('/api/mpl/player/match?lite=1', { cache: 'no-store' });
+                if (!response.ok || !active) return;
+                const data = await response.json();
+                if (!active) return;
+                const celebration = processCelebration(data);
+                setState((current) => ({
+                    ...current,
+                    match: data.match || current.match,
+                    activeDelivery: data.activeDelivery !== undefined ? data.activeDelivery : current.activeDelivery,
+                    pendingDelivery: data.pendingDelivery !== undefined ? data.pendingDelivery : current.pendingDelivery,
+                    ballChoices: data.ballChoices ?? current.ballChoices,
+                    latestDelivery: data.latestDelivery !== undefined ? data.latestDelivery : current.latestDelivery,
+                    dismissedPlayerIds: data.dismissedPlayerIds ?? current.dismissedPlayerIds,
+                    teamScores: data.teamScores ?? current.teamScores,
+                    powerShotUsed: data.powerShotUsed === true ? true : current.powerShotUsed,
+                    isPowerShotArmed: data.isPowerShotArmed === true,
+                    scoreState: data.scoreState !== undefined ? data.scoreState : current.scoreState,
+                    celebration: celebration || current.celebration,
+                }));
+            } catch { /* safety net will retry */ }
+        };
+
+        // Throttled and jittered loader to prevent 20 clients from hitting the DB at the exact same millisecond
+        let liteTimeout = null;
+        const jitteredLoadLite = () => {
+            if (liteTimeout) return;
+            const jitter = Math.floor(Math.random() * 1500); // spread load over 1.5 seconds
+            liteTimeout = setTimeout(() => {
+                loadLite();
+                liteTimeout = null;
+            }, jitter);
+        };
+
+        // Subscribe to the three tables that drive gameplay for this match.
+        // Each INSERT or UPDATE fires one lite fetch — replaces the blind poll.
+        const channel = supabase
+            .channel(`mpl-match-${matchId}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'mpl_match_deliveries',        filter: `match_id=eq.${matchId}` }, () => jitteredLoadLite())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'mpl_match_delivery_requests', filter: `match_id=eq.${matchId}` }, () => jitteredLoadLite())
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'mpl_matches',            filter: `id=eq.${matchId}` },        () => jitteredLoadLite())
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    realtimeConnected = true;
+                    if (safetyInterval) { clearInterval(safetyInterval); safetyInterval = null; }
+                    loadLite(); // one immediate sync after subscribing
+                } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                    realtimeConnected = false;
+                    if (!safetyInterval) safetyInterval = setInterval(loadLite, 10000);
+                }
+            });
+
+        // Start 10 s safety-net immediately; it self-cancels once Realtime connects
+        safetyInterval = setInterval(() => {
+            if (!realtimeConnected) loadLite();
+        }, 10000);
+
+        return () => {
+            active = false;
+            if (safetyInterval) clearInterval(safetyInterval);
+            supabase.removeChannel(channel);
+        };
+    }, [state.match?.id, processCelebration]); // re-subscribe if match changes
+
+
+
+    // ── PRESENCE HEARTBEAT (every 30 s) — isolated write, not on hot path ──
+    useEffect(() => {
+        const beat = () => fetch('/api/mpl/player/presence', { method: 'POST', cache: 'no-store' }).catch(() => {});
+        beat(); // mark as online immediately
+        const interval = setInterval(beat, 30000);
+        return () => clearInterval(interval);
     }, []);
 
     const clearCelebration = useCallback(() => setState((current) => ({ ...current, celebration: null })), []);

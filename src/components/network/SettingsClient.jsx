@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/client";
 import { Settings, Shield, Users, ToggleLeft, ToggleRight, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function SettingsClient() {
-    if (typeof window === 'undefined') return null;
     const { profile, isPresident } = useAuth();
     const [delegatedUsers, setDelegatedUsers] = useState([]);
     const [loading, setLoading] = useState(true);

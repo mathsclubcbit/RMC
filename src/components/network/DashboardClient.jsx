@@ -45,7 +45,6 @@ function QuickAction({ href, icon: Icon, label, color, isPresident }) {
 }
 
 export default function DashboardClient() {
-    if (typeof window === 'undefined') return null;
     const { profile, isPresident, isCoreCouncil } = useAuth();
     const [stats, setStats] = useState({
         totalMembers: 0,

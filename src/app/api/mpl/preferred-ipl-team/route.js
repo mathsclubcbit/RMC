@@ -5,9 +5,9 @@ import { IPL_TEAMS_2026 } from '@/constants/mpl';
 export async function PATCH(request) {
     try {
         const supabase = await createClient();
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { user } } = await supabase.auth.getUser();
 
-        if (!session?.user?.email) {
+        if (!user?.email) {
             return NextResponse.json({ error: 'You must be signed in.' }, { status: 401 });
         }
 
@@ -22,7 +22,7 @@ export async function PATCH(request) {
         const { data: player, error: lookupError } = await admin
             .from('mpl_players')
             .select('id, is_leader')
-            .eq('email', session.user.email)
+            .eq('email', user.email)
             .single();
 
         if (lookupError || !player) {
