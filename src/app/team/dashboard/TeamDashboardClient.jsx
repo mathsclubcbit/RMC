@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -164,9 +164,9 @@ export default function TeamDashboardClient({ initialApplicants, teamName }) {
     };
 
     let filtered = applicants.filter(a => 
-        a.name.toLowerCase().includes(search.toLowerCase()) || 
-        a.email.toLowerCase().includes(search.toLowerCase()) ||
-        a.roll_number.includes(search)
+        a.name?.toLowerCase().includes(search.toLowerCase()) || 
+        a.email?.toLowerCase().includes(search.toLowerCase()) ||
+        a.roll_number?.includes(search)
     );
 
     if (priorityFilter !== "ALL") {

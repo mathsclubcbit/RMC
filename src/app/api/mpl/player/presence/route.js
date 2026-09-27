@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { createAdminClient, createClient } from '@/lib/supabase/server';
 
 // Lightweight heartbeat endpoint — called every 30 s instead of on every poll.

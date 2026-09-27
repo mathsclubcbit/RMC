@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { createAdminClient, createClient } from '@/lib/supabase/server';
 
 // ---------------------------------------------------------------------------
