@@ -91,19 +91,8 @@ export default function PlayerLiveMatch() {
         return () => { active = false; clearTimeout(jitterTimeout); clearInterval(interval); };
     }, [processCelebration]);
 
-    // ── REALTIME (Level 3) — subscribe once per match; fire lite fetch only on real DB change ──
-    // Falls back to a 10 s safety-net poll in case the Realtime connection drops.
-    useEffect(() => {
-        const matchId = state.match?.id;
-        if (!matchId) return; // not in a match yet — full poll will populate state.match
-
-        const supabase = createBrowserSupabase();
-        if (!supabase) return;
-
         let active = true;
-        let safetyInterval = null;
-        let realtimeConnected = false;
-
+        
         const loadLite = async () => {
             try {
                 const response = await fetch('/api/mpl/player/match?lite=1', { cache: 'no-store' });
@@ -126,49 +115,24 @@ export default function PlayerLiveMatch() {
                     celebration: celebration || current.celebration,
                     serverTimeOffset: data.server_time ? Date.now() - new Date(data.server_time).getTime() : current.serverTimeOffset,
                 }));
-            } catch { /* safety net will retry */ }
+            } catch { /* ignore */ }
         };
 
-        // Throttled and jittered loader to prevent 20 clients from hitting the DB at the exact same millisecond
-        let liteTimeout = null;
-        const jitteredLoadLite = () => {
-            if (liteTimeout) return;
-            const jitter = Math.floor(Math.random() * 500); // spread load over 500ms to reduce perceived latency
-            liteTimeout = setTimeout(() => {
-                loadLite();
-                liteTimeout = null;
-            }, jitter);
-        };
-
-        // Subscribe to the three tables that drive gameplay for this match.
-        // Each INSERT or UPDATE fires one lite fetch — replaces the blind poll.
-        const channel = supabase
-            .channel(`mpl-match-${matchId}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'mpl_match_deliveries',        filter: `match_id=eq.${matchId}` }, () => jitteredLoadLite())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'mpl_match_delivery_requests', filter: `match_id=eq.${matchId}` }, () => jitteredLoadLite())
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'mpl_matches',            filter: `id=eq.${matchId}` },        () => jitteredLoadLite())
-            .subscribe((status) => {
-                if (status === 'SUBSCRIBED') {
-                    realtimeConnected = true;
-                    if (safetyInterval) { clearInterval(safetyInterval); safetyInterval = null; }
-                    loadLite(); // one immediate sync after subscribing
-                } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-                    realtimeConnected = false;
-                    if (!safetyInterval) safetyInterval = setInterval(loadLite, 10000);
-                }
-            });
-
-        // Start 10 s safety-net immediately; it self-cancels once Realtime connects
-        safetyInterval = setInterval(() => {
-            if (!realtimeConnected) loadLite();
-        }, 10000);
+        // Random jitter 0-3s so players are spread out perfectly
+        const jitter = Math.floor(Math.random() * 3000);
+        let interval;
+        const startTimeout = setTimeout(() => {
+            if (!active) return;
+            loadLite();
+            interval = setInterval(loadLite, 3000);
+        }, jitter);
 
         return () => {
             active = false;
-            if (safetyInterval) clearInterval(safetyInterval);
-            supabase.removeChannel(channel);
+            clearTimeout(startTimeout);
+            clearInterval(interval);
         };
-    }, [state.match?.id, processCelebration]); // re-subscribe if match changes
+    }, [state.match?.id, processCelebration]); // re-start poll if match changes
 
 
 
@@ -313,7 +277,7 @@ export default function PlayerLiveMatch() {
                         </section>
                     )}
                     {!state.activeDelivery && state.match.status === 'toss_won' && state.match.toss_winner_team_id !== state.match.team_id && <section className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-white/20 text-zinc-400"><Hourglass className="h-6 w-6 animate-pulse" /></div><h2 className="mt-4 text-xl font-bold">Toss decided</h2><p className="mt-2 text-sm text-zinc-500">The other team won the toss. Waiting for them to choose bat or bowl...</p></section>}
-                    {!state.activeDelivery && state.pendingDelivery?.can_select_question && <section className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-6"><p className="text-xs uppercase tracking-widest text-amber-300">Bowler decision</p><h2 className="mt-2 text-2xl font-bold">Choose a ball</h2><p className="mt-2 text-sm text-zinc-400">Select the next ball icon. Its delivery type is hidden until the question appears.</p><div className="mt-6 grid grid-cols-5 gap-3">{(state.ballChoices || []).map((ball) => <button key={ball.ballNumber} disabled={submittingChoice} onClick={async () => { setSubmittingChoice(true); const res = await fetch('/api/mpl/player/choose-question', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ matchId: state.match.id, requestId: state.pendingDelivery.id, ballNumber: ball.ballNumber }) }); if (!res.ok) { const data = await res.json(); setState((current) => ({ ...current, error: data.error || 'Unable to select the ball.' })); } setSubmittingChoice(false); }} className="flex aspect-square items-center justify-center rounded-full border border-amber-300/40 bg-black/30 text-xs font-bold text-amber-100 hover:border-amber-200 hover:bg-amber-300/20 disabled:opacity-50" aria-label={ball.label}><img src="/full logo.png" alt="RMC" className="h-8 w-8 rounded-full object-contain" /></button>)}</div></section>}
+                    {!state.activeDelivery && state.pendingDelivery?.can_select_question && <section className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-6"><p className="text-xs uppercase tracking-widest text-amber-300">Bowler decision</p><h2 className="mt-2 text-2xl font-bold">Choose a ball</h2><p className="mt-2 text-sm text-zinc-400">Select the next ball icon. Its delivery type is hidden until the question appears.</p><div className="mt-6 grid grid-cols-5 gap-3">{(state.ballChoices || []).map((ball) => <button key={ball.ballNumber} disabled={submittingChoice} onClick={async () => { setSubmittingChoice(true); const res = await fetch('/api/mpl/player/choose-question', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ matchId: state.match.id, requestId: state.pendingDelivery.id, ballNumber: ball.ballNumber }) }); if (!res.ok) { const data = await res.json(); setState((current) => ({ ...current, error: data.error || 'Unable to select the ball.' })); } else { const refreshRes = await fetch('/api/mpl/player/match?lite=1'); if (refreshRes.ok) { const data = await refreshRes.json(); setState(c => ({...c, activeDelivery: data.activeDelivery, pendingDelivery: null, serverTimeOffset: data.server_time ? Date.now() - new Date(data.server_time).getTime() : c.serverTimeOffset})); } } setSubmittingChoice(false); }} className="flex aspect-square items-center justify-center rounded-full border border-amber-300/40 bg-black/30 text-xs font-bold text-amber-100 hover:border-amber-200 hover:bg-amber-300/20 disabled:opacity-50" aria-label={ball.label}><img src="/full logo.png" alt="RMC" className="h-8 w-8 rounded-full object-contain" /></button>)}</div></section>}
                     {!state.activeDelivery && state.pendingDelivery && !state.pendingDelivery.can_select_question && <section className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center"><Hourglass className="mx-auto h-9 w-9 animate-pulse text-zinc-500" /><h2 className="mt-4 text-xl font-bold">Waiting for the selected bowler</h2><p className="mt-2 text-sm text-zinc-500">The organiser assigned the delivery. The selected bowler will choose the question type.</p></section>}
                     {!state.activeDelivery && !state.pendingDelivery && state.match.status !== 'toss_pending' && state.match.status !== 'toss_won' && <section className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center"><Timer className="mx-auto h-9 w-9 text-zinc-500" /><h2 className="mt-4 text-xl font-bold">Waiting for the next question</h2><p className="mt-2 text-sm text-zinc-500">Stay on this screen. The organiser will display the next question.</p></section>}
                     {!state.activeDelivery && state.pendingDelivery && !state.pendingDelivery.can_select_question && ownTeamBatting && state.player?.is_leader && !state.powerShotUsed && !state.isPowerShotArmed && (
