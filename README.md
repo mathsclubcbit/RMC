@@ -1,4 +1,4 @@
-# RMC | Ramanujan Math Club
+# RMC | Ramanujan Math Club CBIT
 
 > "The Enigma of RMC" - A cinematic, premium web experience for the Ramanujan Math Club of CBIT.
 ![RMC Banner](public/full logo.png) 
