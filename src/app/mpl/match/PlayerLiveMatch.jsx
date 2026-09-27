@@ -91,8 +91,11 @@ export default function PlayerLiveMatch() {
         return () => { active = false; clearTimeout(jitterTimeout); clearInterval(interval); };
     }, [processCelebration]);
 
+    useEffect(() => {
+        const matchId = state.match?.id;
+        if (!matchId) return;
+
         let active = true;
-        
         const loadLite = async () => {
             try {
                 const response = await fetch('/api/mpl/player/match?lite=1', { cache: 'no-store' });
