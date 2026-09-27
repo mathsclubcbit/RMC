@@ -244,6 +244,7 @@ export async function GET(request) {
             teamScores,
             scoreState,
             celebrationEvent,
+            server_time: new Date().toISOString(),
         });
     }
 
@@ -387,6 +388,7 @@ export async function GET(request) {
         teamScores,
         celebrationEvent,
         matchResult,
+        server_time: new Date().toISOString(),
     });
 }
 

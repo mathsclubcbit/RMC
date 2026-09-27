@@ -21,6 +21,7 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
     const [busy, setBusy] = useState(false);
     const [clockNow, setClockNow] = useState(() => Date.now());
     const [celebration, setCelebration] = useState(null);
+    const [serverTimeOffset, setServerTimeOffset] = useState(0);
     const lastCelebrationDelivery = useRef(null);
     const matchCompletionSeen = useRef(false);
 
@@ -181,6 +182,7 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
                     subtitle: latestCelebration.status === 'wide' ? 'Batting team gets 1 run' : latestCelebration.status === 'dot' ? 'No runs scored' : latestCelebration.metadata?.rescue_available === true && latestCelebration.metadata?.answer_correct === false ? 'Question passed to the bowler' : latestCelebration.status === 'wicket' ? `${celebrationTeam.mpl_teams?.team_name || 'Bowling team'} gets the wicket!` : `${celebrationTeam.mpl_teams?.team_name || 'Batting team'} scores!`
                 });
             }
+            if (data.server_time) setServerTimeOffset(Date.now() - new Date(data.server_time).getTime());
             const active = (data.deliveries || []).find((delivery) => delivery.status === 'active');
             setMatch(data.match);
             setDeliveries(data.deliveries || []);
@@ -272,18 +274,20 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
 
     const answerOptions = useMemo(() => activeDelivery?.question?.options || [], [activeDelivery]);
 
+    const serverNow = clockNow - serverTimeOffset;
     const remainingSeconds = activeDelivery?.answer_started_at
-        ? Math.max(0, Math.ceil((new Date(activeDelivery.answer_started_at).getTime() + (activeDelivery.timer_seconds * 1000) - clockNow) / 1000))
+        ? Math.max(0, Math.ceil((new Date(activeDelivery.answer_started_at).getTime() + (activeDelivery.timer_seconds * 1000) - serverNow) / 1000))
         : (activeDelivery?.timer_seconds || null);
 
     useEffect(() => {
         if (!activeDelivery) return undefined;
+        const currentServerNow = Date.now() - serverTimeOffset;
         const deadline = activeDelivery.answer_started_at
             ? new Date(activeDelivery.answer_started_at).getTime() + (activeDelivery.timer_seconds * 1000)
-            : Date.now() + (activeDelivery.timer_seconds * 1000);
-        const timeout = setTimeout(() => markDelivery('dot', false), Math.max(0, deadline - Date.now()) + 50);
+            : currentServerNow + (activeDelivery.timer_seconds * 1000);
+        const timeout = setTimeout(() => markDelivery('dot', false), Math.max(0, deadline - currentServerNow) + 50);
         return () => clearTimeout(timeout);
-    }, [activeDelivery, busy, markDelivery]);
+    }, [activeDelivery, busy, markDelivery, serverTimeOffset]);
 
     return (
         <main className="min-h-screen bg-[#050505] px-4 py-16 text-white">
