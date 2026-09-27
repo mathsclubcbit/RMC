@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireMplAdmin } from '@/lib/mpl/admin-auth';
 
