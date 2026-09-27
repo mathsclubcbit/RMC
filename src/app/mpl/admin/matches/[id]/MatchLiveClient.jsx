@@ -38,7 +38,7 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
         return () => { mounted = false; clearInterval(interval); };
     }, [initialMatch.id]);
 
-    const currentInnings = match.status === 'innings_2' ? 2 : 1;
+    const currentInnings = match.status === 'innings_1' || match.status === 'toss_pending' || match.status === 'toss_won' ? 1 : 2;
     const battingSideTeams = liveMatchTeams.filter((team) => team.innings_number === currentInnings);
     const bowlingSideTeams = liveMatchTeams.filter((team) => team.innings_number !== currentInnings);
     const currentPlayers = battingSideTeams.flatMap((team) => team.players || []);
@@ -333,7 +333,7 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
                     </div>
                 )}
 
-                {teamScores?.length > 0 && match.status !== 'toss_pending' && match.status !== 'toss_won' && match.status !== 'draft' && match.status !== 'completed' && (
+                {teamScores?.length > 0 && match.status !== 'toss_pending' && match.status !== 'toss_won' && match.status !== 'draft' && (
                     <section className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-5">
                         <p className="text-xs uppercase tracking-widest text-zinc-400">Team scorecard</p>
                         <div className="mt-4 grid gap-3 sm:grid-cols-2">
