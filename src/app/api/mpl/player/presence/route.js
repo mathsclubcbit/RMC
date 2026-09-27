@@ -14,7 +14,7 @@ export async function POST() {
         .from('mpl_players')
         .select('id, team_id')
         .eq('email', user.email)
-        .single();
+        .maybeSingle();
     if (!player) return Response.json({ ok: false }, { status: 404 });
 
     // Find their active match

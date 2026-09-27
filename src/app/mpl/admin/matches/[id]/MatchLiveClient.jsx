@@ -287,7 +287,7 @@ export default function MatchLiveClient({ match: initialMatch, matchTeams, initi
             : currentServerNow + (activeDelivery.timer_seconds * 1000);
         const timeout = setTimeout(() => markDelivery('dot', false), Math.max(0, deadline - currentServerNow) + 50);
         return () => clearTimeout(timeout);
-    }, [activeDelivery, busy, markDelivery, serverTimeOffset]);
+    }, [activeDelivery, markDelivery, serverTimeOffset]);
 
     return (
         <main className="min-h-screen bg-[#050505] px-4 py-16 text-white">

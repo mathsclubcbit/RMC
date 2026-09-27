@@ -15,8 +15,8 @@ export async function POST(request) {
 
     const admin = createAdminClient();
     const [{ data: player, error: playerError }, { data: delivery, error: deliveryError }] = await Promise.all([
-        admin.from('mpl_players').select('id').eq('email', user.email).single(),
-        admin.from('mpl_match_deliveries').select('id, match_id, batter_id, bowler_id, status, metadata').eq('id', deliveryId).single()
+        admin.from('mpl_players').select('id').eq('email', user.email).maybeSingle(),
+        admin.from('mpl_match_deliveries').select('id, match_id, batter_id, bowler_id, status, metadata').eq('id', deliveryId).maybeSingle()
     ]);
     if (playerError || !player) return Response.json({ error: 'No MPL player record found.' }, { status: 404 });
     if (deliveryError || !delivery) return Response.json({ error: 'Delivery not found.' }, { status: 404 });
@@ -34,7 +34,7 @@ export async function POST(request) {
     if (error) return Response.json({ error: error.message }, { status: 409 });
 
     if (data && data.status !== 'active') {
-        const { data: match } = await admin.from('mpl_matches').select('status, total_questions_per_innings').eq('id', delivery.match_id).single();
+        const { data: match } = await admin.from('mpl_matches').select('status, total_questions_per_innings').eq('id', delivery.match_id).maybeSingle();
         const { data: allDeliveries } = await admin
             .from('mpl_match_deliveries')
             .select('innings_number, status, runs_awarded, score_adjustment')
