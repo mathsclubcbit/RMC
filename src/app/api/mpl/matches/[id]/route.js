@@ -28,7 +28,7 @@ export async function GET(request, { params }) {
         ...team,
         players: (players || []).filter((player) => player.team_id === team.team_id)
     }));
-    return Response.json({ match, teams: teamsWithPlayers, deliveries: deliveries || [] });
+    return Response.json({ match, teams: teamsWithPlayers, deliveries: deliveries || [], server_time: new Date().toISOString() });
 }
 
 export async function POST(request, { params }) {

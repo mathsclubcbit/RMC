@@ -22,7 +22,7 @@ export async function GET(request, { params }) {
         .order('created_at');
     if (playersError) return Response.json({ error: playersError.message }, { status: 500 });
 
-    const activeSince = new Date(Date.now() - 15000).toISOString();
+    const activeSince = new Date(Date.now() - 45000).toISOString();
     const { data: presence, error: presenceError } = await admin
         .from('mpl_match_player_presence')
         .select('player_id')
