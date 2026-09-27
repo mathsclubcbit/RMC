@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { createAdminClient, createClient } from '@/lib/supabase/server';
 
 // Lightweight heartbeat endpoint — called every 30 s instead of on every poll.
@@ -14,7 +15,7 @@ export async function POST() {
         .from('mpl_players')
         .select('id, team_id')
         .eq('email', user.email)
-        .single();
+        .maybeSingle();
     if (!player) return Response.json({ ok: false }, { status: 404 });
 
     // Find their active match

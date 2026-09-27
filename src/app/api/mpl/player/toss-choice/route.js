@@ -11,8 +11,8 @@ export async function POST(request) {
 
     const admin = createAdminClient();
     const [{ data: player }, { data: match }] = await Promise.all([
-        admin.from('mpl_players').select('id, team_id, is_leader').eq('email', user.email).single(),
-        admin.from('mpl_matches').select('status, toss_calling_team_id, toss_choice').eq('id', matchId).single()
+        admin.from('mpl_players').select('id, team_id, is_leader').eq('email', user.email).maybeSingle(),
+        admin.from('mpl_matches').select('status, toss_calling_team_id, toss_choice').eq('id', matchId).maybeSingle()
     ]);
     if (!player || !match) return Response.json({ error: 'Player or match not found.' }, { status: 404 });
     if (!player.is_leader || player.team_id !== match.toss_calling_team_id) return Response.json({ error: 'Only the selected team captain can call the toss.' }, { status: 403 });

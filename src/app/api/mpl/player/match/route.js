@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { createAdminClient, createClient } from '@/lib/supabase/server';
 
 // ---------------------------------------------------------------------------
@@ -159,7 +160,7 @@ export async function GET(request) {
         .from('mpl_players')
         .select('id, team_id, name, is_leader, team:mpl_teams(id, team_name, team_code)')
         .eq('email', user.email)
-        .single();
+        .maybeSingle();
     if (playerError || !player) return Response.json({ error: 'No MPL player record found.' }, { status: 404 });
 
     // ── Step 3: match lookup ─────────────────────────────────────────────────
@@ -406,7 +407,7 @@ export async function POST(request) {
     if (!matchId) return Response.json({ error: 'Match ID is required.' }, { status: 400 });
 
     const admin = createAdminClient();
-    const { data: player } = await admin.from('mpl_players').select('id').eq('email', user.email).single();
+    const { data: player } = await admin.from('mpl_players').select('id').eq('email', user.email).maybeSingle();
     if (!player) return Response.json({ error: 'No MPL player record found.' }, { status: 404 });
 
     const { error } = await admin

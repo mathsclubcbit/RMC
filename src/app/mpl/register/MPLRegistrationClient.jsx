@@ -529,11 +529,11 @@ export default function MPLRegistrationClient({ registrationClosed = false }) {
                                                                 {/* Dropdown */}
                                                                 {showTeamDropdown && searchQuery.length > 0 && (
                                                                     <div className="absolute z-50 left-6 right-6 mt-2 bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-xl max-h-64 overflow-y-auto custom-scrollbar shadow-2xl">
-                                                                        {availableTeams
-                                                                            .filter(t => 
-                                                                                t.teamName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                                                                t.registrationId.toLowerCase().includes(searchQuery.toLowerCase())
-                                                                            )
+                                                                            {availableTeams
+                                                                                .filter(t => 
+                                                                                    t.teamName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                                                                    t.registrationId?.toLowerCase().includes(searchQuery.toLowerCase())
+                                                                                )
                                                                             .map(team => (
                                                                                 <div 
                                                                                     key={team.registrationId}
@@ -554,8 +554,8 @@ export default function MPLRegistrationClient({ registrationClosed = false }) {
                                                                                 </div>
                                                                             ))}
                                                                         {availableTeams.filter(t => 
-                                                                            t.teamName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                                                            t.registrationId.toLowerCase().includes(searchQuery.toLowerCase())
+                                                                            t.teamName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                                                            t.registrationId?.toLowerCase().includes(searchQuery.toLowerCase())
                                                                         ).length === 0 && (
                                                                             <div className="px-6 py-8 text-center">
                                                                                 <p className="text-sm text-zinc-400 mb-1">No matching squads found.</p>

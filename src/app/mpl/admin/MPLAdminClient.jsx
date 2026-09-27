@@ -36,15 +36,15 @@ export default function MPLAdminClient({ initialTeamsWithPlayers, totalTeams, to
         const query = searchQuery.toLowerCase();
         
         // Check team name or code
-        if (team.team_name.toLowerCase().includes(query) || team.team_code.toLowerCase().includes(query)) {
+        if (team.team_name?.toLowerCase().includes(query) || team.team_code?.toLowerCase().includes(query)) {
             return true;
         }
 
         // Check players
         return team.players.some(player => 
-            player.name.toLowerCase().includes(query) ||
-            player.roll_number.toLowerCase().includes(query) ||
-            player.branch.toLowerCase().includes(query) ||
+            player.name?.toLowerCase().includes(query) ||
+            player.roll_number?.toLowerCase().includes(query) ||
+            player.branch?.toLowerCase().includes(query) ||
             player.preferred_ipl_team?.toLowerCase().includes(query)
         );
     });
