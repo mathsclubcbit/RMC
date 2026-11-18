@@ -1,0 +1,312 @@
+{
+  "questions": [
+    {
+      "questionText": "A batter has 50 runs off 40 balls. He scores 10 runs off his next 10 balls. What is his final strike rate?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "110",
+        "115",
+        "120",
+        "125"
+      ],
+      "correctOption": 2,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Solving: Total runs = 50 + 10 = 60. Total balls = 40 + 10 = 50. Strike rate = (60 / 50) * 100 = 1.2 * 100 = 120."
+    },
+    {
+      "questionText": "A team is chasing a target of 150 runs. They score 50 runs in the first 10 overs. What run rate do they need per over in the remaining 10 overs?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "8.0",
+        "9.0",
+        "10.0",
+        "11.0"
+      ],
+      "correctOption": 2,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Solving: Remaining runs needed = 150 - 50 = 100. Remaining overs = 10. Required run rate = 100 / 10 = 10.0."
+    },
+    {
+      "questionText": "A bowler concedes 24 runs in his first 3 overs, and 12 runs in his 4th over. What is his overall economy rate for the 4 overs?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "8.0",
+        "8.5",
+        "9.0",
+        "9.5"
+      ],
+      "correctOption": 2,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Solving: Total runs conceded = 24 + 12 = 36. Total overs = 4. Economy rate = 36 / 4 = 9.0."
+    },
+    {
+      "questionText": "A batter scores 54 runs in an innings. If he hit 5 fours and 2 sixes, how many runs did he score by running between the wickets?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "20",
+        "22",
+        "24",
+        "26"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Solving: Runs from boundaries = (5 * 4) + (2 * 6) = 20 + 12 = 32. Runs from running = Total runs (54) - Boundary runs (32) = 22."
+    },
+    {
+      "questionText": "A bowler takes 2 wickets for 30 runs in his first spell, and 3 wickets for 20 runs in his second spell. What is his overall bowling average?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "10",
+        "12",
+        "14",
+        "16"
+      ],
+      "correctOption": 0,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Solving: Total runs = 30 + 20 = 50. Total wickets = 2 + 3 = 5. Bowling average = 50 / 5 = 10."
+    },
+    {
+      "questionText": "A team is chasing a target of 155 runs. They have scored 95 runs in 12 overs. What run rate do they need to maintain in the remaining 8 overs to reach the target exactly?",
+      "ballTypeSlug": "normal_2",
+      "options": [
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.5"
+      ],
+      "correctOption": 1,
+      "runs": 2,
+      "timerSeconds": 30,
+      "explanation": "Solving: Find the remaining runs needed (155 - 95 = 60). Divide those runs by the remaining overs (60 / 8 = 7.5 runs per over)."
+    },
+    {
+      "questionText": "A batter has scored 240 runs across 6 innings in a tournament. However, he remained \"not out\" in 1 of those innings. What is his batting average?",
+      "ballTypeSlug": "normal_2",
+      "options": [
+        "40",
+        "44",
+        "48",
+        "50"
+      ],
+      "correctOption": 2,
+      "runs": 2,
+      "timerSeconds": 30,
+      "explanation": "Solving: Batting average is calculated by dividing total runs by the number of times dismissed. Dismissals = Total Innings (6) - Not Outs (1) = 5. Average = 240 / 5 = 48."
+    },
+    {
+      "questionText": "A batter faces 40 balls. He scores runs off 24 balls and the rest are dot balls (0 runs). What is his dot ball percentage?",
+      "ballTypeSlug": "normal_2",
+      "options": [
+        "35%",
+        "40%",
+        "45%",
+        "60%"
+      ],
+      "correctOption": 1,
+      "runs": 2,
+      "timerSeconds": 30,
+      "explanation": "Solving: Find the number of dot balls (40 - 24 = 16). Divide by total balls and multiply by 100. (16 / 40) * 100 = 40%."
+    },
+    {
+      "questionText": "A team has scored 84 runs in 12 overs. If they maintain this exact same run rate, what will their final score be after 20 overs?",
+      "ballTypeSlug": "normal_2",
+      "options": [
+        "130",
+        "135",
+        "140",
+        "145"
+      ],
+      "correctOption": 2,
+      "runs": 2,
+      "timerSeconds": 30,
+      "explanation": "Solving: First, find the current run rate per over (84 / 12 = 7 runs per over). Then, multiply by the total number of overs (7 * 20 = 140 runs)."
+    },
+    {
+      "questionText": "A batter scores 60 runs. 40% of his runs came from running between the wickets (singles, twos, etc.), and the rest came from boundaries. How many runs did he score from boundaries?",
+      "ballTypeSlug": "normal_2",
+      "options": [
+        "24",
+        "30",
+        "36",
+        "40"
+      ],
+      "correctOption": 2,
+      "runs": 2,
+      "timerSeconds": 30,
+      "explanation": "Solving: The percentage of runs from boundaries is 100% - 40% = 60%. Calculate 60% of 60 total runs (0.60 * 60 = 36 runs)."
+    },
+    {
+      "questionText": "Team A scored 160 runs. 25% of their runs came from extras (wides, no-balls). How many runs were scored by the batters off the bat?",
+      "ballTypeSlug": "normal_4",
+      "options": [
+        "100",
+        "110",
+        "120",
+        "130"
+      ],
+      "correctOption": 2,
+      "runs": 4,
+      "timerSeconds": 50,
+      "explanation": "Solving: Find 25% of the total score (0.25 * 160 = 40 runs) and subtract it from the total score (160 - 40 = 120 runs)."
+    },
+    {
+      "questionText": "Team A scores 196 runs in 20 overs. Team B has scored 116 runs after 14 overs while chasing the target. What run rate does Team B need in the remaining 6 overs to reach the target?",
+      "ballTypeSlug": "normal_4",
+      "options": [
+        "12",
+        "12.5",
+        "13\u2153",
+        "14"
+      ],
+      "correctOption": 2,
+      "runs": 4,
+      "timerSeconds": 50,
+      "explanation": "Solving: Find the remaining runs needed (196 - 116 = 80). Divide by the remaining overs (80 / 6 = 13.33 or 13\u2153)."
+    },
+    {
+      "questionText": "A batter has an average of 42 runs after 5 innings. In the sixth innings, he scores 72 runs. What is his new batting average?",
+      "ballTypeSlug": "normal_4",
+      "options": [
+        "45",
+        "47",
+        "48",
+        "50"
+      ],
+      "correctOption": 1,
+      "runs": 4,
+      "timerSeconds": 50,
+      "explanation": "Solving: Find the total runs before the sixth innings (42 * 5 = 210). Add the new runs (210 + 72 = 282). Divide by the new total number of innings (282 / 6 = 47)."
+    },
+    {
+      "questionText": "A team scores 52 runs in the first 6 overs and 78 runs in the next 8 overs. What is the team's overall run rate after 14 overs?",
+      "ballTypeSlug": "normal_4",
+      "options": [
+        "8.5",
+        "9",
+        "9.29",
+        "9.5"
+      ],
+      "correctOption": 2,
+      "runs": 4,
+      "timerSeconds": 50,
+      "explanation": "Solving: Add the total runs scored in both periods (52 + 78 = 130). Divide by the total number of overs (6 + 8 = 14). Run rate = 130 / 14 \u2248 9.285 (rounds to 9.29)."
+    },
+    {
+      "questionText": "A team's two opening batters score 72 and 48 runs respectively. What is the ratio of their scores in simplest form?",
+      "ballTypeSlug": "normal_4",
+      "options": [
+        "2:3",
+        "3:2",
+        "4:3",
+        "5:3"
+      ],
+      "correctOption": 1,
+      "runs": 4,
+      "timerSeconds": 50,
+      "explanation": "Solving: Divide both numbers by their greatest common divisor, which is 24. 72 / 24 = 3; 48 / 24 = 2. The ratio is 3:2."
+    },
+    {
+      "questionText": "A team needs to chase 150 runs in 20 overs. If they score at exactly 6 runs per over for the first 10 overs, how many runs do they need per over in the final 10 overs?",
+      "ballTypeSlug": "normal_6",
+      "options": [
+        "8",
+        "8.5",
+        "9",
+        "9.5"
+      ],
+      "correctOption": 2,
+      "runs": 6,
+      "timerSeconds": 60,
+      "explanation": "Solving: Calculate runs scored in the first 10 overs (10 * 6 = 60). Subtract from the target to find runs required (150 - 60 = 90). Divide by the remaining 10 overs (90 / 10 = 9)."
+    },
+    {
+      "questionText": "A batter faces 52 balls and hits 20 of them for no runs (dot balls). What is his dot ball percentage (rounded to two decimal places)?",
+      "ballTypeSlug": "normal_6",
+      "options": [
+        "35.50%",
+        "38.46%",
+        "40.20%",
+        "42.10%"
+      ],
+      "correctOption": 1,
+      "runs": 6,
+      "timerSeconds": 60,
+      "explanation": "Solving: Divide the number of dot balls by the total balls faced, then multiply by 100. (20 / 52) * 100 \u2248 38.46%."
+    },
+    {
+      "questionText": "A bowler bowls 6 overs (36 balls). One-third of his deliveries were dot balls (0 runs), and the remaining balls were hit for an average of 1.5 runs per ball. How many runs did he concede in total?",
+      "ballTypeSlug": "normal_6",
+      "options": [
+        "32",
+        "36",
+        "40",
+        "42"
+      ],
+      "correctOption": 1,
+      "runs": 6,
+      "timerSeconds": 60,
+      "explanation": "Solving: Calculate the number of dot balls (36 / 3 = 12). Subtract to find the scoring balls (36 - 12 = 24). Multiply scoring balls by the average runs per scoring ball (24 * 1.5 = 36)."
+    },
+    {
+      "questionText": "A team scores 210 runs in 20 overs. One batsman contributes 84 runs and another contributes 56 runs. What percentage of the team's total runs did these two batsmen score together?",
+      "ballTypeSlug": "normal_6",
+      "options": [
+        "60%",
+        "65%",
+        "66.67%",
+        "70%"
+      ],
+      "correctOption": 2,
+      "runs": 6,
+      "timerSeconds": 60,
+      "explanation": "Solving: Add the two batters' scores together (84 + 56 = 140). Divide by the total team score and multiply by 100. (140 / 210) * 100 = 0.6667 * 100 = 66.67%."
+    },
+    {
+      "questionText": "A batter has scored 240 runs in 8 innings. He wants to finish his next 2 innings with an overall average of 32 runs. How many runs must he score in total in those two innings?",
+      "ballTypeSlug": "normal_6",
+      "options": [
+        "72",
+        "80",
+        "88",
+        "96"
+      ],
+      "correctOption": 1,
+      "runs": 6,
+      "timerSeconds": 60,
+      "explanation": "Solving: Calculate the total runs required across all 10 innings to average 32 (10 * 32 = 320 runs). Subtract the runs he has already scored (320 - 240 = 80)."
+    },
+    {
+      "questionText": "A batter ran 45 singles, 12 doubles, and 3 triples in a tournament. How many total runs did he score strictly by running between the wickets?",
+      "ballTypeSlug": "yorker",
+      "options": [
+        "72",
+        "75",
+        "78",
+        "81"
+      ],
+      "correctOption": 2,
+      "runs": 3,
+      "timerSeconds": 40,
+      "explanation": "Solving: Multiply the frequency of each run type by its run value, then sum the totals. (45 * 1) + (12 * 2) + (3 * 3) = 45 + 24 + 9 = 78."
+    },
+    {
+      "questionText": "A team's total score is 200. The opening partnership contributed 40% of the runs, and the middle order contributed 80 runs. What percentage of the total score was contributed by the tailenders?",
+      "ballTypeSlug": "yorker",
+      "options": [
+        "15%",
+        "20%",
+        "25%",
+        "30%"
+      ],
+      "correctOption": 1,
+      "runs": 3,
+      "timerSeconds": 40,
+      "explanation": "Solving: Convert the opening partnership percentage into runs (0.40 * 200 = 80 runs). Add it to the middle-order runs (80 + 80 = 160). Subtract from the total to find the tailenders' runs (200 - 160 = 40 runs). Convert that figure back to a percentage: (40 / 200) * 100 = 20%."
+    }
+  ]
+}

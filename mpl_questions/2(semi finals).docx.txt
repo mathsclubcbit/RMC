@@ -1,0 +1,184 @@
+MPL 2026 Question Bank
+CATEGORY 1: 1 RUN (10–15 SECONDS) — 5 QUESTIONS
+Question 1  
+If Mumbai Indians need 18 runs off 12 balls, what is the required run rate per over?
+(A) 8.00 runs/over
+(B) 9.00 runs/over
+(C) 9.50 runs/over
+(D) 10.00 runs/over
+Answer: 9.00 runs/over
+Solution: Required run rate = (Runs needed / Remaining balls) × 6 = (18 / 12) × 6 = 1.5 × 6 = 9.00 runs/over.
+Question 2 
+How many legal deliveries are bowled in 16.4 overs during an IPL innings?
+(A) 98 balls
+(B) 100 balls
+(C) 102 balls
+(D) 104 balls
+Answer: 100 balls
+Solution: 16.4 overs means 16 full overs and 4 balls. Total balls = (16 × 6) + 4 = 96 + 4 = 100 balls.
+Question 3  
+A bowler concedes 32 runs in 4 overs. What is his economy rate?
+(A) 7.50 runs/over
+(B) 8.00 runs/over
+(C) 8.25 runs/over
+(D) 8.50 runs/over
+Answer: 8.00 runs/over
+Solution: Economy Rate = Total Runs Conceded / Total Overs Bowled = 32 / 4 = 8.00 runs/over.
+Question 4  
+Virat Kohli scores 80 runs in a match, out of which 48 runs come from boundaries (4s and 6s). What percentage of his total runs came from boundaries?
+(A) 55%
+(B) 58%
+(C) 60%
+(D) 65%
+Answer: 60%
+Solution: Percentage = (Boundary Runs / Total Runs) × 100 = (48 / 80) × 100 = 0.6 × 100 = 60%.
+Question 5  
+If a stadium with 40,000 capacity sells 85% of its tickets for an IPL match, how many spectators are in attendance?
+(A) 32,000 spectators
+(B) 34,000 spectators
+(C) 35,000 spectators
+(D) 36,000 spectators
+Answer: 34,000 spectators
+Solution: Attendance = 85% of 40,000 = 0.85 × 40,000 = 34,000 spectators.
+CATEGORY 2: 2 RUNS (20–30 SECONDS) — 5 QUESTIONS
+Question 6 
+Suryakumar Yadav scored 75 runs off 30 balls. What was his batting strike rate?
+(A) 225.00
+(B) 240.00
+(C) 250.00
+(D) 275.00
+Answer: 250.00
+Solution: Strike Rate = (Total Runs / Balls Faced) × 100 = (75 / 30) × 100 = 2.5 × 100 = 250.00.
+Question 7 
+In a team score of 180 runs, the ratio of runs scored by Fours to runs scored by Sixes is 4 : 5. How many runs were scored in Sixes?
+A) 80 runs
+(B) 90 runs
+(C) 100 runs
+(D) 110 runs
+Answer: 100 runs
+Solution: Total ratio parts = 4 + 5 = 9. Runs from Sixes = (5 / 9) × 180 = 5 × 20 = 100 runs.
+Question 8
+A batsman scored 45, 62, 0 (not out), and 53 in 4 matches. Calculate his batting average.
+(A) 40.00 runs/dismissal
+(B) 53.33 runs/dismissal
+(C) 53.33 runs/match
+(D) 160.00 runs/dismissal
+Answer: 53.33 runs/dismissal
+Solution: Batting Average = Total Runs / Times Dismissed = (45 + 62 + 0 + 53) / 3 = 160 / 3 = 53.33 runs per dismissal.
+Question 9  
+Out of 120 balls faced by a batsman in a tournament, he scored a boundary on 18 balls. What is the probability that he scores a boundary on the next ball?
+A) 0.12
+(B) 0.15
+(C) 0.18
+(D) 0.20
+Answer: 0.15 (or 15%)
+Solution: Probability = Favorable Outcomes / Total Outcomes = 18 / 120 = 3 / 20 = 0.15 or 15%.
+Question 10  
+The Captain scored 24 runs more than the Vice-Captain. Together they scored 110 runs. How many runs did the Vice-Captain score?
+(A) 38 runs
+(B) 43 runs
+(C) 48 runs
+(D) 67 runs
+Answer: 43 runs
+Solution: Let the Vice-Captain's score be V. Captain's score = V + 24. Equation: V + (V + 24) = 110 ⇒ 2V + 24 = 110 ⇒ 2V = 86 ⇒ V = 43 runs.
+CATEGORY 3: 4 RUNS (50–60 SECONDS) — 5 QUESTIONS
+Question 11  
+A batsman has a batting average of 42 runs across 10 innings. How many runs must he score in his 11th innings (where he gets out) to raise his overall average to 45?
+(A) 65 runs
+(B) 72 runs
+(C) 75 runs
+(D) 80 runs
+Answer: 75 runs
+Solution: Total runs after 10 innings = 10 × 42 = 420. Required total runs after 11 innings = 11 × 45 = 495. Runs required in 11th innings = 495 - 420 = 75 runs.
+Question 12  
+A batter scored 80 runs off 50 balls in Match 1. In Match 2, he scored 90 runs off 45 balls. By what percentage did his strike rate increase in Match 2 compared to Match 1?
+(A) 20%
+(B) 22.5%
+(C) 25%
+(D) 30%
+Answer: 25%
+Solution: Match 1 SR = (80 / 50) × 100 = 160. Match 2 SR = (90 / 45) × 100 = 200. Increase = 200 - 160 = 40. Percentage Increase = (40 / 160) × 100 = 25%.
+Question 13  
+In an IPL match total of 210 runs, Batsman A scored twice as many runs as Batsman B, and Batsman C scored 10 runs less than Batsman A. The remaining team members scored 40 runs combined. How many runs did Batsman A score?
+A) 36 runs
+(B) 62 runs
+(C) 72 runs
+(D) 80 runs
+Answer: 72 runs
+Solution: Let B = x. Then A = 2x, C = 2x - 10. Equation: 2x + x + (2x - 10) + 40 = 210 ⇒ 5x + 30 = 210 ⇒ 5x = 180 ⇒ x = 36. Thus, A = 2 × 36 = 72 runs... Wait, let's solve exact: 5x + 30 = 210 -> 5x = 180 -> x = 36 -> A = 72. (Check: A=72, B=36, C=62, Rem=40. Total = 72+36+62+40 = 210). So A scored 72 runs.
+Question 14  
+A player was bought at an auction for ₹8.0 Crore. In the next auction, his price increased by 25%. In the subsequent auction, his new price decreased by 10%. What is his final auction price?
+(A) ₹8.8 Crore
+(B) ₹9.0 Crore
+(C) ₹9.2 Crore
+(D) ₹9.5 Crore
+Answer: ₹9.0 Crore
+Solution: After 25% increase: ₹8.0 Cr × 1.25 = ₹10.0 Cr. After 10% decrease: ₹10.0 Cr × (1 - 0.10) = ₹10.0 Cr × 0.90 = ₹9.0 Crore.
+Question 15  
+Bowler A bowled 4 overs and took 2 wickets for 28 runs. Bowler B bowled 3 overs and took 3 wickets for 24 runs. Which bowler had the better economy rate, and by how much?
+(A) Bowler A, by 1.00 run/over
+(B) Bowler B, by 1.00 run/over
+(C) Bowler A, by 0.50 run/over
+(D) Both have the same economy rate
+Answer: Bowler A, by 1.00 run/over
+Solution: Bowler A Economy = 28 / 4 = 7.00 runs/over. Bowler B Economy = 24 / 3 = 8.00 runs/over. Bowler A was more economical by 8.00 - 7.00 = 1.00 run/over.
+CATEGORY 4: 6 RUNS (80–90 SECONDS) — 5 QUESTIONS
+Question 16 
+Team A sets a target of 192 runs in 20 overs. Team B scores at a run rate of 7.5 runs/over for the first 12 overs. What required run rate (RRR) must Team B maintain in the remaining 8 overs to win the match on the final ball?
+(A) 11.50 runs/over
+(B) 12.00 runs/over
+(C) 12.75 runs/over
+(D) 13.25 runs/over
+Answer: 12.75 runs/over
+Solution: Target = 192 runs. Runs scored in 12 overs = 12 × 7.5 = 90 runs. Runs required = 192 - 90 = 102 runs. Remaining overs = 20 - 12 = 8 overs. Required Run Rate = 102 / 8 = 12.75 runs/over.
+Question 17 
+In a team total of 220 runs, Player A scored 35% of the total runs, Player B scored 25% of the total, and Player C scored 40% of the remaining runs. How many runs did the remaining batsmen score altogether?
+(A) 48.0 runs
+(B) 52.8 runs
+(C) 55.2 runs
+(D) 60.0 runs
+Answer: 52.8 runs 
+Solution: Combined share of A & B = 35% + 25% = 60%. Remaining runs = 100% - 60% = 40% of 220 = 88 runs. Player C scores 40% of 88 = 35.2 runs. Remaining team score = 88 - 35.2 = 52.8 runs.
+Question 18
+In an IPL match, Team X wins the toss with probability 0.5. If they win the toss, their probability of winning the match is 0.7. If they lose the toss, their probability of winning the match is 0.4. What is the overall probability that Team X wins the match?
+(A) 0.50
+(B) 0.55
+(C) 0.60
+(D) 0.65
+Answer: 0.55 
+Solution: Using Total Probability Theorem: P(Win) = P(Win Toss) × P(Win | Win Toss) + P(Lose Toss) × P(Win | Lose Toss) = (0.5 × 0.7) + (0.5 × 0.4) = 0.35 + 0.20 = 0.55 or 55%.
+Question 19 
+A stadium has 50,000 seats divided into Premium (₹3,000) and General (₹1,000). For a housefull match, total ticket revenue collected was ₹9.0 Crores (₹90,000,000). How many Premium seats were sold?
+A) 15,000 seats
+(B) 18,000 seats
+(C) 20,000 seats
+(D) 25,000 seats
+Answer: 20,000 seats
+Solution: Let P = Premium seats, G = General seats. Equations: (1) P + G = 50,000 ⇒ G = 50,000 - P. (2) 3000P + 1000G = 90,000,000. Substitute G: 3000P + 1000(50,000 - P) = 90,000,000 ⇒ 2000P + 50,000,000 = 90,000,000 ⇒ 2000P = 40,000,000 ⇒ P = 20,000 Premium seats.
+Question 20
+Three bowlers X, Y, and Z shared 10 wickets in a match in the ratio 2 : 2 : 1. In their next match, X took 1 more wicket, Y took 1 less wicket, and Z took 2 more wickets. What is the new ratio of wickets taken by X, Y, and Z across both matches combined?
+(A) 4 : 3 : 3
+(B) 5 : 3 : 4
+(C) 5 : 4 : 3
+(D) 6 : 3 : 4
+Answer: 5 : 3 : 4
+Solution: Match 1 (10 wickets, 2:2:1): X = 4, Y = 4, Z = 2. Match 2: X = +1 (Total 5), Y = -1 (Total 3), Z = +2 (Total 4). Total combined wickets: X = 5, Y = 3, Z = 4. Combined ratio = 5 : 3 : 4.
+CATEGORY 5: 3 RUNS (30–40 SECONDS) — 2 QUESTIONS
+Question 21
+Team A scored 175 runs in 20 overs. Team B needs to score at a required run rate of 9.00 runs per over in the last 6 overs to win. How many runs had Team B scored at the end of 14 overs?
+(A) 118 runs
+(B) 120 runs
+(C) 122 runs
+(D) 124 runs
+Answer: 122 runs
+Solution: Target to win = 176 runs. Runs needed in last 6 overs = 6 × 9.00 = 54 runs. Runs scored by end of 14 overs = 176 - 54 = 122 runs.
+Question 22
+Batsman A scored runs at a strike rate of 150 off 40 balls. Batsman B faced 30 balls and scored at a strike rate of 180. What is the ratio of runs scored by Batsman A to Batsman B?
+(A) 9 : 10
+(B) 10 : 9
+(C) 5 : 4
+(D) 4 : 3
+  
+Answer: 10 : 9
+Solution: Runs by A = (150 / 100) × 40 = 60. Runs by B = (180 / 100) × 30 = 54.
+ Ratio A : B = 60 : 54 = 10 : 9.

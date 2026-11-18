@@ -1,0 +1,181 @@
+{
+  "testName": "Burst Test",
+  "concurrency": 20,
+  "eventId": "test-event-id",
+  "eventName": "Test Event",
+  "timestamp": "2026-02-05T18:42:59.489Z",
+  "totalDuration": 29,
+  "metrics": {
+    "successful": 0,
+    "failed": 20,
+    "successRate": 0,
+    "avgDuration": 17,
+    "minDuration": 15,
+    "maxDuration": 24
+  },
+  "errorGroups": {
+    "fetch failed": 20
+  },
+  "details": [
+    {
+      "index": 1,
+      "success": false,
+      "status": 0,
+      "duration": 24,
+      "timestamp": "2026-02-05T18:42:59.482Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 2,
+      "success": false,
+      "status": 0,
+      "duration": 20,
+      "timestamp": "2026-02-05T18:42:59.484Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 3,
+      "success": false,
+      "status": 0,
+      "duration": 19,
+      "timestamp": "2026-02-05T18:42:59.484Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 4,
+      "success": false,
+      "status": 0,
+      "duration": 18,
+      "timestamp": "2026-02-05T18:42:59.484Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 5,
+      "success": false,
+      "status": 0,
+      "duration": 18,
+      "timestamp": "2026-02-05T18:42:59.484Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 6,
+      "success": false,
+      "status": 0,
+      "duration": 18,
+      "timestamp": "2026-02-05T18:42:59.484Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 7,
+      "success": false,
+      "status": 0,
+      "duration": 18,
+      "timestamp": "2026-02-05T18:42:59.485Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 8,
+      "success": false,
+      "status": 0,
+      "duration": 17,
+      "timestamp": "2026-02-05T18:42:59.485Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 9,
+      "success": false,
+      "status": 0,
+      "duration": 17,
+      "timestamp": "2026-02-05T18:42:59.486Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 10,
+      "success": false,
+      "status": 0,
+      "duration": 16,
+      "timestamp": "2026-02-05T18:42:59.486Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 11,
+      "success": false,
+      "status": 0,
+      "duration": 16,
+      "timestamp": "2026-02-05T18:42:59.486Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 12,
+      "success": false,
+      "status": 0,
+      "duration": 15,
+      "timestamp": "2026-02-05T18:42:59.486Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 13,
+      "success": false,
+      "status": 0,
+      "duration": 15,
+      "timestamp": "2026-02-05T18:42:59.486Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 14,
+      "success": false,
+      "status": 0,
+      "duration": 15,
+      "timestamp": "2026-02-05T18:42:59.486Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 15,
+      "success": false,
+      "status": 0,
+      "duration": 16,
+      "timestamp": "2026-02-05T18:42:59.487Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 16,
+      "success": false,
+      "status": 0,
+      "duration": 16,
+      "timestamp": "2026-02-05T18:42:59.487Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 17,
+      "success": false,
+      "status": 0,
+      "duration": 15,
+      "timestamp": "2026-02-05T18:42:59.487Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 18,
+      "success": false,
+      "status": 0,
+      "duration": 15,
+      "timestamp": "2026-02-05T18:42:59.487Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 19,
+      "success": false,
+      "status": 0,
+      "duration": 15,
+      "timestamp": "2026-02-05T18:42:59.487Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 20,
+      "success": false,
+      "status": 0,
+      "duration": 15,
+      "timestamp": "2026-02-05T18:42:59.487Z",
+      "error": "fetch failed"
+    }
+  ]
+}

@@ -1,0 +1,237 @@
+MPL QUIZ QUESTIONS
+1 RUN — 10–15 seconds
+1.
+A team needs 17 runs to win and scores 9 runs from the next over. How many runs are still required?
+A) 6
+B) 8
+C) 7
+D) 9
+Answer: B) 8
+Solution:
+Runs remaining = 17 − 9 = 8
+2.
+An IPL team scores 9 runs in each of the first 2 overs. What is their score after 2 overs?
+A) 16
+B) 20
+C) 21
+D) 18
+Answer: D) 18
+Solution:
+9 × 2 = 18 runs
+3.
+A bowler gives away 6 runs in an over. How many runs does he concede in 2 overs if he maintains the same rate?
+A) 12
+B) 10
+C) 14
+D) 16
+Answer: A) 12
+Solution:
+6 × 2 = 12 runs
+4.
+A batter hits 3 fours and no other boundaries. How many runs come from those fours?
+A) 10
+B) 14
+C) 12
+D) 16
+Answer: C) 12
+Solution:
+3 × 4 = 12 runs
+5.
+A team scores 15 runs in an over. If 6 of those runs came from boundaries, how many runs came from other shots?
+A) 7
+B) 9
+C) 8
+D) 10
+Answer: B) 9
+Solution:
+15 − 6 = 9 runs
+2 RUNS — 20–30 seconds
+6.
+A batter scores 24 runs from 16 balls. What is his strike rate?
+A) 125
+B) 140
+C) 160
+D) 150
+Answer: D) 150
+Solution:
+Strike Rate = (24 ÷ 16) × 100 = 150
+7.
+A team scores 42 runs in 7 overs. At the same run rate, how many runs would they score in 10 overs?
+A) 60
+B) 54
+C) 64
+D) 70
+Answer: A) 60
+Solution:
+Run rate = 42 ÷ 7 = 6 runs/over.
+For 10 overs = 6 × 10 = 60 runs
+8.
+A batter scores 18 runs from boundaries and 22 runs through other shots. What percentage of his runs came from boundaries?
+A) 35%
+B) 40%
+C) 45%
+D) 50%
+Answer: C) 45%
+Solution:
+Total runs = 18 + 22 = 40.
+Percentage = (18 ÷ 40) × 100 = 45%
+9.
+Two IPL batters score runs in the ratio 2 : 3. Together they score 75 runs. How many runs does the second batter score?
+A) 30
+B) 45
+C) 40
+D) 50
+Answer: B) 45
+Solution:
+Total ratio = 2 + 3 = 5.
+One part = 75 ÷ 5 = 15.
+Second batter = 3 × 15 = 45 runs
+10.
+A bowler concedes 18 runs in 3 overs. If he maintains the same economy rate, how many runs will he concede in 5 overs?
+A) 30
+B) 25
+C) 28
+D) 32
+Answer: A) 30
+Solution:
+Economy rate = 18 ÷ 3 = 6.
+For 5 overs = 6 × 5 = 30 runs
+3 RUNS — 30–40 seconds
+11.
+A team is 96/3 after 12 overs and wants to finish on 176 after 20 overs. What run rate must they maintain in the remaining 8 overs?
+A) 8
+B) 9
+C) 11
+D) 10
+Answer: D) 10
+Solution:
+Runs required = 176 − 96 = 80.
+Overs remaining = 8.
+Required run rate = 80 ÷ 8 = 10 runs/over
+12.
+A batter has scored 36 runs from 24 balls. He then scores another 24 runs from 12 balls. What is his overall strike rate?
+A) 150
+B) 166.67
+C) 160
+D) 175
+Answer: B) 166.67
+Solution:
+Total runs = 36 + 24 = 60.
+Total balls = 24 + 12 = 36.
+Strike rate = (60 ÷ 36) × 100 = 166.67
+4 RUNS — 50–60 seconds
+13.
+An IPL team scores 162 runs, of which 18 are extras. The remaining runs are scored by three batters in the ratio 3 : 4 : 5. How many runs did the highest-scoring batter make?
+A) 50
+B) 55
+C) 60
+D) 65
+Answer: C) 60
+Solution:
+Runs scored by batters = 162 − 18 = 144.
+Total ratio = 3 + 4 + 5 = 12.
+One part = 144 ÷ 12 = 12.
+Highest scorer = 5 × 12 = 60 runs
+14.
+A batter has an average of 38 runs after 7 innings. In his next two innings, he scores 51 and 42. What is his new average after 9 innings, approximately?
+A) 39.89
+B) 38.89
+C) 40.89
+D) 41.89
+Answer: A) 39.89
+Solution:
+Runs after 7 innings = 7 × 38 = 266.
+New total = 266 + 51 + 42 = 359.
+New average = 359 ÷ 9 = 39.89
+15.
+A team scores 48 runs in its first 6 overs. During the next 9 overs, it scores at a rate 2 runs per over higher than its first-6-over rate. What is its total score after 15 overs?
+A) 126
+B) 132
+C) 144
+D) 138
+Answer: D) 138
+Solution:
+First 6-over run rate = 48 ÷ 6 = 8.
+Next 9-over run rate = 8 + 2 = 10.
+Runs in next 9 overs = 10 × 9 = 90.
+Total = 48 + 90 = 138 runs
+16.
+A bowler has conceded 35 runs in 5 overs. He concedes 7 runs in his next over. What is his economy rate after 6 overs?
+A) 6.5
+B) 7.5
+C) 7.0
+D) 8.0
+Answer: C) 7.0
+Solution:
+Total runs after 6 overs = 35 + 7 = 42.
+Economy rate = 42 ÷ 6 = 7.0
+17.
+A batter scores 72 runs. He hits 4 sixes and 6 fours. What percentage of his runs came from boundaries?
+A) 58.33%
+B) 66.67%
+C) 62.50%
+D) 72.00%
+Answer: B) 66.67%
+Solution:
+Runs from sixes = 4 × 6 = 24.
+Runs from fours = 6 × 4 = 24.
+Boundary runs = 48.
+Percentage = (48 ÷ 72) × 100 = 66.67%
+6 RUNS — 80–90 seconds
+18.
+An IPL team needs 196 runs to win. After 14 overs, they are 121/4. They score 31 runs in the next 3 overs. What run rate must they maintain in the final 3 overs to win?
+A) 14.67
+B) 12.67
+C) 13.33
+D) 15.00
+Answer: A) 14.67
+Solution:
+Score after 17 overs = 121 + 31 = 152.
+Runs required = 196 − 152 = 44.
+Overs remaining = 3.
+Required run rate = 44 ÷ 3 = 14.67 runs/over
+19.
+A stadium has 50,000 seats. On match day, 80% are occupied. Of the occupied seats, 30% are priced at ₹1,500 each and the rest at ₹2,500 each. What is the total ticket revenue?
+A) ₹7.0 crore
+B) ₹8.0 crore
+C) ₹9.2 crore
+D) ₹8.8 crore
+Answer: D) ₹8.8 crore
+Solution:
+Occupied seats = 50,000 × 80% = 40,000.
+₹1,500 tickets = 30% of 40,000 = 12,000. Revenue = 12,000 × ₹1,500 = ₹1.8 crore.
+₹2,500 tickets = 28,000. Revenue = 28,000 × ₹2,500 = ₹7 crore.
+Total revenue = ₹8.8 crore
+20.
+A batter scores 45 runs from 30 balls. In his next 20 balls, he scores 32 runs. What is his overall strike rate after facing all 50 balls?
+A) 144
+B) 150
+C) 154
+D) 160
+Answer: C) 154
+Solution:
+Total runs = 45 + 32 = 77.
+Total balls = 30 + 20 = 50.
+Strike rate = (77 ÷ 50) × 100 = 154
+21.
+A team scores 52 runs in the Powerplay. During the next 8 overs, its run rate is 25% higher than its Powerplay run rate. Approximately how many runs does the team score in the first 14 overs?
+A) 138.67
+B) 136.67
+C) 140.67
+D) 142.67
+Answer: A) 138.67
+Solution:
+Powerplay run rate = 52 ÷ 6 = 8.67 runs/over.
+Next-over rate = 8.67 × 1.25 = 10.83 runs/over.
+Runs in next 8 overs = 10.83 × 8 = 86.67.
+Total = 52 + 86.67 = 138.67 runs
+22.
+A team requires 72 runs from 48 balls. After scoring 28 runs from the next 18 balls, how many runs must they score from the remaining 18 balls, and what strike rate is required during those balls?
+A) 40 runs, 222.22
+B) 44 runs, 244.44
+C) 42 runs, 233.33
+D) 46 runs, 255.56
+Answer: B) 44 runs, 244.44
+Solution:
+Runs still required = 72 − 28 = 44.
+Required strike rate = (44 ÷ 18) × 100 = 244.44

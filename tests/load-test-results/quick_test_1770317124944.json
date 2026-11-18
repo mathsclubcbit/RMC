@@ -1,0 +1,61 @@
+{
+  "testName": "Quick Test",
+  "concurrency": 5,
+  "eventId": "test-event-id",
+  "eventName": "Test Event",
+  "timestamp": "2026-02-05T18:45:24.944Z",
+  "totalDuration": 10,
+  "metrics": {
+    "successful": 0,
+    "failed": 5,
+    "successRate": 0,
+    "avgDuration": 6,
+    "minDuration": 5,
+    "maxDuration": 8
+  },
+  "errorGroups": {
+    "fetch failed": 5
+  },
+  "details": [
+    {
+      "index": 1,
+      "success": false,
+      "status": 0,
+      "duration": 8,
+      "timestamp": "2026-02-05T18:45:24.940Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 2,
+      "success": false,
+      "status": 0,
+      "duration": 7,
+      "timestamp": "2026-02-05T18:45:24.942Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 3,
+      "success": false,
+      "status": 0,
+      "duration": 6,
+      "timestamp": "2026-02-05T18:45:24.942Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 4,
+      "success": false,
+      "status": 0,
+      "duration": 6,
+      "timestamp": "2026-02-05T18:45:24.942Z",
+      "error": "fetch failed"
+    },
+    {
+      "index": 5,
+      "success": false,
+      "status": 0,
+      "duration": 5,
+      "timestamp": "2026-02-05T18:45:24.942Z",
+      "error": "fetch failed"
+    }
+  ]
+}
