@@ -9,7 +9,7 @@
 This project is a complete reimplementation of the RMC official website, designed with a **"Math Noir"** aesthetic. It combines high-end visual effects, cinematic animations, and a mysterious, premium feel to represent the club's intellectual depth.
 
 **Theme**: Enigma / Math Noir / Dark Academia + Cyberpunk
-**Core Colors**: Teal (`#3ABCB3`), Lime (`#AFF44A`), Coral (`#E36951`), Orange (`#E8B237`) on Deep Black.
+**Core Colors**: Teal (`#3ABCB3`), Lime (`#AFF44A`), Coral (`#E36951`), Orange (`#E8B237`) on Deep Black
 
 ## ✨ Features
 
