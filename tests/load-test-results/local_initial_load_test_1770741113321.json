@@ -1,0 +1,88 @@
+{
+  "testName": "Initial Load Test",
+  "concurrency": 10,
+  "eventId": "load-test-event-v1",
+  "eventName": "Load Test Event",
+  "results": [
+    {
+      "index": 1,
+      "success": false,
+      "status": 0,
+      "duration": 45,
+      "timestamp": "2026-02-10T16:31:53.314Z",
+      "error": "request to http://localhost:3000/api/register failed, reason: "
+    },
+    {
+      "index": 2,
+      "success": false,
+      "status": 0,
+      "duration": 20,
+      "timestamp": "2026-02-10T16:31:53.318Z",
+      "error": "request to http://localhost:3000/api/register failed, reason: "
+    },
+    {
+      "index": 3,
+      "success": false,
+      "status": 0,
+      "duration": 20,
+      "timestamp": "2026-02-10T16:31:53.319Z",
+      "error": "request to http://localhost:3000/api/register failed, reason: "
+    },
+    {
+      "index": 4,
+      "success": false,
+      "status": 0,
+      "duration": 19,
+      "timestamp": "2026-02-10T16:31:53.319Z",
+      "error": "request to http://localhost:3000/api/register failed, reason: "
+    },
+    {
+      "index": 5,
+      "success": false,
+      "status": 0,
+      "duration": 18,
+      "timestamp": "2026-02-10T16:31:53.319Z",
+      "error": "request to http://localhost:3000/api/register failed, reason: "
+    },
+    {
+      "index": 6,
+      "success": false,
+      "status": 0,
+      "duration": 18,
+      "timestamp": "2026-02-10T16:31:53.319Z",
+      "error": "request to http://localhost:3000/api/register failed, reason: "
+    },
+    {
+      "index": 7,
+      "success": false,
+      "status": 0,
+      "duration": 17,
+      "timestamp": "2026-02-10T16:31:53.319Z",
+      "error": "request to http://localhost:3000/api/register failed, reason: "
+    },
+    {
+      "index": 8,
+      "success": false,
+      "status": 0,
+      "duration": 18,
+      "timestamp": "2026-02-10T16:31:53.320Z",
+      "error": "request to http://localhost:3000/api/register failed, reason: "
+    },
+    {
+      "index": 9,
+      "success": false,
+      "status": 0,
+      "duration": 17,
+      "timestamp": "2026-02-10T16:31:53.320Z",
+      "error": "request to http://localhost:3000/api/register failed, reason: "
+    },
+    {
+      "index": 10,
+      "success": false,
+      "status": 0,
+      "duration": 16,
+      "timestamp": "2026-02-10T16:31:53.320Z",
+      "error": "request to http://localhost:3000/api/register failed, reason: "
+    }
+  ]
+}

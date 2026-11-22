@@ -1,0 +1,481 @@
+-- RMC Network System - Database Schema
+-- Run this in the Supabase SQL Editor
+
+-- ============================================
+-- 1. PROFILES TABLE (extends auth.users)
+-- ============================================
+CREATE TABLE IF NOT EXISTS profiles (
+    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    full_name TEXT,
+    role TEXT NOT NULL CHECK (role IN (
+        'president',
+        'vice_president',
+        'general_secretary',
+        'joint_secretary',
+        'faculty',
+        'head',
+        'member'
+    )),
+    avatar_url TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================
+-- 2. TEAMS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS teams (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    type TEXT NOT NULL CHECK (type IN ('general', 'fest')),
+    description TEXT,
+    created_by UUID REFERENCES profiles(id),
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================
+-- 3. TEAM MEMBERS (Junction Table)
+-- ============================================
+CREATE TABLE IF NOT EXISTS team_members (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+    role TEXT NOT NULL CHECK (role IN ('head', 'member')),
+    joined_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(user_id, team_id)
+);
+
+-- ============================================
+-- 4. DELEGATED PERMISSIONS (President grants access)
+-- ============================================
+CREATE TABLE IF NOT EXISTS delegated_permissions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE UNIQUE,
+    can_manage_teams BOOLEAN DEFAULT false,
+    can_manage_members BOOLEAN DEFAULT false,
+    granted_by UUID REFERENCES profiles(id),
+    granted_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================
+-- 5. PERFORMANCE INDEXES
+-- ============================================
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
+CREATE INDEX IF NOT EXISTS idx_profiles_email ON profiles(email);
+CREATE INDEX IF NOT EXISTS idx_team_members_user ON team_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_team_members_team ON team_members(team_id);
+CREATE INDEX IF NOT EXISTS idx_delegated_user ON delegated_permissions(user_id);
+
+-- ============================================
+-- 6. ROW LEVEL SECURITY (RLS)
+-- ============================================
+
+-- Enable RLS on all tables
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE delegated_permissions ENABLE ROW LEVEL SECURITY;
+
+-- Profiles: Users can read all profiles, but only update their own
+CREATE POLICY "Profiles are viewable by authenticated users"
+    ON profiles FOR SELECT
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "Users can update own profile"
+    ON profiles FOR UPDATE
+    TO authenticated
+    USING (auth.uid() = id);
+
+-- Teams: All authenticated users can read; admins can write
+CREATE POLICY "Teams are viewable by authenticated users"
+    ON teams FOR SELECT
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "Admins can insert teams"
+    ON teams FOR INSERT
+    TO authenticated
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE id = auth.uid()
+            AND role = 'president'
+        )
+        OR
+        EXISTS (
+            SELECT 1 FROM delegated_permissions
+            WHERE user_id = auth.uid()
+            AND can_manage_teams = true
+        )
+    );
+
+CREATE POLICY "Admins can update teams"
+    ON teams FOR UPDATE
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE id = auth.uid()
+            AND role = 'president'
+        )
+        OR
+        EXISTS (
+            SELECT 1 FROM delegated_permissions
+            WHERE user_id = auth.uid()
+            AND can_manage_teams = true
+        )
+    );
+
+CREATE POLICY "Admins can delete teams"
+    ON teams FOR DELETE
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE id = auth.uid()
+            AND role = 'president'
+        )
+        OR
+        EXISTS (
+            SELECT 1 FROM delegated_permissions
+            WHERE user_id = auth.uid()
+            AND can_manage_teams = true
+        )
+    );
+
+-- Team Members: Viewable by all; managed by admins and heads
+CREATE POLICY "Team members are viewable by authenticated users"
+    ON team_members FOR SELECT
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "Admins and heads can manage team members"
+    ON team_members FOR ALL
+    TO authenticated
+    USING (
+        -- President
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE id = auth.uid()
+            AND role = 'president'
+        )
+        OR
+        -- Delegated permission
+        EXISTS (
+            SELECT 1 FROM delegated_permissions
+            WHERE user_id = auth.uid()
+            AND can_manage_members = true
+        )
+        OR
+        -- Team head (for their own team)
+        EXISTS (
+            SELECT 1 FROM team_members tm
+            WHERE tm.user_id = auth.uid()
+            AND tm.team_id = team_members.team_id
+            AND tm.role = 'head'
+        )
+    );
+
+-- Delegated Permissions: Only president can read/write
+CREATE POLICY "Only president can view delegated permissions"
+    ON delegated_permissions FOR SELECT
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE id = auth.uid()
+            AND role = 'president'
+        )
+    );
+
+CREATE POLICY "Only president can manage delegated permissions"
+    ON delegated_permissions FOR ALL
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE id = auth.uid()
+            AND role = 'president'
+        )
+    );
+
+-- ============================================
+-- 7. PUBLIC EVENTS (RMC website events CRUD)
+-- ============================================
+-- These events are managed by the custom admin panel (cookie-based auth)
+-- via server-side service role key. We keep the schema minimal and store
+-- the flexible event shape as JSONB.
+--
+-- Common payload fields used by the web app:
+-- - registrationFee: number|string (fixed price; ignored if variablePricingEnabled)
+-- - minTeamSize: number (minimum participants including leader)
+-- - maxTeamSize: number (maximum participants including leader)
+-- - variablePricingEnabled: boolean
+-- - pricingTiers: [{ teamSize: number, price: number }]
+--   where teamSize is the total participants including leader and price is total amount.
+
+CREATE TABLE IF NOT EXISTS public.events (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    date TEXT NOT NULL,
+    payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_events_date ON public.events(date);
+
+-- Keep updated_at fresh on updates
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS trigger AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_events_updated_at ON public.events;
+CREATE TRIGGER trg_events_updated_at
+BEFORE UPDATE ON public.events
+FOR EACH ROW EXECUTE PROCEDURE public.set_updated_at();
+
+-- ============================================
+-- 7. AUTO-CREATE PROFILE ON SIGNUP (Trigger)
+-- ============================================
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+    INSERT INTO public.profiles (id, email, full_name, role)
+    VALUES (
+        NEW.id,
+        NEW.email,
+        COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+        COALESCE(NEW.raw_user_meta_data->>'role', 'member')
+    );
+    RETURN NEW;
+END;
+$$;
+
+-- Drop existing trigger if exists, then create
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ============================================
+-- 8. TASKS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS tasks (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'overdue')),
+    assigned_to_team UUID REFERENCES teams(id) ON DELETE SET NULL,
+    assigned_to_user UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    deadline TIMESTAMPTZ,
+    created_by UUID REFERENCES profiles(id),
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================
+-- 9. CALENDAR EVENTS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS calendar_events (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    start_time TIMESTAMPTZ NOT NULL,
+    end_time TIMESTAMPTZ,
+    type TEXT DEFAULT 'event' CHECK (type IN ('event', 'meeting', 'deadline')),
+    is_global BOOLEAN DEFAULT true,
+    visible_to_user UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    created_by UUID REFERENCES profiles(id),
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================
+-- 10. RESOURCES TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS resources (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    type TEXT NOT NULL DEFAULT 'link' CHECK (type IN ('link', 'file', 'template')),
+    url TEXT NOT NULL,
+    created_by UUID REFERENCES profiles(id),
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================
+-- 11. INDEXES FOR NEW TABLES
+-- ============================================
+CREATE INDEX IF NOT EXISTS idx_tasks_assigned_team ON tasks(assigned_to_team);
+CREATE INDEX IF NOT EXISTS idx_tasks_assigned_user ON tasks(assigned_to_user);
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+CREATE INDEX IF NOT EXISTS idx_calendar_start ON calendar_events(start_time);
+CREATE INDEX IF NOT EXISTS idx_resources_type ON resources(type);
+
+-- ============================================
+-- 12. RLS FOR NEW TABLES
+-- ============================================
+
+-- Enable RLS
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE calendar_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE resources ENABLE ROW LEVEL SECURITY;
+
+-- Tasks: Viewable based on assignment
+CREATE POLICY "Tasks viewable by assigned users"
+    ON tasks FOR SELECT
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "Tasks can be created by admins and heads"
+    ON tasks FOR INSERT
+    TO authenticated
+    WITH CHECK (
+        EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('president', 'head'))
+    );
+
+CREATE POLICY "Tasks can be updated by anyone"
+    ON tasks FOR UPDATE
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "Tasks can be deleted by creator or president"
+    ON tasks FOR DELETE
+    TO authenticated
+    USING (
+        created_by = auth.uid() OR
+        EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'president')
+    );
+
+-- Calendar Events: Viewable by all authenticated
+CREATE POLICY "Calendar events viewable by authenticated"
+    ON calendar_events FOR SELECT
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "Only president can manage calendar events"
+    ON calendar_events FOR ALL
+    TO authenticated
+    USING (
+        EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'president')
+    );
+
+-- Resources: Viewable by all, managed by president
+CREATE POLICY "Resources viewable by authenticated"
+    ON resources FOR SELECT
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "Only president can manage resources"
+    ON resources FOR ALL
+    TO authenticated
+    USING (
+        EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'president')
+    );
+
+-- ============================================
+-- 13. SETTINGS TABLE (Key-Value Store for App Config)
+-- ============================================
+-- Used for storing app settings like hub links, feature flags, etc.
+-- Managed via service role key from admin panel, no RLS needed.
+
+CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL DEFAULT '{}'::jsonb,
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Keep updated_at fresh
+DROP TRIGGER IF EXISTS trg_settings_updated_at ON settings;
+CREATE TRIGGER trg_settings_updated_at
+BEFORE UPDATE ON settings
+FOR EACH ROW EXECUTE PROCEDURE public.set_updated_at();
+
+-- ============================================
+-- 14. RLS FOR EVENTS & SETTINGS
+-- ============================================
+-- These tables are primarily accessed via Service Role (Admin) API routes.
+-- Enabling RLS with no policies effectively "Denies All" public access,
+-- which secures them from unauthorized client-side queries.
+
+ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
+
+-- ============================================
+-- 15. REGISTRATIONS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS registrations (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    event_id TEXT NOT NULL,
+    event_name TEXT NOT NULL,
+    registration_id TEXT NOT NULL, -- Ticket Code
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    roll_no TEXT NOT NULL,
+    department TEXT NOT NULL,
+    team_members JSONB DEFAULT '[]'::jsonb, -- Array of objects
+    team_size INTEGER DEFAULT 1,
+    amount NUMERIC DEFAULT 0,
+    utr_id TEXT NOT NULL, -- Payment Transaction ID
+    status TEXT DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'ATTENDED')),
+    screenshot_url TEXT,
+    abstract TEXT,
+    ppt_url TEXT,
+    time_slot TEXT,
+    checked_in_at TIMESTAMPTZ,
+    member_attendance TEXT,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Indexes for fast lookups
+CREATE INDEX IF NOT EXISTS idx_registrations_event_id ON registrations(event_id);
+CREATE INDEX IF NOT EXISTS idx_registrations_email ON registrations(email);
+CREATE INDEX IF NOT EXISTS idx_registrations_utr_id ON registrations(utr_id);
+CREATE INDEX IF NOT EXISTS idx_registrations_registration_id ON registrations(registration_id);
+
+-- Keep updated_at fresh
+DROP TRIGGER IF EXISTS trg_registrations_updated_at ON registrations;
+CREATE TRIGGER trg_registrations_updated_at
+BEFORE UPDATE ON registrations
+FOR EACH ROW EXECUTE PROCEDURE public.set_updated_at();
+
+-- ============================================
+-- 16. RLS FOR REGISTRATIONS
+-- ============================================
+ALTER TABLE registrations ENABLE ROW LEVEL SECURITY;
+
+-- Admins (President/Core) can view all registrations
+CREATE POLICY "Admins can view all registrations"
+    ON registrations FOR SELECT
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE id = auth.uid()
+            AND role IN ('president', 'vice_president', 'general_secretary', 'joint_secretary', 'head', 'faculty')
+        )
+    );
+
+-- Admins can update registrations
+CREATE POLICY "Admins can update registrations"
+    ON registrations FOR UPDATE
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE id = auth.uid()
+            AND role IN ('president', 'vice_president', 'general_secretary', 'joint_secretary', 'head', 'faculty')
+        )
+    );
+
+-- Service Role (API) has full access (implicit, but we can verify policies don't block it if we don't grant public access)
+-- note: Service role bypasses RLS.

@@ -1,0 +1,424 @@
+{
+  "questions": [
+    {
+      "questionText": "How many players are permitted on the field from the fielding team during a standard cricket match?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "9 players",
+        "10 players",
+        "11 players",
+        "12 players"
+      ],
+      "correctOption": 2,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Each side fields 11 players (one bowler, one wicketkeeper, and nine outfielders)."
+    },
+    {
+      "questionText": "What is the collective name for the three vertical wooden poles pushed into the ground at each end of the pitch?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "Bails",
+        "Stumps",
+        "Pickets",
+        "Wickets"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "The three vertical wooden uprights are called the off stump, middle stump, and leg stump. With the two horizontal bails on top, they constitute the wicket."
+    },
+    {
+      "questionText": "How many runs are awarded to the batting side if the ball crosses the boundary rope after bouncing or rolling along the ground?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "1 run",
+        "2 runs",
+        "4 runs",
+        "6 runs"
+      ],
+      "correctOption": 2,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Under MCC Law 19, any ball that touches or clears the boundary having made contact with the ground inside the field scores 4 runs."
+    },
+    {
+      "questionText": "How many runs are awarded if a batsman strikes the ball cleanly over the boundary rope without it touching the ground within the playing arena?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "2 runs",
+        "4 runs",
+        "6 runs",
+        "8 runs"
+      ],
+      "correctOption": 2,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "A ball struck directly over the perimeter boundary without touching the ground earns the maximum award of 6 runs."
+    },
+    {
+      "questionText": "Who is the designated official on the field responsible for enforcing laws and adjudicating appeals like LBW and caught behind?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "The Team Captain",
+        "The Match Referee",
+        "The Umpire",
+        "The Third Umpire"
+      ],
+      "correctOption": 2,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Two on-field umpires (at the bowler's end and striker's end) manage the game and make primary decisions on field appeals."
+    },
+    {
+      "questionText": "What is the designated fielding position for the player who crouches directly behind the striker's stumps wearing specialized gloves?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "Slip",
+        "Wicketkeeper",
+        "Point",
+        "Fine Leg"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "The wicketkeeper is the only member of the fielding side legally permitted to wear external gloves and leg guards."
+    },
+    {
+      "questionText": "How many fair deliveries constitute one standard 'over' in modern international cricket?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "4 balls",
+        "6 balls",
+        "8 balls",
+        "10 balls"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "While historical eras featured 4-ball or 8-ball overs (notably in Australia), 6 fair deliveries per over have been universally standardized across all formats."
+    },
+    {
+      "questionText": "If a batsman is dismissed for zero runs on the very first legal delivery they face in their innings, what is this specific dismissal called?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "Golden Duck",
+        "Silver Duck",
+        "Diamond Duck",
+        "Platinum Duck"
+      ],
+      "correctOption": 0,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "A 'duck' is zero runs; a 'Golden Duck' specifically denotes falling on the first ball faced. A 'Diamond Duck' refers to getting out without facing a ball (e.g., run out of a wide or at non-striker's end)."
+    },
+    {
+      "questionText": "Which format of international cricket is the shortest standard ICC format, limiting each team to an innings of 120 legal deliveries?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "Test Match",
+        "One Day International (ODI)",
+        "T20 International",
+        "First-Class Cricket"
+      ],
+      "correctOption": 2,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Twenty20 cricket allocates exactly 20 overs (120 legal balls) per side, creating the shortest standard international match duration."
+    },
+    {
+      "questionText": "What colour leather ball is traditionally used in standard multi-day daytime Test matches?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "White",
+        "Red",
+        "Pink",
+        "Orange"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Traditional daytime Test and First-Class matches use a red ball. White balls are reserved for limited-overs cricket under floodlights, and pink balls are used for day-night Tests."
+    },
+    {
+      "questionText": "What extra is signalled and awarded if a fast bowler oversteps the popping crease with their front foot during delivery?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "No Ball",
+        "Wide",
+        "Dead Ball",
+        "Bye"
+      ],
+      "correctOption": 0,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Overstepping the popping crease infringes MCC Law 21.5, penalizing the bowling team with 1 extra run and typically a Free Hit in white-ball cricket."
+    },
+    {
+      "questionText": "What is the primary piece of equipment used by a batsman to hit the ball, traditionally manufactured from English or Kashmir willow?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "The Mallet",
+        "The Blade",
+        "The Bat",
+        "The Paddle"
+      ],
+      "correctOption": 2,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Under MCC Law 5, the bat consists of a wooden blade joined to a handle made of cane and rubber."
+    },
+    {
+      "questionText": "What is the official name of the 22-yard prepared rectangular area in the centre of the ground where bowling and batting take place?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "The Pitch",
+        "The Crease",
+        "The Square",
+        "The Outfield"
+      ],
+      "correctOption": 0,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Under MCC Law 6, the pitch is the central strip of ground 22 yards (20.12 m) long and 10 feet (3.05 m) wide between the bowling creases."
+    },
+    {
+      "questionText": "What rare bowling milestone is achieved when a bowler takes three wickets off three consecutive legal deliveries?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "Triple Wicket",
+        "Hat-trick",
+        "Turkey",
+        "Trifecta"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Originating from cricket tradition where clubs presented a commemorative hat to a bowler achieving three wickets in three balls, the feat remains called a hat-trick."
+    },
+    {
+      "questionText": "How many individual runs must a batsman score in a single innings to record a 'Century'?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "50 runs",
+        "100 runs",
+        "150 runs",
+        "200 runs"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "An individual score of 50 is a half-century, while reaching triple digits (100 runs or more) is formally recognized as a century."
+    },
+    {
+      "questionText": "What is the slang term given to a delivery that is bowled so exceptionally well that it is considered virtually unplayable by the batsman?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "An inswinger",
+        "A Jaffa",
+        "An over",
+        "A half volley"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "The term is thought to originate from Jaffa oranges (or Jaffa Cakes), symbolizing a prized, top-quality delivery that beats the batter completely."
+    },
+    {
+      "questionText": "Which of the following deliveries is bowled by a right-arm wrist-spinner and turns into the right-handed batsman (opposite to their stock delivery)?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "Flipper",
+        "Googly",
+        "Slider",
+        "Topspinner"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "A right-arm leg-spinner's stock ball breaks away to the off side. The googly (or wrong'un) is released over the back of the hand with clockwise rotation so it turns back into the right-hander."
+    },
+    {
+      "questionText": "Which of the following is NOT an officially recognised fielding position in cricket?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "Short third man",
+        "Silly point",
+        "Long twelfth man",
+        "Short extra cover"
+      ],
+      "correctOption": 2,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Third man, silly point, and extra cover are formal field positions. The 'twelfth man' is the designated reserve player stationed off the field who performs substitute fielding or brings out drinks."
+    },
+    {
+      "questionText": "If the fielding side appeals for a stumping, which on-field match official is legally responsible for making the decision?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "The bowler's end (front) umpire",
+        "The square-leg umpire",
+        "The third umpire automatically",
+        "The match referee"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Under MCC Law 39, stumping falls exclusively under the jurisdiction of the square-leg umpire because they stand perpendicular to the popping crease with a direct line of sight down the crease line."
+    },
+    {
+      "questionText": "In cricket pitch geometry, what is the 'return crease'?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "The line drawn perpendicular to the popping crease on either side of the stumps",
+        "The line marking the 30-yard fielding restriction circle",
+        "The line drawn parallel behind the bowling crease",
+        "The line running down the exact centre axis of the pitch"
+      ],
+      "correctOption": 0,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Under MCC Law 8.3, the return creases are drawn at right angles to the popping crease. The bowler's back foot must land within the return crease without touching or cutting it, or a no-ball is called."
+    },
+    {
+      "questionText": "What does the term 'Beamer' refer to in cricket?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "A fast, full-toss delivery passing above waist height",
+        "A bouncing delivery aimed at the helmet",
+        "A disguised slower ball bowled from the back of the hand",
+        "An in-swinging delivery targeting the base of off stump"
+      ],
+      "correctOption": 0,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "A beamer is a dangerous delivery that reaches the batter on the full above waist height without pitching. Umpires immediately call a no-ball and issue a disciplinary warning under safety protocols."
+    },
+    {
+      "questionText": "Which of the following is NOT a recognised cricket batting stroke?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "Hook",
+        "Hitch",
+        "Sweep",
+        "Glance"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "The hook, sweep, and leg glance are canonical batting strokes defined in technical coaching literature. \"Hitch\" is not an acknowledged cricket stroke."
+    },
+    {
+      "questionText": "What is a 'Mankading' dismissal in cricket?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "Run out of the non-striker before the ball is released",
+        "Being stumped off a wide delivery",
+        "Hit wicket while attempting a ramp shot",
+        "Obstructing the field while completing a second run"
+      ],
+      "correctOption": 0,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Named after Indian all-rounder Vinoo Mankad (1947), this occurs when the bowler breaks the stumps at their end if the non-striker leaves their ground prematurely before release. It is officially classified under MCC Law 38 as a Run Out."
+    },
+    {
+      "questionText": "What does the 'DLS method' stand for in limited-overs cricket?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "Direct Leg Spin",
+        "Duckworth-Lewis-Stern method",
+        "Deep Long Shot",
+        "Deferred Last Stand"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "The Duckworth-Lewis-Stern method is a statistical mathematical formulation designed to recalculate run targets in rain-interrupted limited-overs matches based on remaining overs and wickets in hand."
+    },
+    {
+      "questionText": "In cricket tradition, why is a team or individual score of 111 referred to as 'The Nelson' and considered unlucky?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "It represents one eye, one arm, and one leg, associated with Admiral Horatio Nelson",
+        "It marks the exact score at which the first Test wicket fell in 1877",
+        "It is 13 runs short of the historical average Test total",
+        "It was the jersey number retired by MCC founder Thomas Lord"
+      ],
+      "correctOption": 0,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "The folklore holds that the three digits resemble three isolated stumps, representing Admiral Lord Nelson's alleged war wounds (one eye, one arm, one leg). Umpire David Shepherd famously hopped on one leg whenever the scoreboard hit 111."
+    },
+    {
+      "questionText": "Under MCC Law 12.4, where is the official toss for choice of innings required to take place?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "On the pitch itself",
+        "Very near the pitch",
+        "On the field of play",
+        "Inside the match pavilion"
+      ],
+      "correctOption": 2,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "The rule explicitly mandates that the toss take place \"on the field of play\" in the presence of one or both umpires, typically between 15 and 30 minutes before the scheduled start time."
+    },
+    {
+      "questionText": "When does the innings of the opening batsmen officially commence according to MCC Law 2.10?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "As soon as they step onto the field of play",
+        "At the call of 'Play' by the umpire",
+        "As soon as the bowler starts their run-up",
+        "When the first delivery is released"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Under MCC Law 2.10 and 25.1.2, opening batters' innings commence only when the umpire calls \"Play\". For all subsequent incoming batters, the innings commences the moment they cross the boundary into the field of play."
+    },
+    {
+      "questionText": "What does 'LBW' stand for in official cricket dismissal terminology?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "Long Ball Wide",
+        "Leg Before Wicket",
+        "Last Batsman Waiting",
+        "Leg Break Wicket"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "Governed by MCC Law 36, LBW applies when a ball that pitched in line or on the off side would have struck the wicket but was intercepted by any part of the batter's body/pads without first contacting the bat."
+    },
+    {
+      "questionText": "What is a 'Yorker' in bowling terminology?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "A ball that bounces sharply over the batter's shoulder",
+        "A delivery aimed directly at the batsman's toes or base of the stumps",
+        "A slow off-cutter aimed outside off stump",
+        "A back-of-a-length delivery that cuts away into the slips"
+      ],
+      "correctOption": 1,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "A yorker pitches at the batter's feet/popping crease, making it one of the most effective and difficult deliveries to defend or hit during the death overs."
+    },
+    {
+      "questionText": "Under official MCC definitions, during which exact interval does a bowler's 'delivery stride' occur?",
+      "ballTypeSlug": "normal_1",
+      "options": [
+        "From the landing of the back foot until the landing of the front foot",
+        "From the back-foot landing until the front foot is grounded or raised",
+        "From the first running step taken until ball release",
+        "Exclusively during the post-release follow-through"
+      ],
+      "correctOption": 0,
+      "runs": 1,
+      "timerSeconds": 15,
+      "explanation": "According to the MCC Laws of Cricket (Appendix A Definitions), the delivery stride commences at the first point of contact of the back foot and ends when the front foot lands. This specific window is evaluated by umpires to assess front-foot and back-foot no-balls."
+    }
+  ]
+}

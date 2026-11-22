@@ -1,0 +1,45 @@
+{
+  "teamName": "RCB A",
+  "players": [
+    {
+      "name": "Shaik Tabrez",
+      "contact": "8247400170"
+    },
+    {
+      "name": "MANSOOR KHAN",
+      "contact": "9550971156"
+    },
+    {
+      "name": "Chepuri Rajukumar",
+      "contact": "9391443973"
+    },
+    {
+      "name": "sandeep padamatinti",
+      "contact": "7730028128"
+    },
+    {
+      "name": "Hanith Ganduri",
+      "contact": "7675082446"
+    },
+    {
+      "name": "Raju",
+      "contact": "9347891867"
+    },
+    {
+      "name": "Abhi",
+      "contact": "7816072407"
+    },
+    {
+      "name": "Ajay chepuri",
+      "contact": "9059958696"
+    },
+    {
+      "name": "raghu Yadav",
+      "contact": "8008978103"
+    },
+    {
+      "name": "Akshay Sharma",
+      "contact": "7297961547"
+    }
+  ]
+}

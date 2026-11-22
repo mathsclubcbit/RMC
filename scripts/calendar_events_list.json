@@ -1,0 +1,44 @@
+[
+  {
+    "id": "8e9ad489-4ebd-4100-9694-7f7825dcc8fe",
+    "title": "Math Hiest",
+    "description": null,
+    "start_time": "2026-02-07T07:17:00+00:00",
+    "end_time": null,
+    "type": "event",
+    "is_global": true,
+    "visible_to_user": null,
+    "created_by": "fc99f581-ba13-456e-8207-cc56d1be3d92",
+    "created_at": "2026-01-29T03:48:00.55506+00:00",
+    "visibility": "global",
+    "team_id": null
+  },
+  {
+    "id": "18a7ee1b-e3e5-4ec3-ac87-d0e1ef70503d",
+    "title": "SUDHEE DAY 1",
+    "description": "TECHNICAL FEST",
+    "start_time": "2026-02-16T13:00:00+00:00",
+    "end_time": null,
+    "type": "event",
+    "is_global": false,
+    "visible_to_user": null,
+    "created_by": "ff232a32-25cc-43d6-b286-ee544ae96dcf",
+    "created_at": "2026-01-29T15:05:11.350937+00:00",
+    "visibility": "global",
+    "team_id": null
+  },
+  {
+    "id": "a57c21d1-3ff7-464a-bc96-a69e7aea7ce8",
+    "title": "VALENTINES DAY",
+    "description": "WEAR SAFFRON DRESSES AND MAKE MARRIAGES",
+    "start_time": "2026-02-13T13:00:00+00:00",
+    "end_time": null,
+    "type": "event",
+    "is_global": true,
+    "visible_to_user": null,
+    "created_by": "fc99f581-ba13-456e-8207-cc56d1be3d92",
+    "created_at": "2026-01-29T15:06:17.129859+00:00",
+    "visibility": "global",
+    "team_id": null
+  }
+]
