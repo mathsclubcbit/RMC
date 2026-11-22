@@ -8,6 +8,7 @@ export {
   QR_SIZES,
 } from './generator';
 export { generateCertificateQR, generateCertificateQRBuffer, getVerificationUrl } from './qr';
+export { getCertificateRollNumber } from './fields';
 export {
   ensureCertificateSheet,
   generateCertificateId,

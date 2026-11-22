@@ -118,6 +118,7 @@ export interface VerifyCertificateResponse {
     dateIssued: string;
     status: CertificateStatus;
     issuedBy: string;
+    rollNumber: string;
     extraFields: Record<string, string>;
     templateName: string;
   };
