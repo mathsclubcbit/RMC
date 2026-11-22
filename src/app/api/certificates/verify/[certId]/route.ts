@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   getCertificateById,
+  getCertificateRollNumber,
   recordVerification,
 } from '@/lib/certificates';
 import type { VerifyCertificateResponse } from '@/types/certificate';
@@ -49,6 +50,7 @@ export async function GET(
           dateIssued: cert.dateIssued,
           status: cert.status,
           issuedBy: cert.issuedBy,
+          rollNumber: getCertificateRollNumber(cert.extraFields),
           extraFields: cert.extraFields,
           templateName: cert.templateName,
         },
@@ -72,14 +74,16 @@ export async function GET(
         dateIssued: cert.dateIssued,
         status: cert.status,
         issuedBy: cert.issuedBy,
+        rollNumber: getCertificateRollNumber(cert.extraFields),
         extraFields: cert.extraFields,
         templateName: cert.templateName,
       },
     };
 
     return NextResponse.json(res);
-  } catch (error: any) {
-    console.error('[Verify API] Error:', error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[Verify API] Error:', message);
     return NextResponse.json(
       { verified: false, error: 'Verification service error' },
       { status: 500 }
