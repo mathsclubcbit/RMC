@@ -70,7 +70,7 @@ We enforce a strict design consistency:
 -   **Backgrounds**: Always use `<MathBackground />` for pages.
 -   **Headers**: Use `<SectionTitle />`.
 -   **Cards**: Use `<SpotlightCard />` or `<HolographicCard />`.
--   **Typography**: Serif for headings, Sans for body, Mono for accents.
+-   **Typography**: Serif for headings, Sans for body, Mono for accents
 
 ## 🤝 Contribution
 
