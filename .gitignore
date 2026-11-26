@@ -20,6 +20,11 @@
 # production
 /build
 
+# generated e-quiz certificate outputs
+/output/pdf/
+/tmp/pdfs/
+/public/certificates/generated/
+
 # misc
 .DS_Store
 *.pem

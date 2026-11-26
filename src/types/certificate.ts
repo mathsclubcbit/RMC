@@ -114,6 +114,7 @@ export interface VerifyCertificateResponse {
   certificate?: {
     certificateId: string;
     participantName: string;
+    email: string;
     eventName: string;
     dateIssued: string;
     status: CertificateStatus;
@@ -121,6 +122,7 @@ export interface VerifyCertificateResponse {
     rollNumber: string;
     extraFields: Record<string, string>;
     templateName: string;
+    certificateUrl?: string;
   };
   error?: string;
 }

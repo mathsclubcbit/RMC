@@ -3,7 +3,7 @@ import { Readable } from 'stream';
 import { unstable_cache, revalidateTag } from 'next/cache';
 
 const SCOPES = [
-    'https://www.googleapis.com/auth/drive.file',
+    'https://www.googleapis.com/auth/drive',
     'https://www.googleapis.com/auth/spreadsheets',
 ];
 

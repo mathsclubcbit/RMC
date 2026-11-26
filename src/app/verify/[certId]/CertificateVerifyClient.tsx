@@ -28,12 +28,23 @@ export default function CertificateVerifyClient({ certId }: Props) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block w-12 h-12 border-4 border-teal-400 border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-slate-300 text-lg">Verifying certificate...</p>
+      <main
+        className="min-h-screen bg-[#07111f] text-white flex items-center justify-center px-4 relative overflow-hidden"
+        role="status"
+        aria-live="polite"
+      >
+        <div className="relative w-full max-w-sm text-center">
+          <div className="mx-auto mb-7 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]">
+            <img src="/full logo.png" alt="RMC" className="h-10 w-10 rounded-xl" />
+          </div>
+          <div className="mx-auto mb-6 h-8 w-8 animate-spin rounded-full border border-white/15 border-t-teal-300" />
+          <h1 className="text-lg font-semibold tracking-tight text-white">Verifying certificate</h1>
+          <p className="mt-2 text-sm text-slate-500">Checking the RMC registry</p>
+          <div className="mx-auto mt-7 h-px w-32 overflow-hidden bg-white/10">
+            <div className="h-full w-1/2 animate-pulse bg-teal-300" />
+          </div>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -122,6 +133,10 @@ export default function CertificateVerifyClient({ certId }: Props) {
 
   // ── VERIFIED ✅ ──────────────────────────────────────────────
   const cert = data.certificate!;
+  const certificateDownloadUrl =
+    cert.templateName === 'equiz-certificate' && cert.certificateUrl
+      ? cert.certificateUrl
+      : `/api/certificates/${cert.certificateId}/download`;
 
   return (
     <main className="min-h-screen bg-[#07111f] text-white flex items-center justify-center px-4 py-10 sm:py-16 relative overflow-hidden">
@@ -156,7 +171,11 @@ export default function CertificateVerifyClient({ certId }: Props) {
             <DetailCard label="Participant Name" value={cert.participantName} prominent />
             <DetailCard label="Event / Program" value={cert.eventName} />
             <DetailCard label="Issued By" value={cert.issuedBy} />
-            <DetailCard label="Roll Number" value={cert.rollNumber || 'Not available'} mono />
+            {cert.rollNumber ? (
+              <DetailCard label="Roll Number" value={cert.rollNumber} mono />
+            ) : (
+              <DetailCard label="Participant Email" value={cert.email || 'Not available'} mono />
+            )}
           </div>
 
           <div className="bg-black/20 px-6 sm:px-8 py-5 border-t border-white/10">
@@ -166,7 +185,9 @@ export default function CertificateVerifyClient({ certId }: Props) {
                 <p className="text-teal-300 font-mono text-xs mt-1 break-all">{cert.certificateId}</p>
               </div>
               <a
-                href={`/api/certificates/${cert.certificateId}/download`}
+                href={certificateDownloadUrl}
+                target={cert.templateName === 'equiz-certificate' ? '_blank' : undefined}
+                rel={cert.templateName === 'equiz-certificate' ? 'noreferrer' : undefined}
                 className="inline-flex items-center justify-center gap-2 bg-teal-500 hover:bg-teal-400 text-slate-950 text-sm font-bold px-4 py-2.5 rounded-xl transition-colors shadow-lg shadow-teal-500/20"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
