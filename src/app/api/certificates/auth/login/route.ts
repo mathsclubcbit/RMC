@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: [
-      'https://www.googleapis.com/auth/drive.file',
+      'https://www.googleapis.com/auth/drive',
       'https://www.googleapis.com/auth/spreadsheets',
     ],
     prompt: 'consent',

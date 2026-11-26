@@ -82,3 +82,8 @@ We enforce a strict design consistency:
 
 ---
 *Est. 2018 | Ramanujan Math Club, CBIT*
+# E-Quiz certificate generation
+
+The supplied e-quiz PDF template is supported by a batch generator that writes
+participant names, adds verification QR codes, and creates individual PDFs, a
+combined PDF, and a manifest. See [scripts/EQUIZ_CERTIFICATES.md](scripts/EQUIZ_CERTIFICATES.md).

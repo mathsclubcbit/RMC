@@ -8,6 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest",
+    "certificates:generate": "python scripts/generate_equiz_certificates.py",
+    "certificates:register": "node scripts/register_equiz_certificates.mjs",
+    "certificates:upload": "node scripts/upload_equiz_certificates.mjs",
+    "certificates:test": "python scripts/test_equiz_certificates.py",
     "test:coverage": "vitest run --coverage"
   },
   "browserslist": [

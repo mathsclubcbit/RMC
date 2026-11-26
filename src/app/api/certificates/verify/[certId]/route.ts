@@ -11,7 +11,7 @@ import {
   getCertificateRollNumber,
   recordVerification,
 } from '@/lib/certificates';
-import type { VerifyCertificateResponse } from '@/types/certificate';
+import type { CertificateStatus, VerifyCertificateResponse } from '@/types/certificate';
 
 export async function GET(
   request: NextRequest,
@@ -39,22 +39,29 @@ export async function GET(
       return NextResponse.json(res, { status: 404 });
     }
 
-    // Check if revoked
-    if (cert.status === 'REVOKED') {
+    // Only ACTIVE records are genuine and valid. Keep revoked/pending records
+    // visible so the public page can explain why they are not valid.
+    const status = String(cert.status || '').trim().toUpperCase();
+    if (status !== 'ACTIVE') {
       const res: VerifyCertificateResponse = {
         verified: false,
         certificate: {
           certificateId: cert.certificateId,
           participantName: cert.participantName,
+          email: cert.email,
           eventName: cert.eventName,
           dateIssued: cert.dateIssued,
-          status: cert.status,
+          status: status as CertificateStatus,
           issuedBy: cert.issuedBy,
           rollNumber: getCertificateRollNumber(cert.extraFields),
           extraFields: cert.extraFields,
           templateName: cert.templateName,
+          certificateUrl: cert.certificateUrl,
         },
-        error: 'This certificate has been revoked.',
+        error:
+          status === 'REVOKED'
+            ? 'This certificate has been revoked.'
+            : 'This certificate is not active and cannot be verified.',
       };
       return NextResponse.json(res, { status: 200 });
     }
@@ -70,13 +77,15 @@ export async function GET(
       certificate: {
         certificateId: cert.certificateId,
         participantName: cert.participantName,
+        email: cert.email,
         eventName: cert.eventName,
         dateIssued: cert.dateIssued,
-        status: cert.status,
+        status: status as CertificateStatus,
         issuedBy: cert.issuedBy,
         rollNumber: getCertificateRollNumber(cert.extraFields),
         extraFields: cert.extraFields,
         templateName: cert.templateName,
+        certificateUrl: cert.certificateUrl,
       },
     };
 
